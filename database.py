@@ -245,20 +245,16 @@ def get_status(user_id: int) -> str | None:
 
 def get_status_counts() -> dict:
     cursor.execute(
-        "SELECT COUNT(*) FROM applications "
-        "WHERE status IN ('new', 'pending', 'accepted', 'rejected')"
-    )
-    total = cursor.fetchone()[0]
-    cursor.execute(
         "SELECT status, COUNT(*) FROM applications "
         "WHERE status IN ('new', 'pending', 'accepted', 'rejected') "
         "GROUP BY status"
     )
     rows = cursor.fetchall()
-    counts = {"total": total, "new": 0, "pending": 0, "accepted": 0, "rejected": 0}
+    counts = {"total": 0, "new": 0, "pending": 0, "accepted": 0, "rejected": 0}
     for status, count in rows:
         if status in counts:
             counts[status] = count
+    counts["total"] = counts["pending"] + counts["accepted"] + counts["rejected"]
     return counts
 
 def cleanup_old_form_data(days: int = 30):

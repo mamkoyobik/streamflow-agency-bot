@@ -503,8 +503,6 @@ async def send_next_question(
 async def start(message: Message, state: FSMContext):
     try:
         await state.clear()
-        if get_status(message.from_user.id) is None:
-            set_status(message.from_user.id, "new")
         await send_menu(message)
         app = get_application(message.from_user.id)
         if app:
