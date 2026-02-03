@@ -37,7 +37,9 @@ from database import (
     set_admin_message_id,
     get_admin_message_id,
     get_admin_messages_for_archive,
-    reset_all_data
+    reset_all_data,
+    get_setting,
+    set_setting
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -266,6 +268,7 @@ DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
 ADMIN_ARCHIVE_CHECK_HOURS = 6
+ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_MENU_TEXT = (
     "🛠 <b>Админ-меню</b>\n\n"
     "Выбери действие ниже ✨"
@@ -420,6 +423,29 @@ async def archive_admin_messages_task():
         except Exception:
             logger.exception("Ошибка задачи архивации")
         await asyncio.sleep(ADMIN_ARCHIVE_CHECK_HOURS * 3600)
+
+async def ensure_admin_menu_posted():
+    stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
+    if stored_id:
+        try:
+            await bot.edit_message_text(
+                chat_id=ADMIN_GROUP_ID,
+                message_id=int(stored_id),
+                text=ADMIN_MENU_TEXT,
+                reply_markup=admin_menu_keyboard()
+            )
+            return
+        except Exception:
+            logger.exception("Не удалось обновить существующее админ-меню")
+    try:
+        msg = await bot.send_message(
+            ADMIN_GROUP_ID,
+            ADMIN_MENU_TEXT,
+            reply_markup=admin_menu_keyboard()
+        )
+        set_setting(ADMIN_MENU_SETTING_KEY, str(msg.message_id))
+    except Exception:
+        logger.exception("Ошибка автопостинга админ-меню")
 
 async def send_menu(message: Message, caption: str = MENU_CAPTION):
     await gentle_typing(message.chat.id)
@@ -1504,7 +1530,8 @@ async def admin_status(call: CallbackQuery):
 
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message):
-    await message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
+    msg = await message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
+    set_setting(ADMIN_MENU_SETTING_KEY, str(msg.message_id))
 
 @dp.callback_query(F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery):
@@ -1553,6 +1580,10 @@ async def admin_menu_action(call: CallbackQuery):
             await call.message.edit_text(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
         except Exception:
             await call.message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
+        try:
+            set_setting(ADMIN_MENU_SETTING_KEY, str(call.message.message_id))
+        except Exception:
+            pass
         await call.answer()
         return
     await call.answer("Неизвестная команда", show_alert=False)
@@ -1643,14 +1674,7 @@ async def main():
         cleanup_old_form_data()
     except Exception:
         logger.exception("Ошибка очистки старых данных")
-    try:
-        await bot.send_message(
-            ADMIN_GROUP_ID,
-            ADMIN_MENU_TEXT,
-            reply_markup=admin_menu_keyboard()
-        )
-    except Exception:
-        logger.exception("Ошибка автопостинга админ-меню")
+    await ensure_admin_menu_posted()
     asyncio.create_task(daily_stats_task())
     asyncio.create_task(archive_admin_messages_task())
     await dp.start_polling(bot)

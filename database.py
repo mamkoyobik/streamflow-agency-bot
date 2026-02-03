@@ -13,6 +13,14 @@ CREATE TABLE IF NOT EXISTS applications (
 """)
 conn.commit()
 
+cursor.execute("""
+CREATE TABLE IF NOT EXISTS settings (
+    key TEXT PRIMARY KEY,
+    value TEXT
+)
+""")
+conn.commit()
+
 def _now_ts() -> str:
     return datetime.now(timezone.utc).isoformat()
 
@@ -163,6 +171,21 @@ def reset_all_data():
         cursor.execute("VACUUM")
     except Exception:
         pass
+
+def set_setting(key: str, value: str | None):
+    cursor.execute(
+        "INSERT INTO settings (key, value) VALUES (?, ?) "
+        "ON CONFLICT(key) DO UPDATE SET value = excluded.value",
+        (key, value)
+    )
+    conn.commit()
+
+def get_setting(key: str) -> str | None:
+    cursor.execute("SELECT value FROM settings WHERE key = ?", (key,))
+    row = cursor.fetchone()
+    if not row:
+        return None
+    return row[0]
 
 def clear_form_data(user_id: int):
     ts = _now_ts()
