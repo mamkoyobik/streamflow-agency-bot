@@ -203,3 +203,20 @@ def confirm_reset_db_keyboard():
             InlineKeyboardButton(text="Отмена", callback_data="admin_reset_db:cancel")
         ]
     ])
+
+def admin_menu_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_menu:stats"),
+            InlineKeyboardButton(text="📁 Excel", callback_data="admin_menu:excel")
+        ],
+        [
+            InlineKeyboardButton(text="🧹 Архивировать старые", callback_data="admin_menu:archive")
+        ],
+        [
+            InlineKeyboardButton(text="⚠️ Сбросить базу", callback_data="admin_menu:reset")
+        ],
+        [
+            InlineKeyboardButton(text="🔄 Обновить меню", callback_data="admin_menu:refresh")
+        ]
+    ])
