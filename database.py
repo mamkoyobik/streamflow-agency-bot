@@ -116,7 +116,7 @@ def set_form_data(user_id: int, data: dict):
         )
     conn.commit()
 
-def set_admin_message_id(user_id: int, message_id: int):
+def set_admin_message_id(user_id: int, message_id: int | None):
     ts = _now_ts()
     cursor.execute(
         "SELECT 1 FROM applications WHERE user_id = ?",
@@ -144,6 +144,25 @@ def get_admin_message_id(user_id: int) -> int | None:
     if not row:
         return None
     return row[0]
+
+def get_admin_messages_for_archive(days: int) -> list[tuple[int, int]]:
+    cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
+    cursor.execute(
+        "SELECT user_id, admin_message_id FROM applications "
+        "WHERE admin_message_id IS NOT NULL "
+        "AND status IN ('accepted', 'rejected') "
+        "AND updated_at < ?",
+        (cutoff,)
+    )
+    return [(row[0], row[1]) for row in cursor.fetchall() if row[1] is not None]
+
+def reset_all_data():
+    cursor.execute("DELETE FROM applications")
+    conn.commit()
+    try:
+        cursor.execute("VACUUM")
+    except Exception:
+        pass
 
 def clear_form_data(user_id: int):
     ts = _now_ts()

@@ -35,7 +35,9 @@ from database import (
     cleanup_old_form_data,
     get_status_counts,
     set_admin_message_id,
-    get_admin_message_id
+    get_admin_message_id,
+    get_admin_messages_for_archive,
+    reset_all_data
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -262,6 +264,8 @@ PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
 
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
+ADMIN_ARCHIVE_DAYS = 7
+ADMIN_ARCHIVE_CHECK_HOURS = 6
 
 async def persist_form_data(state: FSMContext, user_id: int):
     data = await state.get_data()
@@ -303,9 +307,9 @@ def build_admin_status_text(user_id: int, status: str) -> str:
         f"🆔 ID: {user_id}"
     )
 
-def build_admin_summary(data: dict, user_id: int, status: str) -> str:
+def build_admin_summary(data: dict, user_id: int, status: str, archived: bool = False) -> str:
     status_label = STATUS_LABELS.get(status, status)
-    return (
+    text = (
         "🧾 <b>Кратко по заявке</b>\n\n"
         f"👤 Имя: {data.get('name', '—')}\n"
         f"📅 Дата рождения: {data.get('age', '—')}\n"
@@ -315,6 +319,9 @@ def build_admin_summary(data: dict, user_id: int, status: str) -> str:
         f"🆔 ID: {user_id}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
+    if archived:
+        text += "\n\n🗂 Архив"
+    return text
 
 def admin_keyboard_for_status(user_id: int, status: str):
     if status == "accepted":
@@ -373,6 +380,34 @@ async def daily_stats_task():
                 )
         except Exception:
             logger.exception("Ошибка отправки ежедневной статистики")
+
+async def archive_admin_messages_task():
+    while True:
+        try:
+            rows = get_admin_messages_for_archive(ADMIN_ARCHIVE_DAYS)
+            for user_id, message_id in rows:
+                data = get_form_data(user_id) or {}
+                try:
+                    await bot.edit_message_text(
+                        chat_id=ADMIN_GROUP_ID,
+                        message_id=message_id,
+                        text=build_admin_summary(data, user_id, get_status(user_id) or "accepted", archived=True),
+                        reply_markup=None
+                    )
+                    set_admin_message_id(user_id, None)
+                except Exception:
+                    try:
+                        await bot.edit_message_reply_markup(
+                            chat_id=ADMIN_GROUP_ID,
+                            message_id=message_id,
+                            reply_markup=None
+                        )
+                        set_admin_message_id(user_id, None)
+                    except Exception:
+                        logger.exception("Ошибка архивации админского сообщения")
+        except Exception:
+            logger.exception("Ошибка задачи архивации")
+        await asyncio.sleep(ADMIN_ARCHIVE_CHECK_HOURS * 3600)
 
 async def send_menu(message: Message, caption: str = MENU_CAPTION):
     await gentle_typing(message.chat.id)
@@ -1455,6 +1490,38 @@ async def admin_status(call: CallbackQuery):
     except Exception:
         await call.answer("Статус обновлён", show_alert=False)
 
+@dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
+async def admin_reset_db(message: Message):
+    await message.answer(
+        "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
+        reply_markup=confirm_reset_db_keyboard()
+    )
+
+@dp.callback_query(F.data == "admin_reset_db:confirm")
+async def admin_reset_db_confirm(call: CallbackQuery):
+    try:
+        reset_all_data()
+        file_path = Path("applications.xlsx")
+        if file_path.exists():
+            file_path.unlink()
+        await call.message.answer("✅ База и статистика полностью обнулены.")
+    except Exception:
+        logger.exception("Ошибка сброса базы")
+        await call.message.answer("⚠️ Ошибка при сбросе базы.")
+    try:
+        await call.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
+    await call.answer()
+
+@dp.callback_query(F.data == "admin_reset_db:cancel")
+async def admin_reset_db_cancel(call: CallbackQuery):
+    try:
+        await call.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        pass
+    await call.answer("Отменено")
+
         
 @dp.callback_query(F.data == "portfolio_reviews")
 async def portfolio_reviews(call: CallbackQuery):
@@ -1510,6 +1577,7 @@ async def main():
     except Exception:
         logger.exception("Ошибка очистки старых данных")
     asyncio.create_task(daily_stats_task())
+    asyncio.create_task(archive_admin_messages_task())
     await dp.start_polling(bot)
 
 if __name__ == "__main__":

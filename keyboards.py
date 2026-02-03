@@ -195,3 +195,11 @@ def reject_templates_keyboard():
         [InlineKeyboardButton(text="🕐 Вернёмся позже", callback_data="reject_tpl:3")],
         [InlineKeyboardButton(text="✍️ Своя причина", callback_data="reject_tpl:custom")],
     ])
+
+def confirm_reset_db_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⚠️ Да, обнулить", callback_data="admin_reset_db:confirm"),
+            InlineKeyboardButton(text="Отмена", callback_data="admin_reset_db:cancel")
+        ]
+    ])
