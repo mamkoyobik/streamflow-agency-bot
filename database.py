@@ -187,6 +187,26 @@ def get_setting(key: str) -> str | None:
         return None
     return row[0]
 
+def list_applications(status: str | None = None) -> list[dict]:
+    if status:
+        cursor.execute(
+            "SELECT user_id, status, updated_at FROM applications "
+            "WHERE status = ? "
+            "ORDER BY updated_at DESC",
+            (status,)
+        )
+    else:
+        cursor.execute(
+            "SELECT user_id, status, updated_at FROM applications "
+            "WHERE status IN ('pending', 'accepted', 'rejected') "
+            "ORDER BY updated_at DESC"
+        )
+    rows = cursor.fetchall()
+    return [
+        {"user_id": row[0], "status": row[1], "updated_at": row[2]}
+        for row in rows
+    ]
+
 def clear_form_data(user_id: int):
     ts = _now_ts()
     cursor.execute(
