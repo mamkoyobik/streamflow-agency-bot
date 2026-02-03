@@ -1,0 +1,16 @@
+.env
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.DS_Store
+
+bot_database.db
+applications.db
+applications.xlsx
+bot_errors.log
+.env
+__pycache__/
+bot_database.db
+applications.xlsx
