@@ -40,7 +40,9 @@ from database import (
     reset_all_data,
     get_setting,
     set_setting,
-    list_applications
+    list_applications,
+    set_menu_message_id,
+    get_menu_message_id
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -588,13 +590,48 @@ async def send_admin_list(
     )
     await call.answer()
 
-async def send_menu(message: Message, caption: str = MENU_CAPTION):
+async def send_menu(
+    message: Message,
+    caption: str = MENU_CAPTION,
+    status: str | None = None,
+    intro: str | None = None,
+    tail: str | None = None
+):
     await gentle_typing(message.chat.id)
-    await message.answer_photo(
-        FSInputFile("media/menu.jpg"),
-        caption=caption,
-        reply_markup=main_menu()
+    final_caption = (
+        build_menu_caption_with_status(status, caption, intro, tail)
+        if status
+        else caption
     )
+    await send_or_edit_user_menu(message.from_user.id, final_caption)
+
+async def send_or_edit_user_menu(user_id: int, caption: str):
+    message_id = get_menu_message_id(user_id)
+    if message_id:
+        try:
+            await bot.edit_message_caption(
+                chat_id=user_id,
+                message_id=message_id,
+                caption=caption,
+                reply_markup=main_menu()
+            )
+            return
+        except Exception:
+            logger.exception("Не удалось обновить меню пользователя")
+            try:
+                await bot.delete_message(user_id, message_id)
+            except Exception:
+                pass
+    try:
+        msg = await bot.send_photo(
+            user_id,
+            FSInputFile("media/menu.jpg"),
+            caption=caption,
+            reply_markup=main_menu()
+        )
+        set_menu_message_id(user_id, msg.message_id)
+    except Exception:
+        logger.exception("Ошибка отправки меню пользователю")
 
 async def start_application(message: Message, state: FSMContext):
     await state.clear()
@@ -635,10 +672,9 @@ async def send_next_question(
 async def start(message: Message, state: FSMContext):
     try:
         await state.clear()
-        await send_menu(message)
         app = get_application(message.from_user.id)
-        if app:
-            await send_status_message(message, app.get("status"))
+        status = app.get("status") if app else None
+        await send_menu(message, status=status)
         if app and app.get("status") in {None, "new"} and app.get("last_state") in FORM_PROGRESS_STATES:
             await message.answer(
                 "🤍 Похоже, анкета не завершена.\n\n"
@@ -651,10 +687,9 @@ async def start(message: Message, state: FSMContext):
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
-    await send_menu(call.message)
     app = get_application(call.from_user.id)
-    if app:
-        await send_status_message(call.message, app.get("status"))
+    status = app.get("status") if app else None
+    await send_menu(call.message, status=status)
     await call.answer()
 # ================= APPLY =================
 
@@ -1487,11 +1522,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 MENU_CAPTION,
                 intro="🤍 Спасибо! Анкета отправлена администратору ✨"
             )
-            await call.message.answer_photo(
-                FSInputFile("media/menu.jpg"),
-                caption=caption,
-                reply_markup=main_menu()
-            )
+            await send_or_edit_user_menu(call.from_user.id, caption)
         except Exception:
             logger.exception("Ошибка отправки меню после заявки")
         await call.answer()
@@ -1521,12 +1552,7 @@ async def admin_accept(call: CallbackQuery):
                 ACCEPT_CAPTION,
                 tail="🤍 Ожидайте, скоро админ напишет вам для записи на собеседование ✨"
             )
-            await bot.send_photo(
-                uid,
-                FSInputFile("media/menu.jpg"),
-                caption=caption,
-                reply_markup=main_menu()
-            )
+            await send_or_edit_user_menu(uid, caption)
         except Exception:
             logger.exception("Ошибка отправки меню после принятия")
         set_status(uid, "accepted")
@@ -1612,12 +1638,7 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 MENU_CAPTION,
                 intro=intro
             )
-            await bot.send_photo(
-                uid,
-                FSInputFile("media/menu.jpg"),
-                caption=caption,
-                reply_markup=main_menu()
-            )
+            await send_or_edit_user_menu(uid, caption)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
@@ -1654,12 +1675,7 @@ async def reject_reason(m: Message, state: FSMContext):
                 MENU_CAPTION,
                 intro=intro
             )
-            await bot.send_photo(
-                uid,
-                FSInputFile("media/menu.jpg"),
-                caption=caption,
-                reply_markup=main_menu()
-            )
+            await send_or_edit_user_menu(uid, caption)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
