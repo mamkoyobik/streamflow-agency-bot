@@ -295,3 +295,58 @@ def admin_list_item_keyboard(user_id: int, status: str):
         InlineKeyboardButton(text="💬 Написать кандидату", url=f"tg://user?id={user_id}")
     ])
     return InlineKeyboardMarkup(inline_keyboard=rows)
+
+def admin_list_view_keyboard(
+    user_id: int,
+    status: str,
+    filter_key: str,
+    offset: int,
+    total: int,
+    limit: int
+):
+    rows = []
+    if status == "pending":
+        rows.append([
+            InlineKeyboardButton(text="✅ Принять", callback_data=f"admin_accept:{user_id}:view"),
+            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"admin_reject:{user_id}:view"),
+        ])
+    elif status == "accepted":
+        rows.append([
+            InlineKeyboardButton(text="✅ Принято", callback_data=f"admin_status:{user_id}:accepted")
+        ])
+    elif status == "rejected":
+        rows.append([
+            InlineKeyboardButton(text="❌ Отклонено", callback_data=f"admin_status:{user_id}:rejected")
+        ])
+
+    rows.append([
+        InlineKeyboardButton(text="📷 Фото", callback_data=f"admin_photos:{user_id}")
+    ])
+    rows.append([
+        InlineKeyboardButton(text="💬 Написать кандидату", url=f"tg://user?id={user_id}")
+    ])
+
+    prev_offset = offset - limit
+    next_offset = offset + limit
+    nav_row = []
+    if prev_offset >= 0:
+        nav_row.append(
+            InlineKeyboardButton(
+                text="⬅️ Предыдущая",
+                callback_data=f"admin_list:{filter_key}:{prev_offset}"
+            )
+        )
+    if next_offset < total:
+        nav_row.append(
+            InlineKeyboardButton(
+                text="Следующая ➡️",
+                callback_data=f"admin_list:{filter_key}:{next_offset}"
+            )
+        )
+    if nav_row:
+        rows.append(nav_row)
+
+    rows.append([
+        InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")
+    ])
+    return InlineKeyboardMarkup(inline_keyboard=rows)

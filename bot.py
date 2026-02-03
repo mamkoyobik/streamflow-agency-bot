@@ -9,7 +9,7 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
     InputMediaPhoto, InputMediaVideo,
-    ChatJoinRequest
+    ChatJoinRequest, InlineKeyboardMarkup
 )
 try:
     from aiogram.client.default import DefaultBotProperties
@@ -262,6 +262,23 @@ def build_status_line(status: str | None) -> str | None:
         return None
     return f"Статус заявки: {label}"
 
+def build_menu_caption_with_status(
+    status: str,
+    base_caption: str,
+    intro: str | None = None,
+    tail: str | None = None
+) -> str:
+    parts = []
+    if intro:
+        parts.append(intro)
+    parts.append(base_caption)
+    if tail:
+        parts.append(tail)
+    status_line = build_status_line(status)
+    if status_line:
+        parts.append(status_line)
+    return "\n\n".join(parts)
+
 PORTFOLIO_COOLDOWN_SECONDS = 10
 PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
 
@@ -270,8 +287,8 @@ DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
 ADMIN_ARCHIVE_CHECK_HOURS = 6
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
-ADMIN_LIST_LIMIT = 10
-ADMIN_LIST_MESSAGE_IDS: dict[int, list[int]] = {}
+ADMIN_LIST_LIMIT = 1
+ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
 
 def build_admin_menu_text(counts: dict) -> str:
     return (
@@ -464,6 +481,48 @@ async def ensure_admin_menu_posted():
     except Exception:
         logger.exception("Ошибка автопостинга админ-меню")
 
+async def update_admin_menu_message(text: str, reply_markup: InlineKeyboardMarkup):
+    stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
+    if stored_id and stored_id.isdigit():
+        try:
+            await bot.edit_message_text(
+                chat_id=ADMIN_GROUP_ID,
+                message_id=int(stored_id),
+                text=text,
+                reply_markup=reply_markup
+            )
+            return
+        except Exception:
+            logger.exception("Не удалось обновить админ-сообщение")
+    try:
+        msg = await bot.send_message(
+            ADMIN_GROUP_ID,
+            text,
+            reply_markup=reply_markup
+        )
+        await set_admin_menu_message_id(msg.message_id)
+    except Exception:
+        logger.exception("Ошибка отправки админ-сообщения")
+
+async def notify_admin_new_application():
+    counts = get_status_counts()
+    text = (
+        "🔔 <b>Новая анкета</b>\n\n"
+        f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
+        "Открой админ-меню, чтобы просмотреть ✨"
+    )
+    stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
+    if stored_id and stored_id.isdigit():
+        try:
+            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+        except Exception:
+            logger.exception("Не удалось удалить старое уведомление")
+    try:
+        msg = await bot.send_message(ADMIN_GROUP_ID, text)
+        set_setting(ADMIN_NOTIFY_SETTING_KEY, str(msg.message_id))
+    except Exception:
+        logger.exception("Ошибка уведомления о заявке")
+
 async def set_admin_menu_message_id(message_id: int):
     stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
     if stored_id and stored_id.isdigit() and int(stored_id) != message_id:
@@ -475,26 +534,10 @@ async def set_admin_menu_message_id(message_id: int):
 
 async def post_admin_menu():
     counts = get_status_counts()
-    msg = await bot.send_message(
-        ADMIN_GROUP_ID,
+    await update_admin_menu_message(
         build_admin_menu_text(counts),
-        reply_markup=admin_menu_keyboard(counts)
+        admin_menu_keyboard(counts)
     )
-    await set_admin_menu_message_id(msg.message_id)
-
-async def clear_admin_list_messages(admin_id: int, keep_message_id: int | None = None):
-    message_ids = ADMIN_LIST_MESSAGE_IDS.pop(admin_id, [])
-    remaining: list[int] = []
-    for message_id in message_ids:
-        if keep_message_id and message_id == keep_message_id:
-            remaining.append(message_id)
-            continue
-        try:
-            await bot.delete_message(ADMIN_GROUP_ID, message_id)
-        except Exception:
-            pass
-    if remaining:
-        ADMIN_LIST_MESSAGE_IDS[admin_id] = remaining
 
 def _admin_list_label(filter_key: str | None) -> str:
     return {
@@ -510,39 +553,39 @@ async def send_admin_list(
     filter_key: str,
     offset: int = 0
 ):
-    admin_id = call.from_user.id
-    await clear_admin_list_messages(admin_id)
     status = None if filter_key == "all" else filter_key
     apps = list_applications(status)
     label = _admin_list_label(filter_key)
     if not apps:
-        msg = await call.message.answer(f"🤍 {label}: пока пусто ✨")
-        ADMIN_LIST_MESSAGE_IDS[admin_id] = [msg.message_id]
+        await update_admin_menu_message(
+            f"🤍 {label}: пока пусто ✨",
+            admin_menu_keyboard(get_status_counts())
+        )
         await call.answer()
         return
 
     total = len(apps)
+    if offset < 0:
+        offset = 0
+    if offset >= total:
+        offset = max(total - 1, 0)
     slice_items = apps[offset: offset + ADMIN_LIST_LIMIT]
     page = offset // ADMIN_LIST_LIMIT + 1
     pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
-
-    header = await call.message.answer(
+    current = slice_items[0]
+    user_id = current["user_id"]
+    item_status = current["status"] or status or "pending"
+    data = get_form_data(user_id) or {}
+    text = (
         f"🗂 <b>{label}</b>\n\n"
-        f"Всего: <b>{total}</b>\n"
-        f"Страница: <b>{page}/{pages}</b>",
-        reply_markup=admin_list_nav_keyboard(filter_key, offset, total, ADMIN_LIST_LIMIT)
+        f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
+        f"Страница: <b>{page}/{pages}</b>\n\n"
+        f"{build_admin_summary(data, user_id, item_status)}"
     )
-    sent_ids = [header.message_id]
-    for item in slice_items:
-        user_id = item["user_id"]
-        item_status = item["status"] or status or "pending"
-        data = get_form_data(user_id) or {}
-        msg = await call.message.answer(
-            build_admin_summary(data, user_id, item_status),
-            reply_markup=admin_list_item_keyboard(user_id, item_status)
-        )
-        sent_ids.append(msg.message_id)
-    ADMIN_LIST_MESSAGE_IDS[admin_id] = sent_ids
+    await update_admin_menu_message(
+        text,
+        admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT)
+    )
     await call.answer()
 
 async def send_menu(message: Message, caption: str = MENU_CAPTION):
@@ -1421,53 +1464,6 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             return
 
         await gentle_typing(call.message.chat.id)
-        await call.message.answer("🤍 Проверяю и отправляю твою анкету админу ✨")
-
-        caption = (
-            "🌸 НОВАЯ ЗАЯВКА 🌸\n\n"
-
-            f"👤 Имя: {data['name']}\n"
-            f"📅 Дата рождения: {data['age']}\n"
-            f"🌍 Город и страна: {data['city']}\n\n"
-            f"🏠 Помещение без посторонних: {data['living']}\n\n"
-            f"📱 Устройства: {data['devices']}\n"
-            f"📲 Модель: {data['device_model']}\n"
-            f"🎧 Наушники: {data['headphones']}\n\n"
-            f"⏱ Время работы: {data['work_time']}\n"
-            f"💼 Опыт: {data['experience']}\n\n"
-            f"💬 Telegram: {data['telegram']}\n"
-            f"🆔 ID: {user.id}"
-        )
-
-        media = [
-            InputMediaPhoto(media=data["photo_face"], caption=caption),
-            InputMediaPhoto(media=data["photo_full"]),
-        ]
-        try:
-            await bot.send_media_group(ADMIN_GROUP_ID, media)
-        except Exception:
-            logger.exception("Ошибка отправки медиа администратору")
-            await call.message.answer(
-                "🤍 Похоже, фото не отправились корректно.\n\n"
-                "Давай пришлём их ещё раз ✨"
-            )
-            await state.set_state(ApplicationStates.photo_face)
-            set_last_state(user.id, ApplicationStates.photo_face.state)
-            await call.message.answer(
-                format_question(
-                    ApplicationStates.photo_face,
-                    FORM_QUESTIONS[ApplicationStates.photo_face]
-                ),
-                reply_markup=form_keyboard()
-            )
-            await call.answer()
-            return
-        admin_message = await bot.send_message(
-            ADMIN_GROUP_ID,
-            build_admin_summary(data, user.id, "pending", is_new=True),
-            reply_markup=admin_pending_keyboard(user.id)
-        )
-        set_admin_message_id(user.id, admin_message.message_id)
 
         set_status(user.id, "pending")
         set_last_apply_at(user.id)
@@ -1477,16 +1473,27 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             except Exception:
                 logger.exception("Ошибка записи в Excel")
         await state.clear()
-        await call.message.answer("🤍 Спасибо! Анкета отправлена администратору ✨")
         try:
-            await send_menu(call.message)
-            await send_status_message(call.message, "pending")
+            await notify_admin_new_application()
         except Exception:
-            logger.exception("Ошибка отправки меню/статуса после заявки")
+            logger.exception("Ошибка уведомления админов о новой заявке")
         try:
             await ensure_admin_menu_posted()
         except Exception:
             logger.exception("Ошибка обновления админ-меню после заявки")
+        try:
+            caption = build_menu_caption_with_status(
+                "pending",
+                MENU_CAPTION,
+                intro="🤍 Спасибо! Анкета отправлена администратору ✨"
+            )
+            await call.message.answer_photo(
+                FSInputFile("media/menu.jpg"),
+                caption=caption,
+                reply_markup=main_menu()
+            )
+        except Exception:
+            logger.exception("Ошибка отправки меню после заявки")
         await call.answer()
     except Exception:
         logger.exception("Ошибка в preview_confirm")
@@ -1508,22 +1515,20 @@ async def admin_accept(call: CallbackQuery):
         parts = call.data.split(":")
         uid = int(parts[1])
         view_mode = len(parts) > 2 and parts[2] == "view"
-        await bot.send_photo(
-            uid,
-            FSInputFile("media/menu.jpg"),
-            caption=ACCEPT_CAPTION,
-            reply_markup=main_menu()
-        )
-        await bot.send_message(
-            uid,
-            "🤍 Ожидайте, скоро админ напишет вам для записи на собеседование ✨"
-        )
         try:
-            status_line = build_status_line("accepted")
-            if status_line:
-                await bot.send_message(uid, status_line)
+            caption = build_menu_caption_with_status(
+                "accepted",
+                ACCEPT_CAPTION,
+                tail="🤍 Ожидайте, скоро админ напишет вам для записи на собеседование ✨"
+            )
+            await bot.send_photo(
+                uid,
+                FSInputFile("media/menu.jpg"),
+                caption=caption,
+                reply_markup=main_menu()
+            )
         except Exception:
-            pass
+            logger.exception("Ошибка отправки меню после принятия")
         set_status(uid, "accepted")
         if update_application_status:
             try:
@@ -1531,8 +1536,6 @@ async def admin_accept(call: CallbackQuery):
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "accepted")
-        if view_mode:
-            await clear_admin_list_messages(call.from_user.id)
         try:
             await post_admin_menu()
         except Exception:
@@ -1597,25 +1600,26 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             await call.answer("🤍 Шаблон не найден")
             return
 
-        await bot.send_message(
-            uid,
-            "🤍 Спасибо за твою заявку!\n\n"
-            "К сожалению, сейчас мы не можем принять её.\n\n"
-            f"Причина:\n{reason}\n\n"
-            "Если появится возможность — мы обязательно напишем ✨"
-        )
         try:
+            intro = (
+                "🤍 Спасибо за твою заявку!\n\n"
+                "К сожалению, сейчас мы не можем принять её.\n\n"
+                f"Причина:\n{reason}\n\n"
+                "Если появится возможность — мы обязательно напишем ✨"
+            )
+            caption = build_menu_caption_with_status(
+                "rejected",
+                MENU_CAPTION,
+                intro=intro
+            )
             await bot.send_photo(
                 uid,
                 FSInputFile("media/menu.jpg"),
-                caption=MENU_CAPTION,
+                caption=caption,
                 reply_markup=main_menu()
             )
-            status_line = build_status_line("rejected")
-            if status_line:
-                await bot.send_message(uid, status_line)
         except Exception:
-            logger.exception("Ошибка отправки меню/статуса после отказа")
+            logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
         if update_application_status:
             try:
@@ -1623,8 +1627,6 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "rejected")
-        if data.get("reject_view"):
-            await clear_admin_list_messages(call.from_user.id)
         try:
             await post_admin_menu()
         except Exception:
@@ -1640,25 +1642,26 @@ async def reject_reason(m: Message, state: FSMContext):
         data = await state.get_data()
         uid = data["reject_uid"]
 
-        await bot.send_message(
-            uid,
-            "🤍 Спасибо за твою заявку!\n\n"
-            "К сожалению, сейчас мы не можем принять её.\n\n"
-            f"Причина:\n{m.text}\n\n"
-            "Если появится возможность — мы обязательно напишем ✨"
-        )
         try:
+            intro = (
+                "🤍 Спасибо за твою заявку!\n\n"
+                "К сожалению, сейчас мы не можем принять её.\n\n"
+                f"Причина:\n{m.text}\n\n"
+                "Если появится возможность — мы обязательно напишем ✨"
+            )
+            caption = build_menu_caption_with_status(
+                "rejected",
+                MENU_CAPTION,
+                intro=intro
+            )
             await bot.send_photo(
                 uid,
                 FSInputFile("media/menu.jpg"),
-                caption=MENU_CAPTION,
+                caption=caption,
                 reply_markup=main_menu()
             )
-            status_line = build_status_line("rejected")
-            if status_line:
-                await bot.send_message(uid, status_line)
         except Exception:
-            logger.exception("Ошибка отправки меню/статуса после отказа")
+            logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
         if update_application_status:
             try:
@@ -1666,8 +1669,6 @@ async def reject_reason(m: Message, state: FSMContext):
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "rejected")
-        if data.get("reject_view"):
-            await clear_admin_list_messages(m.from_user.id)
         try:
             await post_admin_menu()
         except Exception:
@@ -1706,12 +1707,7 @@ async def admin_photos(call: CallbackQuery):
 
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message):
-    counts = get_status_counts()
-    msg = await message.answer(
-        build_admin_menu_text(counts),
-        reply_markup=admin_menu_keyboard(counts)
-    )
-    await set_admin_menu_message_id(msg.message_id)
+    await ensure_admin_menu_posted()
 
 @dp.callback_query(F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery):
@@ -1723,17 +1719,26 @@ async def admin_menu_action(call: CallbackQuery):
         await send_admin_list(call, action, 0)
         return
     if action == "stats":
-        await call.message.answer(build_admin_stats_text())
+        await update_admin_menu_message(
+            build_admin_stats_text(),
+            admin_menu_keyboard(get_status_counts())
+        )
         await call.answer()
         return
     if action == "excel":
         if not append_application_row:
-            await call.message.answer("🤍 Экспорт в Excel недоступен. Установи openpyxl.")
+            await update_admin_menu_message(
+                "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
+                admin_menu_keyboard(get_status_counts())
+            )
             await call.answer()
             return
         file_path = Path("applications.xlsx")
         if not file_path.exists():
-            await call.message.answer("🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨")
+            await update_admin_menu_message(
+                "🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨",
+                admin_menu_keyboard(get_status_counts())
+            )
             await call.answer()
             return
         await call.message.answer_document(FSInputFile(str(file_path)))
@@ -1743,41 +1748,32 @@ async def admin_menu_action(call: CallbackQuery):
         try:
             archived = await archive_admin_messages_once()
             if archived:
-                await call.message.answer(f"🧹 Архивировано: {archived}")
+                await update_admin_menu_message(
+                    f"🧹 Архивировано: {archived}",
+                    admin_menu_keyboard(get_status_counts())
+                )
             else:
-                await call.message.answer("🤍 Пока нет заявок для архивации ✨")
+                await update_admin_menu_message(
+                    "🤍 Пока нет заявок для архивации ✨",
+                    admin_menu_keyboard(get_status_counts())
+                )
         except Exception:
             logger.exception("Ошибка ручной архивации")
-            await call.message.answer("⚠️ Не удалось архивировать сейчас.")
+            await update_admin_menu_message(
+                "⚠️ Не удалось архивировать сейчас.",
+                admin_menu_keyboard(get_status_counts())
+            )
         await call.answer()
         return
     if action == "reset":
-        await call.message.answer(
+        await update_admin_menu_message(
             "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
-            reply_markup=confirm_reset_db_keyboard()
+            confirm_reset_db_keyboard()
         )
         await call.answer()
         return
     if action == "refresh":
-        counts = get_status_counts()
-        try:
-            await call.message.edit_text(
-                build_admin_menu_text(counts),
-                reply_markup=admin_menu_keyboard(counts)
-            )
-        except Exception:
-            await call.message.answer(
-                build_admin_menu_text(counts),
-                reply_markup=admin_menu_keyboard(counts)
-            )
-        try:
-            await set_admin_menu_message_id(call.message.message_id)
-        except Exception:
-            pass
-        try:
-            await clear_admin_list_messages(call.from_user.id, keep_message_id=call.message.message_id)
-        except Exception:
-            pass
+        await post_admin_menu()
         await call.answer()
         return
     await call.answer("Неизвестная команда", show_alert=False)
@@ -1794,9 +1790,9 @@ async def admin_list_pagination(call: CallbackQuery):
 
 @dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
 async def admin_reset_db(message: Message):
-    await message.answer(
+    await update_admin_menu_message(
         "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
-        reply_markup=confirm_reset_db_keyboard()
+        confirm_reset_db_keyboard()
     )
 
 @dp.callback_query(F.data == "admin_reset_db:confirm")
@@ -1806,22 +1802,21 @@ async def admin_reset_db_confirm(call: CallbackQuery):
         file_path = Path("applications.xlsx")
         if file_path.exists():
             file_path.unlink()
-        await call.message.answer("✅ База и статистика полностью обнулены.")
+        await update_admin_menu_message(
+            "✅ База и статистика полностью обнулены.",
+            admin_menu_keyboard(get_status_counts())
+        )
     except Exception:
         logger.exception("Ошибка сброса базы")
-        await call.message.answer("⚠️ Ошибка при сбросе базы.")
-    try:
-        await call.message.edit_reply_markup(reply_markup=None)
-    except Exception:
-        pass
+        await update_admin_menu_message(
+            "⚠️ Ошибка при сбросе базы.",
+            admin_menu_keyboard(get_status_counts())
+        )
     await call.answer()
 
 @dp.callback_query(F.data == "admin_reset_db:cancel")
 async def admin_reset_db_cancel(call: CallbackQuery):
-    try:
-        await call.message.edit_reply_markup(reply_markup=None)
-    except Exception:
-        pass
+    await post_admin_menu()
     await call.answer("Отменено")
 
         
