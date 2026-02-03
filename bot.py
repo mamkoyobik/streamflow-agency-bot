@@ -16,6 +16,7 @@ try:
 except Exception:
     DefaultBotProperties = None
 from aiogram.enums import ParseMode, ChatAction
+from aiogram.exceptions import TelegramForbiddenError
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.filters import StateFilter
@@ -603,9 +604,19 @@ async def send_menu(
         if status
         else caption
     )
-    await send_or_edit_user_menu(message.from_user.id, final_caption)
+    await send_or_edit_user_menu(
+        message.from_user.id,
+        final_caption,
+        user_is_bot=message.from_user.is_bot
+    )
 
-async def send_or_edit_user_menu(user_id: int, caption: str):
+async def send_or_edit_user_menu(
+    user_id: int,
+    caption: str,
+    user_is_bot: bool = False
+):
+    if user_is_bot:
+        return
     message_id = get_menu_message_id(user_id)
     if message_id:
         try:
@@ -615,6 +626,9 @@ async def send_or_edit_user_menu(user_id: int, caption: str):
                 caption=caption,
                 reply_markup=main_menu()
             )
+            return
+        except TelegramForbiddenError:
+            logger.warning("Нет прав на обновление меню пользователя")
             return
         except Exception:
             logger.exception("Не удалось обновить меню пользователя")
@@ -630,6 +644,8 @@ async def send_or_edit_user_menu(user_id: int, caption: str):
             reply_markup=main_menu()
         )
         set_menu_message_id(user_id, msg.message_id)
+    except TelegramForbiddenError:
+        logger.warning("Нет прав на отправку меню пользователю")
     except Exception:
         logger.exception("Ошибка отправки меню пользователю")
 
@@ -1522,7 +1538,11 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 MENU_CAPTION,
                 intro="🤍 Спасибо! Анкета отправлена администратору ✨"
             )
-            await send_or_edit_user_menu(call.from_user.id, caption)
+            await send_or_edit_user_menu(
+                call.from_user.id,
+                caption,
+                user_is_bot=call.from_user.is_bot
+            )
         except Exception:
             logger.exception("Ошибка отправки меню после заявки")
         await call.answer()
