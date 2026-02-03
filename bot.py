@@ -1389,6 +1389,11 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 logger.exception("Ошибка записи в Excel")
         await state.clear()
         await call.message.answer("🤍 Спасибо! Анкета отправлена администратору ✨")
+        try:
+            await send_menu(call.message)
+            await send_status_message(call.message, "pending")
+        except Exception:
+            logger.exception("Ошибка отправки меню/статуса после заявки")
         await call.answer()
     except Exception:
         logger.exception("Ошибка в preview_confirm")
