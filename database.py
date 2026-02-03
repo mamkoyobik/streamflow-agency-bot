@@ -30,6 +30,8 @@ def _ensure_columns():
         alter.append("ALTER TABLE applications ADD COLUMN last_apply_at TEXT")
     if "data_json" not in cols:
         alter.append("ALTER TABLE applications ADD COLUMN data_json TEXT")
+    if "admin_message_id" not in cols:
+        alter.append("ALTER TABLE applications ADD COLUMN admin_message_id INTEGER")
     for stmt in alter:
         cursor.execute(stmt)
     if alter:
@@ -114,6 +116,35 @@ def set_form_data(user_id: int, data: dict):
         )
     conn.commit()
 
+def set_admin_message_id(user_id: int, message_id: int):
+    ts = _now_ts()
+    cursor.execute(
+        "SELECT 1 FROM applications WHERE user_id = ?",
+        (user_id,)
+    )
+    exists = cursor.fetchone() is not None
+    if exists:
+        cursor.execute(
+            "UPDATE applications SET admin_message_id = ?, updated_at = ? WHERE user_id = ?",
+            (message_id, ts, user_id)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO applications (user_id, admin_message_id, created_at, updated_at) VALUES (?, ?, ?, ?)",
+            (user_id, message_id, ts, ts)
+        )
+    conn.commit()
+
+def get_admin_message_id(user_id: int) -> int | None:
+    cursor.execute(
+        "SELECT admin_message_id FROM applications WHERE user_id = ?",
+        (user_id,)
+    )
+    row = cursor.fetchone()
+    if not row:
+        return None
+    return row[0]
+
 def clear_form_data(user_id: int):
     ts = _now_ts()
     cursor.execute(
@@ -144,7 +175,7 @@ def get_form_data(user_id: int) -> dict | None:
 
 def get_application(user_id: int) -> dict | None:
     cursor.execute(
-        "SELECT status, last_apply_at, last_state, created_at, updated_at "
+        "SELECT status, last_apply_at, last_state, created_at, updated_at, admin_message_id "
         "FROM applications WHERE user_id = ?",
         (user_id,)
     )
@@ -157,6 +188,7 @@ def get_application(user_id: int) -> dict | None:
         "last_state": row[2],
         "created_at": row[3],
         "updated_at": row[4],
+        "admin_message_id": row[5],
     }
 
 def get_status(user_id: int) -> str | None:
@@ -171,14 +203,18 @@ def get_status(user_id: int) -> str | None:
 
 def get_status_counts() -> dict:
     cursor.execute(
-        "SELECT status, COUNT(*) FROM applications GROUP BY status"
+        "SELECT COUNT(*) FROM applications "
+        "WHERE status IN ('new', 'pending', 'accepted', 'rejected')"
+    )
+    total = cursor.fetchone()[0]
+    cursor.execute(
+        "SELECT status, COUNT(*) FROM applications "
+        "WHERE status IN ('new', 'pending', 'accepted', 'rejected') "
+        "GROUP BY status"
     )
     rows = cursor.fetchall()
-    counts = {"total": 0, "new": 0, "pending": 0, "accepted": 0, "rejected": 0}
+    counts = {"total": total, "new": 0, "pending": 0, "accepted": 0, "rejected": 0}
     for status, count in rows:
-        if status is None:
-            continue
-        counts["total"] += count
         if status in counts:
             counts[status] = count
     return counts

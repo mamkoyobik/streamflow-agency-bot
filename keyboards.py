@@ -125,6 +125,64 @@ def admin_decision(user_id: int):
             )
         ]
     ])
+
+def admin_pending_keyboard(user_id: int):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="🟡 На рассмотрении",
+                callback_data=f"admin_status:{user_id}:pending"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="✅ Принять",
+                callback_data=f"admin_accept:{user_id}"
+            ),
+            InlineKeyboardButton(
+                text="❌ Отклонить",
+                callback_data=f"admin_reject:{user_id}"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="💬 Написать кандидату",
+                url=f"tg://user?id={user_id}"
+            )
+        ]
+    ])
+
+def admin_accepted_keyboard(user_id: int):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="✅ Принято",
+                callback_data=f"admin_status:{user_id}:accepted"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="💬 Написать кандидату",
+                url=f"tg://user?id={user_id}"
+            )
+        ]
+    ])
+
+def admin_rejected_keyboard(user_id: int):
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(
+                text="❌ Отклонено",
+                callback_data=f"admin_status:{user_id}:rejected"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text="💬 Написать кандидату",
+                url=f"tg://user?id={user_id}"
+            )
+        ]
+    ])
 def cancel_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⬅️ Отмена", callback_data="edit_cancel")]

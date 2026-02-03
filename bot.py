@@ -33,7 +33,9 @@ from database import (
     get_form_data,
     clear_form_data,
     cleanup_old_form_data,
-    get_status_counts
+    get_status_counts,
+    set_admin_message_id,
+    get_admin_message_id
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -300,6 +302,43 @@ def build_admin_status_text(user_id: int, status: str) -> str:
         f"💬 Telegram: {telegram}\n"
         f"🆔 ID: {user_id}"
     )
+
+def build_admin_summary(data: dict, user_id: int, status: str) -> str:
+    status_label = STATUS_LABELS.get(status, status)
+    return (
+        "🧾 <b>Кратко по заявке</b>\n\n"
+        f"👤 Имя: {data.get('name', '—')}\n"
+        f"📅 Дата рождения: {data.get('age', '—')}\n"
+        f"🌍 Город и страна: {data.get('city', '—')}\n"
+        f"🏠 Помещение без посторонних: {data.get('living', '—')}\n"
+        f"💬 Telegram: {data.get('telegram', '—')}\n"
+        f"🆔 ID: {user_id}\n\n"
+        f"Статус: <b>{status_label}</b>"
+    )
+
+def admin_keyboard_for_status(user_id: int, status: str):
+    if status == "accepted":
+        return admin_accepted_keyboard(user_id)
+    if status == "rejected":
+        return admin_rejected_keyboard(user_id)
+    return admin_pending_keyboard(user_id)
+
+async def update_admin_summary_message(user_id: int, status: str) -> bool:
+    message_id = get_admin_message_id(user_id)
+    if not message_id:
+        return False
+    data = get_form_data(user_id) or {}
+    try:
+        await bot.edit_message_text(
+            chat_id=ADMIN_GROUP_ID,
+            message_id=message_id,
+            text=build_admin_summary(data, user_id, status),
+            reply_markup=admin_keyboard_for_status(user_id, status)
+        )
+        return True
+    except Exception:
+        logger.exception("Ошибка обновления админского сообщения")
+        return False
 
 def build_admin_stats_text() -> str:
     counts = get_status_counts()
@@ -1217,6 +1256,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
 
         caption = (
             "🌸 НОВАЯ ЗАЯВКА 🌸\n\n"
+
             f"👤 Имя: {data['name']}\n"
             f"📅 Дата рождения: {data['age']}\n"
             f"🌍 Город и страна: {data['city']}\n\n"
@@ -1253,21 +1293,12 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             )
             await call.answer()
             return
-        admin_summary = (
-            "🧾 <b>Кратко по заявке</b>\n\n"
-            f"👤 Имя: {data['name']}\n"
-            f"📅 Дата рождения: {data['age']}\n"
-            f"🌍 Город и страна: {data['city']}\n"
-            f"🏠 Помещение без посторонних: {data['living']}\n"
-            f"💬 Telegram: {data['telegram']}\n"
-            f"🆔 ID: {user.id}\n\n"
-            "Статус: <b>pending</b>"
-        )
-        await bot.send_message(
+        admin_message = await bot.send_message(
             ADMIN_GROUP_ID,
-            admin_summary,
-            reply_markup=admin_decision(user.id)
+            build_admin_summary(data, user.id, "pending"),
+            reply_markup=admin_pending_keyboard(user.id)
         )
+        set_admin_message_id(user.id, admin_message.message_id)
 
         set_status(user.id, "pending")
         set_last_apply_at(user.id)
@@ -1278,10 +1309,6 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 logger.exception("Ошибка записи в Excel")
         await state.clear()
         await call.message.answer("🤍 Спасибо! Анкета отправлена администратору ✨")
-        try:
-            await bot.send_message(ADMIN_GROUP_ID, build_admin_stats_text())
-        except Exception:
-            logger.exception("Ошибка отправки статистики")
         await call.answer()
     except Exception:
         logger.exception("Ошибка в preview_confirm")
@@ -1317,12 +1344,7 @@ async def admin_accept(call: CallbackQuery):
                 update_application_status(uid, "accepted")
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
-        try:
-            await call.message.edit_reply_markup(reply_markup=None)
-        except Exception:
-            pass
-        await call.message.answer(build_admin_status_text(uid, "accepted"))
-        await call.message.answer(build_admin_stats_text())
+        await update_admin_summary_message(uid, "accepted")
         await call.answer("Принято")
     except Exception:
         logger.exception("Ошибка в admin_accept")
@@ -1394,10 +1416,8 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 update_application_status(uid, "rejected")
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
+        await update_admin_summary_message(uid, "rejected")
         await state.clear()
-        await call.message.answer(build_admin_status_text(uid, "rejected"))
-        await call.message.answer(build_admin_stats_text())
-        await call.message.answer("Причина отправлена кандидату")
         await call.answer()
     except Exception:
         logger.exception("Ошибка в reject_template")
@@ -1421,12 +1441,19 @@ async def reject_reason(m: Message, state: FSMContext):
                 update_application_status(uid, "rejected")
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
-        await m.answer(build_admin_status_text(uid, "rejected"))
-        await m.answer(build_admin_stats_text())
+        await update_admin_summary_message(uid, "rejected")
         await state.clear()
-        await m.answer("Причина отправлена кандидату")
     except Exception:
         logger.exception("Ошибка в reject_reason")
+
+@dp.callback_query(F.data.startswith("admin_status:"))
+async def admin_status(call: CallbackQuery):
+    try:
+        _, uid, status = call.data.split(":", 2)
+        status_label = STATUS_LABELS.get(status, status)
+        await call.answer(f"Статус: {status_label}", show_alert=False)
+    except Exception:
+        await call.answer("Статус обновлён", show_alert=False)
 
         
 @dp.callback_query(F.data == "portfolio_reviews")
