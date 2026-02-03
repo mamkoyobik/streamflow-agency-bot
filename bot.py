@@ -447,6 +447,15 @@ async def ensure_admin_menu_posted():
     except Exception:
         logger.exception("Ошибка автопостинга админ-меню")
 
+async def set_admin_menu_message_id(message_id: int):
+    stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
+    if stored_id and stored_id.isdigit() and int(stored_id) != message_id:
+        try:
+            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+        except Exception:
+            logger.exception("Не удалось удалить старое админ-меню")
+    set_setting(ADMIN_MENU_SETTING_KEY, str(message_id))
+
 async def send_menu(message: Message, caption: str = MENU_CAPTION):
     await gentle_typing(message.chat.id)
     await message.answer_photo(
@@ -1531,7 +1540,7 @@ async def admin_status(call: CallbackQuery):
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message):
     msg = await message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
-    set_setting(ADMIN_MENU_SETTING_KEY, str(msg.message_id))
+    await set_admin_menu_message_id(msg.message_id)
 
 @dp.callback_query(F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery):
@@ -1581,7 +1590,7 @@ async def admin_menu_action(call: CallbackQuery):
         except Exception:
             await call.message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
         try:
-            set_setting(ADMIN_MENU_SETTING_KEY, str(call.message.message_id))
+            await set_admin_menu_message_id(call.message.message_id)
         except Exception:
             pass
         await call.answer()
