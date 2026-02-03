@@ -266,6 +266,10 @@ DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
 ADMIN_ARCHIVE_CHECK_HOURS = 6
+ADMIN_MENU_TEXT = (
+    "🛠 <b>Админ-меню</b>\n\n"
+    "Выбери действие ниже ✨"
+)
 
 async def persist_form_data(state: FSMContext, user_id: int):
     data = await state.get_data()
@@ -381,30 +385,38 @@ async def daily_stats_task():
         except Exception:
             logger.exception("Ошибка отправки ежедневной статистики")
 
+async def archive_admin_messages_once() -> int:
+    archived = 0
+    rows = get_admin_messages_for_archive(ADMIN_ARCHIVE_DAYS)
+    for user_id, message_id in rows:
+        data = get_form_data(user_id) or {}
+        status = get_status(user_id) or "accepted"
+        try:
+            await bot.edit_message_text(
+                chat_id=ADMIN_GROUP_ID,
+                message_id=message_id,
+                text=build_admin_summary(data, user_id, status, archived=True),
+                reply_markup=None
+            )
+            set_admin_message_id(user_id, None)
+            archived += 1
+        except Exception:
+            try:
+                await bot.edit_message_reply_markup(
+                    chat_id=ADMIN_GROUP_ID,
+                    message_id=message_id,
+                    reply_markup=None
+                )
+                set_admin_message_id(user_id, None)
+                archived += 1
+            except Exception:
+                logger.exception("Ошибка архивации админского сообщения")
+    return archived
+
 async def archive_admin_messages_task():
     while True:
         try:
-            rows = get_admin_messages_for_archive(ADMIN_ARCHIVE_DAYS)
-            for user_id, message_id in rows:
-                data = get_form_data(user_id) or {}
-                try:
-                    await bot.edit_message_text(
-                        chat_id=ADMIN_GROUP_ID,
-                        message_id=message_id,
-                        text=build_admin_summary(data, user_id, get_status(user_id) or "accepted", archived=True),
-                        reply_markup=None
-                    )
-                    set_admin_message_id(user_id, None)
-                except Exception:
-                    try:
-                        await bot.edit_message_reply_markup(
-                            chat_id=ADMIN_GROUP_ID,
-                            message_id=message_id,
-                            reply_markup=None
-                        )
-                        set_admin_message_id(user_id, None)
-                    except Exception:
-                        logger.exception("Ошибка архивации админского сообщения")
+            await archive_admin_messages_once()
         except Exception:
             logger.exception("Ошибка задачи архивации")
         await asyncio.sleep(ADMIN_ARCHIVE_CHECK_HOURS * 3600)
@@ -1490,6 +1502,61 @@ async def admin_status(call: CallbackQuery):
     except Exception:
         await call.answer("Статус обновлён", show_alert=False)
 
+@dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
+async def admin_menu(message: Message):
+    await message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
+
+@dp.callback_query(F.data.startswith("admin_menu:"))
+async def admin_menu_action(call: CallbackQuery):
+    if call.message.chat.id != ADMIN_GROUP_ID:
+        await call.answer("Недостаточно прав", show_alert=True)
+        return
+    action = call.data.split(":", 1)[1]
+    if action == "stats":
+        await call.message.answer(build_admin_stats_text())
+        await call.answer()
+        return
+    if action == "excel":
+        if not append_application_row:
+            await call.message.answer("🤍 Экспорт в Excel недоступен. Установи openpyxl.")
+            await call.answer()
+            return
+        file_path = Path("applications.xlsx")
+        if not file_path.exists():
+            await call.message.answer("🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨")
+            await call.answer()
+            return
+        await call.message.answer_document(FSInputFile(str(file_path)))
+        await call.answer()
+        return
+    if action == "archive":
+        try:
+            archived = await archive_admin_messages_once()
+            if archived:
+                await call.message.answer(f"🧹 Архивировано: {archived}")
+            else:
+                await call.message.answer("🤍 Пока нет заявок для архивации ✨")
+        except Exception:
+            logger.exception("Ошибка ручной архивации")
+            await call.message.answer("⚠️ Не удалось архивировать сейчас.")
+        await call.answer()
+        return
+    if action == "reset":
+        await call.message.answer(
+            "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
+            reply_markup=confirm_reset_db_keyboard()
+        )
+        await call.answer()
+        return
+    if action == "refresh":
+        try:
+            await call.message.edit_text(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
+        except Exception:
+            await call.message.answer(ADMIN_MENU_TEXT, reply_markup=admin_menu_keyboard())
+        await call.answer()
+        return
+    await call.answer("Неизвестная команда", show_alert=False)
+
 @dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
 async def admin_reset_db(message: Message):
     await message.answer(
@@ -1576,6 +1643,14 @@ async def main():
         cleanup_old_form_data()
     except Exception:
         logger.exception("Ошибка очистки старых данных")
+    try:
+        await bot.send_message(
+            ADMIN_GROUP_ID,
+            ADMIN_MENU_TEXT,
+            reply_markup=admin_menu_keyboard()
+        )
+    except Exception:
+        logger.exception("Ошибка автопостинга админ-меню")
     asyncio.create_task(daily_stats_task())
     asyncio.create_task(archive_admin_messages_task())
     await dp.start_polling(bot)
