@@ -44,6 +44,8 @@ def _ensure_columns():
         alter.append("ALTER TABLE applications ADD COLUMN menu_message_id INTEGER")
     if "flow_message_id" not in cols:
         alter.append("ALTER TABLE applications ADD COLUMN flow_message_id INTEGER")
+    if "source" not in cols:
+        alter.append("ALTER TABLE applications ADD COLUMN source TEXT")
     for stmt in alter:
         cursor.execute(stmt)
     if alter:
@@ -176,6 +178,35 @@ def set_menu_message_id(user_id: int, message_id: int | None):
         )
     conn.commit()
 
+def set_source(user_id: int, source: str | None):
+    ts = _now_ts()
+    cursor.execute(
+        "SELECT 1 FROM applications WHERE user_id = ?",
+        (user_id,)
+    )
+    exists = cursor.fetchone() is not None
+    if exists:
+        cursor.execute(
+            "UPDATE applications SET source = ?, updated_at = ? WHERE user_id = ?",
+            (source, ts, user_id)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO applications (user_id, source, created_at, updated_at) VALUES (?, ?, ?, ?)",
+            (user_id, source, ts, ts)
+        )
+    conn.commit()
+
+def get_source(user_id: int) -> str | None:
+    cursor.execute(
+        "SELECT source FROM applications WHERE user_id = ?",
+        (user_id,)
+    )
+    row = cursor.fetchone()
+    if not row:
+        return None
+    return row[0]
+
 def get_menu_message_id(user_id: int) -> int | None:
     cursor.execute(
         "SELECT menu_message_id FROM applications WHERE user_id = ?",
@@ -299,7 +330,7 @@ def get_form_data(user_id: int) -> dict | None:
 
 def get_application(user_id: int) -> dict | None:
     cursor.execute(
-        "SELECT status, last_apply_at, last_state, created_at, updated_at, admin_message_id "
+        "SELECT status, last_apply_at, last_state, created_at, updated_at, admin_message_id, source "
         "FROM applications WHERE user_id = ?",
         (user_id,)
     )
@@ -313,6 +344,7 @@ def get_application(user_id: int) -> dict | None:
         "created_at": row[3],
         "updated_at": row[4],
         "admin_message_id": row[5],
+        "source": row[6],
     }
 
 def get_status(user_id: int) -> str | None:

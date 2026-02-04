@@ -106,7 +106,8 @@ def continue_form_keyboard():
 
 # ================= ADMIN =================
 
-def admin_decision(user_id: int):
+def admin_decision(user_id: int, contact_url: str | None = None):
+    contact = contact_url or f"tg://user?id={user_id}"
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -121,12 +122,13 @@ def admin_decision(user_id: int):
         [
             InlineKeyboardButton(
                 text="💬 Написать кандидату",
-                url=f"tg://user?id={user_id}"
+                url=contact
             )
         ]
     ])
 
-def admin_pending_keyboard(user_id: int):
+def admin_pending_keyboard(user_id: int, contact_url: str | None = None):
+    contact = contact_url or f"tg://user?id={user_id}"
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -147,12 +149,13 @@ def admin_pending_keyboard(user_id: int):
         [
             InlineKeyboardButton(
                 text="💬 Написать кандидату",
-                url=f"tg://user?id={user_id}"
+                url=contact
             )
         ]
     ])
 
-def admin_accepted_keyboard(user_id: int):
+def admin_accepted_keyboard(user_id: int, contact_url: str | None = None):
+    contact = contact_url or f"tg://user?id={user_id}"
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -163,12 +166,13 @@ def admin_accepted_keyboard(user_id: int):
         [
             InlineKeyboardButton(
                 text="💬 Написать кандидату",
-                url=f"tg://user?id={user_id}"
+                url=contact
             )
         ]
     ])
 
-def admin_rejected_keyboard(user_id: int):
+def admin_rejected_keyboard(user_id: int, contact_url: str | None = None):
+    contact = contact_url or f"tg://user?id={user_id}"
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(
@@ -179,7 +183,7 @@ def admin_rejected_keyboard(user_id: int):
         [
             InlineKeyboardButton(
                 text="💬 Написать кандидату",
-                url=f"tg://user?id={user_id}"
+                url=contact
             )
         ]
     ])
@@ -279,7 +283,8 @@ def admin_list_nav_keyboard(filter_key: str, offset: int, total: int, limit: int
     ])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def admin_list_item_keyboard(user_id: int, status: str):
+def admin_list_item_keyboard(user_id: int, status: str, contact_url: str | None = None):
+    contact = contact_url or f"tg://user?id={user_id}"
     rows = []
     if status == "pending":
         rows.append([
@@ -298,7 +303,7 @@ def admin_list_item_keyboard(user_id: int, status: str):
         InlineKeyboardButton(text="📷 Фото", callback_data=f"admin_photos:{user_id}")
     ])
     rows.append([
-        InlineKeyboardButton(text="💬 Написать кандидату", url=f"tg://user?id={user_id}")
+        InlineKeyboardButton(text="💬 Написать кандидату", url=contact)
     ])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -308,8 +313,10 @@ def admin_list_view_keyboard(
     filter_key: str,
     offset: int,
     total: int,
-    limit: int
+    limit: int,
+    contact_url: str | None = None
 ):
+    contact = contact_url or f"tg://user?id={user_id}"
     rows = []
     if status == "pending":
         rows.append([
@@ -330,7 +337,7 @@ def admin_list_view_keyboard(
         InlineKeyboardButton(text="🧍 В полный рост", callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}")
     ])
     rows.append([
-        InlineKeyboardButton(text="💬 Написать кандидату", url=f"tg://user?id={user_id}")
+        InlineKeyboardButton(text="💬 Написать кандидату", url=contact)
     ])
 
     prev_offset = offset - limit

@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Streamflow — этапы работы</title>
+  <meta name="description" content="Этапы работы с Streamflow: от заявки до старта.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="preload" data-page="steps">
+  <div class="grain"></div>
+
+  <header class="site-header">
+    <div class="container header-grid">
+      <a class="brand" href="index.html" aria-label="Streamflow">
+        <img src="assets/logo.jpg" alt="Streamflow">
+        <div>
+          <span class="brand-title">Streamflow</span>
+          <span class="brand-subtitle">Model agency</span>
+        </div>
+      </a>
+      <nav class="site-nav" aria-label="Навигация">
+        <a class="nav-link" href="index.html">Главная</a>
+        <a class="nav-link" href="about.html">О работе</a>
+        <a class="nav-link" href="conditions.html">Условия</a>
+        <a class="nav-link" href="steps.html">Этапы</a>
+        <a class="nav-link" href="streams.html">Видеопримеры</a>
+        <a class="nav-link" href="portfolio.html">Портфолио</a>
+        <a class="nav-link" href="apply.html">Заявка</a>
+      </nav>
+      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
+        <span></span>
+        <span></span>
+        <span></span>
+      </button>
+      <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+    </div>
+  </header>
+
+  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
+    <div class="mobile-nav-backdrop" data-nav-close></div>
+    <div class="mobile-nav-panel">
+      <div class="mobile-nav-header">
+        <span>Меню</span>
+        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+      </div>
+      <nav class="mobile-nav-links">
+        <a href="index.html">Главная</a>
+        <a href="about.html">О работе</a>
+        <a href="conditions.html">Условия</a>
+        <a href="steps.html">Этапы</a>
+        <a href="streams.html">Видеопримеры</a>
+        <a href="portfolio.html">Портфолио</a>
+        <a href="apply.html">Заявка</a>
+      </nav>
+      <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+    </div>
+  </div>
+
+  <main class="page">
+    <section class="page-hero">
+      <div class="container">
+        <span class="eyebrow">Этапы</span>
+        <h1>Путь до старта — спокойно и по шагам.</h1>
+        <p>Мы ведём тебя от первой заявки до уверенного выхода в эфир.</p>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="timeline">
+          <div class="timeline-item reveal">
+            <div class="timeline-step">01</div>
+            <div>
+              <h3>Заявка</h3>
+              <p>Заполняешь анкету, и мы быстро возвращаемся с ответом.</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-step">02</div>
+            <div>
+              <h3>Знакомство</h3>
+              <p>Коротко обсуждаем формат, требования и твои цели.</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-step">03</div>
+            <div>
+              <h3>Подготовка</h3>
+              <p>Настраиваем технику, свет, звук и стиль подачи.</p>
+            </div>
+          </div>
+          <div class="timeline-item reveal">
+            <div class="timeline-step">04</div>
+            <div>
+              <h3>Старт</h3>
+              <p>Выходишь в эфир с поддержкой команды и получаешь первые результаты.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container footer-grid">
+      <div class="footer-brand">
+        <img src="assets/logo.jpg" alt="Streamflow">
+        <div>
+          <span class="brand-title">Streamflow</span>
+          <span class="brand-subtitle">Model agency</span>
+        </div>
+      </div>
+      <div class="footer-links">
+        <a id="telegram-link" href="https://t.me/sryboutthat" target="_blank" rel="noopener">Telegram</a>
+        <a href="apply.html">Оставить заявку</a>
+      </div>
+      <div class="footer-note">© Streamflow. Все права защищены.</div>
+    </div>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

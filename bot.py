@@ -45,7 +45,9 @@ from database import (
     set_menu_message_id,
     get_menu_message_id,
     set_flow_message_id,
-    get_flow_message_id
+    get_flow_message_id,
+    set_source,
+    get_source
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -372,6 +374,26 @@ def build_admin_status_text(user_id: int, status: str) -> str:
         f"🆔 ID: {user_id}"
     )
 
+def source_label_for_user(user_id: int) -> str:
+    source = get_source(user_id)
+    if source == "site":
+        return "Сайт"
+    if source == "bot":
+        return "Бот"
+    return "Бот"
+
+def contact_url_for_user(user_id: int, data: dict | None) -> str:
+    source = get_source(user_id)
+    if source == "site":
+        raw = (data or {}).get("telegram", "") or ""
+        username = raw.lstrip("@").strip()
+        if username:
+            return f"https://t.me/{username}"
+    return f"tg://user?id={user_id}"
+
+def is_site_source(user_id: int) -> bool:
+    return get_source(user_id) == "site"
+
 def build_admin_summary(
     data: dict,
     user_id: int,
@@ -388,7 +410,8 @@ def build_admin_summary(
         f"🌍 Город и страна: {data.get('city', '—')}\n"
         f"🏠 Помещение без посторонних: {data.get('living', '—')}\n"
         f"💬 Telegram: {data.get('telegram', '—')}\n"
-        f"🆔 ID: {user_id}\n\n"
+        f"🆔 ID: {user_id}\n"
+        f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
     if archived:
@@ -410,28 +433,30 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"⏱ Время работы: {data.get('work_time', '—')}\n"
         f"💼 Опыт: {data.get('experience', '—')}\n"
         f"💬 Telegram: {data.get('telegram', '—')}\n"
-        f"🆔 ID: {user_id}\n\n"
+        f"🆔 ID: {user_id}\n"
+        f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
 
-def admin_keyboard_for_status(user_id: int, status: str):
+def admin_keyboard_for_status(user_id: int, status: str, contact_url: str | None = None):
     if status == "accepted":
-        return admin_accepted_keyboard(user_id)
+        return admin_accepted_keyboard(user_id, contact_url=contact_url)
     if status == "rejected":
-        return admin_rejected_keyboard(user_id)
-    return admin_pending_keyboard(user_id)
+        return admin_rejected_keyboard(user_id, contact_url=contact_url)
+    return admin_pending_keyboard(user_id, contact_url=contact_url)
 
 async def update_admin_summary_message(user_id: int, status: str) -> bool:
     message_id = get_admin_message_id(user_id)
     if not message_id:
         return False
     data = get_form_data(user_id) or {}
+    contact_url = contact_url_for_user(user_id, data)
     try:
         await bot.edit_message_text(
             chat_id=ADMIN_GROUP_ID,
             message_id=message_id,
             text=build_admin_summary(data, user_id, status),
-            reply_markup=admin_keyboard_for_status(user_id, status)
+            reply_markup=admin_keyboard_for_status(user_id, status, contact_url=contact_url)
         )
         return True
     except Exception:
@@ -743,6 +768,7 @@ async def send_admin_list(
     user_id = current["user_id"]
     item_status = current["status"] or status or "pending"
     data = get_form_data(user_id) or {}
+    contact_url = contact_url_for_user(user_id, data)
     text = (
         f"🗂 <b>{label}</b>\n\n"
         f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
@@ -752,7 +778,7 @@ async def send_admin_list(
     photo_id = data.get("photo_face") or data.get("photo_full")
     await update_admin_view_message(
         text,
-        admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT),
+        admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
         photo_id
     )
     await call.answer()
@@ -1895,6 +1921,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
 
         await gentle_typing(call.message.chat.id)
 
+        set_source(user.id, "bot")
         set_status(user.id, "pending")
         set_last_apply_at(user.id)
         if append_application_row:
@@ -1951,8 +1978,9 @@ async def admin_accept(call: CallbackQuery):
                 ACCEPT_CAPTION,
                 tail="🤍 Ожидайте, скоро админ напишет вам для записи на собеседование ✨"
             )
-            await send_or_edit_user_menu(uid, caption)
-            await clear_user_flow_message(uid)
+            if not is_site_source(uid):
+                await send_or_edit_user_menu(uid, caption)
+                await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после принятия")
         set_status(uid, "accepted")
@@ -2034,8 +2062,9 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 MENU_CAPTION,
                 intro=intro
             )
-            await send_or_edit_user_menu(uid, caption)
-            await clear_user_flow_message(uid)
+            if not is_site_source(uid):
+                await send_or_edit_user_menu(uid, caption)
+                await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
@@ -2078,8 +2107,9 @@ async def reject_reason(m: Message, state: FSMContext):
                 MENU_CAPTION,
                 intro=intro
             )
-            await send_or_edit_user_menu(uid, caption)
-            await clear_user_flow_message(uid)
+            if not is_site_source(uid):
+                await send_or_edit_user_menu(uid, caption)
+                await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
@@ -2111,6 +2141,7 @@ async def admin_photos(call: CallbackQuery):
     try:
         uid = int(call.data.split(":", 1)[1])
         data = get_form_data(uid) or {}
+        contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") or data.get("photo_full")
         if not photo_id:
             await call.answer("Фото не найдено", show_alert=False)
@@ -2119,7 +2150,7 @@ async def admin_photos(call: CallbackQuery):
         text = build_admin_full_text(data, uid, status)
         await update_admin_view_message(
             text,
-            admin_list_view_keyboard(uid, status, "all", 0, 1, ADMIN_LIST_LIMIT),
+            admin_list_view_keyboard(uid, status, "all", 0, 1, ADMIN_LIST_LIMIT, contact_url=contact_url),
             photo_id
         )
         await call.answer()
@@ -2223,6 +2254,7 @@ async def admin_view_photo(call: CallbackQuery):
         uid = int(uid_raw)
         offset = int(offset_raw)
         data = get_form_data(uid) or {}
+        contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") if photo_type == "face" else data.get("photo_full")
         if not photo_id:
             await call.answer("Фото не найдено", show_alert=False)
@@ -2243,7 +2275,7 @@ async def admin_view_photo(call: CallbackQuery):
         )
         await update_admin_view_message(
             text,
-            admin_list_view_keyboard(uid, status, filter_key, offset, total, ADMIN_LIST_LIMIT),
+            admin_list_view_keyboard(uid, status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
             photo_id
         )
         await call.answer()
