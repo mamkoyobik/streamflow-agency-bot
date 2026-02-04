@@ -330,6 +330,22 @@ async def delete_user_message(m: Message):
     except Exception:
         pass
 
+async def try_edit_message(message: Message, text: str, reply_markup=None) -> bool:
+    try:
+        if message.photo or message.caption is not None:
+            await message.edit_caption(caption=text, reply_markup=reply_markup)
+        else:
+            await message.edit_text(text, reply_markup=reply_markup)
+        return True
+    except TelegramBadRequest as e:
+        if "message is not modified" in str(e).lower():
+            return True
+    except TelegramForbiddenError:
+        logger.warning("Нет прав на редактирование сообщения пользователя")
+    except Exception:
+        logger.exception("Не удалось отредактировать сообщение пользователя")
+    return False
+
 async def send_status_message(message: Message, status: str | None):
     line = build_status_line(status)
     if line:
@@ -814,18 +830,28 @@ async def start_application(message: Message, state: FSMContext):
     clear_form_data(message.from_user.id)
     await state.set_state(ApplicationStates.name)
     await gentle_typing(message.chat.id)
-    sent = await send_or_edit_user_text(
-        message.from_user.id,
-        format_question(
-            ApplicationStates.name,
-            FORM_QUESTIONS[ApplicationStates.name]
-        ),
-        reply_markup=form_keyboard()
+    question = format_question(
+        ApplicationStates.name,
+        FORM_QUESTIONS[ApplicationStates.name]
     )
-    if sent:
-        set_status(message.from_user.id, "new")
-        set_last_state(message.from_user.id, ApplicationStates.name.state)
-        return True
+    edited = False
+    if message and message.chat.type == "private":
+        edited = await try_edit_message(message, question, reply_markup=form_keyboard())
+        if edited:
+            set_menu_message_id(message.from_user.id, message.message_id)
+    if not edited:
+        sent = await send_or_edit_user_text(
+            message.from_user.id,
+            question,
+            reply_markup=form_keyboard()
+        )
+        if not sent:
+            await state.clear()
+            set_last_state(message.from_user.id, None)
+            return False
+    set_status(message.from_user.id, "new")
+    set_last_state(message.from_user.id, ApplicationStates.name.state)
+    return True
     await state.clear()
     set_last_state(message.from_user.id, None)
     return False
@@ -862,6 +888,8 @@ async def start(message: Message, state: FSMContext):
         app = get_application(message.from_user.id)
         status = app.get("status") if app else None
         await send_menu(message, status=status)
+        if app and app.get("last_state") in FORM_PROGRESS_STATES and not get_form_data(message.from_user.id):
+            set_last_state(message.from_user.id, None)
         if app and app.get("status") in {None, "new"} and app.get("last_state") in FORM_PROGRESS_STATES:
             await send_or_edit_user_text(
                 message.from_user.id,
@@ -978,6 +1006,9 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
     if not current:
         app = get_application(call.from_user.id)
         last_state = app.get("last_state") if app else None
+        if last_state and last_state in FORM_PROGRESS_STATES and not get_form_data(call.from_user.id):
+            set_last_state(call.from_user.id, None)
+            last_state = None
         if last_state and last_state in FORM_PROGRESS_STATES:
             await state.set_state(last_state)
             await restore_form_data(state, call.from_user.id)
