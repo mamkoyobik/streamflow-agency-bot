@@ -70,7 +70,7 @@ def set_status(user_id: int, status: str):
         )
     conn.commit()
 
-def set_last_state(user_id: int, last_state: str):
+def set_last_state(user_id: int, last_state: str | None):
     ts = _now_ts()
     cursor.execute(
         "SELECT 1 FROM applications WHERE user_id = ?",

@@ -724,7 +724,7 @@ async def send_or_edit_user_text(
     user_id: int,
     text: str,
     reply_markup=None
-):
+) -> bool:
     message_id = get_flow_message_id(user_id)
     if message_id:
         try:
@@ -734,16 +734,17 @@ async def send_or_edit_user_text(
                 text=text,
                 reply_markup=reply_markup
             )
-            return
+            return True
         except TelegramBadRequest as e:
             err = str(e).lower()
             if "message is not modified" in err:
-                return
+                return True
         except TelegramForbiddenError:
             logger.warning("Нет прав на обновление сообщения пользователя")
-            return
+            return False
         except Exception:
             logger.exception("Не удалось обновить сообщение пользователя")
+            return False
     else:
         menu_id = get_menu_message_id(user_id)
         if menu_id and len(text) <= CAPTION_LIMIT:
@@ -754,16 +755,17 @@ async def send_or_edit_user_text(
                     caption=text,
                     reply_markup=reply_markup
                 )
-                return
+                return True
             except TelegramBadRequest as e:
                 err = str(e).lower()
                 if "message is not modified" in err:
-                    return
+                    return True
             except TelegramForbiddenError:
                 logger.warning("Нет прав на обновление меню пользователя")
-                return
+                return False
             except Exception:
                 logger.exception("Не удалось обновить меню пользователя")
+                return False
     if message_id:
         try:
             await bot.delete_message(user_id, message_id)
@@ -776,10 +778,13 @@ async def send_or_edit_user_text(
             reply_markup=reply_markup
         )
         set_flow_message_id(user_id, msg.message_id)
+        return True
     except TelegramForbiddenError:
         logger.warning("Нет прав на отправку сообщения пользователю")
+        return False
     except Exception:
         logger.exception("Ошибка отправки сообщения пользователю")
+        return False
 
 async def clear_user_flow_message(user_id: int):
     message_id = get_flow_message_id(user_id)
@@ -807,11 +812,9 @@ def track_portfolio_media(user_id: int, message_ids: list[int]):
 async def start_application(message: Message, state: FSMContext):
     await state.clear()
     clear_form_data(message.from_user.id)
-    set_status(message.from_user.id, "new")
     await state.set_state(ApplicationStates.name)
-    set_last_state(message.from_user.id, ApplicationStates.name.state)
     await gentle_typing(message.chat.id)
-    await send_or_edit_user_text(
+    sent = await send_or_edit_user_text(
         message.from_user.id,
         format_question(
             ApplicationStates.name,
@@ -819,6 +822,13 @@ async def start_application(message: Message, state: FSMContext):
         ),
         reply_markup=form_keyboard()
     )
+    if sent:
+        set_status(message.from_user.id, "new")
+        set_last_state(message.from_user.id, ApplicationStates.name.state)
+        return True
+    await state.clear()
+    set_last_state(message.from_user.id, None)
+    return False
 
 async def send_next_question(
     message: Message,
@@ -919,6 +929,9 @@ async def apply(call: CallbackQuery, state: FSMContext):
 
         current = await state.get_state()
         last_state = app.get("last_state") if app else None
+        if last_state in FORM_PROGRESS_STATES and not get_form_data(call.from_user.id):
+            set_last_state(call.from_user.id, None)
+            last_state = None
         if (current and current in FORM_PROGRESS_STATES) or (last_state in FORM_PROGRESS_STATES):
             await send_or_edit_user_text(
                 call.from_user.id,
@@ -929,7 +942,10 @@ async def apply(call: CallbackQuery, state: FSMContext):
             await call.answer()
             return
 
-        await start_application(call.message, state)
+        started = await start_application(call.message, state)
+        if not started:
+            await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            return
         await call.answer()
     except Exception:
         logger.exception("Ошибка в apply")
@@ -950,7 +966,10 @@ async def apply_restart(call: CallbackQuery, state: FSMContext):
         return
 
     await state.clear()
-    await start_application(call.message, state)
+    started = await start_application(call.message, state)
+    if not started:
+        await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+        return
     await call.answer()
 
 @dp.callback_query(F.data == "form_continue")
@@ -964,14 +983,20 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
             await restore_form_data(state, call.from_user.id)
             current = last_state
         else:
-            await start_application(call.message, state)
+            started = await start_application(call.message, state)
+            if not started:
+                await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                return
             await call.answer()
             return
 
     if current == ApplicationStates.preview.state:
         data = await state.get_data()
         if not REQUIRED_PREVIEW_FIELDS.issubset(data):
-            await start_application(call.message, state)
+            started = await start_application(call.message, state)
+            if not started:
+                await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                return
             await call.answer()
             return
         await show_preview(call.message, state)
@@ -1004,12 +1029,18 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
             await call.answer()
             return
 
-    await start_application(call.message, state)
+    started = await start_application(call.message, state)
+    if not started:
+        await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+        return
     await call.answer()
 
 @dp.callback_query(F.data == "form_restart")
 async def form_restart(call: CallbackQuery, state: FSMContext):
-    await start_application(call.message, state)
+    started = await start_application(call.message, state)
+    if not started:
+        await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+        return
     await call.answer()
 
 # ================= FORM STEPS =================
@@ -1743,7 +1774,10 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 "🤍 Кажется, анкета заполнена не полностью.\n\n"
                 "Давай продолжим заполнение ✨"
             )
-            await start_application(call.message, state)
+            started = await start_application(call.message, state)
+            if not started:
+                await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                return
             await call.answer()
             return
 
