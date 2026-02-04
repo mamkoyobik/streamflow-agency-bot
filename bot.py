@@ -659,30 +659,53 @@ async def send_or_edit_user_text(
     text: str,
     reply_markup=None
 ):
-    message_id = get_flow_message_id(user_id)
+    menu_id = get_menu_message_id(user_id)
+    flow_id = get_flow_message_id(user_id)
+    message_id = flow_id or menu_id
+
     if message_id:
         try:
-            await bot.edit_message_text(
-                chat_id=user_id,
-                message_id=message_id,
-                text=text,
-                reply_markup=reply_markup
-            )
+            if menu_id and message_id == menu_id:
+                await bot.edit_message_caption(
+                    chat_id=user_id,
+                    message_id=message_id,
+                    caption=text,
+                    reply_markup=reply_markup
+                )
+            else:
+                await bot.edit_message_text(
+                    chat_id=user_id,
+                    message_id=message_id,
+                    text=text,
+                    reply_markup=reply_markup
+                )
+            set_flow_message_id(user_id, message_id)
             return
         except TelegramBadRequest as e:
             err = str(e).lower()
             if "message is not modified" in err:
+                return
+            if menu_id and message_id == menu_id and "message is too long" in err:
+                # fallback to text message below
+                pass
+            elif menu_id and message_id == menu_id and "message can't be edited" in err:
+                pass
+            else:
+                logger.exception("Не удалось обновить сообщение пользователя")
                 return
         except TelegramForbiddenError:
             logger.warning("Нет прав на обновление сообщения пользователя")
             return
         except Exception:
             logger.exception("Не удалось обновить сообщение пользователя")
-    if message_id:
+            return
+
+    if flow_id and flow_id != menu_id:
         try:
-            await bot.delete_message(user_id, message_id)
+            await bot.delete_message(user_id, flow_id)
         except Exception:
             pass
+
     try:
         msg = await bot.send_message(
             user_id,
@@ -697,7 +720,11 @@ async def send_or_edit_user_text(
 
 async def clear_user_flow_message(user_id: int):
     message_id = get_flow_message_id(user_id)
+    menu_id = get_menu_message_id(user_id)
     if not message_id:
+        return
+    if menu_id and message_id == menu_id:
+        set_flow_message_id(user_id, None)
         return
     try:
         await bot.delete_message(user_id, message_id)
