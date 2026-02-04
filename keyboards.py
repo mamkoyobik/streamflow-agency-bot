@@ -326,7 +326,8 @@ def admin_list_view_keyboard(
         ])
 
     rows.append([
-        InlineKeyboardButton(text="📷 Фото", callback_data=f"admin_photos:{user_id}")
+        InlineKeyboardButton(text="📷 Анфас", callback_data=f"admin_view_photo:{user_id}:face:{filter_key}:{offset}"),
+        InlineKeyboardButton(text="🧍 В полный рост", callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}")
     ])
     rows.append([
         InlineKeyboardButton(text="💬 Написать кандидату", url=f"tg://user?id={user_id}")

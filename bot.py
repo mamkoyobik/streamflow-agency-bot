@@ -296,6 +296,7 @@ ADMIN_ARCHIVE_CHECK_HOURS = 6
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_LIST_LIMIT = 1
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
+ADMIN_VIEW_SETTING_KEY = "admin_view_message_id"
 ADMIN_PHOTOS_SETTING_KEY = "admin_photos_message_ids"
 
 def build_admin_menu_text(counts: dict) -> str:
@@ -565,6 +566,85 @@ def _parse_admin_photo_ids(value: str | None) -> list[int]:
             result.append(int(raw))
     return result
 
+async def clear_admin_notify():
+    stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
+    if stored_id and stored_id.isdigit():
+        try:
+            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+        except Exception:
+            pass
+    set_setting(ADMIN_NOTIFY_SETTING_KEY, None)
+
+async def clear_admin_view_message():
+    stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
+    if stored_id and stored_id.isdigit():
+        try:
+            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+        except Exception:
+            pass
+    set_setting(ADMIN_VIEW_SETTING_KEY, None)
+
+async def update_admin_view_message(
+    text: str,
+    reply_markup: InlineKeyboardMarkup,
+    photo_id: str | None
+):
+    stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
+    if stored_id and stored_id.isdigit():
+        msg_id = int(stored_id)
+        if photo_id:
+            try:
+                await bot.edit_message_media(
+                    chat_id=ADMIN_GROUP_ID,
+                    message_id=msg_id,
+                    media=InputMediaPhoto(
+                        media=photo_id,
+                        caption=text,
+                        parse_mode=ParseMode.HTML
+                    ),
+                    reply_markup=reply_markup
+                )
+                return
+            except Exception:
+                try:
+                    await bot.delete_message(ADMIN_GROUP_ID, msg_id)
+                except Exception:
+                    pass
+                set_setting(ADMIN_VIEW_SETTING_KEY, None)
+        else:
+            try:
+                await bot.edit_message_text(
+                    chat_id=ADMIN_GROUP_ID,
+                    message_id=msg_id,
+                    text=text,
+                    reply_markup=reply_markup
+                )
+                return
+            except Exception:
+                try:
+                    await bot.delete_message(ADMIN_GROUP_ID, msg_id)
+                except Exception:
+                    pass
+                set_setting(ADMIN_VIEW_SETTING_KEY, None)
+
+    try:
+        if photo_id:
+            msg = await bot.send_photo(
+                ADMIN_GROUP_ID,
+                photo_id,
+                caption=text,
+                reply_markup=reply_markup
+            )
+        else:
+            msg = await bot.send_message(
+                ADMIN_GROUP_ID,
+                text,
+                reply_markup=reply_markup
+            )
+        set_setting(ADMIN_VIEW_SETTING_KEY, str(msg.message_id))
+    except Exception:
+        logger.exception("Ошибка отправки сообщения просмотра анкеты")
+
 async def update_admin_photos(user_id: int):
     stored_ids = _parse_admin_photo_ids(get_setting(ADMIN_PHOTOS_SETTING_KEY))
     for msg_id in stored_ids:
@@ -669,11 +749,12 @@ async def send_admin_list(
         f"Страница: <b>{page}/{pages}</b>\n\n"
         f"{build_admin_full_text(data, user_id, item_status)}"
     )
-    await update_admin_menu_message(
+    photo_id = data.get("photo_face") or data.get("photo_full")
+    await update_admin_view_message(
         text,
-        admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT)
+        admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT),
+        photo_id
     )
-    await update_admin_photos(user_id)
     await call.answer()
 
 async def send_menu(
@@ -2029,7 +2110,18 @@ async def admin_status(call: CallbackQuery):
 async def admin_photos(call: CallbackQuery):
     try:
         uid = int(call.data.split(":", 1)[1])
-        await update_admin_photos(uid)
+        data = get_form_data(uid) or {}
+        photo_id = data.get("photo_face") or data.get("photo_full")
+        if not photo_id:
+            await call.answer("Фото не найдено", show_alert=False)
+            return
+        status = get_status(uid) or "pending"
+        text = build_admin_full_text(data, uid, status)
+        await update_admin_view_message(
+            text,
+            admin_list_view_keyboard(uid, status, "all", 0, 1, ADMIN_LIST_LIMIT),
+            photo_id
+        )
         await call.answer()
     except Exception:
         logger.exception("Ошибка отправки фото админу")
@@ -2046,9 +2138,11 @@ async def admin_menu_action(call: CallbackQuery):
         return
     action = call.data.split(":", 1)[1]
     if action in {"pending", "accepted", "rejected", "all"}:
+        await clear_admin_notify()
         await send_admin_list(call, action, 0)
         return
     if action == "stats":
+        await clear_admin_view_message()
         await update_admin_menu_message(
             build_admin_stats_text(),
             admin_menu_keyboard(get_status_counts())
@@ -2056,6 +2150,7 @@ async def admin_menu_action(call: CallbackQuery):
         await call.answer()
         return
     if action == "excel":
+        await clear_admin_view_message()
         if not append_application_row:
             await update_admin_menu_message(
                 "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
@@ -2075,6 +2170,7 @@ async def admin_menu_action(call: CallbackQuery):
         await call.answer()
         return
     if action == "archive":
+        await clear_admin_view_message()
         try:
             archived = await archive_admin_messages_once()
             if archived:
@@ -2096,6 +2192,7 @@ async def admin_menu_action(call: CallbackQuery):
         await call.answer()
         return
     if action == "reset":
+        await clear_admin_view_message()
         await update_admin_menu_message(
             "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
             confirm_reset_db_keyboard()
@@ -2103,6 +2200,7 @@ async def admin_menu_action(call: CallbackQuery):
         await call.answer()
         return
     if action == "refresh":
+        await clear_admin_view_message()
         await post_admin_menu()
         await call.answer()
         return
@@ -2117,6 +2215,41 @@ async def admin_list_pagination(call: CallbackQuery):
         await call.answer("Ошибка пагинации", show_alert=False)
         return
     await send_admin_list(call, filter_key, offset)
+
+@dp.callback_query(F.data.startswith("admin_view_photo:"))
+async def admin_view_photo(call: CallbackQuery):
+    try:
+        _, uid_raw, photo_type, filter_key, offset_raw = call.data.split(":", 4)
+        uid = int(uid_raw)
+        offset = int(offset_raw)
+        data = get_form_data(uid) or {}
+        photo_id = data.get("photo_face") if photo_type == "face" else data.get("photo_full")
+        if not photo_id:
+            await call.answer("Фото не найдено", show_alert=False)
+            return
+        status = get_status(uid) or "pending"
+        label = _admin_list_label(filter_key)
+        total = len(list_applications(None if filter_key == "all" else filter_key))
+        if total == 0:
+            await call.answer()
+            return
+        page = offset // ADMIN_LIST_LIMIT + 1
+        pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
+        text = (
+            f"🗂 <b>{label}</b>\n\n"
+            f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
+            f"Страница: <b>{page}/{pages}</b>\n\n"
+            f"{build_admin_full_text(data, uid, status)}"
+        )
+        await update_admin_view_message(
+            text,
+            admin_list_view_keyboard(uid, status, filter_key, offset, total, ADMIN_LIST_LIMIT),
+            photo_id
+        )
+        await call.answer()
+    except Exception:
+        logger.exception("Ошибка переключения фото")
+        await call.answer("Не удалось показать фото", show_alert=False)
 
 @dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
 async def admin_reset_db(message: Message):
