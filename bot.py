@@ -787,9 +787,11 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "apply")
 async def apply(call: CallbackQuery, state: FSMContext):
     try:
+        logger.info("APPLY_CLICK user_id=%s chat_id=%s", call.from_user.id, call.message.chat.id)
         await clear_portfolio_media(call.from_user.id)
         app = get_application(call.from_user.id)
         status = app["status"] if app else None
+        logger.info("APPLY_STATUS user_id=%s status=%s", call.from_user.id, status)
 
         if status in {"pending", "accepted", "rejected"}:
             status_text = {
