@@ -194,6 +194,12 @@ def reject_templates_keyboard():
         [InlineKeyboardButton(text="🧩 Не совпали условия", callback_data="reject_tpl:2")],
         [InlineKeyboardButton(text="🕐 Вернёмся позже", callback_data="reject_tpl:3")],
         [InlineKeyboardButton(text="✍️ Своя причина", callback_data="reject_tpl:custom")],
+        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+    ])
+
+def reject_reason_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")]
     ])
 
 def confirm_reset_db_keyboard():

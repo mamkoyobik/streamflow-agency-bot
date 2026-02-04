@@ -149,7 +149,7 @@ def normalize_birthdate(text: str) -> str | None:
     for fmt in ("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d"):
         try:
             dt = datetime.strptime(value, fmt)
-            if dt.year < 1900:
+            if dt.year < 1900 or dt.date() > datetime.now().date():
                 return None
             return dt.strftime("%d.%m.%Y")
         except ValueError:
@@ -287,6 +287,7 @@ def build_menu_caption_with_status(
 PORTFOLIO_COOLDOWN_SECONDS = 10
 PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
 PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
+CAPTION_LIMIT = 1024
 
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
@@ -659,53 +660,50 @@ async def send_or_edit_user_text(
     text: str,
     reply_markup=None
 ):
-    menu_id = get_menu_message_id(user_id)
-    flow_id = get_flow_message_id(user_id)
-    message_id = flow_id or menu_id
-
+    message_id = get_flow_message_id(user_id)
     if message_id:
         try:
-            if menu_id and message_id == menu_id:
-                await bot.edit_message_caption(
-                    chat_id=user_id,
-                    message_id=message_id,
-                    caption=text,
-                    reply_markup=reply_markup
-                )
-            else:
-                await bot.edit_message_text(
-                    chat_id=user_id,
-                    message_id=message_id,
-                    text=text,
-                    reply_markup=reply_markup
-                )
-            set_flow_message_id(user_id, message_id)
+            await bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=text,
+                reply_markup=reply_markup
+            )
             return
         except TelegramBadRequest as e:
             err = str(e).lower()
             if "message is not modified" in err:
-                return
-            if menu_id and message_id == menu_id and "message is too long" in err:
-                # fallback to text message below
-                pass
-            elif menu_id and message_id == menu_id and "message can't be edited" in err:
-                pass
-            else:
-                logger.exception("Не удалось обновить сообщение пользователя")
                 return
         except TelegramForbiddenError:
             logger.warning("Нет прав на обновление сообщения пользователя")
             return
         except Exception:
             logger.exception("Не удалось обновить сообщение пользователя")
-            return
-
-    if flow_id and flow_id != menu_id:
+    else:
+        menu_id = get_menu_message_id(user_id)
+        if menu_id and len(text) <= CAPTION_LIMIT:
+            try:
+                await bot.edit_message_caption(
+                    chat_id=user_id,
+                    message_id=menu_id,
+                    caption=text,
+                    reply_markup=reply_markup
+                )
+                return
+            except TelegramBadRequest as e:
+                err = str(e).lower()
+                if "message is not modified" in err:
+                    return
+            except TelegramForbiddenError:
+                logger.warning("Нет прав на обновление меню пользователя")
+                return
+            except Exception:
+                logger.exception("Не удалось обновить меню пользователя")
+    if message_id:
         try:
-            await bot.delete_message(user_id, flow_id)
+            await bot.delete_message(user_id, message_id)
         except Exception:
             pass
-
     try:
         msg = await bot.send_message(
             user_id,
@@ -720,11 +718,7 @@ async def send_or_edit_user_text(
 
 async def clear_user_flow_message(user_id: int):
     message_id = get_flow_message_id(user_id)
-    menu_id = get_menu_message_id(user_id)
     if not message_id:
-        return
-    if menu_id and message_id == menu_id:
-        set_flow_message_id(user_id, None)
         return
     try:
         await bot.delete_message(user_id, message_id)
@@ -785,6 +779,9 @@ async def send_next_question(
 @dp.message(F.text == "/start")
 async def start(message: Message, state: FSMContext):
     try:
+        if message.chat.type != "private":
+            await message.answer("🤍 Напиши мне в личку и нажми /start ✨")
+            return
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
         app = get_application(message.from_user.id)
@@ -802,6 +799,9 @@ async def start(message: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
+    if not call.message or call.message.chat.type != "private":
+        await call.answer("🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+        return
     await state.clear()
     await clear_portfolio_media(call.from_user.id)
     app = get_application(call.from_user.id)
@@ -814,7 +814,16 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "apply")
 async def apply(call: CallbackQuery, state: FSMContext):
     try:
-        logger.info("APPLY_CLICK user_id=%s chat_id=%s", call.from_user.id, call.message.chat.id)
+        if not call.message or call.message.chat.type != "private":
+            await call.answer("🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            return
+        logger.info(
+            "APPLY_CLICK user_id=%s is_bot=%s chat_id=%s chat_type=%s",
+            call.from_user.id,
+            call.from_user.is_bot,
+            call.message.chat.id,
+            call.message.chat.type
+        )
         await clear_portfolio_media(call.from_user.id)
         app = get_application(call.from_user.id)
         status = app["status"] if app else None
@@ -862,6 +871,9 @@ async def apply(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "apply_restart")
 async def apply_restart(call: CallbackQuery, state: FSMContext):
+    if not call.message or call.message.chat.type != "private":
+        await call.answer("🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+        return
     app = get_application(call.from_user.id)
     if app and is_rate_limited(app.get("last_apply_at")):
         await edit_or_send(
@@ -1238,7 +1250,6 @@ TEXT_STATES = (
     ApplicationStates.telegram,
     ApplicationStates.experience,
     ApplicationStates.edit_value,
-    ApplicationStates.admin_reject_reason,
 )
 
 @dp.message(StateFilter(*TEXT_STATES), ~F.text)
@@ -1247,6 +1258,15 @@ async def reject_non_text(m: Message):
         m.from_user.id,
         "🤍 Пожалуйста, отправь ответ текстом.",
         reply_markup=form_keyboard()
+    )
+
+@dp.message(StateFilter(ApplicationStates.admin_reject_reason), ~F.text)
+async def reject_reason_non_text(m: Message, state: FSMContext):
+    if m.chat.id != ADMIN_GROUP_ID:
+        return
+    await update_admin_menu_message(
+        "🤍 Пожалуйста, напиши причину отказа текстом.",
+        reject_reason_keyboard()
     )
 
 @dp.callback_query(F.data == "form_back")
@@ -1397,10 +1417,11 @@ async def about(call: CallbackQuery):
 async def contact(call: CallbackQuery):
     try:
         await clear_portfolio_media(call.from_user.id)
+        username = ADMIN_USERNAME.lstrip("@")
         await edit_or_send(
             call,
             f"💬 <b>Связь с администратором</b>\n\n"
-            f"https://t.me/{ADMIN_USERNAME}",
+            f"https://t.me/{username}",
             reply_markup=main_menu()
         )
     except Exception:
@@ -1729,18 +1750,11 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
         view_mode = len(parts) > 2 and parts[2] == "view"
         await state.set_state(ApplicationStates.admin_reject_reason)
         await state.update_data(reject_uid=uid, reject_view=view_mode)
-        await call.message.answer(
+        await update_admin_menu_message(
             "✍️ Укажи причину отказа:\n\n"
-            "Можно выбрать готовый вариант или написать свой текст."
+            "Можно выбрать готовый вариант или написать свой текст.",
+            reject_templates_keyboard()
         )
-        await call.message.answer(
-            "Выбери шаблон отказа:",
-            reply_markup=reject_templates_keyboard()
-        )
-        try:
-            await call.message.edit_reply_markup(reply_markup=None)
-        except Exception:
-            pass
         await call.answer()
     except Exception:
         logger.exception("Ошибка в admin_reject")
@@ -1765,7 +1779,10 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
         }
 
         if tpl_code == "custom":
-            await call.message.answer("✍️ Напиши свою причину отказа:")
+            await update_admin_menu_message(
+                "✍️ Напиши свою причину отказа:",
+                reject_reason_keyboard()
+            )
             await call.answer()
             return
 
@@ -1809,8 +1826,14 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.admin_reject_reason), F.text)
 async def reject_reason(m: Message, state: FSMContext):
     try:
+        if m.chat.id != ADMIN_GROUP_ID:
+            return
         data = await state.get_data()
-        uid = data["reject_uid"]
+        uid = data.get("reject_uid")
+        if not uid:
+            await post_admin_menu()
+            await state.clear()
+            return
 
         try:
             intro = (
