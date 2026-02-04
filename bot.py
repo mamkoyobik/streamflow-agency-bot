@@ -286,6 +286,7 @@ def build_menu_caption_with_status(
 
 PORTFOLIO_COOLDOWN_SECONDS = 10
 PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
+PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
 
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
@@ -704,6 +705,19 @@ async def clear_user_flow_message(user_id: int):
         pass
     set_flow_message_id(user_id, None)
 
+async def clear_portfolio_media(user_id: int):
+    ids = PORTFOLIO_MEDIA_IDS.pop(user_id, [])
+    for message_id in ids:
+        try:
+            await bot.delete_message(user_id, message_id)
+        except Exception:
+            pass
+
+def track_portfolio_media(user_id: int, message_ids: list[int]):
+    if not message_ids:
+        return
+    PORTFOLIO_MEDIA_IDS.setdefault(user_id, []).extend(message_ids)
+
 async def start_application(message: Message, state: FSMContext):
     await state.clear()
     clear_form_data(message.from_user.id)
@@ -745,6 +759,7 @@ async def send_next_question(
 async def start(message: Message, state: FSMContext):
     try:
         await state.clear()
+        await clear_portfolio_media(message.from_user.id)
         app = get_application(message.from_user.id)
         status = app.get("status") if app else None
         await send_menu(message, status=status)
@@ -761,6 +776,7 @@ async def start(message: Message, state: FSMContext):
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
+    await clear_portfolio_media(call.from_user.id)
     app = get_application(call.from_user.id)
     status = app.get("status") if app else None
     await send_menu(call.message, status=status)
@@ -771,6 +787,7 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "apply")
 async def apply(call: CallbackQuery, state: FSMContext):
     try:
+        await clear_portfolio_media(call.from_user.id)
         app = get_application(call.from_user.id)
         status = app["status"] if app else None
 
@@ -1241,6 +1258,7 @@ async def form_back(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "about_work")
 async def about_work(call: CallbackQuery):
+    await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
         "🌷 <b>О работе в нашем проекте</b>\n\n"
@@ -1269,6 +1287,7 @@ async def about_work(call: CallbackQuery):
 
 @dp.callback_query(F.data == "about_platforms")
 async def about_platforms(call: CallbackQuery):
+    await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
         "💻 <b>Площадки и формат работы</b>\n\n"
@@ -1291,6 +1310,7 @@ async def about_platforms(call: CallbackQuery):
 
 @dp.callback_query(F.data == "about_income")
 async def about_income(call: CallbackQuery):
+    await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
         "💰 <b>Доход и выплаты</b>\n\n"
@@ -1318,6 +1338,7 @@ async def about_income(call: CallbackQuery):
 @dp.callback_query(F.data == "portfolio")
 async def portfolio(call: CallbackQuery):
     try:
+        await clear_portfolio_media(call.from_user.id)
         await edit_or_send(
             call,
             "📁 <b>Портфолио моделей</b>\n\n"
@@ -1330,6 +1351,7 @@ async def portfolio(call: CallbackQuery):
 @dp.callback_query(F.data == "about")
 async def about(call: CallbackQuery):
     try:
+        await clear_portfolio_media(call.from_user.id)
         await edit_or_send(
             call,
             "ℹ️ <b>Подробнее о работе</b>\n\n"
@@ -1345,6 +1367,7 @@ async def about(call: CallbackQuery):
 @dp.callback_query(F.data == "contact")
 async def contact(call: CallbackQuery):
     try:
+        await clear_portfolio_media(call.from_user.id)
         await edit_or_send(
             call,
             f"💬 <b>Связь с администратором</b>\n\n"
@@ -1936,10 +1959,11 @@ async def admin_reset_db_cancel(call: CallbackQuery):
         
 @dp.callback_query(F.data == "portfolio_reviews")
 async def portfolio_reviews(call: CallbackQuery):
-    await call.message.answer_media_group([
+    messages = await call.message.answer_media_group([
         InputMediaPhoto(media=FSInputFile("media/review1.jpg")),
         InputMediaPhoto(media=FSInputFile("media/review2.jpg")),
     ])
+    track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
     await call.answer()
 
 @dp.callback_query(F.data == "portfolio_videos")
@@ -1950,17 +1974,19 @@ async def portfolio_streams(call: CallbackQuery):
         await call.answer("🤍 Видео уже отправлены, посмотри, пожалуйста ✨")
         return
     PORTFOLIO_VIDEO_LAST[call.from_user.id] = now
-    await call.message.answer_media_group([
+    messages = await call.message.answer_media_group([
         InputMediaVideo(media=FSInputFile("media/stream1.MP4")),
         InputMediaVideo(media=FSInputFile("media/stream2.MP4")),
     ])
+    track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
     await call.answer()
 
 @dp.callback_query(F.data == "portfolio_pdf")
 async def portfolio_pdf(call: CallbackQuery):
-    await call.message.answer_document(
+    msg = await call.message.answer_document(
         FSInputFile("media/portfolio.pdf")
     )
+    track_portfolio_media(call.from_user.id, [msg.message_id])
     await call.answer()
 
 # ================= ADMIN STATS =================
