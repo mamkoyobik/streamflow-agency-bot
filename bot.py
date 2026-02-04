@@ -296,6 +296,7 @@ ADMIN_ARCHIVE_CHECK_HOURS = 6
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_LIST_LIMIT = 1
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
+ADMIN_PHOTOS_SETTING_KEY = "admin_photos_message_ids"
 
 def build_admin_menu_text(counts: dict) -> str:
     return (
@@ -320,6 +321,14 @@ async def restore_form_data(state: FSMContext, user_id: int):
     data = get_form_data(user_id)
     if data:
         await state.update_data(**data)
+
+async def delete_user_message(m: Message):
+    if m.chat.type != "private":
+        return
+    try:
+        await m.delete()
+    except Exception:
+        pass
 
 async def send_status_message(message: Message, status: str | None):
     line = build_status_line(status)
@@ -368,6 +377,25 @@ def build_admin_summary(
     if archived:
         text += "\n\n🗂 Архив"
     return text
+
+def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
+    status_label = STATUS_LABELS.get(status, status)
+    return (
+        "📋 <b>Полная анкета</b>\n\n"
+        f"👤 Имя: {data.get('name', '—')}\n"
+        f"📅 Дата рождения: {data.get('age', '—')}\n"
+        f"🌍 Город и страна: {data.get('city', '—')}\n"
+        f"📞 Телефон: {data.get('phone', '—')}\n"
+        f"🏠 Помещение без посторонних: {data.get('living', '—')}\n"
+        f"📱 Устройства: {data.get('devices', '—')}\n"
+        f"📲 Модель: {data.get('device_model', '—')}\n"
+        f"🎧 Наушники: {data.get('headphones', '—')}\n"
+        f"⏱ Время работы: {data.get('work_time', '—')}\n"
+        f"💼 Опыт: {data.get('experience', '—')}\n"
+        f"💬 Telegram: {data.get('telegram', '—')}\n"
+        f"🆔 ID: {user_id}\n\n"
+        f"Статус: <b>{status_label}</b>"
+    )
 
 def admin_keyboard_for_status(user_id: int, status: str):
     if status == "accepted":
@@ -511,6 +539,42 @@ async def update_admin_menu_message(text: str, reply_markup: InlineKeyboardMarku
     except Exception:
         logger.exception("Ошибка отправки админ-сообщения")
 
+def _parse_admin_photo_ids(value: str | None) -> list[int]:
+    if not value:
+        return []
+    result = []
+    for raw in value.split(","):
+        raw = raw.strip()
+        if raw.isdigit():
+            result.append(int(raw))
+    return result
+
+async def update_admin_photos(user_id: int):
+    stored_ids = _parse_admin_photo_ids(get_setting(ADMIN_PHOTOS_SETTING_KEY))
+    for msg_id in stored_ids:
+        try:
+            await bot.delete_message(ADMIN_GROUP_ID, msg_id)
+        except Exception:
+            pass
+    data = get_form_data(user_id) or {}
+    face = data.get("photo_face")
+    full = data.get("photo_full")
+    if not face or not full:
+        set_setting(ADMIN_PHOTOS_SETTING_KEY, None)
+        return
+    try:
+        messages = await bot.send_media_group(
+            ADMIN_GROUP_ID,
+            [
+                InputMediaPhoto(media=face),
+                InputMediaPhoto(media=full),
+            ]
+        )
+        ids = [m.message_id for m in messages]
+        set_setting(ADMIN_PHOTOS_SETTING_KEY, ",".join(str(i) for i in ids))
+    except Exception:
+        logger.exception("Ошибка отправки фото админу")
+
 async def notify_admin_new_application():
     counts = get_status_counts()
     text = (
@@ -587,12 +651,13 @@ async def send_admin_list(
         f"🗂 <b>{label}</b>\n\n"
         f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
         f"Страница: <b>{page}/{pages}</b>\n\n"
-        f"{build_admin_summary(data, user_id, item_status)}"
+        f"{build_admin_full_text(data, user_id, item_status)}"
     )
     await update_admin_menu_message(
         text,
         admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT)
     )
+    await update_admin_photos(user_id)
     await call.answer()
 
 async def send_menu(
@@ -952,6 +1017,7 @@ async def form_restart(call: CallbackQuery, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.name), F.text)
 async def step_name(m: Message, state: FSMContext):
     name = m.text.strip()
+    await delete_user_message(m)
     if len(name) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -970,6 +1036,7 @@ async def step_name(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.city), F.text)
 async def step_city(m: Message, state: FSMContext):
     city = m.text.strip()
+    await delete_user_message(m)
     if len(city) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -988,6 +1055,7 @@ async def step_city(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.phone), F.text)
 async def step_phone(m: Message, state: FSMContext):
     phone = m.text.strip()
+    await delete_user_message(m)
     if not is_valid_phone(phone):
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1011,6 +1079,7 @@ async def step_phone(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.age), F.text)
 async def step_age(m: Message, state: FSMContext):
     birthdate = m.text.strip()
+    await delete_user_message(m)
     if not is_valid_birthdate(birthdate):
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1038,6 +1107,7 @@ async def step_age(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.living), F.text)
 async def step_living(m: Message, state: FSMContext):
     living_raw = m.text.strip()
+    await delete_user_message(m)
     normalized = normalize_yes_no(living_raw)
     if not normalized:
         await send_or_edit_user_text(
@@ -1061,6 +1131,7 @@ async def step_living(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.devices), F.text)
 async def step_devices(m: Message, state: FSMContext):
     devices = m.text.strip()
+    await delete_user_message(m)
     if len(devices) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1079,6 +1150,7 @@ async def step_devices(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.device_model), F.text)
 async def step_device_model(m: Message, state: FSMContext):
     device_model = m.text.strip()
+    await delete_user_message(m)
     if len(device_model) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1097,6 +1169,7 @@ async def step_device_model(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.work_time), F.text)
 async def step_work_time(m: Message, state: FSMContext):
     work_time = m.text.strip()
+    await delete_user_message(m)
     if not has_any_digit(work_time):
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1115,6 +1188,7 @@ async def step_work_time(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.headphones), F.text)
 async def step_headphones(m: Message, state: FSMContext):
     headphones = m.text.strip()
+    await delete_user_message(m)
     if len(headphones) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1132,7 +1206,9 @@ async def step_headphones(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.telegram), F.text)
 async def step_tg(m: Message, state: FSMContext):
-    normalized = normalize_telegram(m.text)
+    raw = m.text.strip()
+    await delete_user_message(m)
+    normalized = normalize_telegram(raw)
     if not normalized:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1141,7 +1217,7 @@ async def step_tg(m: Message, state: FSMContext):
         )
         return
     note = None
-    if normalized != m.text.strip():
+    if normalized != raw:
         note = f"🤍 Сохранила Telegram как: {normalized}"
     await update_form_field(state, m.from_user.id, telegram=normalized)
     await send_next_question(
@@ -1155,6 +1231,7 @@ async def step_tg(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.experience), F.text)
 async def step_exp(m: Message, state: FSMContext):
     experience = m.text.strip()
+    await delete_user_message(m)
     if len(experience) < 1:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -1173,6 +1250,7 @@ async def step_exp(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.photo_face), F.photo)
 async def step_face(m: Message, state: FSMContext):
     await update_form_field(state, m.from_user.id, photo_face=m.photo[-1].file_id)
+    await delete_user_message(m)
     await send_next_question(
         m,
         state,
@@ -1183,11 +1261,13 @@ async def step_face(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.photo_full), F.photo)
 async def step_full(m: Message, state: FSMContext):
     await update_form_field(state, m.from_user.id, photo_full=m.photo[-1].file_id)
+    await delete_user_message(m)
     await send_or_edit_user_text(m.from_user.id, build_ack())
     await show_preview(m, state)
 
 @dp.message(StateFilter(ApplicationStates.photo_face), ~F.photo)
 async def reject_non_photo_face(m: Message):
+    await delete_user_message(m)
     await send_or_edit_user_text(
         m.from_user.id,
         "🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n"
@@ -1197,6 +1277,7 @@ async def reject_non_photo_face(m: Message):
 
 @dp.message(StateFilter(ApplicationStates.photo_full), ~F.photo)
 async def reject_non_photo_full(m: Message):
+    await delete_user_message(m)
     await send_or_edit_user_text(
         m.from_user.id,
         "🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n"
@@ -1254,6 +1335,7 @@ TEXT_STATES = (
 
 @dp.message(StateFilter(*TEXT_STATES), ~F.text)
 async def reject_non_text(m: Message):
+    await delete_user_message(m)
     await send_or_edit_user_text(
         m.from_user.id,
         "🤍 Пожалуйста, отправь ответ текстом.",
@@ -1467,6 +1549,7 @@ async def edit_field(call: CallbackQuery, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.edit_value), F.text)
 async def save_edited_value(m: Message, state: FSMContext):
     value = m.text.strip()
+    await delete_user_message(m)
 
     # 🚫 запрет пустых значений
     if not value:
@@ -1577,6 +1660,7 @@ async def receive_edited_photo(m: Message, state: FSMContext):
     elif photo_type == "full":
         await update_form_field(state, m.from_user.id, photo_full=m.photo[-1].file_id)
 
+    await delete_user_message(m)
     await state.update_data(edit_photo=None)
 
     await show_preview(m, state)
@@ -1586,6 +1670,7 @@ async def reject_text_when_waiting_photo(m: Message, state: FSMContext):
     data = await state.get_data()
 
     if data.get("edit_photo"):
+        await delete_user_message(m)
         await send_or_edit_user_text(
             m.from_user.id,
             "🤍 Сейчас нужно отправить <b>ФОТО</b>, а не текст.\n\n"
@@ -1879,16 +1964,7 @@ async def admin_status(call: CallbackQuery):
 async def admin_photos(call: CallbackQuery):
     try:
         uid = int(call.data.split(":", 1)[1])
-        data = get_form_data(uid) or {}
-        face = data.get("photo_face")
-        full = data.get("photo_full")
-        if not face or not full:
-            await call.answer("Фото не найдено", show_alert=False)
-            return
-        await call.message.answer_media_group([
-            InputMediaPhoto(media=face),
-            InputMediaPhoto(media=full),
-        ])
+        await update_admin_photos(uid)
         await call.answer()
     except Exception:
         logger.exception("Ошибка отправки фото админу")
