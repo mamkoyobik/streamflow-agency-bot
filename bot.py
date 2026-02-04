@@ -43,7 +43,9 @@ from database import (
     set_setting,
     list_applications,
     set_menu_message_id,
-    get_menu_message_id
+    get_menu_message_id,
+    set_flow_message_id,
+    get_flow_message_id
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -651,6 +653,57 @@ async def send_or_edit_user_menu(
     except Exception:
         logger.exception("Ошибка отправки меню пользователю")
 
+async def send_or_edit_user_text(
+    user_id: int,
+    text: str,
+    reply_markup=None
+):
+    message_id = get_flow_message_id(user_id)
+    if message_id:
+        try:
+            await bot.edit_message_text(
+                chat_id=user_id,
+                message_id=message_id,
+                text=text,
+                reply_markup=reply_markup
+            )
+            return
+        except TelegramBadRequest as e:
+            err = str(e).lower()
+            if "message is not modified" in err:
+                return
+        except TelegramForbiddenError:
+            logger.warning("Нет прав на обновление сообщения пользователя")
+            return
+        except Exception:
+            logger.exception("Не удалось обновить сообщение пользователя")
+    if message_id:
+        try:
+            await bot.delete_message(user_id, message_id)
+        except Exception:
+            pass
+    try:
+        msg = await bot.send_message(
+            user_id,
+            text,
+            reply_markup=reply_markup
+        )
+        set_flow_message_id(user_id, msg.message_id)
+    except TelegramForbiddenError:
+        logger.warning("Нет прав на отправку сообщения пользователю")
+    except Exception:
+        logger.exception("Ошибка отправки сообщения пользователю")
+
+async def clear_user_flow_message(user_id: int):
+    message_id = get_flow_message_id(user_id)
+    if not message_id:
+        return
+    try:
+        await bot.delete_message(user_id, message_id)
+    except Exception:
+        pass
+    set_flow_message_id(user_id, None)
+
 async def start_application(message: Message, state: FSMContext):
     await state.clear()
     clear_form_data(message.from_user.id)
@@ -658,7 +711,8 @@ async def start_application(message: Message, state: FSMContext):
     await state.set_state(ApplicationStates.name)
     set_last_state(message.from_user.id, ApplicationStates.name.state)
     await gentle_typing(message.chat.id)
-    await message.answer(
+    await send_or_edit_user_text(
+        message.from_user.id,
         format_question(
             ApplicationStates.name,
             FORM_QUESTIONS[ApplicationStates.name]
@@ -679,7 +733,8 @@ async def send_next_question(
     ack = build_ack()
     if note:
         ack = f"{ack}\n{note}"
-    await message.answer(
+    await send_or_edit_user_text(
+        message.from_user.id,
         f"{ack}\n\n{format_question(next_state, question)}",
         reply_markup=form_keyboard()
     )
@@ -694,7 +749,8 @@ async def start(message: Message, state: FSMContext):
         status = app.get("status") if app else None
         await send_menu(message, status=status)
         if app and app.get("status") in {None, "new"} and app.get("last_state") in FORM_PROGRESS_STATES:
-            await message.answer(
+            await send_or_edit_user_text(
+                message.from_user.id,
                 "🤍 Похоже, анкета не завершена.\n\n"
                 "Хочешь продолжить заполнение?",
                 reply_markup=continue_form_keyboard()
@@ -708,6 +764,7 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     app = get_application(call.from_user.id)
     status = app.get("status") if app else None
     await send_menu(call.message, status=status)
+    await clear_user_flow_message(call.from_user.id)
     await call.answer()
 # ================= APPLY =================
 
@@ -743,7 +800,8 @@ async def apply(call: CallbackQuery, state: FSMContext):
         current = await state.get_state()
         last_state = app.get("last_state") if app else None
         if (current and current in FORM_PROGRESS_STATES) or (last_state in FORM_PROGRESS_STATES):
-            await call.message.answer(
+            await send_or_edit_user_text(
+                call.from_user.id,
                 "🤍 Похоже, анкета уже начата.\n\n"
                 "Продолжим с того места, где остановились?",
                 reply_markup=continue_form_keyboard()
@@ -804,7 +862,8 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
             await call.answer()
             return
         title = FIELD_TITLES.get(field, "Поле")
-        await call.message.answer(
+        await send_or_edit_user_text(
+            call.from_user.id,
             f"✏️ <b>Редактирование поля:</b>\n\n"
             f"{title}\n\n"
             f"👉 Введи новое значение:"
@@ -814,7 +873,8 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
 
     for st in FORM_ORDER:
         if st.state == current:
-            await call.message.answer(
+            await send_or_edit_user_text(
+                call.from_user.id,
                 format_question(st, FORM_QUESTIONS[st]),
                 reply_markup=form_keyboard()
             )
@@ -835,7 +895,8 @@ async def form_restart(call: CallbackQuery, state: FSMContext):
 async def step_name(m: Message, state: FSMContext):
     name = m.text.strip()
     if len(name) < 2:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:",
             reply_markup=form_keyboard()
         )
@@ -852,7 +913,8 @@ async def step_name(m: Message, state: FSMContext):
 async def step_city(m: Message, state: FSMContext):
     city = m.text.strip()
     if len(city) < 2:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Подскажи город и страну проживания ещё раз:",
             reply_markup=form_keyboard()
         )
@@ -869,7 +931,8 @@ async def step_city(m: Message, state: FSMContext):
 async def step_phone(m: Message, state: FSMContext):
     phone = m.text.strip()
     if not is_valid_phone(phone):
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00",
             reply_markup=form_keyboard()
         )
@@ -891,7 +954,8 @@ async def step_phone(m: Message, state: FSMContext):
 async def step_age(m: Message, state: FSMContext):
     birthdate = m.text.strip()
     if not is_valid_birthdate(birthdate):
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Напиши дату рождения в формате 01.01.2000:",
             reply_markup=form_keyboard()
         )
@@ -918,7 +982,8 @@ async def step_living(m: Message, state: FSMContext):
     living_raw = m.text.strip()
     normalized = normalize_yes_no(living_raw)
     if not normalized:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Ответь, пожалуйста, «да» или «нет»:",
             reply_markup=form_keyboard()
         )
@@ -939,7 +1004,8 @@ async def step_living(m: Message, state: FSMContext):
 async def step_devices(m: Message, state: FSMContext):
     devices = m.text.strip()
     if len(devices) < 2:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Уточни, пожалуйста, какие устройства есть:",
             reply_markup=form_keyboard()
         )
@@ -956,7 +1022,8 @@ async def step_devices(m: Message, state: FSMContext):
 async def step_device_model(m: Message, state: FSMContext):
     device_model = m.text.strip()
     if len(device_model) < 2:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Напиши модель устройства, пожалуйста:",
             reply_markup=form_keyboard()
         )
@@ -973,7 +1040,8 @@ async def step_device_model(m: Message, state: FSMContext):
 async def step_work_time(m: Message, state: FSMContext):
     work_time = m.text.strip()
     if not has_any_digit(work_time):
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):",
             reply_markup=form_keyboard()
         )
@@ -990,7 +1058,8 @@ async def step_work_time(m: Message, state: FSMContext):
 async def step_headphones(m: Message, state: FSMContext):
     headphones = m.text.strip()
     if len(headphones) < 2:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:",
             reply_markup=form_keyboard()
         )
@@ -1007,7 +1076,8 @@ async def step_headphones(m: Message, state: FSMContext):
 async def step_tg(m: Message, state: FSMContext):
     normalized = normalize_telegram(m.text)
     if not normalized:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Укажи, пожалуйста, Telegram в формате @username:",
             reply_markup=form_keyboard()
         )
@@ -1028,7 +1098,8 @@ async def step_tg(m: Message, state: FSMContext):
 async def step_exp(m: Message, state: FSMContext):
     experience = m.text.strip()
     if len(experience) < 1:
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Напиши, пожалуйста, есть ли опыт:",
             reply_markup=form_keyboard()
         )
@@ -1054,12 +1125,13 @@ async def step_face(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.photo_full), F.photo)
 async def step_full(m: Message, state: FSMContext):
     await update_form_field(state, m.from_user.id, photo_full=m.photo[-1].file_id)
-    await m.answer(build_ack())
+    await send_or_edit_user_text(m.from_user.id, build_ack())
     await show_preview(m, state)
 
 @dp.message(StateFilter(ApplicationStates.photo_face), ~F.photo)
 async def reject_non_photo_face(m: Message):
-    await m.answer(
+    await send_or_edit_user_text(
+        m.from_user.id,
         "🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n"
         "📷 Пришли фотографию, пожалуйста",
         reply_markup=form_keyboard()
@@ -1067,7 +1139,8 @@ async def reject_non_photo_face(m: Message):
 
 @dp.message(StateFilter(ApplicationStates.photo_full), ~F.photo)
 async def reject_non_photo_full(m: Message):
-    await m.answer(
+    await send_or_edit_user_text(
+        m.from_user.id,
         "🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n"
         "📷 Пришли фотографию, пожалуйста",
         reply_markup=form_keyboard()
@@ -1124,7 +1197,8 @@ TEXT_STATES = (
 
 @dp.message(StateFilter(*TEXT_STATES), ~F.text)
 async def reject_non_text(m: Message):
-    await m.answer(
+    await send_or_edit_user_text(
+        m.from_user.id,
         "🤍 Пожалуйста, отправь ответ текстом.",
         reply_markup=form_keyboard()
     )
@@ -1157,7 +1231,8 @@ async def form_back(call: CallbackQuery, state: FSMContext):
     elif prev_value:
         question += f"\n\nТвой прошлый ответ: {prev_value}\nЕсли нужно — отправь новый."
 
-    await call.message.answer(
+    await send_or_edit_user_text(
+        call.from_user.id,
         question,
         reply_markup=form_keyboard()
     )
@@ -1308,7 +1383,8 @@ async def edit_field(call: CallbackQuery, state: FSMContext):
 
     title = FIELD_TITLES.get(field, "Поле")
 
-    await call.message.answer(
+    await send_or_edit_user_text(
+        call.from_user.id,
         f"✏️ <b>Редактирование поля:</b>\n\n"
         f"{title}\n\n"
         f"👉 Введи новое значение:"
@@ -1321,60 +1397,60 @@ async def save_edited_value(m: Message, state: FSMContext):
 
     # 🚫 запрет пустых значений
     if not value:
-        await m.answer("🤍 Значение не может быть пустым. Введи ещё раз:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Значение не может быть пустым. Введи ещё раз:")
         return
 
     data = await state.get_data()
     field = data.get("edit_field")
 
     if not field:
-        await m.answer("🤍 Похоже, что-то пошло не так. Попробуй ещё раз.")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Похоже, что-то пошло не так. Попробуй ещё раз.")
         await state.clear()
         return
 
     # базовая валидация при редактировании
     if field == "name" and len(value) < 2:
-        await m.answer("🤍 Имя должно быть чуть длиннее. Напиши ещё раз:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Имя должно быть чуть длиннее. Напиши ещё раз:")
         return
     if field == "city" and len(value) < 2:
-        await m.answer("🤍 Подскажи город и страну ещё раз:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Подскажи город и страну ещё раз:")
         return
     if field == "phone" and not is_valid_phone(value):
-        await m.answer("🤍 Номер выглядит некорректно. Пример: +7 900 000 00 00")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Номер выглядит некорректно. Пример: +7 900 000 00 00")
         return
     if field == "phone":
         value = normalize_phone(value) or value
     if field == "age" and not is_valid_birthdate(value):
-        await m.answer("🤍 Напиши дату рождения в формате 01.01.2000:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши дату рождения в формате 01.01.2000:")
         return
     if field == "age":
         value = normalize_birthdate(value) or value
     if field == "living":
         normalized = normalize_yes_no(value)
         if not normalized:
-            await m.answer("🤍 Ответь, пожалуйста, «да» или «нет»:")
+            await send_or_edit_user_text(m.from_user.id, "🤍 Ответь, пожалуйста, «да» или «нет»:")
             return
         value = normalized
     if field == "devices" and len(value) < 2:
-        await m.answer("🤍 Уточни, пожалуйста, какие устройства есть:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Уточни, пожалуйста, какие устройства есть:")
         return
     if field == "device_model" and len(value) < 2:
-        await m.answer("🤍 Напиши модель устройства, пожалуйста:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши модель устройства, пожалуйста:")
         return
     if field == "work_time" and not has_any_digit(value):
-        await m.answer("🤍 Напиши, пожалуйста, количество часов цифрами:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши, пожалуйста, количество часов цифрами:")
         return
     if field == "headphones" and len(value) < 2:
-        await m.answer("🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:")
         return
     if field == "telegram":
         normalized = normalize_telegram(value)
         if not normalized:
-            await m.answer("🤍 Укажи, пожалуйста, Telegram в формате @username:")
+            await send_or_edit_user_text(m.from_user.id, "🤍 Укажи, пожалуйста, Telegram в формате @username:")
             return
         value = normalized
     if field == "experience" and len(value) < 1:
-        await m.answer("🤍 Напиши, пожалуйста, есть ли опыт:")
+        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши, пожалуйста, есть ли опыт:")
         return
 
     # сохраняем новое значение
@@ -1407,7 +1483,8 @@ async def edit_photo(call: CallbackQuery, state: FSMContext):
         "⬅️ Если передумала — нажми «Отмена»"
     )
 
-    await call.message.answer(
+    await send_or_edit_user_text(
+        call.from_user.id,
         text,
         reply_markup=cancel_keyboard()
     )
@@ -1436,7 +1513,8 @@ async def reject_text_when_waiting_photo(m: Message, state: FSMContext):
     data = await state.get_data()
 
     if data.get("edit_photo"):
-        await m.answer(
+        await send_or_edit_user_text(
+            m.from_user.id,
             "🤍 Сейчас нужно отправить <b>ФОТО</b>, а не текст.\n\n"
             "📷 Пришли фотографию или нажми «Отмена»."
         )
@@ -1448,21 +1526,14 @@ async def preview_back(call: CallbackQuery, state: FSMContext):
 
 async def show_preview(m: Message, state: FSMContext):
     data = await state.get_data()
-    loading_msg = await m.answer(LOADING_TEXT)
+    await send_or_edit_user_text(m.from_user.id, LOADING_TEXT)
     for text in (
         "✨ Проверяю детали...\nЕщё секунду 🌸",
         "🌷 Оформляю карточку...\nПочти готово 🤍",
     ):
         await asyncio.sleep(random.uniform(0.4, 0.8))
-        try:
-            await loading_msg.edit_text(text)
-        except Exception:
-            break
+        await send_or_edit_user_text(m.from_user.id, text)
     await asyncio.sleep(random.uniform(0.3, 0.6))
-    try:
-        await loading_msg.delete()
-    except Exception:
-        pass
     status = get_status(m.from_user.id) or "new"
     status_label = STATUS_LABELS.get(status, "📝 Черновик")
     text = (
@@ -1489,7 +1560,7 @@ async def show_preview(m: Message, state: FSMContext):
     )
     await state.set_state(ApplicationStates.preview)
     set_last_state(m.from_user.id, ApplicationStates.preview.state)
-    await m.answer(text, reply_markup=preview_keyboard())
+    await send_or_edit_user_text(m.from_user.id, text, reply_markup=preview_keyboard())
 
 # ================= CONFIRM SEND =================
 
@@ -1501,14 +1572,16 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
         app = get_application(user.id)
 
         if app and is_rate_limited(app.get("last_apply_at")):
-            await call.message.answer(
+            await send_or_edit_user_text(
+                call.from_user.id,
                 "🤍 Похоже, недавно уже была отправлена заявка.\n\n"
                 "Немного позже можно будет отправить новую ✨"
             )
             await call.answer()
             return
         if not REQUIRED_PREVIEW_FIELDS.issubset(data):
-            await call.message.answer(
+            await send_or_edit_user_text(
+                call.from_user.id,
                 "🤍 Кажется, анкета заполнена не полностью.\n\n"
                 "Давай продолжим заполнение ✨"
             )
@@ -1546,6 +1619,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             )
         except Exception:
             logger.exception("Ошибка отправки меню после заявки")
+        await clear_user_flow_message(call.from_user.id)
         await call.answer()
     except Exception:
         logger.exception("Ошибка в preview_confirm")
@@ -1574,6 +1648,7 @@ async def admin_accept(call: CallbackQuery):
                 tail="🤍 Ожидайте, скоро админ напишет вам для записи на собеседование ✨"
             )
             await send_or_edit_user_menu(uid, caption)
+            await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после принятия")
         set_status(uid, "accepted")
@@ -1660,6 +1735,7 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 intro=intro
             )
             await send_or_edit_user_menu(uid, caption)
+            await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")
@@ -1697,6 +1773,7 @@ async def reject_reason(m: Message, state: FSMContext):
                 intro=intro
             )
             await send_or_edit_user_menu(uid, caption)
+            await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
         set_status(uid, "rejected")

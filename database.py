@@ -42,6 +42,8 @@ def _ensure_columns():
         alter.append("ALTER TABLE applications ADD COLUMN admin_message_id INTEGER")
     if "menu_message_id" not in cols:
         alter.append("ALTER TABLE applications ADD COLUMN menu_message_id INTEGER")
+    if "flow_message_id" not in cols:
+        alter.append("ALTER TABLE applications ADD COLUMN flow_message_id INTEGER")
     for stmt in alter:
         cursor.execute(stmt)
     if alter:
@@ -177,6 +179,35 @@ def set_menu_message_id(user_id: int, message_id: int | None):
 def get_menu_message_id(user_id: int) -> int | None:
     cursor.execute(
         "SELECT menu_message_id FROM applications WHERE user_id = ?",
+        (user_id,)
+    )
+    row = cursor.fetchone()
+    if not row:
+        return None
+    return row[0]
+
+def set_flow_message_id(user_id: int, message_id: int | None):
+    ts = _now_ts()
+    cursor.execute(
+        "SELECT 1 FROM applications WHERE user_id = ?",
+        (user_id,)
+    )
+    exists = cursor.fetchone() is not None
+    if exists:
+        cursor.execute(
+            "UPDATE applications SET flow_message_id = ?, updated_at = ? WHERE user_id = ?",
+            (message_id, ts, user_id)
+        )
+    else:
+        cursor.execute(
+            "INSERT INTO applications (user_id, flow_message_id, created_at, updated_at) VALUES (?, ?, ?, ?)",
+            (user_id, message_id, ts, ts)
+        )
+    conn.commit()
+
+def get_flow_message_id(user_id: int) -> int | None:
+    cursor.execute(
+        "SELECT flow_message_id FROM applications WHERE user_id = ?",
         (user_id,)
     )
     row = cursor.fetchone()
