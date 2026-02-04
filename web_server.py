@@ -40,10 +40,11 @@ def load_settings():
     admin_group_id = os.getenv("ADMIN_GROUP_ID", "").strip()
     admin_username = os.getenv("ADMIN_USERNAME", "").strip()
     bot_username = os.getenv("BOT_USERNAME", "").strip()
-    return bot_token, admin_group_id, admin_username, bot_username
+    channel_link = os.getenv("CHANNEL_LINK", "https://t.me/+uuVr5gJFwoJjYmRi").strip()
+    return bot_token, admin_group_id, admin_username, bot_username, channel_link
 
 
-BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME = load_settings()
+BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK = load_settings()
 
 
 def normalize_phone(text: str) -> str | None:
@@ -235,7 +236,7 @@ class Handler(SimpleHTTPRequestHandler):
         bot_username = BOT_USERNAME.strip().lstrip("@")
         bot_link = f"https://t.me/{bot_username}" if bot_username else None
         payload = {
-            "telegram_link": f"https://t.me/{admin_username}" if admin_username else None,
+            "telegram_link": CHANNEL_LINK or (f"https://t.me/{admin_username}" if admin_username else None),
             "bot_link": bot_link,
         }
         self.send_json(payload)
