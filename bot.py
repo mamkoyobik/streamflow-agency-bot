@@ -605,18 +605,14 @@ async def send_menu(
         else caption
     )
     await send_or_edit_user_menu(
-        message.from_user.id,
-        final_caption,
-        user_is_bot=message.from_user.is_bot
+        message.chat.id,
+        final_caption
     )
 
 async def send_or_edit_user_menu(
     user_id: int,
-    caption: str,
-    user_is_bot: bool = False
+    caption: str
 ):
-    if user_is_bot:
-        return
     message_id = get_menu_message_id(user_id)
     if message_id:
         try:
@@ -1540,8 +1536,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             )
             await send_or_edit_user_menu(
                 call.from_user.id,
-                caption,
-                user_is_bot=call.from_user.is_bot
+                caption
             )
         except Exception:
             logger.exception("Ошибка отправки меню после заявки")
