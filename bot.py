@@ -16,7 +16,7 @@ try:
 except Exception:
     DefaultBotProperties = None
 from aiogram.enums import ParseMode, ChatAction
-from aiogram.exceptions import TelegramForbiddenError
+from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.filters import StateFilter
@@ -623,15 +623,21 @@ async def send_or_edit_user_menu(
                 reply_markup=main_menu()
             )
             return
+        except TelegramBadRequest as e:
+            text = str(e).lower()
+            if "message is not modified" in text:
+                return
+            # fall through to send new menu on other edit errors
         except TelegramForbiddenError:
             logger.warning("Нет прав на обновление меню пользователя")
             return
         except Exception:
             logger.exception("Не удалось обновить меню пользователя")
-            try:
-                await bot.delete_message(user_id, message_id)
-            except Exception:
-                pass
+    if message_id:
+        try:
+            await bot.delete_message(user_id, message_id)
+        except Exception:
+            pass
     try:
         msg = await bot.send_photo(
             user_id,
