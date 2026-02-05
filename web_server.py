@@ -379,14 +379,23 @@ def parse_multipart(body: bytes, content_type: str):
                 "data": part.get_payload(decode=True) or b"",
             }
         else:
-            value = part.get_content()
-            if isinstance(value, bytes):
-                charset = part.get_content_charset() or "utf-8"
-                try:
-                    value = value.decode(charset, errors="replace")
-                except Exception:
-                    value = value.decode("utf-8", errors="replace")
-            fields[name] = value.strip() if isinstance(value, str) else ""
+            raw = part.get_payload(decode=True)
+            if raw is None:
+                raw = b""
+            charset = part.get_content_charset() or "utf-8"
+            value = ""
+            if isinstance(raw, (bytes, bytearray)):
+                for enc in (charset, "utf-8", "cp1251", "latin-1"):
+                    try:
+                        value = raw.decode(enc, errors="strict")
+                        break
+                    except Exception:
+                        value = ""
+                if not value:
+                    value = raw.decode(charset or "utf-8", errors="replace")
+            else:
+                value = str(raw)
+            fields[name] = value.strip()
     return fields, files
 
 
