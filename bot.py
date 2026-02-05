@@ -1,4 +1,5 @@
 import asyncio
+import html
 import logging
 import random
 import re
@@ -362,18 +363,6 @@ async def send_status_message(message: Message, status: str | None):
         except Exception:
             await message.answer(line)
 
-def build_admin_status_text(user_id: int, status: str) -> str:
-    data = get_form_data(user_id) or {}
-    name = data.get("name", "—")
-    telegram = data.get("telegram", "—")
-    return (
-        "📝 <b>Статус обновлён</b>\n\n"
-        f"Статус: <b>{status}</b>\n"
-        f"👤 Имя: {name}\n"
-        f"💬 Telegram: {telegram}\n"
-        f"🆔 ID: {user_id}"
-    )
-
 def source_label_for_user(user_id: int) -> str:
     source = get_source(user_id)
     if source == "site":
@@ -394,6 +383,23 @@ def contact_url_for_user(user_id: int, data: dict | None) -> str:
 def is_site_source(user_id: int) -> bool:
     return get_source(user_id) == "site"
 
+def _safe_text(value) -> str:
+    if value is None:
+        return "—"
+    return html.escape(str(value))
+
+def build_admin_status_text(user_id: int, status: str) -> str:
+    data = get_form_data(user_id) or {}
+    name = _safe_text(data.get("name", "—"))
+    telegram = _safe_text(data.get("telegram", "—"))
+    return (
+        "📝 <b>Статус обновлён</b>\n\n"
+        f"Статус: <b>{status}</b>\n"
+        f"👤 Имя: {name}\n"
+        f"💬 Telegram: {telegram}\n"
+        f"🆔 ID: {user_id}"
+    )
+
 def build_admin_summary(
     data: dict,
     user_id: int,
@@ -405,11 +411,11 @@ def build_admin_summary(
     header = "🔔 <b>Новая анкета — требуется просмотр</b>\n\n" if is_new else "🧾 <b>Кратко по заявке</b>\n\n"
     text = (
         f"{header}"
-        f"👤 Имя: {data.get('name', '—')}\n"
-        f"📅 Дата рождения: {data.get('age', '—')}\n"
-        f"🌍 Город и страна: {data.get('city', '—')}\n"
-        f"🏠 Помещение без посторонних: {data.get('living', '—')}\n"
-        f"💬 Telegram: {data.get('telegram', '—')}\n"
+        f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
+        f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
+        f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
+        f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
+        f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
         f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
         f"Статус: <b>{status_label}</b>"
@@ -422,17 +428,17 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
     status_label = STATUS_LABELS.get(status, status)
     return (
         "📋 <b>Полная анкета</b>\n\n"
-        f"👤 Имя: {data.get('name', '—')}\n"
-        f"📅 Дата рождения: {data.get('age', '—')}\n"
-        f"🌍 Город и страна: {data.get('city', '—')}\n"
-        f"📞 Телефон: {data.get('phone', '—')}\n"
-        f"🏠 Помещение без посторонних: {data.get('living', '—')}\n"
-        f"📱 Устройства: {data.get('devices', '—')}\n"
-        f"📲 Модель: {data.get('device_model', '—')}\n"
-        f"🎧 Наушники: {data.get('headphones', '—')}\n"
-        f"⏱ Время работы: {data.get('work_time', '—')}\n"
-        f"💼 Опыт: {data.get('experience', '—')}\n"
-        f"💬 Telegram: {data.get('telegram', '—')}\n"
+        f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
+        f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
+        f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
+        f"📞 Телефон: {_safe_text(data.get('phone', '—'))}\n"
+        f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
+        f"📱 Устройства: {_safe_text(data.get('devices', '—'))}\n"
+        f"📲 Модель: {_safe_text(data.get('device_model', '—'))}\n"
+        f"🎧 Наушники: {_safe_text(data.get('headphones', '—'))}\n"
+        f"⏱ Время работы: {_safe_text(data.get('work_time', '—'))}\n"
+        f"💼 Опыт: {_safe_text(data.get('experience', '—'))}\n"
+        f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
         f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
         f"Статус: <b>{status_label}</b>"

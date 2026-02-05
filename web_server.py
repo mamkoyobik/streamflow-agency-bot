@@ -1,4 +1,5 @@
 import json
+import html
 import os
 import re
 import ssl
@@ -48,6 +49,10 @@ def load_settings():
 
 
 BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK = load_settings()
+try:
+    from excel_export import append_application_row
+except Exception:
+    append_application_row = None
 try:
     import certifi
 except Exception:
@@ -148,24 +153,33 @@ def normalize_telegram(text: str) -> str | None:
     return None
 
 
+def _safe(value: str | None) -> str:
+    return html.escape(str(value)) if value is not None else "—"
+
 def build_admin_full_text(data: dict, web_id: str) -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
     return (
         "📋 <b>Полная анкета</b>\n\n"
-        f"👤 Имя: {data.get('name', '—')}\n"
-        f"📅 Дата рождения: {data.get('age', '—')}\n"
-        f"🌍 Город и страна: {data.get('city', '—')}\n"
-        f"📞 Телефон: {data.get('phone', '—')}\n"
-        f"🏠 Помещение без посторонних: {data.get('living', '—')}\n"
-        f"📱 Устройства: {data.get('devices', '—')}\n"
-        f"📲 Модель: {data.get('device_model', '—')}\n"
-        f"🎧 Наушники: {data.get('headphones', '—')}\n"
-        f"⏱ Время работы: {data.get('work_time', '—')}\n"
-        f"💼 Опыт: {data.get('experience', '—')}\n"
-        f"💬 Telegram: {data.get('telegram', '—')}\n"
-        f"🆔 ID: {web_id}\n"
+        f"👤 Имя: {_safe(data.get('name'))}\n"
+        f"📅 Дата рождения: {_safe(data.get('age'))}\n"
+        f"🌍 Город и страна: {_safe(data.get('city'))}\n"
+        f"📞 Телефон: {_safe(data.get('phone'))}\n"
+        f"🏠 Помещение без посторонних: {_safe(data.get('living'))}\n"
+        f"📱 Устройства: {_safe(data.get('devices'))}\n"
+        f"📲 Модель: {_safe(data.get('device_model'))}\n"
+        f"🎧 Наушники: {_safe(data.get('headphones'))}\n"
+        f"⏱ Время работы: {_safe(data.get('work_time'))}\n"
+        f"💼 Опыт: {_safe(data.get('experience'))}\n"
+        f"💬 Telegram: {_safe(data.get('telegram'))}\n"
+        f"🆔 ID: {_safe(web_id)}\n"
         "🧭 Источник: Сайт\n\n"
         f"Статус: <b>{status_label}</b>"
+    )
+
+def build_admin_notice_text() -> str:
+    return (
+        "🔔 <b>Новая анкета с сайта</b>\n\n"
+        "Открой админ‑меню бота, чтобы просмотреть заявку."
     )
 
 
@@ -384,20 +398,31 @@ class Handler(SimpleHTTPRequestHandler):
         web_id = str(user_id)
 
         try:
-            telegram_request(
-                "sendMessage",
-                {
-                    "chat_id": str(ADMIN_GROUP_ID),
-                    "text": build_admin_full_text(payload, web_id),
-                    "parse_mode": "HTML",
-                },
-            )
+            send_full = os.getenv("WEB_SEND_FULL_TO_ADMIN", "1").strip().lower() in {"1", "true", "yes"}
+            if send_full:
+                telegram_request(
+                    "sendMessage",
+                    {
+                        "chat_id": str(ADMIN_GROUP_ID),
+                        "text": build_admin_full_text(payload, web_id),
+                        "parse_mode": "HTML",
+                    },
+                )
+            else:
+                telegram_request(
+                    "sendMessage",
+                    {
+                        "chat_id": str(ADMIN_GROUP_ID),
+                        "text": build_admin_notice_text(),
+                        "parse_mode": "HTML",
+                    },
+                )
 
             face_result = telegram_request(
                 "sendPhoto",
                 {
                     "chat_id": str(ADMIN_GROUP_ID),
-                    "caption": "1️⃣2️⃣ Фото анфас:",
+                    "caption": "Фото анфас:",
                     "parse_mode": "HTML",
                 },
                 {
@@ -409,7 +434,7 @@ class Handler(SimpleHTTPRequestHandler):
                 "sendPhoto",
                 {
                     "chat_id": str(ADMIN_GROUP_ID),
-                    "caption": "1️⃣3️⃣ Фото в полный рост:",
+                    "caption": "Фото в полный рост:",
                     "parse_mode": "HTML",
                 },
                 {
@@ -447,6 +472,11 @@ class Handler(SimpleHTTPRequestHandler):
 
         try:
             save_web_application(user_id, payload, source="site", status="pending")
+            if append_application_row:
+                try:
+                    append_application_row(payload, user_id, "pending")
+                except Exception as err:
+                    print("Excel error:", err)
         except Exception as err:
             print("DB error:", err)
             return error("Ошибка сохранения анкеты. Попробуй ещё раз.", status=500)
