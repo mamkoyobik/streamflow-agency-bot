@@ -167,6 +167,7 @@ def _safe(value: str | None) -> str:
 
 def build_admin_full_text(data: dict, web_id: str) -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
+    submitted_at = datetime.now().astimezone().strftime("%d.%m.%Y %H:%M")
     return (
         "📋 <b>Полная анкета</b>\n\n"
         f"👤 Имя: {_safe(data.get('name'))}\n"
@@ -181,7 +182,8 @@ def build_admin_full_text(data: dict, web_id: str) -> str:
         f"💼 Опыт: {_safe(data.get('experience'))}\n"
         f"💬 Telegram: {_safe(data.get('telegram'))}\n"
         f"🆔 ID: {_safe(web_id)}\n"
-        "🧭 Источник: Сайт\n\n"
+        "🧭 Источник: Сайт\n"
+        f"🕒 Время подачи: {submitted_at}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
 

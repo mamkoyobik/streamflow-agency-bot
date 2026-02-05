@@ -402,6 +402,7 @@ def get_admin_messages_for_archive(days: int) -> list[tuple[int, int]]:
 def reset_all_data():
     with DB_LOCK:
         _execute("DELETE FROM applications")
+        _execute("DELETE FROM settings")
         conn.commit()
         if DB_KIND == "sqlite":
             try:
