@@ -7,7 +7,7 @@
   <meta name="description" content="Анкета для заявки в Streamflow.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital,wght@0,400;1,400&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="styles.css">
 </head>
 <body class="preload" data-page="apply">
@@ -24,14 +24,14 @@
       </a>
       <nav class="site-nav" aria-label="Навигация">
         <a class="nav-link" href="index.html">Главная</a>
-        <a class="nav-link" href="about.html">О работе</a>
-        <a class="nav-link" href="conditions.html">Условия</a>
-        <a class="nav-link" href="steps.html">Этапы</a>
-        <a class="nav-link" href="streams.html">Видеопримеры</a>
-        <a class="nav-link" href="portfolio.html">Портфолио</a>
-        <a class="nav-link" href="apply.html">Заявка</a>
+        <a class="nav-link" href="index.html#about">О работе</a>
+        <a class="nav-link" href="index.html#offer">Условия</a>
+        <a class="nav-link" href="index.html#steps">Этапы</a>
+        <a class="nav-link" href="index.html#streams">Видеопримеры</a>
+        <a class="nav-link" href="index.html#portfolio">Портфолио</a>
+        <a class="nav-link" href="index.html#apply">Заявка</a>
       </nav>
-      <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+      <a class="btn btn-primary" href="index.html#apply">Оставить заявку</a>
     </div>
   </header>
 
@@ -44,14 +44,14 @@
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
-        <a href="about.html">О работе</a>
-        <a href="conditions.html">Условия</a>
-        <a href="steps.html">Этапы</a>
-        <a href="streams.html">Видеопримеры</a>
-        <a href="portfolio.html">Портфолио</a>
-        <a href="apply.html">Заявка</a>
+        <a href="index.html#about">О работе</a>
+        <a href="index.html#offer">Условия</a>
+        <a href="index.html#steps">Этапы</a>
+        <a href="index.html#streams">Видеопримеры</a>
+        <a href="index.html#portfolio">Портфолио</a>
+        <a href="index.html#apply">Заявка</a>
       </nav>
-      <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+      <a class="btn btn-primary" href="index.html#apply">Оставить заявку</a>
     </div>
   </div>
 
@@ -64,12 +64,12 @@
       </div>
     </section>
 
-    <section class="section">
-      <div class="container form-shell">
-        <aside class="form-intro reveal">
-          <span class="eyebrow">Процесс</span>
-          <h2>Как всё проходит</h2>
-          <p>Мягкий вход и личная связь после отправки анкеты.</p>
+      <section class="section">
+      <div class="container form-section">
+        <div class="form-intro reveal">
+          <span class="eyebrow">Заявка</span>
+          <h2>Анкета Streamflow</h2>
+          <p>После каждого ответа ты переходишь к следующему шагу.</p>
           <div class="mini-steps">
             <div class="mini-step">
               <span>1</span>
@@ -77,84 +77,110 @@
             </div>
             <div class="mini-step">
               <span>2</span>
-              <p>Мы вернёмся с ответом и деталями в Telegram.</p>
+              <p>Мы вернёмся с ответом в Telegram.</p>
             </div>
             <div class="mini-step">
               <span>3</span>
-              <p>Стартуем с подготовкой и поддержкой команды.</p>
+              <p>Стартуем подготовку вместе с командой.</p>
             </div>
           </div>
-          <ul>
-            <li>Данные конфиденциальны</li>
-            <li>Ответ обычно в течение дня</li>
-            <li>Можно заполнить тестовую заявку</li>
-          </ul>
-        </aside>
+        </div>
 
-        <form id="application-form" class="form-card" enctype="multipart/form-data">
-          <div class="form-grid">
-            <div class="field">
-              <label for="name">1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:</label>
-              <input id="name" name="name" type="text" required>
+        <form class="form-card" data-application-form enctype="multipart/form-data">
+          <div class="form-progress">
+            <div class="form-progress-count"><span data-step-current>1</span> / <span data-step-total>13</span></div>
+            <div class="form-progress-bar"><span data-step-bar></span></div>
+          </div>
+
+          <div class="form-steps">
+            <div class="form-step is-active" data-step="1">
+              <div class="field">
+                <label for="name">1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:</label>
+                <input id="name" name="name" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="city">2️⃣ Город и страна проживания:</label>
-              <input id="city" name="city" type="text" required>
+            <div class="form-step" data-step="2">
+              <div class="field">
+                <label for="city">2️⃣ Город и страна проживания:</label>
+                <input id="city" name="city" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="phone">3️⃣ Контактный телефон (+код):</label>
-              <input id="phone" name="phone" type="tel" required>
+            <div class="form-step" data-step="3">
+              <div class="field">
+                <label for="phone">3️⃣ Контактный телефон (+код):</label>
+                <input id="phone" name="phone" type="tel" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="age">4️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
-              <input id="age" name="age" type="text" required>
+            <div class="form-step" data-step="4">
+              <div class="field">
+                <label for="age">4️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
+                <input id="age" name="age" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="living">5️⃣ Есть ли помещение без посторонних?</label>
-              <input id="living" name="living" type="text" required>
+            <div class="form-step" data-step="5">
+              <div class="field">
+                <label for="living">5️⃣ Есть ли помещение без посторонних?</label>
+                <input id="living" name="living" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="devices">6️⃣ Устройства (телефон / ПК):</label>
-              <input id="devices" name="devices" type="text" required>
+            <div class="form-step" data-step="6">
+              <div class="field">
+                <label for="devices">6️⃣ Устройства (телефон / ПК):</label>
+                <input id="devices" name="devices" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="device_model">7️⃣ Модель устройства:</label>
-              <input id="device_model" name="device_model" type="text" required>
+            <div class="form-step" data-step="7">
+              <div class="field">
+                <label for="device_model">7️⃣ Модель устройства:</label>
+                <input id="device_model" name="device_model" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="work_time">8️⃣ Время работы (часов в день):</label>
-              <input id="work_time" name="work_time" type="text" required>
+            <div class="form-step" data-step="8">
+              <div class="field">
+                <label for="work_time">8️⃣ Время работы (часов в день):</label>
+                <input id="work_time" name="work_time" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="headphones">9️⃣ Есть ли наушники с микрофоном:</label>
-              <input id="headphones" name="headphones" type="text" required>
+            <div class="form-step" data-step="9">
+              <div class="field">
+                <label for="headphones">9️⃣ Есть ли наушники с микрофоном:</label>
+                <input id="headphones" name="headphones" type="text" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="telegram">🔟 Telegram (@username):</label>
-              <input id="telegram" name="telegram" type="text" required>
+            <div class="form-step" data-step="10">
+              <div class="field">
+                <label for="telegram">🔟 Telegram (@username):</label>
+                <input id="telegram" name="telegram" type="text" required>
+              </div>
             </div>
-            <div class="field full">
-              <label for="experience">1️⃣1️⃣ Опыт (если нет — напиши «нет»):</label>
-              <textarea id="experience" name="experience" rows="3" required></textarea>
+            <div class="form-step" data-step="11">
+              <div class="field">
+                <label for="experience">1️⃣1️⃣ Опыт (если нет — напиши «нет»):</label>
+                <textarea id="experience" name="experience" rows="3" required></textarea>
+              </div>
             </div>
-            <div class="field">
-              <label for="photo_face">1️⃣2️⃣ Фото анфас:</label>
-              <input id="photo_face" name="photo_face" type="file" accept="image/*" required>
+            <div class="form-step" data-step="12">
+              <div class="field">
+                <label for="photo_face">1️⃣2️⃣ Фото анфас:</label>
+                <input id="photo_face" name="photo_face" type="file" accept="image/*" required>
+              </div>
             </div>
-            <div class="field">
-              <label for="photo_full">1️⃣3️⃣ Фото в полный рост:</label>
-              <input id="photo_full" name="photo_full" type="file" accept="image/*" required>
+            <div class="form-step" data-step="13">
+              <div class="field">
+                <label for="photo_full">1️⃣3️⃣ Фото в полный рост:</label>
+                <input id="photo_full" name="photo_full" type="file" accept="image/*" required>
+              </div>
             </div>
           </div>
-          <div class="form-actions">
-            <div class="btn-row">
-              <button class="btn btn-primary" type="submit">Оставить заявку</button>
-              <button class="btn btn-ghost" type="button" data-test-submit>Тестовая заявка</button>
-            </div>
-            <div id="form-status" class="form-status" role="status" aria-live="polite"></div>
-            <div id="form-next" class="form-next hidden">
-              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Открыть Telegram</a>
-            </div>
+
+          <div class="form-nav">
+            <button class="btn btn-ghost" type="button" data-step-prev>Назад</button>
+            <button class="btn btn-primary" type="button" data-step-next>Далее</button>
+            <button class="btn btn-primary hidden" type="submit" data-step-submit>Отправить</button>
+          </div>
+          <div class="form-status" data-form-status role="status" aria-live="polite"></div>
+          <div class="form-next hidden" data-form-next>
+            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Открыть Telegram</a>
           </div>
         </form>
       </div>
@@ -171,15 +197,15 @@
         </div>
       </div>
       <div class="footer-links">
-        <a id="telegram-link" href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Telegram</a>
-        <a href="apply.html">Оставить заявку</a>
+        <a id="telegram-link" href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Канал Streamflow</a>
+        <a href="index.html#apply">Оставить заявку</a>
       </div>
       <div class="footer-note">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
 
   <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
-    <span class="floating-menu-dot"></span>
+    <img class="floating-menu-logo" src="assets/logo.jpg" alt="Streamflow">
     <span data-menu-text>Меню</span>
   </button>
 

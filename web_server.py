@@ -404,6 +404,7 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = ThreadingHTTPServer(("127.0.0.1", 8080), Handler)
-    print("Running on http://127.0.0.1:8080")
+    port = int(os.getenv("PORT", "8080"))
+    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
+    print(f"Running on http://127.0.0.1:{port}")
     server.serve_forever()

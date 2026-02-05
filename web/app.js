@@ -68,9 +68,7 @@ videoCards.forEach((card) => {
 });
 
 const videoModal = document.getElementById('video-modal');
-const pdfModal = document.getElementById('pdf-modal');
 const modalVideo = videoModal ? videoModal.querySelector('video') : null;
-const pdfIframe = pdfModal ? pdfModal.querySelector('iframe') : null;
 
 function openModal(modal) {
   modal.classList.add('open');
@@ -97,19 +95,7 @@ if (videoModal && modalVideo) {
   });
 }
 
-const pdfButtons = document.querySelectorAll('[data-pdf]');
-if (pdfModal && pdfIframe) {
-  pdfButtons.forEach((button) => {
-    button.addEventListener('click', () => {
-      const src = button.getAttribute('data-pdf');
-      if (!src) return;
-      pdfIframe.src = src;
-      openModal(pdfModal);
-    });
-  });
-}
-
-[videoModal, pdfModal].forEach((modal) => {
+[videoModal].forEach((modal) => {
   if (!modal) return;
   modal.addEventListener('click', (event) => {
     if (event.target.hasAttribute('data-close')) {
@@ -130,9 +116,6 @@ document.addEventListener('keydown', (event) => {
         modalVideo.removeAttribute('src');
       }
       closeModal(videoModal);
-    }
-    if (pdfModal && pdfModal.classList.contains('open')) {
-      closeModal(pdfModal);
     }
   }
 });
@@ -172,6 +155,11 @@ carousels.forEach((carousel) => {
   if (!track || slides.length === 0) return;
 
   let positions = slides.map((slide) => slide.offsetLeft);
+  let activeIndex = 0;
+  let autoTimer;
+  let isDragging = false;
+  let startX = 0;
+  let startScrollLeft = 0;
 
   function setActive(index) {
     if (!dots.length) return;
@@ -189,7 +177,30 @@ carousels.forEach((carousel) => {
         closestIndex = idx;
       }
     });
+    activeIndex = closestIndex;
     setActive(closestIndex);
+  }
+
+  function stopAuto() {
+    if (autoTimer) {
+      window.clearInterval(autoTimer);
+      autoTimer = null;
+    }
+  }
+
+  function goTo(index) {
+    const target = positions[index] ?? slides[index].offsetLeft;
+    track.scrollTo({ left: target, behavior: 'smooth' });
+    activeIndex = index;
+    setActive(index);
+  }
+
+  function startAuto() {
+    stopAuto();
+    autoTimer = window.setInterval(() => {
+      const next = (activeIndex + 1) % slides.length;
+      goTo(next);
+    }, 4000);
   }
 
   let scrollTimer;
@@ -200,11 +211,41 @@ carousels.forEach((carousel) => {
 
   dots.forEach((dot, idx) => {
     dot.addEventListener('click', () => {
-      const target = positions[idx] ?? slides[idx].offsetLeft;
-      track.scrollTo({ left: target, behavior: 'smooth' });
-      setActive(idx);
+      goTo(idx);
     });
   });
+
+  track.addEventListener('pointerdown', (event) => {
+    isDragging = true;
+    startX = event.clientX;
+    startScrollLeft = track.scrollLeft;
+    stopAuto();
+    track.setPointerCapture(event.pointerId);
+  });
+
+  track.addEventListener('pointermove', (event) => {
+    if (!isDragging) return;
+    const delta = startX - event.clientX;
+    track.scrollLeft = startScrollLeft + delta;
+  });
+
+  function endDrag(event) {
+    if (!isDragging) return;
+    isDragging = false;
+    if (event.pointerId !== undefined) {
+      try {
+        track.releasePointerCapture(event.pointerId);
+      } catch (err) {
+        // ignore
+      }
+    }
+    updateActive();
+    startAuto();
+  }
+
+  track.addEventListener('pointerup', endDrag);
+  track.addEventListener('pointerleave', endDrag);
+  track.addEventListener('pointercancel', endDrag);
 
   window.addEventListener('resize', () => {
     positions = slides.map((slide) => slide.offsetLeft);
@@ -212,15 +253,12 @@ carousels.forEach((carousel) => {
   });
 
   updateActive();
+  startAuto();
 });
 
-const form = document.getElementById('application-form');
-const formStatus = document.getElementById('form-status');
-const formNext = document.getElementById('form-next');
-const formNextLink = formNext ? formNext.querySelector('a') : null;
+const forms = document.querySelectorAll('[data-application-form]');
 const telegramLink = document.getElementById('telegram-link');
-const submitButton = form ? form.querySelector('button[type="submit"]') : null;
-const testButton = form ? form.querySelector('[data-test-submit]') : null;
+const formNextLinks = document.querySelectorAll('[data-form-next] a');
 
 async function loadConfig() {
   try {
@@ -230,9 +268,12 @@ async function loadConfig() {
     if (data.telegram_link && telegramLink) {
       telegramLink.href = data.telegram_link;
     }
-    if (data.bot_link && formNext && formNextLink) {
-      formNextLink.href = data.bot_link;
-      formNext.classList.remove('hidden');
+    if (data.bot_link && formNextLinks.length) {
+      formNextLinks.forEach((link) => {
+        link.href = data.bot_link;
+        const parent = link.closest('[data-form-next]');
+        if (parent) parent.classList.remove('hidden');
+      });
     }
   } catch (err) {
     // ignore
@@ -241,8 +282,88 @@ async function loadConfig() {
 
 loadConfig();
 
-async function sendApplication(formData, options = {}) {
+function initMultiStep(form) {
+  const steps = Array.from(form.querySelectorAll('.form-step'));
+  if (!steps.length) return;
+
+  let current = 0;
+  const total = steps.length;
+  const progressCurrent = form.querySelector('[data-step-current]');
+  const progressTotal = form.querySelector('[data-step-total]');
+  const progressBar = form.querySelector('[data-step-bar]');
+  const btnPrev = form.querySelector('[data-step-prev]');
+  const btnNext = form.querySelector('[data-step-next]');
+  const btnSubmit = form.querySelector('[data-step-submit]');
+
+  if (progressTotal) progressTotal.textContent = String(total);
+
+  function update() {
+    steps.forEach((step, idx) => step.classList.toggle('is-active', idx === current));
+    if (progressCurrent) progressCurrent.textContent = String(current + 1);
+    if (progressBar) progressBar.style.width = `${((current + 1) / total) * 100}%`;
+    if (btnPrev) btnPrev.classList.toggle('hidden', current === 0);
+    if (btnNext) btnNext.classList.toggle('hidden', current >= total - 1);
+    if (btnSubmit) btnSubmit.classList.toggle('hidden', current < total - 1);
+  }
+
+  function validateStep(index) {
+    const step = steps[index];
+    if (!step) return true;
+    const fields = step.querySelectorAll('input, textarea, select');
+    for (const field of fields) {
+      if (!field.checkValidity()) {
+        field.reportValidity();
+        return false;
+      }
+    }
+    return true;
+  }
+
+  function goTo(index) {
+    const nextIndex = Math.max(0, Math.min(total - 1, index));
+    current = nextIndex;
+    update();
+    const nextStep = steps[current];
+    if (nextStep) {
+      const focusField = nextStep.querySelector('input, textarea, select');
+      if (focusField) focusField.focus();
+    }
+  }
+
+  btnPrev?.addEventListener('click', () => goTo(current - 1));
+  btnNext?.addEventListener('click', () => {
+    if (validateStep(current)) {
+      goTo(current + 1);
+    }
+  });
+
+  steps.forEach((step, idx) => {
+    step.querySelectorAll('input, textarea, select').forEach((field) => {
+      field.addEventListener('change', () => {
+        if (idx === current && field.checkValidity() && current < total - 1) {
+          goTo(current + 1);
+        }
+      });
+      field.addEventListener('keydown', (event) => {
+        if (event.key !== 'Enter') return;
+        if (field.tagName === 'TEXTAREA') return;
+        if (current < total - 1) {
+          event.preventDefault();
+          if (field.checkValidity()) {
+            goTo(current + 1);
+          }
+        }
+      });
+    });
+  });
+
+  form.addEventListener('form:reset-steps', () => goTo(0));
+  update();
+}
+
+async function sendApplication(formData, elements, options = {}) {
   const { pendingMessage = 'Отправка...', resetForm = false } = options;
+  const { form, formStatus, formNext, formNextLink, submitButton } = elements;
   if (formStatus) {
     formStatus.textContent = pendingMessage;
     formStatus.classList.remove('is-error');
@@ -250,7 +371,6 @@ async function sendApplication(formData, options = {}) {
   }
 
   if (submitButton) submitButton.disabled = true;
-  if (testButton) testButton.disabled = true;
 
   try {
     const response = await fetch('/api/apply', {
@@ -263,7 +383,10 @@ async function sendApplication(formData, options = {}) {
         formStatus.classList.add('is-success');
         formStatus.innerHTML = payload.message || 'Готово.';
       }
-      if (resetForm && form) form.reset();
+      if (resetForm && form) {
+        form.reset();
+        form.dispatchEvent(new Event('form:reset-steps'));
+      }
       if (payload.bot_link && formNext && formNextLink) {
         formNextLink.href = payload.bot_link;
         formNext.classList.remove('hidden');
@@ -279,46 +402,21 @@ async function sendApplication(formData, options = {}) {
     }
   } finally {
     if (submitButton) submitButton.disabled = false;
-    if (testButton) testButton.disabled = false;
   }
 }
 
-async function buildTestFormData() {
-  const formData = new FormData();
-  formData.set('name', 'Тестовая заявка Streamflow');
-  formData.set('city', 'Москва, Россия');
-  formData.set('phone', '+79990000000');
-  formData.set('age', '01.01.2000');
-  formData.set('living', 'да');
-  formData.set('devices', 'телефон');
-  formData.set('device_model', 'iPhone 14');
-  formData.set('work_time', '6');
-  formData.set('headphones', 'да');
-  formData.set('telegram', '@streamflow_test');
-  formData.set('experience', 'тест');
+forms.forEach((form) => {
+  const formStatus = form.querySelector('[data-form-status]');
+  const formNext = form.querySelector('[data-form-next]');
+  const formNextLink = formNext ? formNext.querySelector('a') : null;
+  const submitButton = form.querySelector('button[type="submit"]');
+  const elements = { form, formStatus, formNext, formNextLink, submitButton };
 
-  const [faceBlob, fullBlob] = await Promise.all([
-    fetch('assets/reviews/review-1.jpg').then((response) => response.blob()),
-    fetch('assets/reviews/review-2.jpg').then((response) => response.blob()),
-  ]);
+  initMultiStep(form);
 
-  formData.set('photo_face', new File([faceBlob], 'face.jpg', { type: faceBlob.type || 'image/jpeg' }));
-  formData.set('photo_full', new File([fullBlob], 'full.jpg', { type: fullBlob.type || 'image/jpeg' }));
-
-  return formData;
-}
-
-if (form) {
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
     const formData = new FormData(form);
-    await sendApplication(formData, { resetForm: true });
+    await sendApplication(formData, elements, { resetForm: true });
   });
-
-  if (testButton) {
-    testButton.addEventListener('click', async () => {
-      const formData = await buildTestFormData();
-      await sendApplication(formData, { pendingMessage: 'Отправка тестовой заявки...', resetForm: false });
-    });
-  }
-}
+});
