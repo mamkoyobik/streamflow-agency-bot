@@ -7,6 +7,12 @@ import ssl
 from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
+try:
+    from dotenv import load_dotenv
+    load_dotenv()
+except Exception:
+    pass
+
 DB_URL = os.getenv("DATABASE_URL", "").strip()
 DB_KIND = "postgres" if DB_URL.startswith("postgres") else "sqlite"
 
@@ -50,11 +56,13 @@ if DB_KIND == "postgres":
         database=db_name,
         ssl_context=ssl_context,
     )
+    print(f"[db] postgres {db_host}:{db_port}/{db_name}")
 else:
     DB_PATH = Path(__file__).resolve().parent / "bot_database.db"
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.execute("PRAGMA journal_mode=WAL")
     conn.execute("PRAGMA busy_timeout = 5000")
+    print(f"[db] sqlite {DB_PATH}")
 
 cursor = conn.cursor()
 
