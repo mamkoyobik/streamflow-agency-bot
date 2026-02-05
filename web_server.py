@@ -380,6 +380,12 @@ def parse_multipart(body: bytes, content_type: str):
             }
         else:
             value = part.get_content()
+            if isinstance(value, bytes):
+                charset = part.get_content_charset() or "utf-8"
+                try:
+                    value = value.decode(charset, errors="replace")
+                except Exception:
+                    value = value.decode("utf-8", errors="replace")
             fields[name] = value.strip() if isinstance(value, str) else ""
     return fields, files
 
