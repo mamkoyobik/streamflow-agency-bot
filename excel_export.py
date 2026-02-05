@@ -7,10 +7,12 @@ from typing import Any
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font
 
+from database import get_application
+
 EXCEL_PATH = Path("applications.xlsx")
 
 HEADERS = [
-    "Дата",
+    "Время подачи",
     "Имя",
     "Дата рождения",
     "Город и страна",
@@ -35,6 +37,18 @@ def _init_sheet(ws):
     ws.freeze_panes = "A2"
     ws.auto_filter.ref = f"A1:{chr(64 + len(HEADERS))}1"
 
+def _ensure_headers(ws):
+    if ws.max_row < 1:
+        _init_sheet(ws)
+        return
+    for col, header in enumerate(HEADERS, start=1):
+        cell = ws.cell(row=1, column=col)
+        cell.value = header
+        cell.font = Font(bold=True)
+        cell.alignment = Alignment(horizontal="center")
+    ws.freeze_panes = "A2"
+    ws.auto_filter.ref = f"A1:{chr(64 + len(HEADERS))}1"
+
 def _fit_columns(ws):
     for col in ws.columns:
         max_len = 0
@@ -46,8 +60,18 @@ def _fit_columns(ws):
             max_len = max(max_len, len(str(value)))
         ws.column_dimensions[col_letter].width = min(max_len + 2, 45)
 
+def _format_submit_time(ts: str | None) -> str:
+    if not ts:
+        return datetime.now().strftime("%d.%m.%Y %H:%M")
+    try:
+        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
+        return dt.astimezone().strftime("%d.%m.%Y %H:%M")
+    except Exception:
+        return ts
+
 def append_application_row(data: dict[str, Any], user_id: int, status: str):
-    ts = datetime.now().strftime("%d.%m.%Y %H:%M")
+    app = get_application(user_id) or {}
+    ts = _format_submit_time(app.get("last_apply_at") or app.get("created_at"))
     row = [
         ts,
         data.get("name", ""),
@@ -68,6 +92,7 @@ def append_application_row(data: dict[str, Any], user_id: int, status: str):
     if EXCEL_PATH.exists():
         wb = load_workbook(EXCEL_PATH)
         ws = wb.active
+        _ensure_headers(ws)
     else:
         wb = Workbook()
         ws = wb.active
