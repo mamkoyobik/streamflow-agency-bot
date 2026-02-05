@@ -1,16 +1,19 @@
 import json
 import os
 import re
+import ssl
 import uuid
 import urllib.parse
 import urllib.request
+import urllib.error
+import time
 from datetime import datetime
 from email.parser import BytesParser
 from email.policy import default
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from database import set_form_data, set_last_apply_at, set_source, set_status
+from database import save_web_application
 from texts import STATUS_LABELS
 
 ROOT_DIR = Path(__file__).parent
@@ -45,6 +48,31 @@ def load_settings():
 
 
 BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK = load_settings()
+try:
+    import certifi
+except Exception:
+    certifi = None
+
+
+def get_ssl_context():
+    disable_verify = os.getenv("SSL_NO_VERIFY", "").strip().lower() in {"1", "true", "yes"}
+    if disable_verify:
+        return ssl._create_unverified_context()
+    cert_file = os.getenv("SSL_CERT_FILE", "").strip()
+    cert_dir = os.getenv("SSL_CERT_DIR", "").strip()
+    if cert_file:
+        if Path(cert_file).exists():
+            return ssl.create_default_context(cafile=cert_file)
+        print(f"SSL_CERT_FILE not found: {cert_file}")
+    context = ssl.create_default_context()
+    if cert_dir:
+        if Path(cert_dir).exists():
+            context.load_verify_locations(capath=cert_dir)
+            return context
+        print(f"SSL_CERT_DIR not found: {cert_dir}")
+    if certifi:
+        return ssl.create_default_context(cafile=certifi.where())
+    return context
 
 
 def normalize_phone(text: str) -> str | None:
@@ -172,7 +200,7 @@ def build_multipart(fields: dict, files: dict):
 
 def telegram_request(method: str, data: dict, files: dict | None = None):
     if not BOT_TOKEN or not ADMIN_GROUP_ID:
-        raise RuntimeError("BOT_TOKEN или ADMIN_GROUP_ID не заданы")
+        raise RuntimeError({"description": "BOT_TOKEN или ADMIN_GROUP_ID не заданы"})
     url = f"https://api.telegram.org/bot{BOT_TOKEN}/{method}"
 
     if files:
@@ -183,8 +211,15 @@ def telegram_request(method: str, data: dict, files: dict | None = None):
         headers = {"Content-Type": "application/x-www-form-urlencoded"}
 
     req = urllib.request.Request(url, data=body, headers=headers)
-    with urllib.request.urlopen(req, timeout=20) as resp:
-        payload = json.loads(resp.read().decode("utf-8"))
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=get_ssl_context()) as resp:
+            payload = json.loads(resp.read().decode("utf-8"))
+    except urllib.error.HTTPError as err:
+        try:
+            payload = json.loads(err.read().decode("utf-8"))
+        except Exception:
+            payload = {"description": f"HTTP {err.code}"}
+        raise RuntimeError(payload)
     if not payload.get("ok"):
         raise RuntimeError(payload)
     return payload
@@ -217,6 +252,13 @@ def parse_multipart(body: bytes, content_type: str):
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_DIR), **kwargs)
+
+    def copyfile(self, source, outputfile):
+        try:
+            super().copyfile(source, outputfile)
+        except BrokenPipeError:
+            # Client closed connection early (browser navigation/refresh).
+            pass
 
     def do_GET(self):
         parsed = urllib.parse.urlparse(self.path)
@@ -287,7 +329,9 @@ class Handler(SimpleHTTPRequestHandler):
         living_raw = (fields.get("living") or "").strip()
         living = normalize_yes_no(living_raw)
         if not living:
-            return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
+            if len(living_raw) < 1:
+                return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
+            living = living_raw
 
         devices = (fields.get("devices") or "").strip()
         if len(devices) < 2:
@@ -336,7 +380,7 @@ class Handler(SimpleHTTPRequestHandler):
             "experience": experience,
         }
 
-        user_id = -int(datetime.now().timestamp() * 1000)
+        user_id = -int(time.time_ns())
         web_id = str(user_id)
 
         try:
@@ -381,15 +425,30 @@ class Handler(SimpleHTTPRequestHandler):
                 payload["photo_full"] = full_result["result"]["photo"][-1]["file_id"]
             except Exception:
                 payload["photo_full"] = None
-        except Exception:
-            return error("Ошибка отправки анкеты. Попробуй ещё раз.", status=500)
+        except Exception as err:
+            print("Telegram error:", err)
+            description = ""
+            if isinstance(err, RuntimeError) and err.args:
+                payload_err = err.args[0]
+                if isinstance(payload_err, dict):
+                    description = str(payload_err.get("description", ""))
+                else:
+                    description = str(payload_err)
+            message = "Ошибка отправки анкеты. Попробуй ещё раз."
+            if "not found" in description or "chat not found" in description:
+                message = "Бот не видит админ‑группу. Проверь ADMIN_GROUP_ID и что бот добавлен в группу."
+            elif "not enough rights" in description or "not a member" in description:
+                message = "Бот без прав отправки в группу. Добавь бота и выдай права."
+            elif "file is too big" in description:
+                message = "Фото слишком большое. Пришли файл меньше 10 МБ."
+            elif "TOKEN" in description or "not set" in description:
+                message = "Не настроен BOT_TOKEN или ADMIN_GROUP_ID."
+            return error(message, status=500)
 
         try:
-            set_status(user_id, "pending")
-            set_last_apply_at(user_id)
-            set_form_data(user_id, payload)
-            set_source(user_id, "site")
-        except Exception:
+            save_web_application(user_id, payload, source="site", status="pending")
+        except Exception as err:
+            print("DB error:", err)
             return error("Ошибка сохранения анкеты. Попробуй ещё раз.", status=500)
 
         bot_link = f"https://t.me/{BOT_USERNAME.strip().lstrip('@')}" if BOT_USERNAME.strip() else None
