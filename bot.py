@@ -386,7 +386,11 @@ def is_site_source(user_id: int) -> bool:
 def _safe_text(value) -> str:
     if value is None:
         return "—"
-    return html.escape(str(value))
+    text = str(value)
+    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff]", "", text)
+    text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
+    text = re.sub(r"\s+", " ", text).strip()
+    return html.escape(text)
 
 def build_admin_status_text(user_id: int, status: str) -> str:
     data = get_form_data(user_id) or {}

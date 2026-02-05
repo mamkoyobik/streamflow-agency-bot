@@ -95,6 +95,13 @@ def normalize_phone(text: str) -> str | None:
         return value
     return None
 
+def clean_text(value: str) -> str:
+    text = value or ""
+    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff]", "", text)
+    text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
+    text = re.sub(r"\s+", " ", text)
+    return text.strip()
+
 
 def is_valid_phone(text: str) -> bool:
     normalized = normalize_phone(text)
@@ -436,53 +443,53 @@ class Handler(SimpleHTTPRequestHandler):
                 payload["field"] = field
             return self.send_json(payload, status=status)
 
-        name = (fields.get("name") or "").strip()
+        name = clean_text(fields.get("name") or "")
         if len(name) < 2:
             return error("🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:", field="name")
 
-        city = (fields.get("city") or "").strip()
+        city = clean_text(fields.get("city") or "")
         if len(city) < 2:
             return error("🤍 Подскажи город и страну проживания ещё раз:", field="city")
 
-        phone_raw = (fields.get("phone") or "").strip()
+        phone_raw = clean_text(fields.get("phone") or "")
         if not is_valid_phone(phone_raw):
             return error("🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00", field="phone")
         phone = normalize_phone(phone_raw) or phone_raw
 
-        age_raw = (fields.get("age") or "").strip()
+        age_raw = clean_text(fields.get("age") or "")
         if not is_valid_birthdate(age_raw):
             return error("🤍 Напиши дату рождения в формате 01.01.2000:", field="age")
         age = normalize_birthdate(age_raw) or age_raw
 
-        living_raw = (fields.get("living") or "").strip()
+        living_raw = clean_text(fields.get("living") or "")
         living = normalize_yes_no(living_raw)
         if not living:
             if len(living_raw) < 1:
                 return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
             living = living_raw
 
-        devices = (fields.get("devices") or "").strip()
+        devices = clean_text(fields.get("devices") or "")
         if len(devices) < 2:
             return error("🤍 Уточни, пожалуйста, какие устройства есть:", field="devices")
 
-        device_model = (fields.get("device_model") or "").strip()
+        device_model = clean_text(fields.get("device_model") or "")
         if len(device_model) < 2:
             return error("🤍 Напиши модель устройства, пожалуйста:", field="device_model")
 
-        work_time = (fields.get("work_time") or "").strip()
+        work_time = clean_text(fields.get("work_time") or "")
         if not has_any_digit(work_time):
             return error("🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):", field="work_time")
 
-        headphones = (fields.get("headphones") or "").strip()
+        headphones = clean_text(fields.get("headphones") or "")
         if len(headphones) < 2:
             return error("🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:", field="headphones")
 
-        telegram_raw = (fields.get("telegram") or "").strip()
+        telegram_raw = clean_text(fields.get("telegram") or "")
         telegram = normalize_telegram(telegram_raw)
         if not telegram:
             return error("🤍 Укажи, пожалуйста, Telegram в формате @username:", field="telegram")
 
-        experience = (fields.get("experience") or "").strip()
+        experience = clean_text(fields.get("experience") or "")
         if len(experience) < 1:
             return error("🤍 Напиши, пожалуйста, есть ли опыт:", field="experience")
 
