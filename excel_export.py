@@ -24,6 +24,24 @@ HEADERS = [
     "Время работы",
     "Опыт",
     "Telegram",
+    "Источник",
+    "Статус",
+    "ID",
+]
+
+OLD_HEADERS = [
+    "Время подачи",
+    "Имя",
+    "Дата рождения",
+    "Город и страна",
+    "Телефон",
+    "Помещение без посторонних",
+    "Устройства",
+    "Модель устройства",
+    "Наушники",
+    "Время работы",
+    "Опыт",
+    "Telegram",
     "Статус",
     "ID",
 ]
@@ -41,6 +59,10 @@ def _ensure_headers(ws):
     if ws.max_row < 1:
         _init_sheet(ws)
         return
+    current = [ws.cell(row=1, column=col).value for col in range(1, ws.max_column + 1)]
+    if current[:len(OLD_HEADERS)] == OLD_HEADERS:
+        insert_at = OLD_HEADERS.index("Статус") + 1
+        ws.insert_cols(insert_at)
     for col, header in enumerate(HEADERS, start=1):
         cell = ws.cell(row=1, column=col)
         cell.value = header
@@ -67,11 +89,17 @@ def _format_submit_time(ts: str | None) -> str:
         dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         return dt.astimezone().strftime("%d.%m.%Y %H:%M")
     except Exception:
-        return ts
+    return ts
+
+def _format_source(value: str | None) -> str:
+    if not value:
+        return ""
+    return "Сайт" if value.lower() == "site" else "Бот"
 
 def append_application_row(data: dict[str, Any], user_id: int, status: str):
     app = get_application(user_id) or {}
     ts = _format_submit_time(app.get("last_apply_at") or app.get("created_at"))
+    source = _format_source(app.get("source"))
     row = [
         ts,
         data.get("name", ""),
@@ -85,6 +113,7 @@ def append_application_row(data: dict[str, Any], user_id: int, status: str):
         data.get("work_time", ""),
         data.get("experience", ""),
         data.get("telegram", ""),
+        source,
         status,
         str(user_id),
     ]
@@ -111,7 +140,8 @@ def update_application_status(user_id: int, status: str):
     target_row = None
     for row in range(2, ws.max_row + 1):
         val = ws.cell(row=row, column=len(HEADERS)).value
-        if str(val) == str(user_id):
+        val_alt = ws.cell(row=row, column=len(HEADERS) - 1).value
+        if str(val) == str(user_id) or str(val_alt) == str(user_id):
             target_row = row
     if not target_row:
         return
