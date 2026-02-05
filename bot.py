@@ -188,18 +188,6 @@ def normalize_yes_no(text: str) -> str | None:
         return "Нет"
     return None
 
-def format_submit_time(user_id: int) -> str:
-    app = get_application(user_id) or {}
-    ts = app.get("last_apply_at") or app.get("created_at")
-    if not ts:
-        return "—"
-    try:
-        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-        dt_local = dt.astimezone()
-        return dt_local.strftime("%d.%m.%Y %H:%M")
-    except Exception:
-        return ts
-
 def normalize_telegram(text: str) -> str | None:
     value = text.strip()
     if value.startswith("https://t.me/"):
@@ -433,8 +421,7 @@ def build_admin_summary(
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
-        f"🧭 Источник: {source_label_for_user(user_id)}\n"
-        f"🕒 Время подачи: {format_submit_time(user_id)}\n"
+        f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
     if archived:
@@ -457,8 +444,7 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"💼 Опыт: {_safe_text(data.get('experience', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
-        f"🧭 Источник: {source_label_for_user(user_id)}\n"
-        f"🕒 Время подачи: {format_submit_time(user_id)}\n\n"
+        f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
 
@@ -812,6 +798,7 @@ async def send_menu(
     caption: str = MENU_CAPTION,
     status: str | None = None,
     intro: str | None = None,
+
     tail: str | None = None
 ):
     await gentle_typing(message.chat.id)
