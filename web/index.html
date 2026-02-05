@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Streamflow — агентство стриминговых моделей</title>
-  <meta name="description" content="Streamflow — бережный онбординг и современный формат стриминга.">
+  <meta name="description" content="Streamflow — агентство стриминговых моделей. Бережная поддержка, современный формат, заявка онлайн.">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Bodoni+Moda:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -64,25 +59,49 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-text reveal">
-          <span class="eyebrow">Streamflow</span>
-          <h1>Агентство стриминговых моделей с мягким и безопасным подходом.</h1>
+          <span class="eyebrow">Streamflow agency</span>
+          <h1>Агентство стриминговых моделей <span class="hero-highlight">в эстетичном и безопасном формате</span>.</h1>
           <p>
-            Современный формат, эстетичный стиль и бережное сопровождение.
-            Мы помогаем с запуском, техникой и развитием.
+            Мы создаём комфортный старт: техника, визуал, подача и поддержка команды.
+            Всё спокойно, без давления и лишнего шума.
           </p>
           <div class="hero-actions">
             <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
             <a class="btn btn-ghost" href="streams.html">Смотреть примеры</a>
           </div>
           <div class="hero-tags">
-            <span>без 18+</span>
+            <span>без взрослого контента</span>
+            <span>мягкий стиль</span>
             <span>поддержка 24/7</span>
-            <span>гибкий график</span>
           </div>
         </div>
-        <div class="hero-media reveal">
-          <video src="assets/videos/stream-1.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          <div class="hero-media-label">Визуальный стиль и атмосфера</div>
+        <div class="carousel reveal" data-carousel>
+          <div class="carousel-viewport">
+            <div class="carousel-track">
+              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('assets/reviews/review-1.jpg');">
+                <h3>Свет и кадр</h3>
+                <p>Мягкая визуальная подача без резких акцентов.</p>
+              </article>
+              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('assets/reviews/review-2.jpg');">
+                <h3>Образ</h3>
+                <p>Эстетика остаётся в твоих руках.</p>
+              </article>
+              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('assets/reviews/review-3.jpg');">
+                <h3>Поддержка</h3>
+                <p>Команда рядом на каждом шаге.</p>
+              </article>
+              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('assets/reviews/review-4.jpg');">
+                <h3>Уверенность</h3>
+                <p>Спокойный рост без давления и стресса.</p>
+              </article>
+            </div>
+          </div>
+          <div class="carousel-dots">
+            <button class="carousel-dot is-active" type="button" aria-label="Слайд 1"></button>
+            <button class="carousel-dot" type="button" aria-label="Слайд 2"></button>
+            <button class="carousel-dot" type="button" aria-label="Слайд 3"></button>
+            <button class="carousel-dot" type="button" aria-label="Слайд 4"></button>
+          </div>
         </div>
       </div>
     </section>
@@ -91,34 +110,28 @@
       <div class="container split">
         <div class="split-content reveal">
           <span class="eyebrow">О работе</span>
-          <h2>Комфортный формат с фокусом на уважение.</h2>
+          <h2>Комфортный формат для моделей, которые ценят спокойствие.</h2>
           <p>
-            Мы создаём безопасное пространство для роста и развития.
-            Никакого давления — только прозрачные правила и поддержка.
+            Streamflow помогает встроиться в современный стриминг: настройка,
+            сопровождение, поддержка и прозрачные правила.
           </p>
-          <div class="note-grid">
-            <div class="note">
-              <strong>Гибкость</strong>
-              Ты сама выбираешь удобный ритм и формат.
-            </div>
-            <div class="note">
-              <strong>Эстетика</strong>
-              Стиль и подача остаются в твоих руках.
-            </div>
+          <div class="hero-actions">
+            <a class="btn btn-ghost" href="about.html">Подробнее о формате</a>
+            <a class="btn btn-ghost" href="conditions.html">Условия и преимущества</a>
           </div>
         </div>
         <div class="note-grid reveal">
           <div class="note">
-            <strong>Сопровождение</strong>
-            Поддержка на каждом этапе — от заявки до первых результатов.
-          </div>
-          <div class="note">
-            <strong>Уверенный старт</strong>
-            Настройка техники, света и образа — вместе.
+            <strong>Гибкость</strong>
+            Подбираем ритм и задачи под твой стиль жизни.
           </div>
           <div class="note">
             <strong>Прозрачность</strong>
-            Чёткие ожидания и понятные условия сотрудничества.
+            Понятные условия без скрытых моментов.
+          </div>
+          <div class="note">
+            <strong>Сопровождение</strong>
+            Техника, визуал, подача и поддержка менеджера.
           </div>
         </div>
       </div>
@@ -126,18 +139,56 @@
 
     <section class="section">
       <div class="container">
-        <div class="card-grid">
-          <div class="info-card reveal">
-            <span>Деликатная коммуникация</span>
-            <p>Мы общаемся мягко и уважительно, без давления.</p>
+        <span class="eyebrow">Условия и преимущества</span>
+        <h2>Всё по шагам и без лишнего стресса.</h2>
+        <p class="section-lead">Три базовых фокуса, которые дают уверенность на старте и стабильность в работе.</p>
+        <div class="offer-grid">
+          <div class="offer-card reveal">
+            <span class="offer-step">01</span>
+            <h3>Комфортный вход</h3>
+            <p>Объясняем, настраиваем, показываем, как выглядит работа изнутри.</p>
           </div>
-          <div class="info-card reveal">
-            <span>Современный формат</span>
-            <p>Техническая поддержка, качество картинки, комфорт.</p>
+          <div class="offer-card reveal">
+            <span class="offer-step">02</span>
+            <h3>Эстетика и безопасность</h3>
+            <p>Только аккуратный визуал и спокойный формат без давления.</p>
           </div>
-          <div class="info-card reveal">
-            <span>Рост и развитие</span>
-            <p>Подсказываем, как улучшить подачу и результат.</p>
+          <div class="offer-card reveal">
+            <span class="offer-step">03</span>
+            <h3>Стабильный рост</h3>
+            <p>Поддержка и рекомендации, чтобы результат рос плавно.</p>
+          </div>
+        </div>
+        <div class="hero-actions" style="margin-top: 28px;">
+          <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+          <a class="btn btn-ghost" href="steps.html">Смотреть этапы</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container split">
+        <div class="video-mosaic reveal">
+          <div class="video-tile large">
+            <video src="assets/videos/stream-1.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+          <div class="video-tile">
+            <video src="assets/videos/stream-2.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+          <div class="video-tile">
+            <video src="assets/videos/stream-3.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+        </div>
+        <div class="split-content reveal">
+          <span class="eyebrow">Видеопримеры</span>
+          <h2>Смотри атмосферу и ритм стримов.</h2>
+          <p>
+            Спокойный свет, чистый звук, мягкая подача. Можно открыть каждое видео и
+            почувствовать стиль заранее.
+          </p>
+          <div class="hero-actions">
+            <a class="btn btn-ghost" href="streams.html">Открыть примеры</a>
+            <a class="btn btn-ghost" href="portfolio.html">Смотреть портфолио</a>
           </div>
         </div>
       </div>
@@ -160,6 +211,11 @@
       <div class="footer-note">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>

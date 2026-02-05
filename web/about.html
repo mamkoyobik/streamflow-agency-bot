@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -64,10 +59,10 @@
     <section class="page-hero">
       <div class="container">
         <span class="eyebrow">О работе</span>
-        <h1>Современный формат стриминга с аккуратным стилем.</h1>
+        <h1>Современный стриминг с мягкой поддержкой и вниманием к деталям.</h1>
         <p>
-          Streamflow — это спокойная и эстетичная среда, где модель чувствует поддержку
-          и уверенность. Мы помогаем с техникой, образом, расписанием и адаптацией.
+          Мы выстраиваем спокойный формат без давления: от первых шагов до уверенного запуска.
+          Всё в комфортном темпе и с уважением к личным границам.
         </p>
       </div>
     </section>
@@ -75,34 +70,55 @@
     <section class="section">
       <div class="container split">
         <div class="split-content reveal">
-          <h2>Формат работы</h2>
+          <span class="eyebrow">Формат</span>
+          <h2>Ты управляешь стилем, мы отвечаем за поддержку.</h2>
           <p>
-            Онлайн-стриминг из комфортного места. Ты задаёшь ритм и стиль общения с аудиторией.
-            Никакого офиса и жёстких смен.
+            Удалённый формат, гибкий график и команда, которая помогает с техникой,
+            светом, подачей и организацией процесса.
           </p>
           <div class="note-grid">
             <div class="note">
-              <strong>Удалённый формат</strong>
-              Работаешь из любой точки мира.
+              <strong>Гибкий ритм</strong>
+              Подстраиваемся под твои планы и темп.
             </div>
             <div class="note">
-              <strong>Без давления</strong>
-              Мы подстраиваемся под тебя и твои цели.
+              <strong>Личный менеджер</strong>
+              На связи, когда нужно решить вопрос быстро.
             </div>
           </div>
         </div>
-        <div class="note-grid reveal">
-          <div class="note">
-            <strong>Поддержка</strong>
-            Поможем со всеми вопросами — от техники до визуала.
+        <div class="video-mosaic reveal">
+          <div class="video-tile large">
+            <video src="assets/videos/stream-4.mp4" autoplay muted loop playsinline preload="metadata"></video>
           </div>
-          <div class="note">
-            <strong>Личный менеджер</strong>
-            Всегда на связи и готов подсказать.
+          <div class="video-tile">
+            <video src="assets/videos/stream-5.mp4" autoplay muted loop playsinline preload="metadata"></video>
           </div>
-          <div class="note">
-            <strong>Прозрачность</strong>
-            Чёткие ожидания и понятные договорённости.
+          <div class="video-tile">
+            <video src="assets/videos/stream-6.mp4" autoplay muted loop playsinline preload="metadata"></video>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container">
+        <div class="card-grid">
+          <div class="info-card reveal">
+            <span>Безопасный формат</span>
+            <p>Мы работаем с эстетикой и комфортом, без взрослого визуала.</p>
+          </div>
+          <div class="info-card reveal">
+            <span>Техническая помощь</span>
+            <p>Подсказываем, как настроить свет, звук и кадр.</p>
+          </div>
+          <div class="info-card reveal">
+            <span>Уверенный старт</span>
+            <p>Помогаем подготовить образ и первые эфиры.</p>
+          </div>
+          <div class="info-card reveal">
+            <span>Прозрачные условия</span>
+            <p>Чётко объясняем правила, чтобы всё было спокойно.</p>
           </div>
         </div>
       </div>
@@ -125,6 +141,11 @@
       <div class="footer-note">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>

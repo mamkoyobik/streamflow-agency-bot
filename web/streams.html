@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -65,7 +60,7 @@
       <div class="container">
         <span class="eyebrow">Видеопримеры</span>
         <h1>Посмотри атмосферу стримов и стиль подачи.</h1>
-        <p>Кликни по карточке, чтобы открыть видео в модальном окне.</p>
+        <p>Нажми на карточку, чтобы открыть видео в модальном окне.</p>
       </div>
     </section>
 
@@ -157,6 +152,11 @@
       <video controls playsinline></video>
     </div>
   </div>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>

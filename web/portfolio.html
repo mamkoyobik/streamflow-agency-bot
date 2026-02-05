@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -70,32 +65,30 @@
     </section>
 
     <section class="section">
-      <div class="container">
-        <div class="portfolio-grid">
-          <div class="portfolio-block reveal">
-            <h3>Отзывы моделей</h3>
-            <div class="review-grid">
-              <img src="assets/reviews/review-1.jpg" alt="Отзыв 1" loading="lazy">
-              <img src="assets/reviews/review-2.jpg" alt="Отзыв 2" loading="lazy">
-              <img src="assets/reviews/review-3.jpg" alt="Отзыв 3" loading="lazy">
-              <img src="assets/reviews/review-4.jpg" alt="Отзыв 4" loading="lazy">
-              <img src="assets/reviews/review-5.jpg" alt="Отзыв 5" loading="lazy">
-              <img src="assets/reviews/review-6.jpg" alt="Отзыв 6" loading="lazy">
-              <img src="assets/reviews/review-7.jpg" alt="Отзыв 7" loading="lazy">
-            </div>
+      <div class="container portfolio-grid">
+        <div class="portfolio-block reveal">
+          <h3>Отзывы моделей</h3>
+          <div class="review-grid">
+            <img src="assets/reviews/review-1.jpg" alt="Отзыв 1" loading="lazy">
+            <img src="assets/reviews/review-2.jpg" alt="Отзыв 2" loading="lazy">
+            <img src="assets/reviews/review-3.jpg" alt="Отзыв 3" loading="lazy">
+            <img src="assets/reviews/review-4.jpg" alt="Отзыв 4" loading="lazy">
+            <img src="assets/reviews/review-5.jpg" alt="Отзыв 5" loading="lazy">
+            <img src="assets/reviews/review-6.jpg" alt="Отзыв 6" loading="lazy">
+            <img src="assets/reviews/review-7.jpg" alt="Отзыв 7" loading="lazy">
           </div>
-          <div class="portfolio-block reveal">
-            <h3>PDF портфолио</h3>
-            <div class="pdf-card">
-              <div class="pdf-preview">
-                <span>PDF</span>
-                <strong>Портфолио моделей</strong>
-                <p>Открыть в модальном окне или скачать.</p>
-              </div>
-              <div class="pdf-actions">
-                <button class="btn btn-primary" type="button" data-pdf="assets/portfolio.pdf">Открыть портфолио</button>
-                <a class="btn btn-ghost" href="assets/portfolio.pdf" target="_blank" rel="noopener">Скачать PDF</a>
-              </div>
+        </div>
+        <div class="portfolio-block reveal">
+          <h3>PDF портфолио</h3>
+          <div class="pdf-card">
+            <div class="pdf-preview">
+              <span>PDF</span>
+              <strong>Портфолио моделей</strong>
+              <p>Открыть в модальном окне или скачать.</p>
+            </div>
+            <div class="pdf-actions">
+              <button class="btn btn-primary" type="button" data-pdf="assets/portfolio.pdf">Открыть портфолио</button>
+              <a class="btn btn-ghost" href="assets/portfolio.pdf" target="_blank" rel="noopener">Скачать PDF</a>
             </div>
           </div>
         </div>
@@ -127,6 +120,11 @@
       <iframe title="PDF портфолио" src="assets/portfolio.pdf" loading="lazy"></iframe>
     </div>
   </div>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>

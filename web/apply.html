@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -65,19 +60,34 @@
       <div class="container">
         <span class="eyebrow">Заявка</span>
         <h1>Анкета для вступления в Streamflow.</h1>
-        <p>Все поля обязательны и полностью соответствуют анкете в боте.</p>
+        <p>Заполни форму ниже — мы внимательно читаем каждую заявку.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container form-shell">
         <aside class="form-intro reveal">
-          <h2>Перед отправкой</h2>
-          <p>Заполняй спокойно и внимательно — мы читаем каждую заявку.</p>
+          <span class="eyebrow">Процесс</span>
+          <h2>Как всё проходит</h2>
+          <p>Мягкий вход и личная связь после отправки анкеты.</p>
+          <div class="mini-steps">
+            <div class="mini-step">
+              <span>1</span>
+              <p>Заполни анкету и прикрепи фото.</p>
+            </div>
+            <div class="mini-step">
+              <span>2</span>
+              <p>Мы вернёмся с ответом и деталями в Telegram.</p>
+            </div>
+            <div class="mini-step">
+              <span>3</span>
+              <p>Стартуем с подготовкой и поддержкой команды.</p>
+            </div>
+          </div>
           <ul>
             <li>Данные конфиденциальны</li>
-            <li>Свяжемся лично в Telegram</li>
             <li>Ответ обычно в течение дня</li>
+            <li>Можно заполнить тестовую заявку</li>
           </ul>
         </aside>
 
@@ -137,7 +147,10 @@
             </div>
           </div>
           <div class="form-actions">
-            <button class="btn btn-primary" type="submit">Оставить заявку</button>
+            <div class="btn-row">
+              <button class="btn btn-primary" type="submit">Оставить заявку</button>
+              <button class="btn btn-ghost" type="button" data-test-submit>Тестовая заявка</button>
+            </div>
             <div id="form-status" class="form-status" role="status" aria-live="polite"></div>
             <div id="form-next" class="form-next hidden">
               <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Открыть Telegram</a>
@@ -164,6 +177,11 @@
       <div class="footer-note">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>

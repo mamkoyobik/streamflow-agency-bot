@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -71,35 +66,26 @@
 
     <section class="section">
       <div class="container">
-        <div class="timeline">
-          <div class="timeline-item reveal">
-            <div class="timeline-step">01</div>
-            <div>
-              <h3>Заявка</h3>
-              <p>Заполняешь анкету, и мы быстро возвращаемся с ответом.</p>
-            </div>
+        <div class="steps-grid">
+          <div class="steps-card reveal">
+            <span>01</span>
+            <h3>Заявка</h3>
+            <p>Заполняешь анкету, мы возвращаемся с ответом и уточняем детали.</p>
           </div>
-          <div class="timeline-item reveal">
-            <div class="timeline-step">02</div>
-            <div>
-              <h3>Знакомство</h3>
-              <p>Обсуждаем формат, условия и твои цели.</p>
-            </div>
+          <div class="steps-card reveal">
+            <span>02</span>
+            <h3>Созвон и подготовка</h3>
+            <p>Разбираем формат, цели и подготавливаем технику и подачу.</p>
           </div>
-          <div class="timeline-item reveal">
-            <div class="timeline-step">03</div>
-            <div>
-              <h3>Подготовка</h3>
-              <p>Настраиваем технику, свет, звук и визуальную подачу.</p>
-            </div>
+          <div class="steps-card reveal">
+            <span>03</span>
+            <h3>Старт</h3>
+            <p>Выходишь в эфир с поддержкой команды и спокойным темпом.</p>
           </div>
-          <div class="timeline-item reveal">
-            <div class="timeline-step">04</div>
-            <div>
-              <h3>Старт</h3>
-              <p>Выходишь в эфир с поддержкой команды и растёшь дальше.</p>
-            </div>
-          </div>
+        </div>
+        <div class="hero-actions" style="margin-top: 28px;">
+          <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+          <a class="btn btn-ghost" href="streams.html">Смотреть примеры</a>
         </div>
       </div>
     </section>
@@ -121,6 +107,11 @@
       <div class="footer-note">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>

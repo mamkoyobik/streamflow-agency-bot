@@ -31,11 +31,6 @@
         <a class="nav-link" href="portfolio.html">Портфолио</a>
         <a class="nav-link" href="apply.html">Заявка</a>
       </nav>
-      <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="mobile-nav">
-        <span></span>
-        <span></span>
-        <span></span>
-      </button>
       <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
     </div>
   </header>
@@ -45,7 +40,7 @@
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
         <span>Меню</span>
-        <button class="mobile-nav-close" type="button" data-nav-close>×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html">Главная</a>
@@ -64,37 +59,58 @@
     <section class="page-hero">
       <div class="container">
         <span class="eyebrow">Условия</span>
-        <h1>Прозрачные правила и понятный формат.</h1>
+        <h1>Прозрачные правила и понятный формат работы.</h1>
         <p>Мы строим долгосрочное сотрудничество без сюрпризов и скрытых условий.</p>
       </div>
     </section>
 
     <section class="section">
       <div class="container">
-        <div class="card-grid">
-          <div class="info-card reveal">
-            <span>Гибкий график</span>
-            <p>Подбираем расписание под твой ритм и цели.</p>
+        <span class="eyebrow">Преимущества</span>
+        <h2>Три ключевых акцента Streamflow.</h2>
+        <p class="section-lead">Ставим на комфорт, эстетику и стабильный рост. Всё остальное — в поддержку этих трёх шагов.</p>
+        <div class="offer-grid">
+          <div class="offer-card reveal">
+            <span class="offer-step">01</span>
+            <h3>Гибкий график</h3>
+            <p>Ритм работы подстраивается под твою жизнь, без жёстких смен.</p>
           </div>
-          <div class="info-card reveal">
-            <span>Прозрачные выплаты</span>
-            <p>Регулярные выплаты и понятная система расчёта.</p>
+          <div class="offer-card reveal">
+            <span class="offer-step">02</span>
+            <h3>Комфортная среда</h3>
+            <p>Удалённый формат, спокойная коммуникация, уважение к границам.</p>
           </div>
-          <div class="info-card reveal">
-            <span>Безопасный стиль</span>
-            <p>Формат без взрослого контента и с уважением к границам.</p>
+          <div class="offer-card reveal">
+            <span class="offer-step">03</span>
+            <h3>Прозрачность</h3>
+            <p>Понятные условия, понятные договорённости, чёткий план.</p>
           </div>
-          <div class="info-card reveal">
-            <span>Техническая поддержка</span>
-            <p>Помогаем с техникой, светом и картинкой.</p>
+        </div>
+        <div class="hero-actions" style="margin-top: 28px;">
+          <a class="btn btn-primary" href="apply.html">Оставить заявку</a>
+          <a class="btn btn-ghost" href="steps.html">Смотреть этапы</a>
+        </div>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="container split">
+        <div class="split-content reveal">
+          <h2>Что входит в сопровождение</h2>
+          <p>Мы поддерживаем не только старт, но и рост: от технической базы до подачи и уверенного ритма.</p>
+        </div>
+        <div class="note-grid reveal">
+          <div class="note">
+            <strong>Техника и свет</strong>
+            Поможем настроить картинку и звук.
           </div>
-          <div class="info-card reveal">
-            <span>Личный менеджер</span>
-            <p>На связи по любым вопросам и нюансам.</p>
+          <div class="note">
+            <strong>Образ и стиль</strong>
+            Деликатные рекомендации по подаче.
           </div>
-          <div class="info-card reveal">
-            <span>Рост результата</span>
-            <p>Подсказываем, как улучшить подачу и стабильность.</p>
+          <div class="note">
+            <strong>Коммуникация</strong>
+            Спокойный тон и персональная поддержка.
           </div>
         </div>
       </div>
@@ -117,6 +133,11 @@
       <div class="footer-note">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
+
+  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+    <span class="floating-menu-dot"></span>
+    <span data-menu-text>Меню</span>
+  </button>
 
   <script src="app.js"></script>
 </body>
