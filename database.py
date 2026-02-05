@@ -43,11 +43,13 @@ if DB_KIND == "postgres":
     ssl_context = None
     if sslmode in {"disable", "allow"}:
         ssl_context = None
-    elif sslmode in {"no-verify", "verify-none"}:
+    elif sslmode in {"no-verify", "verify-none", "require", "prefer"}:
         ssl_context = ssl._create_unverified_context()
     else:
         ssl_context = ssl.create_default_context()
 
+    connect_timeout = float(os.getenv("DB_CONNECT_TIMEOUT", "8"))
+    print(f"[db] connecting postgres {db_host}:{db_port}/{db_name} (timeout {connect_timeout}s)", flush=True)
     conn = pg8000.connect(
         user=db_user,
         password=db_password,
@@ -55,6 +57,7 @@ if DB_KIND == "postgres":
         port=db_port,
         database=db_name,
         ssl_context=ssl_context,
+        timeout=connect_timeout,
     )
     print(f"[db] postgres {db_host}:{db_port}/{db_name}")
 else:
