@@ -387,7 +387,7 @@ def _safe_text(value) -> str:
     if value is None:
         return "—"
     text = str(value)
-    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff]", "", text)
+    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]", "", text)
     text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return html.escape(text)

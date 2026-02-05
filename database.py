@@ -65,6 +65,13 @@ else:
     print(f"[db] sqlite {DB_PATH}")
 
 cursor = conn.cursor()
+if DB_KIND == "postgres":
+    with DB_LOCK:
+        try:
+            cursor.execute("SET client_encoding TO 'UTF8'")
+            conn.commit()
+        except Exception:
+            pass
 
 with DB_LOCK:
     if DB_KIND == "postgres":

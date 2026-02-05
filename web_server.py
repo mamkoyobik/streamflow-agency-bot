@@ -97,7 +97,7 @@ def normalize_phone(text: str) -> str | None:
 
 def clean_text(value: str) -> str:
     text = value or ""
-    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff]", "", text)
+    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]", "", text)
     text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
     text = re.sub(r"\s+", " ", text)
     return text.strip()
