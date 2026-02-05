@@ -26,6 +26,7 @@
         <a class="nav-link" href="index.html">Главная</a>
         <a class="nav-link" href="#about">О работе</a>
         <a class="nav-link" href="#offer">Условия</a>
+        <a class="nav-link" href="#income">Доходы</a>
         <a class="nav-link" href="#steps">Этапы</a>
         <a class="nav-link" href="#streams">Видеопримеры</a>
         <a class="nav-link" href="#portfolio">Портфолио</a>
@@ -46,6 +47,7 @@
         <a href="index.html">Главная</a>
         <a href="#about">О работе</a>
         <a href="#offer">Условия</a>
+        <a href="#income">Доходы</a>
         <a href="#steps">Этапы</a>
         <a href="#streams">Видеопримеры</a>
         <a href="#portfolio">Портфолио</a>
@@ -77,19 +79,19 @@
         <div class="carousel reveal" data-carousel>
           <div class="carousel-viewport">
             <div class="carousel-track">
-              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('https://source.unsplash.com/U6TFqmsV48g/1200x1600');">
-                <h3>Свет и кадр</h3>
-                <p>Чистая визуальная подача без резких акцентов.</p>
+              <article class="carousel-slide" style="--slide-bg: url('assets/models/model-1.jpg');">
+                <h3>Старт</h3>
+                <p>Спокойный старт и понятные шаги без давления.</p>
               </article>
-              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('https://source.unsplash.com/OnpLcF8Zkko/1200x1600');">
+              <article class="carousel-slide" style="--slide-bg: url('assets/models/milena.jpg');">
                 <h3>Образ</h3>
                 <p>Образ остаётся в твоих руках.</p>
               </article>
-              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('https://source.unsplash.com/SftXE9aH5FY/1200x1600');">
+              <article class="carousel-slide" style="--slide-bg: url('assets/models/model-3.jpg');">
                 <h3>Поддержка</h3>
                 <p>Команда рядом на каждом шаге.</p>
               </article>
-              <article class="carousel-slide" style="--slide-bg: linear-gradient(140deg, rgba(12, 9, 16, 0.2), rgba(12, 9, 16, 0.7)), url('https://source.unsplash.com/jnR7FpNCWCA/1200x1600');">
+              <article class="carousel-slide" style="--slide-bg: url('assets/models/confident.jpg');">
                 <h3>Уверенность</h3>
                 <p>Спокойный рост без давления и стресса.</p>
               </article>
@@ -118,18 +120,15 @@
             <a class="btn btn-ghost" href="#offer">Условия и преимущества</a>
           </div>
         </div>
-        <div class="note-grid reveal">
-          <div class="note">
-            <strong>Гибкость</strong>
-            Подбираем ритм и задачи под твой стиль жизни.
+        <div class="about-mosaic reveal">
+          <div class="mosaic-tile large">
+            <video src="assets/videos/stream-1.mp4" autoplay muted loop playsinline preload="metadata"></video>
           </div>
-          <div class="note">
-            <strong>Прозрачность</strong>
-            Понятные условия без скрытых моментов.
+          <div class="mosaic-tile">
+            <video src="assets/videos/stream-2.mp4" autoplay muted loop playsinline preload="metadata"></video>
           </div>
-          <div class="note">
-            <strong>Сопровождение</strong>
-            Техника, визуал, подача и поддержка менеджера.
+          <div class="mosaic-tile">
+            <video src="assets/videos/stream-3.mp4" autoplay muted loop playsinline preload="metadata"></video>
           </div>
         </div>
       </div>
@@ -164,74 +163,73 @@
       </div>
     </section>
 
-    <section class="section" id="streams">
-      <div class="container split">
-        <div class="video-mosaic reveal">
-          <div class="video-tile large">
-            <video src="assets/videos/stream-1.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          </div>
-          <div class="video-tile">
-            <video src="assets/videos/stream-2.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          </div>
-          <div class="video-tile">
-            <video src="assets/videos/stream-3.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          </div>
-        </div>
-        <div class="split-content reveal">
-          <span class="eyebrow">Видеопримеры</span>
-          <h2>Смотри атмосферу и ритм стримов.</h2>
-          <p>
-            Спокойный свет, чистый звук, спокойная подача. Можно открыть каждое видео и
-            почувствовать стиль заранее.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-ghost" href="#portfolio">Смотреть портфолио</a>
-          </div>
+    <section class="section section-center" id="income">
+      <div class="container">
+        <span class="eyebrow">Примеры дохода</span>
+        <h2>Примеры дохода</h2>
+        <p class="section-lead">Это реальные цифры моделей, которые работают с нами несколько месяцев.</p>
+        <div class="income-grid">
+          <article class="income-card reveal">
+            <img src="assets/models/model-1.jpg" alt="Анастасия" loading="lazy">
+            <div class="income-body">
+              <h3>Анастасия</h3>
+              <div class="income-amount">320 000 ₽</div>
+              <div class="income-note">Рост дохода</div>
+            </div>
+          </article>
+          <article class="income-card reveal">
+            <img src="assets/models/model-2.jpg" alt="Марина" loading="lazy">
+            <div class="income-body">
+              <h3>Марина</h3>
+              <div class="income-amount">150 000 ₽</div>
+              <div class="income-note">Рост дохода</div>
+            </div>
+          </article>
+          <article class="income-card reveal">
+            <img src="assets/models/model-3.jpg" alt="Ксения" loading="lazy">
+            <div class="income-body">
+              <h3>Ксения</h3>
+              <div class="income-amount">180 000 ₽</div>
+              <div class="income-note">Рост дохода</div>
+            </div>
+          </article>
+          <article class="income-card reveal">
+            <img src="assets/models/model-4.jpg" alt="Лиза" loading="lazy">
+            <div class="income-body">
+              <h3>Лиза</h3>
+              <div class="income-amount">110 000 ₽</div>
+              <div class="income-note">Рост дохода</div>
+            </div>
+          </article>
         </div>
       </div>
-      <div class="container" style="margin-top: 32px;">
+    </section>
+
+    <section class="section" id="streams">
+      <div class="container">
+        <div class="section-head">
+          <span class="eyebrow">Видеопримеры</span>
+          <h2>Смотри атмосферу и ритм стримов.</h2>
+          <p class="section-lead">Фрагменты реальных стримов, снятых моделями дома.</p>
+        </div>
         <div class="video-grid">
           <button class="video-card reveal" type="button" data-video="assets/videos/stream-1.mp4">
             <div class="video-preview">
               <video src="assets/videos/stream-1.mp4" muted playsinline preload="metadata"></video>
               <div class="video-overlay">▶</div>
             </div>
-            <div class="video-meta">Видео</div>
           </button>
           <button class="video-card reveal" type="button" data-video="assets/videos/stream-2.mp4">
             <div class="video-preview">
               <video src="assets/videos/stream-2.mp4" muted playsinline preload="metadata"></video>
               <div class="video-overlay">▶</div>
             </div>
-            <div class="video-meta">Видео</div>
           </button>
           <button class="video-card reveal" type="button" data-video="assets/videos/stream-3.mp4">
             <div class="video-preview">
               <video src="assets/videos/stream-3.mp4" muted playsinline preload="metadata"></video>
               <div class="video-overlay">▶</div>
             </div>
-            <div class="video-meta">Видео</div>
-          </button>
-          <button class="video-card reveal" type="button" data-video="assets/videos/stream-4.mp4">
-            <div class="video-preview">
-              <video src="assets/videos/stream-4.mp4" muted playsinline preload="metadata"></video>
-              <div class="video-overlay">▶</div>
-            </div>
-            <div class="video-meta">Видео</div>
-          </button>
-          <button class="video-card reveal" type="button" data-video="assets/videos/stream-5.mp4">
-            <div class="video-preview">
-              <video src="assets/videos/stream-5.mp4" muted playsinline preload="metadata"></video>
-              <div class="video-overlay">▶</div>
-            </div>
-            <div class="video-meta">Видео</div>
-          </button>
-          <button class="video-card reveal" type="button" data-video="assets/videos/stream-6.mp4">
-            <div class="video-preview">
-              <video src="assets/videos/stream-6.mp4" muted playsinline preload="metadata"></video>
-              <div class="video-overlay">▶</div>
-            </div>
-            <div class="video-meta">Видео</div>
           </button>
         </div>
       </div>
@@ -268,21 +266,10 @@
         <h2>Портфолио моделей Streamflow.</h2>
       </div>
       <div class="container portfolio-grid">
-                <div class="portfolio-block reveal">
-          <h3>Галерея образов</h3>
-          <div class="gallery-grid">
-            <img src="https://source.unsplash.com/KfXpsxBeiv0/800x1000" alt="Галерея 1" loading="lazy">
-            <img src="https://source.unsplash.com/OnpLcF8Zkko/800x1000" alt="Галерея 2" loading="lazy">
-            <img src="https://source.unsplash.com/U6TFqmsV48g/800x1000" alt="Галерея 3" loading="lazy">
-            <img src="https://source.unsplash.com/SftXE9aH5FY/800x1000" alt="Галерея 4" loading="lazy">
-            <img src="https://source.unsplash.com/jnR7FpNCWCA/800x1000" alt="Галерея 5" loading="lazy">
-            <img src="https://source.unsplash.com/_G8mhkd28bU/800x1000" alt="Галерея 6" loading="lazy">
-          </div>
-        </div>
-                <div class="portfolio-block reveal">
+        <div class="portfolio-block reveal">
           <h3>Портфолио моделей</h3>
           <div class="portfolio-embed">
-            <iframe title="Портфолио моделей" src="assets/portfolio.pdf#toolbar=0&navpanes=0&scrollbar=0" loading="lazy"></iframe>
+            <iframe title="Портфолио моделей" src="assets/portfolio.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH" loading="lazy"></iframe>
           </div>
         </div>
       </div>

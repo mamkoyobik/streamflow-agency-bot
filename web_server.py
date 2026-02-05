@@ -258,64 +258,67 @@ class Handler(SimpleHTTPRequestHandler):
         else:
             return self.send_json({"ok": False, "message": "Неверный тип данных."}, status=400)
 
-        def error(message: str, status: int = 400):
-            return self.send_json({"ok": False, "message": message}, status=status)
+        def error(message: str, status: int = 400, field: str | None = None):
+            payload = {"ok": False, "message": message}
+            if field:
+                payload["field"] = field
+            return self.send_json(payload, status=status)
 
         name = (fields.get("name") or "").strip()
         if len(name) < 2:
-            return error("🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:")
+            return error("🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:", field="name")
 
         city = (fields.get("city") or "").strip()
         if len(city) < 2:
-            return error("🤍 Подскажи город и страну проживания ещё раз:")
+            return error("🤍 Подскажи город и страну проживания ещё раз:", field="city")
 
         phone_raw = (fields.get("phone") or "").strip()
         if not is_valid_phone(phone_raw):
-            return error("🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00")
+            return error("🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00", field="phone")
         phone = normalize_phone(phone_raw) or phone_raw
 
         age_raw = (fields.get("age") or "").strip()
         if not is_valid_birthdate(age_raw):
-            return error("🤍 Напиши дату рождения в формате 01.01.2000:")
+            return error("🤍 Напиши дату рождения в формате 01.01.2000:", field="age")
         age = normalize_birthdate(age_raw) or age_raw
 
         living_raw = (fields.get("living") or "").strip()
         living = normalize_yes_no(living_raw)
         if not living:
-            return error("🤍 Ответь, пожалуйста, «да» или «нет»:")
+            return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
 
         devices = (fields.get("devices") or "").strip()
         if len(devices) < 2:
-            return error("🤍 Уточни, пожалуйста, какие устройства есть:")
+            return error("🤍 Уточни, пожалуйста, какие устройства есть:", field="devices")
 
         device_model = (fields.get("device_model") or "").strip()
         if len(device_model) < 2:
-            return error("🤍 Напиши модель устройства, пожалуйста:")
+            return error("🤍 Напиши модель устройства, пожалуйста:", field="device_model")
 
         work_time = (fields.get("work_time") or "").strip()
         if not has_any_digit(work_time):
-            return error("🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):")
+            return error("🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):", field="work_time")
 
         headphones = (fields.get("headphones") or "").strip()
         if len(headphones) < 2:
-            return error("🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:")
+            return error("🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:", field="headphones")
 
         telegram_raw = (fields.get("telegram") or "").strip()
         telegram = normalize_telegram(telegram_raw)
         if not telegram:
-            return error("🤍 Укажи, пожалуйста, Telegram в формате @username:")
+            return error("🤍 Укажи, пожалуйста, Telegram в формате @username:", field="telegram")
 
         experience = (fields.get("experience") or "").strip()
         if len(experience) < 1:
-            return error("🤍 Напиши, пожалуйста, есть ли опыт:")
+            return error("🤍 Напиши, пожалуйста, есть ли опыт:", field="experience")
 
         photo_face = files.get("photo_face")
         if not photo_face or not photo_face.get("data"):
-            return error("🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n📷 Пришли фотографию, пожалуйста")
+            return error("🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n📷 Пришли фотографию, пожалуйста", field="photo_face")
 
         photo_full = files.get("photo_full")
         if not photo_full or not photo_full.get("data"):
-            return error("🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n📷 Пришли фотографию, пожалуйста")
+            return error("🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n📷 Пришли фотографию, пожалуйста", field="photo_full")
 
         payload = {
             "name": name,

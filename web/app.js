@@ -295,7 +295,78 @@ function initMultiStep(form) {
   const btnNext = form.querySelector('[data-step-next]');
   const btnSubmit = form.querySelector('[data-step-submit]');
 
+  form.setAttribute('novalidate', 'novalidate');
+
   if (progressTotal) progressTotal.textContent = String(total);
+
+  const validators = {
+    name: (value) => (value.trim().length >= 2 ? '' : 'Введите имя полностью.'),
+    city: (value) => (value.trim().length >= 2 ? '' : 'Укажи город и страну.'),
+    phone: (value) => (isValidPhone(value) ? '' : 'Введите телефон в формате +7 900 000 00 00.'),
+    age: (value) => (isValidBirthdate(value) ? '' : 'Дата рождения в формате 01.01.2000.'),
+    living: (value) => (normalizeYesNo(value) ? '' : 'Ответь «да» или «нет».'),
+    devices: (value) => (value.trim().length >= 2 ? '' : 'Уточни, какие устройства есть.'),
+    device_model: (value) => (value.trim().length >= 2 ? '' : 'Напиши модель устройства.'),
+    work_time: (value) => (/\d/.test(value) ? '' : 'Укажи количество часов цифрами.'),
+    headphones: (value) => (value.trim().length >= 2 ? '' : 'Ответь про наушники с микрофоном.'),
+    telegram: (value) => (normalizeTelegram(value) ? '' : 'Укажи Telegram в формате @username.'),
+    experience: (value) => (value.trim().length >= 1 ? '' : 'Напиши, есть ли опыт.'),
+    photo_face: (_value, field) => (field.files && field.files.length ? '' : 'Загрузи фото анфас.'),
+    photo_full: (_value, field) => (field.files && field.files.length ? '' : 'Загрузи фото в полный рост.'),
+  };
+
+  function ensureFieldError(field) {
+    const wrapper = field.closest('.field');
+    if (!wrapper) return null;
+    let error = wrapper.querySelector('.field-error');
+    if (!error) {
+      error = document.createElement('div');
+      error.className = 'field-error';
+      error.setAttribute('role', 'alert');
+      error.setAttribute('aria-live', 'polite');
+      wrapper.appendChild(error);
+    }
+    return error;
+  }
+
+  function setFieldError(field, message) {
+    const wrapper = field.closest('.field');
+    const error = ensureFieldError(field);
+    if (wrapper) wrapper.classList.add('is-error');
+    if (error) error.textContent = message;
+    field.setAttribute('aria-invalid', 'true');
+  }
+
+  function clearFieldError(field) {
+    const wrapper = field.closest('.field');
+    const error = wrapper ? wrapper.querySelector('.field-error') : null;
+    if (wrapper) wrapper.classList.remove('is-error');
+    if (error) error.textContent = '';
+    field.removeAttribute('aria-invalid');
+  }
+
+  function validateField(field) {
+    if (!field) return true;
+    const value = field.type === 'file' ? '' : field.value || '';
+    const rule = validators[field.name];
+    let message = '';
+    if (rule) {
+      message = rule(value, field) || '';
+    } else if (field.required) {
+      if (field.type === 'file') {
+        message = field.files && field.files.length ? '' : 'Поле обязательно.';
+      } else {
+        message = value.trim() ? '' : 'Поле обязательно.';
+      }
+    }
+
+    if (message) {
+      setFieldError(field, message);
+      return false;
+    }
+    clearFieldError(field);
+    return true;
+  }
 
   function update() {
     steps.forEach((step, idx) => step.classList.toggle('is-active', idx === current));
@@ -310,11 +381,15 @@ function initMultiStep(form) {
     const step = steps[index];
     if (!step) return true;
     const fields = step.querySelectorAll('input, textarea, select');
-    for (const field of fields) {
-      if (!field.checkValidity()) {
-        field.reportValidity();
-        return false;
-      }
+    let firstInvalid = null;
+    fields.forEach((field) => {
+      const valid = validateField(field);
+      if (!valid && !firstInvalid) firstInvalid = field;
+    });
+    if (firstInvalid) {
+      firstInvalid.focus();
+      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return false;
     }
     return true;
   }
@@ -339,8 +414,13 @@ function initMultiStep(form) {
 
   steps.forEach((step, idx) => {
     step.querySelectorAll('input, textarea, select').forEach((field) => {
+      field.addEventListener('input', () => {
+        if (field.closest('.field')?.classList.contains('is-error')) {
+          validateField(field);
+        }
+      });
       field.addEventListener('change', () => {
-        if (idx === current && field.checkValidity() && current < total - 1) {
+        if (idx === current && validateField(field) && current < total - 1) {
           goTo(current + 1);
         }
       });
@@ -349,7 +429,7 @@ function initMultiStep(form) {
         if (field.tagName === 'TEXTAREA') return;
         if (current < total - 1) {
           event.preventDefault();
-          if (field.checkValidity()) {
+          if (validateField(field)) {
             goTo(current + 1);
           }
         }
@@ -358,6 +438,7 @@ function initMultiStep(form) {
   });
 
   form.addEventListener('form:reset-steps', () => goTo(0));
+  form.__stepper = { steps, goTo, validateField, validateStep, setFieldError };
   update();
 }
 
@@ -391,9 +472,37 @@ async function sendApplication(formData, elements, options = {}) {
         formNextLink.href = payload.bot_link;
         formNext.classList.remove('hidden');
       }
-    } else if (formStatus) {
-      formStatus.classList.add('is-error');
-      formStatus.innerHTML = payload.message || 'Ошибка отправки.';
+    } else {
+      const fieldName = payload.field;
+      const stepper = form ? form.__stepper : null;
+      let handledInline = false;
+      if (fieldName && form) {
+        const field = form.querySelector(`[name="${fieldName}"]`);
+        if (field) {
+          if (stepper) {
+            const step = field.closest('.form-step');
+            if (step) {
+              const stepIndex = stepper.steps.indexOf(step);
+              if (stepIndex >= 0) {
+                stepper.goTo(stepIndex);
+              }
+            }
+            stepper.setFieldError(field, payload.message || 'Поле заполнено неверно.');
+          }
+          field.focus();
+          field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          handledInline = true;
+        }
+      }
+      if (formStatus) {
+        if (handledInline) {
+          formStatus.textContent = '';
+          formStatus.classList.remove('is-error');
+        } else {
+          formStatus.classList.add('is-error');
+          formStatus.innerHTML = payload.message || 'Ошибка отправки.';
+        }
+      }
     }
   } catch (err) {
     if (formStatus) {
@@ -416,7 +525,83 @@ forms.forEach((form) => {
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    const stepper = form.__stepper;
+    if (stepper) {
+      for (let i = 0; i < stepper.steps.length; i += 1) {
+        const ok = stepper.validateStep(i);
+        if (!ok) {
+          stepper.goTo(i);
+          return;
+        }
+      }
+    }
     const formData = new FormData(form);
     await sendApplication(formData, elements, { resetForm: true });
   });
 });
+
+function normalizeTelegram(value) {
+  let v = (value || '').trim();
+  if (!v) return null;
+  if (v.startsWith('https://t.me/')) v = v.split('/').pop() || '';
+  if (v.startsWith('http://t.me/')) v = v.split('/').pop() || '';
+  if (v.startsWith('t.me/')) v = v.split('/')[1] || '';
+  if (v.startsWith('@')) v = v.slice(1);
+  if (/^[A-Za-z0-9_]{5,32}$/.test(v)) return `@${v}`;
+  return null;
+}
+
+function normalizePhone(value) {
+  const v = (value || '').replace(/[()\s-]+/g, '');
+  if (!v) return null;
+  if (v.startsWith('+')) {
+    const digits = v.slice(1);
+    if (!/^\d+$/.test(digits)) return null;
+    return `+${digits}`;
+  }
+  if (/^\d+$/.test(v)) return v;
+  return null;
+}
+
+function isValidPhone(value) {
+  const normalized = normalizePhone(value);
+  if (!normalized) return false;
+  const digits = normalized.replace(/\D/g, '');
+  return digits.length >= 10 && digits.length <= 15;
+}
+
+function normalizeYesNo(value) {
+  const v = (value || '').trim().toLowerCase();
+  if (!v) return null;
+  const yes = new Set(['да', 'есть', 'имеется', 'конечно', 'ага', 'y', 'yes']);
+  const no = new Set(['нет', 'не', 'нету', 'no', 'n']);
+  if (yes.has(v)) return 'Да';
+  if (no.has(v)) return 'Нет';
+  return null;
+}
+
+function isValidBirthdate(value) {
+  const v = (value || '').trim();
+  let day;
+  let month;
+  let year;
+  let match = v.match(/^(\d{2})[./](\d{2})[./](\d{4})$/);
+  if (match) {
+    day = Number(match[1]);
+    month = Number(match[2]);
+    year = Number(match[3]);
+  } else {
+    match = v.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+    if (!match) return false;
+    year = Number(match[1]);
+    month = Number(match[2]);
+    day = Number(match[3]);
+  }
+  if (year < 1900) return false;
+  const date = new Date(year, month - 1, day);
+  if (Number.isNaN(date.getTime())) return false;
+  if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return date <= today;
+}
