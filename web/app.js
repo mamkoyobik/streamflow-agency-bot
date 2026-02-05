@@ -573,10 +573,10 @@ function isValidPhone(value) {
 function normalizeYesNo(value) {
   const v = (value || '').trim().toLowerCase();
   if (!v) return null;
-  const yes = new Set(['да', 'есть', 'имеется', 'конечно', 'ага', 'y', 'yes']);
-  const no = new Set(['нет', 'не', 'нету', 'no', 'n']);
-  if (yes.has(v)) return 'Да';
-  if (no.has(v)) return 'Нет';
+  const yesRe = /\b(да|ага|есть|имеется|конечно|yes|y|da|ок|ok)\b/;
+  const noRe = /\b(нет|нету|неа|no|n)\b/;
+  if (yesRe.test(v)) return 'Да';
+  if (noRe.test(v)) return 'Нет';
   return null;
 }
 

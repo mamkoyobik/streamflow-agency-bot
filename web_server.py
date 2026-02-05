@@ -92,11 +92,13 @@ def has_any_digit(text: str) -> bool:
 
 def normalize_yes_no(text: str) -> str | None:
     value = text.strip().lower()
-    yes = {"да", "есть", "имеется", "конечно", "ага", "y", "yes"}
-    no = {"нет", "не", "нету", "no", "n"}
-    if value in yes:
+    if not value:
+        return None
+    yes_re = re.compile(r"\b(да|ага|есть|имеется|конечно|yes|y|da|ок|ok)\b", re.IGNORECASE)
+    no_re = re.compile(r"\b(нет|нету|неа|no|n)\b", re.IGNORECASE)
+    if yes_re.search(value):
         return "Да"
-    if value in no:
+    if no_re.search(value):
         return "Нет"
     return None
 
