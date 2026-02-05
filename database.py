@@ -1,9 +1,11 @@
 import json
 import sqlite3
 import threading
+from pathlib import Path
 from datetime import datetime, timezone, timedelta
 
-conn = sqlite3.connect("bot_database.db", check_same_thread=False)
+DB_PATH = Path(__file__).resolve().parent / "bot_database.db"
+conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
 conn.execute("PRAGMA journal_mode=WAL")
 conn.execute("PRAGMA busy_timeout = 5000")
 cursor = conn.cursor()
