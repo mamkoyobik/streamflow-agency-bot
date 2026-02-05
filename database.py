@@ -35,7 +35,11 @@ if DB_KIND == "postgres":
     query = urllib.parse.parse_qs(parsed.query or "")
     sslmode = (query.get("sslmode", ["require"])[0] or "require").lower()
     ssl_context = None
-    if sslmode not in {"disable", "allow"}:
+    if sslmode in {"disable", "allow"}:
+        ssl_context = None
+    elif sslmode in {"no-verify", "verify-none"}:
+        ssl_context = ssl._create_unverified_context()
+    else:
         ssl_context = ssl.create_default_context()
 
     conn = pg8000.connect(
