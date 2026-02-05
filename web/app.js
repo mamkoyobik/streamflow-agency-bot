@@ -304,7 +304,7 @@ function initMultiStep(form) {
     city: (value) => (value.trim().length >= 2 ? '' : 'Укажи город и страну.'),
     phone: (value) => (isValidPhone(value) ? '' : 'Введите телефон в формате +7 900 000 00 00.'),
     age: (value) => (isValidBirthdate(value) ? '' : 'Дата рождения в формате 01.01.2000.'),
-    living: (value) => (normalizeYesNo(value) ? '' : 'Ответь «да» или «нет».'),
+    living: (value) => (value.trim().length ? '' : 'Ответь «да» или «нет».'),
     devices: (value) => (value.trim().length >= 2 ? '' : 'Уточни, какие устройства есть.'),
     device_model: (value) => (value.trim().length >= 2 ? '' : 'Напиши модель устройства.'),
     work_time: (value) => (/\d/.test(value) ? '' : 'Укажи количество часов цифрами.'),
@@ -573,10 +573,14 @@ function isValidPhone(value) {
 function normalizeYesNo(value) {
   const v = (value || '').trim().toLowerCase();
   if (!v) return null;
-  const yesRe = /\b(да|ага|есть|имеется|конечно|yes|y|da|ок|ok)\b/;
-  const noRe = /\b(нет|нету|неа|no|n)\b/;
-  if (yesRe.test(v)) return 'Да';
-  if (noRe.test(v)) return 'Нет';
+  const tokens = v.match(/[a-zA-Zа-яА-ЯёЁ]+/g) || [v];
+  const yes = new Set(['да', 'ага', 'есть', 'имеется', 'конечно', 'yes', 'y', 'da', 'ок', 'ok']);
+  const no = new Set(['нет', 'нету', 'неа', 'no', 'n']);
+  for (const raw of tokens) {
+    const token = raw.toLowerCase();
+    if (yes.has(token)) return 'Да';
+    if (no.has(token)) return 'Нет';
+  }
   return null;
 }
 

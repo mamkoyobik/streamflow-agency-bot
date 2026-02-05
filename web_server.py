@@ -14,7 +14,7 @@ from email.policy import default
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 
-from database import save_web_application
+from database import save_web_application, get_status_counts, get_setting, set_setting
 from texts import STATUS_LABELS
 
 ROOT_DIR = Path(__file__).parent
@@ -22,6 +22,8 @@ WEB_DIR = ROOT_DIR / "web"
 ENV_PATH = ROOT_DIR / ".env"
 
 MAX_BODY_SIZE = 30 * 1024 * 1024
+ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
+ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
 
 
 def load_env_file(path: Path) -> None:
@@ -176,11 +178,123 @@ def build_admin_full_text(data: dict, web_id: str) -> str:
         f"Статус: <b>{status_label}</b>"
     )
 
-def build_admin_notice_text() -> str:
+def build_admin_menu_text(counts: dict) -> str:
     return (
-        "🔔 <b>Новая анкета с сайта</b>\n\n"
-        "Открой админ‑меню бота, чтобы просмотреть заявку."
+        "🛠 <b>Админ-меню</b>\n\n"
+        f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
+        f"Принятые: <b>{counts.get('accepted', 0)}</b>\n"
+        f"Отклонённые: <b>{counts.get('rejected', 0)}</b>\n\n"
+        "Выбери раздел ниже ✨"
     )
+
+def build_admin_menu_keyboard(counts: dict) -> dict:
+    pending = counts.get("pending", 0)
+    accepted = counts.get("accepted", 0)
+    rejected = counts.get("rejected", 0)
+    total = counts.get("total", pending + accepted + rejected)
+    return {
+        "inline_keyboard": [
+            [
+                {
+                    "text": f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
+                    "callback_data": "admin_menu:pending",
+                }
+            ],
+            [
+                {
+                    "text": f"✅ Принятые ({accepted})",
+                    "callback_data": "admin_menu:accepted",
+                }
+            ],
+            [
+                {
+                    "text": f"❌ Отклонённые ({rejected})",
+                    "callback_data": "admin_menu:rejected",
+                }
+            ],
+            [
+                {
+                    "text": f"📚 Все заявки ({total})",
+                    "callback_data": "admin_menu:all",
+                }
+            ],
+            [
+                {"text": "📊 Статистика", "callback_data": "admin_menu:stats"},
+                {"text": "📁 Excel", "callback_data": "admin_menu:excel"},
+            ],
+            [
+                {"text": "🧹 Архивировать старые", "callback_data": "admin_menu:archive"}
+            ],
+            [
+                {"text": "⚠️ Сбросить базу", "callback_data": "admin_menu:reset"},
+                {"text": "🔄 Обновить меню", "callback_data": "admin_menu:refresh"},
+            ],
+        ]
+    }
+
+def notify_admin_new_application():
+    counts = get_status_counts()
+    text = (
+        "🔔 <b>Новая анкета</b>\n\n"
+        f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
+        "Открой админ-меню, чтобы просмотреть ✨"
+    )
+    stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
+    if stored_id and str(stored_id).isdigit():
+        try:
+            telegram_request("deleteMessage", {"chat_id": str(ADMIN_GROUP_ID), "message_id": int(stored_id)})
+        except Exception:
+            pass
+    try:
+        result = telegram_request(
+            "sendMessage",
+            {
+                "chat_id": str(ADMIN_GROUP_ID),
+                "text": text,
+                "parse_mode": "HTML",
+            },
+        )
+        msg_id = result.get("result", {}).get("message_id")
+        if msg_id:
+            set_setting(ADMIN_NOTIFY_SETTING_KEY, str(msg_id))
+    except Exception:
+        pass
+
+def update_admin_menu_message():
+    counts = get_status_counts()
+    text = build_admin_menu_text(counts)
+    markup = build_admin_menu_keyboard(counts)
+    stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
+    if stored_id and str(stored_id).isdigit():
+        try:
+            telegram_request(
+                "editMessageText",
+                {
+                    "chat_id": str(ADMIN_GROUP_ID),
+                    "message_id": int(stored_id),
+                    "text": text,
+                    "parse_mode": "HTML",
+                    "reply_markup": json.dumps(markup, ensure_ascii=False),
+                },
+            )
+            return
+        except Exception:
+            pass
+    try:
+        result = telegram_request(
+            "sendMessage",
+            {
+                "chat_id": str(ADMIN_GROUP_ID),
+                "text": text,
+                "parse_mode": "HTML",
+                "reply_markup": json.dumps(markup, ensure_ascii=False),
+            },
+        )
+        msg_id = result.get("result", {}).get("message_id")
+        if msg_id:
+            set_setting(ADMIN_MENU_SETTING_KEY, str(msg_id))
+    except Exception:
+        pass
 
 
 def build_multipart(fields: dict, files: dict):
@@ -398,22 +512,13 @@ class Handler(SimpleHTTPRequestHandler):
         web_id = str(user_id)
 
         try:
-            send_full = os.getenv("WEB_SEND_FULL_TO_ADMIN", "1").strip().lower() in {"1", "true", "yes"}
+            send_full = os.getenv("WEB_SEND_FULL_TO_ADMIN", "").strip().lower() in {"1", "true", "yes"}
             if send_full:
                 telegram_request(
                     "sendMessage",
                     {
                         "chat_id": str(ADMIN_GROUP_ID),
                         "text": build_admin_full_text(payload, web_id),
-                        "parse_mode": "HTML",
-                    },
-                )
-            else:
-                telegram_request(
-                    "sendMessage",
-                    {
-                        "chat_id": str(ADMIN_GROUP_ID),
-                        "text": build_admin_notice_text(),
                         "parse_mode": "HTML",
                     },
                 )
@@ -450,6 +555,24 @@ class Handler(SimpleHTTPRequestHandler):
                 payload["photo_full"] = full_result["result"]["photo"][-1]["file_id"]
             except Exception:
                 payload["photo_full"] = None
+            try:
+                face_msg_id = face_result.get("result", {}).get("message_id")
+                if face_msg_id:
+                    telegram_request(
+                        "deleteMessage",
+                        {"chat_id": str(ADMIN_GROUP_ID), "message_id": int(face_msg_id)},
+                    )
+            except Exception:
+                pass
+            try:
+                full_msg_id = full_result.get("result", {}).get("message_id")
+                if full_msg_id:
+                    telegram_request(
+                        "deleteMessage",
+                        {"chat_id": str(ADMIN_GROUP_ID), "message_id": int(full_msg_id)},
+                    )
+            except Exception:
+                pass
         except Exception as err:
             print("Telegram error:", err)
             description = ""
@@ -480,6 +603,10 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as err:
             print("DB error:", err)
             return error("Ошибка сохранения анкеты. Попробуй ещё раз.", status=500)
+
+        # синхронизируем админ-меню и уведомление так же, как в боте
+        notify_admin_new_application()
+        update_admin_menu_message()
 
         bot_link = f"https://t.me/{BOT_USERNAME.strip().lstrip('@')}" if BOT_USERNAME.strip() else None
         return self.send_json({
