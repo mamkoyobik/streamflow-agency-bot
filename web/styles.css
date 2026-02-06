@@ -386,6 +386,13 @@ body[data-page="home"] .page {
   z-index: 1;
 }
 
+.hero-brand-row {
+  grid-column: 1 / -1;
+  display: flex;
+  justify-content: center;
+  margin-bottom: 10px;
+}
+
 .hero-text h1 {
   font-family: var(--font-title);
   font-size: clamp(2.6rem, 4.8vw, 4rem);
@@ -1801,6 +1808,10 @@ body.nav-open .mobile-nav-panel {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 28px;
+  }
+
+  .hero-brand-row {
+    margin-bottom: 0;
   }
 
   .hero-text {
