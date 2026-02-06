@@ -162,12 +162,12 @@ button {
 .brand {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 0;
 }
 
 .brand img {
-  width: 50px;
-  height: 50px;
+  width: 46px;
+  height: 46px;
   border-radius: 16px;
   box-shadow: 0 10px 24px rgba(17, 17, 17, 0.12);
 }
@@ -391,6 +391,17 @@ body[data-page="home"] .page {
   line-height: 1.15;
   margin: 12px 0 18px;
   text-shadow: 0 6px 24px rgba(255, 59, 157, 0.18);
+}
+
+.hero-logo {
+  margin-bottom: 18px;
+}
+
+.hero-logo img {
+  width: min(520px, 100%);
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 12px 30px rgba(0, 0, 0, 0.35));
 }
 
 .hero-text p {
@@ -1734,6 +1745,11 @@ body.nav-open .mobile-nav-panel {
 
   .hero-text {
     text-align: center;
+  }
+
+  .hero-logo {
+    display: flex;
+    justify-content: center;
   }
 
   .split-content {
