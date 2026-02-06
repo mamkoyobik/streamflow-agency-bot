@@ -399,6 +399,18 @@ body[data-page="home"] .page {
   transform: translateX(-50%);
   width: max-content;
   margin: 0;
+  padding-bottom: 18px;
+}
+
+.hero-brand-row::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  bottom: 0;
+  transform: translateX(-50%);
+  width: 160px;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
 }
 
 .hero-text h1 {
