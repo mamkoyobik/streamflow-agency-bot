@@ -294,8 +294,37 @@
       <div class="container portfolio-grid">
         <div class="portfolio-block reveal">
           <h3>Портфолио моделей</h3>
-          <div class="portfolio-embed">
-            <iframe title="Портфолио моделей" src="assets/portfolio.pdf#toolbar=0&navpanes=0&scrollbar=0&view=FitH" loading="lazy"></iframe>
+          <div class="portfolio-slider" data-portfolio>
+            <button class="portfolio-btn prev" type="button" aria-label="Предыдущее фото">‹</button>
+            <div class="portfolio-track">
+              <figure class="portfolio-slide">
+                <img src="assets/models/model-1.jpg" alt="Портфолио Streamflow 1" loading="lazy">
+              </figure>
+              <figure class="portfolio-slide">
+                <img src="assets/models/model-2.jpg" alt="Портфолио Streamflow 2" loading="lazy">
+              </figure>
+              <figure class="portfolio-slide">
+                <img src="assets/models/model-3.jpg" alt="Портфолио Streamflow 3" loading="lazy">
+              </figure>
+              <figure class="portfolio-slide">
+                <img src="assets/models/model-4.jpg" alt="Портфолио Streamflow 4" loading="lazy">
+              </figure>
+              <figure class="portfolio-slide">
+                <img src="assets/models/milena.jpg" alt="Портфолио Streamflow 5" loading="lazy">
+              </figure>
+              <figure class="portfolio-slide">
+                <img src="assets/models/confident.jpg" alt="Портфолио Streamflow 6" loading="lazy">
+              </figure>
+            </div>
+            <button class="portfolio-btn next" type="button" aria-label="Следующее фото">›</button>
+            <div class="portfolio-dots">
+              <button class="portfolio-dot is-active" type="button" aria-label="Слайд 1"></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 2"></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 3"></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 4"></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 5"></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 6"></button>
+            </div>
           </div>
         </div>
       </div>
@@ -362,32 +391,8 @@
             </div>
             <div class="form-step" data-step="6">
               <div class="field">
-                <label for="devices">6️⃣ Устройства (кроме ПК):</label>
-                <input id="devices" name="devices" type="text" required readonly placeholder="Выберите ниже">
-                <div class="device-options">
-                  <label class="device-chip">
-                    <input type="checkbox" value="Смартфон" data-device-option>
-                    <span>Смартфон</span>
-                  </label>
-                  <label class="device-chip">
-                    <input type="checkbox" value="Ноутбук" data-device-option>
-                    <span>Ноутбук</span>
-                  </label>
-                  <label class="device-chip">
-                    <input type="checkbox" value="Планшет" data-device-option>
-                    <span>Планшет</span>
-                  </label>
-                  <label class="device-chip">
-                    <input type="checkbox" value="Веб-камера" data-device-option>
-                    <span>Веб-камера</span>
-                  </label>
-                  <label class="device-chip">
-                    <input type="checkbox" value="Микрофон" data-device-option>
-                    <span>Микрофон</span>
-                  </label>
-                </div>
-                <input class="device-other" type="text" placeholder="Другое устройство (если есть)" data-device-other>
-                <small class="device-hint">Можно выбрать несколько вариантов</small>
+                <label for="devices">6️⃣ Устройства:</label>
+                <input id="devices" name="devices" type="text" required placeholder="Например: смартфон, ноутбук">
               </div>
             </div>
             <div class="form-step" data-step="7">

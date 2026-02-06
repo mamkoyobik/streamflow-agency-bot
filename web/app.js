@@ -256,6 +256,64 @@ carousels.forEach((carousel) => {
   startAuto();
 });
 
+const portfolioSliders = document.querySelectorAll('[data-portfolio]');
+portfolioSliders.forEach((slider) => {
+  const track = slider.querySelector('.portfolio-track');
+  const slides = Array.from(slider.querySelectorAll('.portfolio-slide'));
+  const dots = Array.from(slider.querySelectorAll('.portfolio-dot'));
+  const prev = slider.querySelector('.portfolio-btn.prev');
+  const next = slider.querySelector('.portfolio-btn.next');
+  if (!track || slides.length === 0) return;
+
+  const getClosestIndex = () => {
+    const scrollLeft = track.scrollLeft;
+    let closestIndex = 0;
+    let minDiff = Infinity;
+    slides.forEach((slide, idx) => {
+      const diff = Math.abs(scrollLeft - slide.offsetLeft);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closestIndex = idx;
+      }
+    });
+    return closestIndex;
+  };
+
+  const updateDots = (index) => {
+    if (!dots.length) return;
+    dots.forEach((dot, idx) => dot.classList.toggle('is-active', idx === index));
+  };
+
+  const goTo = (index) => {
+    const target = slides[index]?.offsetLeft ?? 0;
+    track.scrollTo({ left: target, behavior: 'smooth' });
+    updateDots(index);
+  };
+
+  let scrollTimer;
+  track.addEventListener('scroll', () => {
+    window.clearTimeout(scrollTimer);
+    scrollTimer = window.setTimeout(() => updateDots(getClosestIndex()), 80);
+  });
+
+  if (prev) {
+    prev.addEventListener('click', () => {
+      const nextIndex = Math.max(0, getClosestIndex() - 1);
+      goTo(nextIndex);
+    });
+  }
+
+  if (next) {
+    next.addEventListener('click', () => {
+      const nextIndex = Math.min(slides.length - 1, getClosestIndex() + 1);
+      goTo(nextIndex);
+    });
+  }
+
+  dots.forEach((dot, idx) => dot.addEventListener('click', () => goTo(idx)));
+  updateDots(0);
+});
+
 const forms = document.querySelectorAll('[data-application-form]');
 const telegramLinks = document.querySelectorAll('[data-telegram-link]');
 const formNextLinks = document.querySelectorAll('[data-form-next] a');
@@ -283,28 +341,6 @@ async function loadConfig() {
 }
 
 loadConfig();
-
-function initDevicePicker(form) {
-  const field = form.querySelector('input[name="devices"]');
-  if (!field) return;
-  const options = Array.from(form.querySelectorAll('[data-device-option]'));
-  const other = form.querySelector('[data-device-other]');
-  if (!options.length) return;
-
-  const updateValue = () => {
-    const selected = options.filter((opt) => opt.checked).map((opt) => opt.value);
-    const extra = other ? other.value.trim() : '';
-    const all = extra ? [...selected, extra] : selected;
-    field.value = all.join(', ');
-    if (field.closest('.field')?.classList.contains('is-error')) {
-      form.__stepper?.validateField(field);
-    }
-  };
-
-  options.forEach((opt) => opt.addEventListener('change', updateValue));
-  if (other) other.addEventListener('input', updateValue);
-  updateValue();
-}
 
 function initMultiStep(form) {
   const steps = Array.from(form.querySelectorAll('.form-step'));
@@ -545,7 +581,6 @@ forms.forEach((form) => {
   const submitButton = form.querySelector('button[type="submit"]');
   const elements = { form, formStatus, formNext, formNextLink, submitButton };
 
-  initDevicePicker(form);
   initMultiStep(form);
 
   form.addEventListener('submit', async (event) => {
