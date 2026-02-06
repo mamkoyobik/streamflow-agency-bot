@@ -380,6 +380,7 @@ body[data-page="home"] .page {
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 48px;
   align-items: center;
+  justify-items: center;
   width: 100%;
   position: relative;
   z-index: 1;
@@ -394,10 +395,14 @@ body[data-page="home"] .page {
 }
 
 .hero-text {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   text-align: center;
   max-width: 560px;
   margin-left: auto;
   margin-right: auto;
+  width: 100%;
 }
 
 .hero-brand {
@@ -425,6 +430,7 @@ body[data-page="home"] .page {
   letter-spacing: 0.12em;
   text-transform: uppercase;
   line-height: 1.25;
+  text-align: center;
 }
 
 .hero-actions {
