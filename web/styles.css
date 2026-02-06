@@ -381,6 +381,7 @@ body[data-page="home"] .page {
   gap: 48px;
   align-items: center;
   justify-items: stretch;
+  padding-top: 140px;
   width: 100%;
   position: relative;
   z-index: 1;
@@ -390,7 +391,12 @@ body[data-page="home"] .page {
   grid-column: 1 / -1;
   display: flex;
   justify-content: center;
-  margin-bottom: 10px;
+  position: absolute;
+  left: 50%;
+  top: 20px;
+  transform: translateX(-50%);
+  width: max-content;
+  margin: 0;
 }
 
 .hero-text h1 {
@@ -1808,10 +1814,11 @@ body.nav-open .mobile-nav-panel {
   .hero-grid {
     grid-template-columns: 1fr;
     gap: 28px;
+    padding-top: 120px;
   }
 
   .hero-brand-row {
-    margin-bottom: 0;
+    top: 10px;
   }
 
   .hero-text {
