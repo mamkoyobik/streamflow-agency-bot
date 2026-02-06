@@ -1399,6 +1399,21 @@ body.nav-open .mobile-nav-panel {
     --spacing-xl: 40px;
   }
 
+  .header-grid {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    row-gap: 10px;
+  }
+
+  .site-header .btn-primary {
+    display: none;
+  }
+
+  .brand {
+    justify-content: center;
+  }
+
   .brand img {
     width: 44px;
     height: 44px;
@@ -1420,9 +1435,13 @@ body.nav-open .mobile-nav-panel {
     padding-top: 54px;
   }
 
+  .hero-text {
+    text-align: center;
+  }
+
   .carousel-slide {
-    flex: 0 0 90%;
-    min-height: 260px;
+    flex: 0 0 100%;
+    min-height: 240px;
   }
 
   .hero-text h1 {
@@ -1431,19 +1450,25 @@ body.nav-open .mobile-nav-panel {
 
   .hero-text p {
     font-size: 0.98rem;
+    margin-left: auto;
+    margin-right: auto;
   }
 
   .hero-actions {
     flex-direction: column;
     align-items: stretch;
+    gap: 10px;
   }
 
   .hero-actions .btn {
     width: 100%;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
   }
 
   .hero-tags {
     font-size: 0.78rem;
+    justify-content: center;
   }
 
   .video-mosaic {
@@ -1546,8 +1571,13 @@ body.nav-open .mobile-nav-panel {
   }
 
   .floating-menu-btn {
-    bottom: 18px;
-    padding: 10px 18px;
+    left: auto;
+    right: 16px;
+    bottom: calc(16px + env(safe-area-inset-bottom));
+    transform: none;
+    padding: 9px 14px;
+    border-radius: 999px;
+    letter-spacing: 0.12em;
   }
 }
 
