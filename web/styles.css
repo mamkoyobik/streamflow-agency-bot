@@ -393,9 +393,14 @@ body[data-page="home"] .page {
   text-shadow: 0 6px 24px rgba(255, 59, 157, 0.18);
 }
 
+.hero-text {
+  text-align: center;
+}
+
 .hero-brand {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 18px;
   margin-bottom: 18px;
 }
@@ -403,7 +408,10 @@ body[data-page="home"] .page {
 .hero-brand img {
   width: 72px;
   height: 72px;
-  border-radius: 20px;
+  object-fit: contain;
+  border-radius: 18px;
+  background: rgba(12, 10, 16, 0.6);
+  padding: 6px;
   box-shadow: 0 12px 28px rgba(0, 0, 0, 0.35);
 }
 
@@ -415,11 +423,21 @@ body[data-page="home"] .page {
   line-height: 1.1;
 }
 
+.hero-actions {
+  justify-content: center;
+}
+
+.hero-tags {
+  justify-content: center;
+}
+
 .hero-text p {
   color: rgba(255, 255, 255, 0.74);
   max-width: 520px;
   font-size: 1.1rem;
   line-height: 1.75;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 .hero-actions {
