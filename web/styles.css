@@ -1006,11 +1006,11 @@ body[data-page="home"] .page {
 
 .portfolio-track {
   display: flex;
-  gap: 16px;
+  gap: 18px;
   overflow-x: auto;
   scroll-snap-type: x mandatory;
   scroll-behavior: smooth;
-  padding: 6px 2px 18px;
+  padding: 8px 2px 18px;
 }
 
 .portfolio-track::-webkit-scrollbar {
@@ -1018,7 +1018,7 @@ body[data-page="home"] .page {
 }
 
 .portfolio-slide {
-  flex: 0 0 520px;
+  flex: 0 0 clamp(360px, 46vw, 700px);
   border-radius: 16px;
   overflow: hidden;
   border: 1px solid var(--line);
@@ -1861,19 +1861,21 @@ body.nav-open .mobile-nav-panel {
   }
 
   .portfolio-track {
-    flex-direction: column;
-    overflow: visible;
-    scroll-snap-type: none;
-    gap: 16px;
+    flex-direction: row;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    padding-bottom: 16px;
   }
 
   .portfolio-slide {
-    flex: 1 1 auto;
-    width: 100%;
+    flex: 0 0 86vw;
+    width: auto;
   }
 
   .portfolio-dots {
-    display: none;
+    display: flex;
+    margin-top: 8px;
   }
 
   .form-nav .btn {
