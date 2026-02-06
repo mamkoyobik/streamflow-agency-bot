@@ -284,6 +284,28 @@ async function loadConfig() {
 
 loadConfig();
 
+function initDevicePicker(form) {
+  const field = form.querySelector('input[name="devices"]');
+  if (!field) return;
+  const options = Array.from(form.querySelectorAll('[data-device-option]'));
+  const other = form.querySelector('[data-device-other]');
+  if (!options.length) return;
+
+  const updateValue = () => {
+    const selected = options.filter((opt) => opt.checked).map((opt) => opt.value);
+    const extra = other ? other.value.trim() : '';
+    const all = extra ? [...selected, extra] : selected;
+    field.value = all.join(', ');
+    if (field.closest('.field')?.classList.contains('is-error')) {
+      form.__stepper?.validateField(field);
+    }
+  };
+
+  options.forEach((opt) => opt.addEventListener('change', updateValue));
+  if (other) other.addEventListener('input', updateValue);
+  updateValue();
+}
+
 function initMultiStep(form) {
   const steps = Array.from(form.querySelectorAll('.form-step'));
   if (!steps.length) return;
@@ -523,6 +545,7 @@ forms.forEach((form) => {
   const submitButton = form.querySelector('button[type="submit"]');
   const elements = { form, formStatus, formNext, formNextLink, submitButton };
 
+  initDevicePicker(form);
   initMultiStep(form);
 
   form.addEventListener('submit', async (event) => {
