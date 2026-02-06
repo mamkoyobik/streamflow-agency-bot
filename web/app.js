@@ -257,7 +257,7 @@ carousels.forEach((carousel) => {
 });
 
 const forms = document.querySelectorAll('[data-application-form]');
-const telegramLink = document.getElementById('telegram-link');
+const telegramLinks = document.querySelectorAll('[data-telegram-link]');
 const formNextLinks = document.querySelectorAll('[data-form-next] a');
 
 async function loadConfig() {
@@ -265,8 +265,10 @@ async function loadConfig() {
     const response = await fetch('/api/config');
     if (!response.ok) return;
     const data = await response.json();
-    if (data.telegram_link && telegramLink) {
-      telegramLink.href = data.telegram_link;
+    if (data.telegram_link && telegramLinks.length) {
+      telegramLinks.forEach((link) => {
+        link.href = data.telegram_link;
+      });
     }
     if (data.bot_link && formNextLinks.length) {
       formNextLinks.forEach((link) => {
