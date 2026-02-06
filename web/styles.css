@@ -395,7 +395,7 @@ body[data-page="home"] .page {
   justify-content: center;
   position: absolute;
   left: 50%;
-  top: 48px;
+  top: 30px;
   transform: translateX(-50%);
   width: max-content;
   margin: 0;
@@ -1832,7 +1832,7 @@ body.nav-open .mobile-nav-panel {
   }
 
   .hero-brand-row {
-  top: 24px;
+  top: 14px;
   }
 
   .hero-text {
