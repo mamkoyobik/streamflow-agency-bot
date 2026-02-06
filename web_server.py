@@ -649,7 +649,8 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
+    host = os.getenv("HOST", "0.0.0.0")
     port = int(os.getenv("PORT", "8080"))
-    server = ThreadingHTTPServer(("127.0.0.1", port), Handler)
-    print(f"Running on http://127.0.0.1:{port}")
+    server = ThreadingHTTPServer((host, port), Handler)
+    print(f"Running on http://{host}:{port}")
     server.serve_forever()
