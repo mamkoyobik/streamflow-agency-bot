@@ -34,6 +34,8 @@
 
 html {
   scroll-behavior: smooth;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body {
@@ -47,6 +49,8 @@ body {
   opacity: 1;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  width: 100%;
+  overflow-x: hidden;
 }
 
 body.preload {
@@ -101,6 +105,7 @@ button {
 .container {
   width: min(var(--container-width), 92%);
   margin: 0 auto;
+  max-width: 100%;
 }
 
 .site-header {
@@ -258,6 +263,7 @@ body[data-page="apply"] .nav-link[href="index.html#apply"] {
 
 .page {
   padding: 70px 0 70px;
+  overflow-x: hidden;
 }
 
 body[data-page="home"] .page {
@@ -482,6 +488,7 @@ body[data-page="home"] .page {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 40px;
+  min-width: 0;
 }
 
 .about-mosaic {
@@ -1437,6 +1444,23 @@ body.nav-open .mobile-nav-panel {
 
   .hero-text {
     text-align: center;
+  }
+
+  .hero-grid {
+    gap: 28px;
+  }
+
+  .carousel {
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+
+  .carousel-viewport,
+  .carousel-track {
+    padding-left: 0;
+    padding-right: 0;
+    margin-right: 0;
   }
 
   .carousel-slide {
