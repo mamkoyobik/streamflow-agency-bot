@@ -307,8 +307,11 @@ def build_menu_caption_with_status(
     return "\n\n".join(parts)
 
 PORTFOLIO_COOLDOWN_SECONDS = 10
+PORTFOLIO_AUTO_DELETE_SECONDS = 120
 PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
 PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
+PORTFOLIO_CLEANUP_TASKS: dict[int, asyncio.Task] = {}
+ADMIN_TEMP_MESSAGE_IDS: list[int] = []
 CAPTION_LIMIT = 1024
 
 DAILY_STATS_HOUR = 10
@@ -986,6 +989,9 @@ async def clear_user_flow_message(user_id: int):
     set_flow_message_id(user_id, None)
 
 async def clear_portfolio_media(user_id: int):
+    cleanup_task = PORTFOLIO_CLEANUP_TASKS.pop(user_id, None)
+    if cleanup_task and not cleanup_task.done():
+        cleanup_task.cancel()
     ids = PORTFOLIO_MEDIA_IDS.pop(user_id, [])
     for message_id in ids:
         try:
@@ -993,10 +999,45 @@ async def clear_portfolio_media(user_id: int):
         except Exception:
             pass
 
+async def _delayed_portfolio_cleanup(user_id: int, delay_seconds: int):
+    try:
+        await asyncio.sleep(delay_seconds)
+        await clear_portfolio_media(user_id)
+    except asyncio.CancelledError:
+        pass
+    except Exception:
+        logger.exception("Ошибка автоочистки портфолио-медиа")
+
+def schedule_portfolio_cleanup(user_id: int):
+    old = PORTFOLIO_CLEANUP_TASKS.pop(user_id, None)
+    if old and not old.done():
+        old.cancel()
+    PORTFOLIO_CLEANUP_TASKS[user_id] = asyncio.create_task(
+        _delayed_portfolio_cleanup(user_id, PORTFOLIO_AUTO_DELETE_SECONDS)
+    )
+
 def track_portfolio_media(user_id: int, message_ids: list[int]):
     if not message_ids:
         return
     PORTFOLIO_MEDIA_IDS.setdefault(user_id, []).extend(message_ids)
+    schedule_portfolio_cleanup(user_id)
+
+def track_admin_temp_message(message_id: int | None):
+    if not message_id:
+        return
+    if message_id not in ADMIN_TEMP_MESSAGE_IDS:
+        ADMIN_TEMP_MESSAGE_IDS.append(message_id)
+
+async def clear_admin_temp_messages():
+    if not ADMIN_TEMP_MESSAGE_IDS:
+        return
+    ids = ADMIN_TEMP_MESSAGE_IDS.copy()
+    ADMIN_TEMP_MESSAGE_IDS.clear()
+    for message_id in ids:
+        try:
+            await bot.delete_message(ADMIN_GROUP_ID, message_id)
+        except Exception:
+            pass
 
 async def start_application(message: Message, state: FSMContext):
     await state.clear()
@@ -2291,6 +2332,7 @@ async def admin_photos(call: CallbackQuery):
 
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message):
+    await clear_admin_temp_messages()
     await ensure_admin_menu_posted()
 
 @dp.callback_query(F.data.startswith("admin_menu:"))
@@ -2299,6 +2341,7 @@ async def admin_menu_action(call: CallbackQuery):
         if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
+        await clear_admin_temp_messages()
         action = call.data.split(":", 1)[1]
         if action in {"pending", "accepted", "rejected", "all"}:
             await clear_admin_notify()
@@ -2329,7 +2372,8 @@ async def admin_menu_action(call: CallbackQuery):
                 )
                 await safe_call_answer(call)
                 return
-            await call.message.answer_document(FSInputFile(str(file_path)))
+            msg = await call.message.answer_document(FSInputFile(str(file_path)))
+            track_admin_temp_message(msg.message_id)
             await safe_call_answer(call)
             return
         if action == "archive":
@@ -2460,6 +2504,10 @@ async def admin_reset_db_cancel(call: CallbackQuery):
 @dp.callback_query(F.data == "portfolio_reviews")
 async def portfolio_reviews(call: CallbackQuery):
     try:
+        if not call.message:
+            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            return
+        await clear_portfolio_media(call.from_user.id)
         messages = await call.message.answer_media_group([
             InputMediaPhoto(media=FSInputFile("media/review1.jpg")),
             InputMediaPhoto(media=FSInputFile("media/review2.jpg")),
@@ -2473,6 +2521,10 @@ async def portfolio_reviews(call: CallbackQuery):
 @dp.callback_query(F.data == "portfolio_videos")
 async def portfolio_streams(call: CallbackQuery):
     try:
+        if not call.message:
+            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            return
+        await clear_portfolio_media(call.from_user.id)
         now = datetime.now(timezone.utc)
         last = PORTFOLIO_VIDEO_LAST.get(call.from_user.id)
         if last and (now - last).total_seconds() < PORTFOLIO_COOLDOWN_SECONDS:
@@ -2492,6 +2544,10 @@ async def portfolio_streams(call: CallbackQuery):
 @dp.callback_query(F.data == "portfolio_pdf")
 async def portfolio_pdf(call: CallbackQuery):
     try:
+        if not call.message:
+            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            return
+        await clear_portfolio_media(call.from_user.id)
         base_dir = Path(__file__).resolve().parent
         candidates = [
             base_dir / "media" / "portfolio.pdf",
@@ -2513,18 +2569,24 @@ async def portfolio_pdf(call: CallbackQuery):
 
 @dp.message(F.text == "/stats", F.chat.id == ADMIN_GROUP_ID)
 async def admin_stats(message: Message):
-    await message.answer(build_admin_stats_text())
+    await clear_admin_temp_messages()
+    msg = await message.answer(build_admin_stats_text())
+    track_admin_temp_message(msg.message_id)
 
 @dp.message(F.text == "/excel", F.chat.id == ADMIN_GROUP_ID)
 async def admin_excel(message: Message):
+    await clear_admin_temp_messages()
     if not append_application_row:
-        await message.answer("🤍 Экспорт в Excel недоступен. Установи openpyxl.")
+        msg = await message.answer("🤍 Экспорт в Excel недоступен. Установи openpyxl.")
+        track_admin_temp_message(msg.message_id)
         return
     file_path = Path("applications.xlsx")
     if not file_path.exists():
-        await message.answer("🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨")
+        msg = await message.answer("🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨")
+        track_admin_temp_message(msg.message_id)
         return
-    await message.answer_document(FSInputFile(str(file_path)))
+    msg = await message.answer_document(FSInputFile(str(file_path)))
+    track_admin_temp_message(msg.message_id)
 # ================= RUN =================
 
 async def main():
