@@ -1,7 +1,24 @@
 import os
-from dotenv import load_dotenv
+from pathlib import Path
+try:
+    from dotenv import load_dotenv
+except Exception:
+    load_dotenv = None
 
-load_dotenv()
+if load_dotenv is not None:
+    load_dotenv()
+else:
+    env_path = Path(__file__).resolve().parent / ".env"
+    if env_path.exists():
+        for line in env_path.read_text(encoding="utf-8").splitlines():
+            row = line.strip()
+            if not row or row.startswith("#") or "=" not in row:
+                continue
+            key, value = row.split("=", 1)
+            key = key.strip()
+            value = value.strip().strip('"').strip("'")
+            if key and key not in os.environ:
+                os.environ[key] = value
 
 
 def _get_env(name: str, required: bool = True) -> str | None:

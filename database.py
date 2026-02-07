@@ -17,21 +17,83 @@ DB_URL = os.getenv("DATABASE_URL", "").strip()
 DB_KIND = "postgres" if DB_URL.startswith("postgres") else "sqlite"
 
 DB_LOCK = threading.Lock()
+conn = None
+cursor = None
+_PG_CONNECT_KWARGS: dict = {}
 
 def _sql(sql: str) -> str:
     if DB_KIND == "sqlite":
         return sql
     return sql.replace("?", "%s")
 
+def _is_retryable_db_error(exc: Exception) -> bool:
+    text = str(exc).lower()
+    markers = (
+        "timeout",
+        "timed out",
+        "broken pipe",
+        "connection reset",
+        "connection is closed",
+        "connection closed",
+        "server closed",
+        "network",
+        "could not receive data",
+        "connection refused",
+        "interfaceerror",
+        "temporary failure in name resolution",
+        "nodename nor servname provided",
+        "ssl",
+        "eof occurred",
+    )
+    return any(marker in text for marker in markers)
+
+
+def _open_postgres_connection():
+    return pg8000.connect(**_PG_CONNECT_KWARGS)
+
+
+def _reconnect_postgres_locked():
+    global conn, cursor
+    if DB_KIND != "postgres":
+        return
+    try:
+        if conn is not None:
+            conn.close()
+    except Exception:
+        pass
+    conn = _open_postgres_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute("SET client_encoding TO 'UTF8'")
+        conn.commit()
+    except Exception:
+        pass
+
+
 def _execute(sql: str, params: tuple = ()):
-    cursor.execute(_sql(sql), params)
+    global conn, cursor
+    query = _sql(sql)
+    attempts = 0
+    while True:
+        try:
+            cursor.execute(query, params)
+            return
+        except Exception as exc:
+            if DB_KIND != "postgres" or not _is_retryable_db_error(exc):
+                raise
+            attempts += 1
+            if attempts > 2:
+                raise
+            _reconnect_postgres_locked()
 
 if DB_KIND == "postgres":
     try:
         import pg8000
-    except Exception as exc:
-        raise RuntimeError("pg8000 is required when DATABASE_URL is set") from exc
+    except Exception:
+        print("[db] warning: pg8000 is missing, fallback to sqlite")
+        DB_KIND = "sqlite"
 
+if DB_KIND == "postgres":
     parsed = urllib.parse.urlparse(DB_URL)
     db_user = urllib.parse.unquote(parsed.username or "")
     db_password = urllib.parse.unquote(parsed.password or "")
@@ -48,19 +110,25 @@ if DB_KIND == "postgres":
     else:
         ssl_context = ssl.create_default_context()
 
-    connect_timeout = float(os.getenv("DB_CONNECT_TIMEOUT", "30"))
+    connect_timeout = float(os.getenv("DB_CONNECT_TIMEOUT", "8"))
+    _PG_CONNECT_KWARGS = {
+        "user": db_user,
+        "password": db_password,
+        "host": db_host,
+        "port": db_port,
+        "database": db_name,
+        "ssl_context": ssl_context,
+        "timeout": connect_timeout,
+    }
     print(f"[db] connecting postgres {db_host}:{db_port}/{db_name} (timeout {connect_timeout}s)", flush=True)
-    conn = pg8000.connect(
-        user=db_user,
-        password=db_password,
-        host=db_host,
-        port=db_port,
-        database=db_name,
-        ssl_context=ssl_context,
-        timeout=connect_timeout,
-    )
-    print(f"[db] postgres {db_host}:{db_port}/{db_name}")
-else:
+    try:
+        conn = _open_postgres_connection()
+        print(f"[db] postgres {db_host}:{db_port}/{db_name}")
+    except Exception as exc:
+        print(f"[db] warning: postgres connect failed ({exc}), fallback to sqlite")
+        DB_KIND = "sqlite"
+
+if DB_KIND == "sqlite":
     DB_PATH = Path(__file__).resolve().parent / "bot_database.db"
     conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
     conn.execute("PRAGMA journal_mode=WAL")
@@ -160,6 +228,15 @@ def _ensure_columns():
                 _execute(statement)
             conn.commit()
         except Exception as err:
+            if DB_KIND == "postgres" and _is_retryable_db_error(err):
+                try:
+                    _reconnect_postgres_locked()
+                    for statement in alter_statements:
+                        _execute(statement)
+                    conn.commit()
+                    return
+                except Exception:
+                    pass
             print(f"[db] warning: migration failed: {err}")
 
 _ensure_columns()

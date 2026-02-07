@@ -55,7 +55,7 @@ try:
 except Exception:
     append_application_row = None
     update_application_status = None
-    logging.getLogger(__name__).exception("Excel export недоступен (нет openpyxl?)")
+    logging.getLogger(__name__).warning("Excel export недоступен (нет openpyxl?)")
 from utils import edit_or_send
 from texts import (
     MENU_CAPTION,
@@ -563,52 +563,62 @@ async def archive_admin_messages_task():
         await asyncio.sleep(ADMIN_ARCHIVE_CHECK_HOURS * 3600)
 
 async def ensure_admin_menu_posted():
-    counts = get_status_counts()
-    menu_text = build_admin_menu_text(counts)
-    stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
-    if stored_id:
+    try:
         try:
-            await bot.edit_message_text(
-                chat_id=ADMIN_GROUP_ID,
-                message_id=int(stored_id),
-                text=menu_text,
+            counts = get_status_counts()
+        except Exception:
+            logger.exception("Не удалось получить статистику для админ-меню")
+            counts = {"pending": 0, "accepted": 0, "rejected": 0, "total": 0, "new": 0}
+        menu_text = build_admin_menu_text(counts)
+        stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
+        if stored_id:
+            try:
+                await bot.edit_message_text(
+                    chat_id=ADMIN_GROUP_ID,
+                    message_id=int(stored_id),
+                    text=menu_text,
+                    reply_markup=admin_menu_keyboard(counts)
+                )
+                return
+            except Exception:
+                logger.exception("Не удалось обновить существующее админ-меню")
+        try:
+            msg = await bot.send_message(
+                ADMIN_GROUP_ID,
+                menu_text,
                 reply_markup=admin_menu_keyboard(counts)
             )
-            return
+            set_setting(ADMIN_MENU_SETTING_KEY, str(msg.message_id))
         except Exception:
-            logger.exception("Не удалось обновить существующее админ-меню")
-    try:
-        msg = await bot.send_message(
-            ADMIN_GROUP_ID,
-            menu_text,
-            reply_markup=admin_menu_keyboard(counts)
-        )
-        set_setting(ADMIN_MENU_SETTING_KEY, str(msg.message_id))
+            logger.exception("Ошибка автопостинга админ-меню")
     except Exception:
-        logger.exception("Ошибка автопостинга админ-меню")
+        logger.exception("Критическая ошибка ensure_admin_menu_posted")
 
 async def update_admin_menu_message(text: str, reply_markup: InlineKeyboardMarkup):
-    stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
-    if stored_id and stored_id.isdigit():
+    try:
+        stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
+        if stored_id and stored_id.isdigit():
+            try:
+                await bot.edit_message_text(
+                    chat_id=ADMIN_GROUP_ID,
+                    message_id=int(stored_id),
+                    text=text,
+                    reply_markup=reply_markup
+                )
+                return
+            except Exception:
+                logger.exception("Не удалось обновить админ-сообщение")
         try:
-            await bot.edit_message_text(
-                chat_id=ADMIN_GROUP_ID,
-                message_id=int(stored_id),
-                text=text,
+            msg = await bot.send_message(
+                ADMIN_GROUP_ID,
+                text,
                 reply_markup=reply_markup
             )
-            return
+            await set_admin_menu_message_id(msg.message_id)
         except Exception:
-            logger.exception("Не удалось обновить админ-сообщение")
-    try:
-        msg = await bot.send_message(
-            ADMIN_GROUP_ID,
-            text,
-            reply_markup=reply_markup
-        )
-        await set_admin_menu_message_id(msg.message_id)
+            logger.exception("Ошибка отправки админ-сообщения")
     except Exception:
-        logger.exception("Ошибка отправки админ-сообщения")
+        logger.exception("Критическая ошибка update_admin_menu_message")
 
 def _parse_admin_photo_ids(value: str | None) -> list[int]:
     if not value:
@@ -621,29 +631,39 @@ def _parse_admin_photo_ids(value: str | None) -> list[int]:
     return result
 
 async def clear_admin_notify():
-    stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
-    if stored_id and stored_id.isdigit():
-        try:
-            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
-        except Exception:
-            pass
-    set_setting(ADMIN_NOTIFY_SETTING_KEY, None)
+    try:
+        stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
+        if stored_id and stored_id.isdigit():
+            try:
+                await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+            except Exception:
+                pass
+        set_setting(ADMIN_NOTIFY_SETTING_KEY, None)
+    except Exception:
+        logger.exception("Ошибка очистки уведомления админа")
 
 async def clear_admin_view_message():
-    stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
-    if stored_id and stored_id.isdigit():
-        try:
-            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
-        except Exception:
-            pass
-    set_setting(ADMIN_VIEW_SETTING_KEY, None)
+    try:
+        stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
+        if stored_id and stored_id.isdigit():
+            try:
+                await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+            except Exception:
+                pass
+        set_setting(ADMIN_VIEW_SETTING_KEY, None)
+    except Exception:
+        logger.exception("Ошибка очистки карточки просмотра")
 
 async def update_admin_view_message(
     text: str,
     reply_markup: InlineKeyboardMarkup,
     photo_id: str | None
 ):
-    stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
+    try:
+        stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
+    except Exception:
+        logger.exception("Не удалось прочитать id карточки просмотра")
+        stored_id = None
     if stored_id and stored_id.isdigit():
         msg_id = int(stored_id)
         if photo_id:
@@ -726,7 +746,11 @@ async def update_admin_photos(user_id: int):
         logger.exception("Ошибка отправки фото админу")
 
 async def notify_admin_new_application():
-    counts = get_status_counts()
+    try:
+        counts = get_status_counts()
+    except Exception:
+        logger.exception("Не удалось получить статистику для уведомления")
+        counts = {"pending": 0}
     text = (
         "🔔 <b>Новая анкета</b>\n\n"
         f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
@@ -754,7 +778,11 @@ async def set_admin_menu_message_id(message_id: int):
     set_setting(ADMIN_MENU_SETTING_KEY, str(message_id))
 
 async def post_admin_menu():
-    counts = get_status_counts()
+    try:
+        counts = get_status_counts()
+    except Exception:
+        logger.exception("Не удалось получить статистику для обновления админ-меню")
+        counts = {"pending": 0, "accepted": 0, "rejected": 0, "total": 0, "new": 0}
     await update_admin_menu_message(
         build_admin_menu_text(counts),
         admin_menu_keyboard(counts)
@@ -898,12 +926,13 @@ async def send_or_edit_user_text(
             err = str(e).lower()
             if "message is not modified" in err:
                 return True
+            # Message can be deleted/not editable. Fall back to sending a new one.
+            logger.warning("edit_message_text failed for user %s: %s", user_id, e)
         except TelegramForbiddenError:
             logger.warning("Нет прав на обновление сообщения пользователя")
             return False
         except Exception:
-            logger.exception("Не удалось обновить сообщение пользователя")
-            return False
+            logger.exception("Не удалось обновить сообщение пользователя, пробую отправить новое")
     else:
         menu_id = get_menu_message_id(user_id)
         if menu_id and len(text) <= CAPTION_LIMIT:
@@ -919,12 +948,13 @@ async def send_or_edit_user_text(
                 err = str(e).lower()
                 if "message is not modified" in err:
                     return True
+                # Menu caption can be missing/not editable. Fall back to sending a new message.
+                logger.warning("edit_message_caption failed for user %s: %s", user_id, e)
             except TelegramForbiddenError:
                 logger.warning("Нет прав на обновление меню пользователя")
                 return False
             except Exception:
-                logger.exception("Не удалось обновить меню пользователя")
-                return False
+                logger.exception("Не удалось обновить меню пользователя, пробую отправить новое сообщение")
     if message_id:
         try:
             await bot.delete_message(user_id, message_id)
@@ -1043,23 +1073,24 @@ async def start(message: Message, state: FSMContext):
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     if not call.message or call.message.chat.type != "private":
-        await call.answer("🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+        await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
         return
+    await safe_call_answer(call)
     await state.clear()
     await clear_portfolio_media(call.from_user.id)
     app = get_application(call.from_user.id)
     status = app.get("status") if app else None
     await send_menu(call.message, status=status)
     await clear_user_flow_message(call.from_user.id)
-    await call.answer()
 # ================= APPLY =================
 
 @dp.callback_query(F.data == "apply")
 async def apply(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await call.answer("🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
             return
+        await safe_call_answer(call)
         logger.info(
             "APPLY_CLICK user_id=%s is_bot=%s chat_id=%s chat_type=%s",
             call.from_user.id,
@@ -1107,113 +1138,123 @@ async def apply(call: CallbackQuery, state: FSMContext):
                 "Продолжим с того места, где остановились?",
                 reply_markup=continue_form_keyboard()
             )
-            await call.answer()
             return
 
         started = await start_application(call.message, state)
         if not started:
-            await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
             return
-        await call.answer()
     except Exception:
         logger.exception("Ошибка в apply")
         await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
 
 @dp.callback_query(F.data == "apply_restart")
 async def apply_restart(call: CallbackQuery, state: FSMContext):
-    if not call.message or call.message.chat.type != "private":
-        await call.answer("🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
-        return
-    app = get_application(call.from_user.id)
-    if app and is_rate_limited(app.get("last_apply_at")):
-        await edit_or_send(
-            call,
-            "🤍 Спасибо! Сейчас уже есть недавняя заявка.\n\n"
-            "Новую можно отправить немного позже ✨",
-            reply_markup=main_menu()
-        )
-        return
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            return
+        await safe_call_answer(call)
+        app = get_application(call.from_user.id)
+        if app and is_rate_limited(app.get("last_apply_at")):
+            await edit_or_send(
+                call,
+                "🤍 Спасибо! Сейчас уже есть недавняя заявка.\n\n"
+                "Новую можно отправить немного позже ✨",
+                reply_markup=main_menu()
+            )
+            return
 
-    await state.clear()
-    started = await start_application(call.message, state)
-    if not started:
-        await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
-        return
-    await call.answer()
+        await state.clear()
+        started = await start_application(call.message, state)
+        if not started:
+            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            return
+    except Exception:
+        logger.exception("Ошибка в apply_restart")
+        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
 
 @dp.callback_query(F.data == "form_continue")
 async def form_continue(call: CallbackQuery, state: FSMContext):
-    current = await state.get_state()
-    if not current:
-        app = get_application(call.from_user.id)
-        last_state = app.get("last_state") if app else None
-        if last_state and last_state in FORM_PROGRESS_STATES and not get_form_data(call.from_user.id):
-            set_last_state(call.from_user.id, None)
-            last_state = None
-        if last_state and last_state in FORM_PROGRESS_STATES:
-            await state.set_state(last_state)
-            await restore_form_data(state, call.from_user.id)
-            current = last_state
-        else:
-            started = await start_application(call.message, state)
-            if not started:
-                await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
-                return
-            await call.answer()
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
             return
+        await safe_call_answer(call)
+        current = await state.get_state()
+        if not current:
+            app = get_application(call.from_user.id)
+            last_state = app.get("last_state") if app else None
+            if last_state and last_state in FORM_PROGRESS_STATES and not get_form_data(call.from_user.id):
+                set_last_state(call.from_user.id, None)
+                last_state = None
+            if last_state and last_state in FORM_PROGRESS_STATES:
+                await state.set_state(last_state)
+                await restore_form_data(state, call.from_user.id)
+                current = last_state
+            else:
+                started = await start_application(call.message, state)
+                if not started:
+                    await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                    return
+                return
 
-    if current == ApplicationStates.preview.state:
-        data = await state.get_data()
-        if not REQUIRED_PREVIEW_FIELDS.issubset(data):
-            started = await start_application(call.message, state)
-            if not started:
-                await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+        if current == ApplicationStates.preview.state:
+            data = await state.get_data()
+            if not REQUIRED_PREVIEW_FIELDS.issubset(data):
+                started = await start_application(call.message, state)
+                if not started:
+                    await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                    return
                 return
-            await call.answer()
-            return
-        await show_preview(call.message, state)
-        await call.answer()
-        return
-    if current == ApplicationStates.edit_value.state:
-        data = await state.get_data()
-        field = data.get("edit_field")
-        if not field:
             await show_preview(call.message, state)
-            await call.answer()
             return
-        title = FIELD_TITLES.get(field, "Поле")
-        await send_or_edit_user_text(
-            call.from_user.id,
-            f"✏️ <b>Редактирование поля:</b>\n\n"
-            f"{title}\n\n"
-            f"👉 Введи новое значение:"
-        )
-        await call.answer()
-        return
-
-    for st in FORM_ORDER:
-        if st.state == current:
+        if current == ApplicationStates.edit_value.state:
+            data = await state.get_data()
+            field = data.get("edit_field")
+            if not field:
+                await show_preview(call.message, state)
+                return
+            title = FIELD_TITLES.get(field, "Поле")
             await send_or_edit_user_text(
                 call.from_user.id,
-                format_question(st, FORM_QUESTIONS[st]),
-                reply_markup=form_keyboard()
+                f"✏️ <b>Редактирование поля:</b>\n\n"
+                f"{title}\n\n"
+                f"👉 Введи новое значение:"
             )
-            await call.answer()
             return
 
-    started = await start_application(call.message, state)
-    if not started:
-        await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
-        return
-    await call.answer()
+        for st in FORM_ORDER:
+            if st.state == current:
+                await send_or_edit_user_text(
+                    call.from_user.id,
+                    format_question(st, FORM_QUESTIONS[st]),
+                    reply_markup=form_keyboard()
+                )
+                return
+
+        started = await start_application(call.message, state)
+        if not started:
+            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            return
+    except Exception:
+        logger.exception("Ошибка в form_continue")
+        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
 
 @dp.callback_query(F.data == "form_restart")
 async def form_restart(call: CallbackQuery, state: FSMContext):
-    started = await start_application(call.message, state)
-    if not started:
-        await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
-        return
-    await call.answer()
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            return
+        await safe_call_answer(call)
+        started = await start_application(call.message, state)
+        if not started:
+            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            return
+    except Exception:
+        logger.exception("Ошибка в form_restart")
+        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
 
 # ================= FORM STEPS =================
 
@@ -1556,38 +1597,41 @@ async def reject_reason_non_text(m: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "form_back")
 async def form_back(call: CallbackQuery, state: FSMContext):
-    current = await state.get_state()
+    try:
+        await safe_call_answer(call)
+        current = await state.get_state()
 
-    if current not in FORM_ORDER:
-        await call.answer()
-        return
+        if current not in FORM_ORDER:
+            return
 
-    idx = FORM_ORDER.index(current)
+        idx = FORM_ORDER.index(current)
 
-    if idx == 0:
-        await call.answer("🤍 Это первый пункт анкеты")
-        return
+        if idx == 0:
+            await safe_call_answer(call, "🤍 Это первый пункт анкеты")
+            return
 
-    prev_state = FORM_ORDER[idx - 1]
-    await state.set_state(prev_state)
-    set_last_state(call.from_user.id, prev_state.state)
+        prev_state = FORM_ORDER[idx - 1]
+        await state.set_state(prev_state)
+        set_last_state(call.from_user.id, prev_state.state)
 
-    data = await state.get_data()
-    field_key = STATE_TO_FIELD.get(prev_state)
-    prev_value = data.get(field_key) if field_key else None
+        data = await state.get_data()
+        field_key = STATE_TO_FIELD.get(prev_state)
+        prev_value = data.get(field_key) if field_key else None
 
-    question = format_question(prev_state, FORM_QUESTIONS[prev_state])
-    if prev_state in {ApplicationStates.photo_face, ApplicationStates.photo_full}:
-        question += "\n\nЕсли нужно заменить — пришли новое фото."
-    elif prev_value:
-        question += f"\n\nТвой прошлый ответ: {prev_value}\nЕсли нужно — отправь новый."
+        question = format_question(prev_state, FORM_QUESTIONS[prev_state])
+        if prev_state in {ApplicationStates.photo_face, ApplicationStates.photo_full}:
+            question += "\n\nЕсли нужно заменить — пришли новое фото."
+        elif prev_value:
+            question += f"\n\nТвой прошлый ответ: {prev_value}\nЕсли нужно — отправь новый."
 
-    await send_or_edit_user_text(
-        call.from_user.id,
-        question,
-        reply_markup=form_keyboard()
-    )
-    await call.answer()
+        await send_or_edit_user_text(
+            call.from_user.id,
+            question,
+            reply_markup=form_keyboard()
+        )
+    except Exception:
+        logger.exception("Ошибка в form_back")
+        await safe_call_answer(call, "Ошибка возврата на предыдущий шаг", show_alert=False)
 # ================= MAIN MENU HANDLERS =================
 
 @dp.callback_query(F.data == "about_work")
@@ -1718,6 +1762,9 @@ async def contact(call: CallbackQuery):
 @dp.callback_query(F.data == "back")
 async def back_handler(call: CallbackQuery, state: FSMContext):
     try:
+        if not call.message:
+            await safe_call_answer(call, "Не удалось открыть меню", show_alert=False)
+            return
         await state.clear()
         await start(call.message, state)
         await safe_call_answer(call)
@@ -1729,29 +1776,40 @@ async def back_handler(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "preview_edit")
 async def preview_edit(call: CallbackQuery):
-    await edit_or_send(
-        call,
-        "✏️ <b>Что хочешь исправить?</b>\n\nВыбери пункт:",
-        reply_markup=preview_edit_menu()
-    )
+    try:
+        await edit_or_send(
+            call,
+            "✏️ <b>Что хочешь исправить?</b>\n\nВыбери пункт:",
+            reply_markup=preview_edit_menu()
+        )
+    except Exception:
+        logger.exception("Ошибка в preview_edit")
+        await safe_call_answer(call, "Не удалось открыть редактирование", show_alert=False)
 
 @dp.callback_query(F.data.startswith("edit:"))
 async def edit_field(call: CallbackQuery, state: FSMContext):
-    field = call.data.split(":")[1]
+    try:
+        if ":" not in call.data:
+            await safe_call_answer(call, "Некорректная команда", show_alert=False)
+            return
+        field = call.data.split(":", 1)[1]
 
-    await state.update_data(edit_field=field)
-    await state.set_state(ApplicationStates.edit_value)
-    set_last_state(call.from_user.id, ApplicationStates.edit_value.state)
+        await state.update_data(edit_field=field)
+        await state.set_state(ApplicationStates.edit_value)
+        set_last_state(call.from_user.id, ApplicationStates.edit_value.state)
 
-    title = FIELD_TITLES.get(field, "Поле")
+        title = FIELD_TITLES.get(field, "Поле")
 
-    await send_or_edit_user_text(
-        call.from_user.id,
-        f"✏️ <b>Редактирование поля:</b>\n\n"
-        f"{title}\n\n"
-        f"👉 Введи новое значение:"
-    )
-    await call.answer()
+        await send_or_edit_user_text(
+            call.from_user.id,
+            f"✏️ <b>Редактирование поля:</b>\n\n"
+            f"{title}\n\n"
+            f"👉 Введи новое значение:"
+        )
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка в edit_field")
+        await safe_call_answer(call, "Не удалось открыть редактирование", show_alert=False)
 
 @dp.message(StateFilter(ApplicationStates.edit_value), F.text)
 async def save_edited_value(m: Message, state: FSMContext):
@@ -1825,33 +1883,44 @@ async def save_edited_value(m: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "preview_edit_photo")
 async def preview_edit_photo(call: CallbackQuery):
-    await edit_or_send(
-        call,
-        "📷 <b>Какое фото хочешь заменить?</b>",
-        reply_markup=preview_edit_photo_menu()
-    )
+    try:
+        await edit_or_send(
+            call,
+            "📷 <b>Какое фото хочешь заменить?</b>",
+            reply_markup=preview_edit_photo_menu()
+        )
+    except Exception:
+        logger.exception("Ошибка в preview_edit_photo")
+        await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
 
 @dp.callback_query(F.data.startswith("edit_photo:"))
 async def edit_photo(call: CallbackQuery, state: FSMContext):
-    photo_type = call.data.split(":")[1]
+    try:
+        if ":" not in call.data:
+            await safe_call_answer(call, "Некорректная команда", show_alert=False)
+            return
+        photo_type = call.data.split(":", 1)[1]
 
-    await state.update_data(edit_photo=photo_type)
+        await state.update_data(edit_photo=photo_type)
 
-    text = (
-        "📷 <b>Замена фото</b>\n\n"
-        "Отправь новое фото:\n"
-        "• чёткое\n"
-        "• без фильтров\n"
-        "• хорошее освещение\n\n"
-        "⬅️ Если передумала — нажми «Отмена»"
-    )
+        text = (
+            "📷 <b>Замена фото</b>\n\n"
+            "Отправь новое фото:\n"
+            "• чёткое\n"
+            "• без фильтров\n"
+            "• хорошее освещение\n\n"
+            "⬅️ Если передумала — нажми «Отмена»"
+        )
 
-    await send_or_edit_user_text(
-        call.from_user.id,
-        text,
-        reply_markup=cancel_keyboard()
-    )
-    await call.answer()
+        await send_or_edit_user_text(
+            call.from_user.id,
+            text,
+            reply_markup=cancel_keyboard()
+        )
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка в edit_photo")
+        await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
 
 @dp.message(F.photo)
 async def receive_edited_photo(m: Message, state: FSMContext):
@@ -1886,8 +1955,14 @@ async def reject_text_when_waiting_photo(m: Message, state: FSMContext):
 
 @dp.callback_query(F.data == "preview_back")
 async def preview_back(call: CallbackQuery, state: FSMContext):
-    await show_preview(call.message, state)
-    await call.answer()
+    try:
+        await safe_call_answer(call)
+        if not call.message:
+            return
+        await show_preview(call.message, state)
+    except Exception:
+        logger.exception("Ошибка в preview_back")
+        await safe_call_answer(call, "Не удалось открыть предпросмотр", show_alert=False)
 
 async def show_preview(m: Message, state: FSMContext):
     data = await state.get_data()
@@ -1997,17 +2072,24 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "edit_cancel")
 async def edit_cancel(call: CallbackQuery, state: FSMContext):
-    await state.update_data(edit_field=None, edit_photo=None)
-    await show_preview(call.message, state)
-    await call.answer("Отменено")
+    try:
+        await safe_call_answer(call)
+        await state.update_data(edit_field=None, edit_photo=None)
+        if not call.message:
+            return
+        await show_preview(call.message, state)
+        await safe_call_answer(call, "Отменено")
+    except Exception:
+        logger.exception("Ошибка в edit_cancel")
+        await safe_call_answer(call, "Не удалось отменить редактирование", show_alert=False)
 
 # ================= ADMIN =================
 
 @dp.callback_query(F.data.startswith("admin_accept:"))
 async def admin_accept(call: CallbackQuery):
     try:
-        if call.message.chat.id != ADMIN_GROUP_ID:
-            await call.answer("Недостаточно прав", show_alert=True)
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await safe_call_answer(call)
         parts = call.data.split(":")
@@ -2043,8 +2125,8 @@ async def admin_accept(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_reject:"))
 async def admin_reject(call: CallbackQuery, state: FSMContext):
     try:
-        if call.message.chat.id != ADMIN_GROUP_ID:
-            await call.answer("Недостаточно прав", show_alert=True)
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await safe_call_answer(call)
         parts = call.data.split(":")
@@ -2065,8 +2147,8 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("reject_tpl:"))
 async def reject_template(call: CallbackQuery, state: FSMContext):
     try:
-        if call.message.chat.id != ADMIN_GROUP_ID:
-            await call.answer("Недостаточно прав", show_alert=True)
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await safe_call_answer(call)
         tpl_code = call.data.split(":", 1)[1]
@@ -2178,19 +2260,22 @@ async def admin_status(call: CallbackQuery):
     try:
         _, uid, status = call.data.split(":", 2)
         status_label = STATUS_LABELS.get(status, status)
-        await call.answer(f"Статус: {status_label}", show_alert=False)
+        await safe_call_answer(call, f"Статус: {status_label}", show_alert=False)
     except Exception:
-        await call.answer("Статус обновлён", show_alert=False)
+        await safe_call_answer(call, "Статус обновлён", show_alert=False)
 
 @dp.callback_query(F.data.startswith("admin_photos:"))
 async def admin_photos(call: CallbackQuery):
     try:
+        if not call.message:
+            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            return
         uid = int(call.data.split(":", 1)[1])
         data = get_form_data(uid) or {}
         contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") or data.get("photo_full")
         if not photo_id:
-            await call.answer("Фото не найдено", show_alert=False)
+            await safe_call_answer(call, "Фото не найдено", show_alert=False)
             return
         status = get_status(uid) or "pending"
         text = build_admin_full_text(data, uid, status)
@@ -2199,10 +2284,10 @@ async def admin_photos(call: CallbackQuery):
             admin_list_view_keyboard(uid, status, "all", 0, 1, ADMIN_LIST_LIMIT, contact_url=contact_url),
             photo_id
         )
-        await call.answer()
+        await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка отправки фото админу")
-        await call.answer("Не удалось отправить фото", show_alert=False)
+        await safe_call_answer(call, "Не удалось отправить фото", show_alert=False)
 
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message):
@@ -2211,8 +2296,8 @@ async def admin_menu(message: Message):
 @dp.callback_query(F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery):
     try:
-        if call.message.chat.id != ADMIN_GROUP_ID:
-            await call.answer("Недостаточно прав", show_alert=True)
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         action = call.data.split(":", 1)[1]
         if action in {"pending", "accepted", "rejected", "all"}:
@@ -2304,6 +2389,9 @@ async def admin_list_pagination(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_view_photo:"))
 async def admin_view_photo(call: CallbackQuery):
     try:
+        if not call.message:
+            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            return
         _, uid_raw, photo_type, filter_key, offset_raw = call.data.split(":", 4)
         uid = int(uid_raw)
         offset = int(offset_raw)
@@ -2311,13 +2399,13 @@ async def admin_view_photo(call: CallbackQuery):
         contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") if photo_type == "face" else data.get("photo_full")
         if not photo_id:
-            await call.answer("Фото не найдено", show_alert=False)
+            await safe_call_answer(call, "Фото не найдено", show_alert=False)
             return
         status = get_status(uid) or "pending"
         label = _admin_list_label(filter_key)
         total = len(list_applications(None if filter_key == "all" else filter_key))
         if total == 0:
-            await call.answer()
+            await safe_call_answer(call)
             return
         page = offset // ADMIN_LIST_LIMIT + 1
         pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
@@ -2332,10 +2420,10 @@ async def admin_view_photo(call: CallbackQuery):
             admin_list_view_keyboard(uid, status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
             photo_id
         )
-        await call.answer()
+        await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка переключения фото")
-        await call.answer("Не удалось показать фото", show_alert=False)
+        await safe_call_answer(call, "Не удалось показать фото", show_alert=False)
 
 @dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
 async def admin_reset_db(message: Message):
@@ -2361,12 +2449,12 @@ async def admin_reset_db_confirm(call: CallbackQuery):
             "⚠️ Ошибка при сбросе базы.",
             admin_menu_keyboard(get_status_counts())
         )
-    await call.answer()
+    await safe_call_answer(call)
 
 @dp.callback_query(F.data == "admin_reset_db:cancel")
 async def admin_reset_db_cancel(call: CallbackQuery):
     await post_admin_menu()
-    await call.answer("Отменено")
+    await safe_call_answer(call, "Отменено")
 
         
 @dp.callback_query(F.data == "portfolio_reviews")
