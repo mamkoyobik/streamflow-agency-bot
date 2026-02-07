@@ -69,6 +69,10 @@
     <div class="container header-grid">
       <a class="brand" href="index.html" aria-label="Streamflow">
         <img src="assets/favicon.png" alt="Streamflow">
+        <span class="brand-stack">
+          <strong>Streamflow</strong>
+          <small>Model Agency</small>
+        </span>
       </a>
       <nav class="site-nav" aria-label="Навигация">
         <a class="nav-link" href="index.html">Главная</a>
@@ -110,12 +114,6 @@
   <main class="page">
     <section class="hero">
       <div class="container hero-grid">
-        <div class="hero-brand-row">
-          <div class="hero-brand">
-            <img src="assets/favicon.png" alt="Streamflow">
-            <span>Streamflow Agency</span>
-          </div>
-        </div>
         <div class="hero-text reveal">
           <span class="hero-eyebrow">Model Agency</span>
           <h1>Агентство стриминговых моделей</h1>
@@ -123,28 +121,9 @@
             Спокойный старт, ясные шаги и поддержка команды на каждом этапе.
             Без спешки, без давления, с понятной коммуникацией.
           </p>
-          <div class="hero-metrics">
-            <article class="hero-metric">
-              <strong>24/7</strong>
-              <span>Поддержка команды</span>
-            </article>
-            <article class="hero-metric">
-              <strong>0%</strong>
-              <span>Лишнего давления</span>
-            </article>
-            <article class="hero-metric">
-              <strong>1:1</strong>
-              <span>Понятная обратная связь</span>
-            </article>
-          </div>
           <div class="hero-actions">
             <a class="btn btn-primary" data-smart-cta href="#apply">Оставить заявку</a>
             <a class="btn btn-telegram" data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Telegram канал</a>
-          </div>
-          <a class="hero-link" href="#streams">Смотреть примеры</a>
-          <div class="hero-tags">
-            <span>без взрослого контента</span>
-            <span>поддержка 24/7</span>
           </div>
         </div>
         <div class="hero-media reveal">
@@ -369,45 +348,58 @@
       </div>
       <div class="container portfolio-grid">
         <div class="portfolio-block reveal">
-          <h3>Портфолио моделей</h3>
+          <div class="portfolio-header">
+            <h3>Портфолио моделей</h3>
+            <p>Листай слайды и быстро переходи к любому кадру через миниатюры.</p>
+          </div>
           <div class="portfolio-slider" data-portfolio>
-            <button class="portfolio-btn prev" type="button" aria-label="Предыдущее фото">‹</button>
-            <div class="portfolio-track">
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/1.jpg" alt="Портфолио Streamflow 1" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/2.jpg" alt="Портфолио Streamflow 2" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/3.jpg" alt="Портфолио Streamflow 3" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/4.jpg" alt="Портфолио Streamflow 4" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/5.jpg" alt="Портфолио Streamflow 5" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/6.jpg" alt="Портфолио Streamflow 6" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/7.jpg" alt="Портфолио Streamflow 7" loading="lazy">
-              </figure>
-              <figure class="portfolio-slide">
-                <img src="assets/portfolio/8.jpg" alt="Портфолио Streamflow 8" loading="lazy">
-              </figure>
+            <div class="portfolio-stage">
+              <button class="portfolio-btn prev" type="button" aria-label="Предыдущее фото">‹</button>
+              <div class="portfolio-track">
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/1.jpg" alt="Портфолио Streamflow 1" loading="lazy">
+                  <figcaption><span>01</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/2.jpg" alt="Портфолио Streamflow 2" loading="lazy">
+                  <figcaption><span>02</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/3.jpg" alt="Портфолио Streamflow 3" loading="lazy">
+                  <figcaption><span>03</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/4.jpg" alt="Портфолио Streamflow 4" loading="lazy">
+                  <figcaption><span>04</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/5.jpg" alt="Портфолио Streamflow 5" loading="lazy">
+                  <figcaption><span>05</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/6.jpg" alt="Портфолио Streamflow 6" loading="lazy">
+                  <figcaption><span>06</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/7.jpg" alt="Портфолио Streamflow 7" loading="lazy">
+                  <figcaption><span>07</span> Портфолио Streamflow</figcaption>
+                </figure>
+                <figure class="portfolio-slide">
+                  <img src="assets/portfolio/8.jpg" alt="Портфолио Streamflow 8" loading="lazy">
+                  <figcaption><span>08</span> Портфолио Streamflow</figcaption>
+                </figure>
+              </div>
+              <button class="portfolio-btn next" type="button" aria-label="Следующее фото">›</button>
             </div>
-            <button class="portfolio-btn next" type="button" aria-label="Следующее фото">›</button>
-            <div class="portfolio-dots">
-              <button class="portfolio-dot is-active" type="button" aria-label="Слайд 1"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 2"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 3"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 4"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 5"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 6"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 7"></button>
-              <button class="portfolio-dot" type="button" aria-label="Слайд 8"></button>
+            <div class="portfolio-dots portfolio-thumbs">
+              <button class="portfolio-dot is-active" type="button" aria-label="Слайд 1"><img src="assets/portfolio/1.jpg" alt=""><span>01</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 2"><img src="assets/portfolio/2.jpg" alt=""><span>02</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 3"><img src="assets/portfolio/3.jpg" alt=""><span>03</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 4"><img src="assets/portfolio/4.jpg" alt=""><span>04</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 5"><img src="assets/portfolio/5.jpg" alt=""><span>05</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 6"><img src="assets/portfolio/6.jpg" alt=""><span>06</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 7"><img src="assets/portfolio/7.jpg" alt=""><span>07</span></button>
+              <button class="portfolio-dot" type="button" aria-label="Слайд 8"><img src="assets/portfolio/8.jpg" alt=""><span>08</span></button>
             </div>
           </div>
         </div>
@@ -572,7 +564,7 @@
       <div class="footer-brand">
         <img src="assets/favicon.png" alt="Streamflow">
         <div class="footer-brand-text">
-          <strong>Streamflow Agency</strong>
+          <strong>Streamflow</strong>
           <span>Model Agency</span>
         </div>
       </div>
