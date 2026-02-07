@@ -6,6 +6,20 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+function normalizeInitialScrollPosition() {
+  if (!('scrollRestoration' in history)) return;
+  history.scrollRestoration = 'manual';
+  window.addEventListener('load', () => {
+    if (!window.location.hash) {
+      window.scrollTo(0, 0);
+      requestAnimationFrame(() => window.scrollTo(0, 0));
+    }
+    history.scrollRestoration = 'auto';
+  });
+}
+
+normalizeInitialScrollPosition();
+
 function initScrollProgress() {
   const update = () => {
     const doc = document.documentElement;

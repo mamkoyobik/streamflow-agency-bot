@@ -172,7 +172,7 @@ button {
   backdrop-filter: blur(11px) saturate(128%);
   background: rgba(10, 10, 10, 0.7);
   border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-  overflow-x: clip;
+  overflow: visible;
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.22);
   isolation: isolate;
 }
@@ -201,7 +201,7 @@ button {
 .header-grid {
   display: grid;
   grid-template-columns: auto 1fr auto;
-  gap: 20px;
+  gap: 14px;
   align-items: center;
   align-content: center;
   min-height: 88px;
@@ -251,7 +251,7 @@ button {
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: max-content;
-  gap: 8px;
+  gap: 4px;
   justify-content: start;
   align-items: center;
   font-size: 0.79rem;
@@ -274,18 +274,23 @@ button {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 10px;
+  padding: 8px 8px;
   min-height: 38px;
   min-width: max-content;
   border-radius: 12px;
   border: 1px solid transparent;
   transition: background 0.25s ease, color 0.25s ease, border-color 0.25s ease, transform 0.2s ease;
   font-weight: 700;
-  letter-spacing: 0.06em;
+  letter-spacing: 0.045em;
   text-transform: uppercase;
   white-space: nowrap;
   line-height: 1.1;
   flex: 0 0 auto;
+}
+
+.site-header .btn-primary {
+  padding-inline: clamp(20px, 2.3vw, 34px);
+  white-space: nowrap;
 }
 
 .nav-telegram {
@@ -1311,6 +1316,8 @@ body[data-page="home"] .page {
   border: 1px solid rgba(255, 255, 255, 0.14);
   padding: clamp(16px, 2.6vw, 30px);
   min-width: 0;
+  max-width: 980px;
+  margin: 0 auto;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.38);
 }
 
@@ -1351,7 +1358,7 @@ body[data-page="home"] .page {
   padding: 10px;
   min-width: 0;
   overflow: hidden;
-  width: min(100%, 560px);
+  width: min(100%, 450px);
   margin: 0 auto;
 }
 
@@ -1382,13 +1389,14 @@ body[data-page="home"] .page {
   scroll-snap-align: center;
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.44);
   position: relative;
-  aspect-ratio: 9 / 16;
+  aspect-ratio: auto;
 }
 
 .portfolio-slide img {
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
+  max-height: min(74vh, 640px);
+  object-fit: contain;
   background: #07060b;
   display: block;
 }
@@ -2241,12 +2249,41 @@ body.nav-open .mobile-nav-panel {
   }
 
   .site-nav {
-    gap: 6px;
+    gap: 4px;
   }
 
   .nav-link {
-    padding: 7px 9px;
-    font-size: 0.72rem;
+    padding: 7px 7px;
+    font-size: 0.68rem;
+    letter-spacing: 0.035em;
+  }
+}
+
+@media (max-width: 1680px) and (min-width: 1361px) {
+  .brand-stack strong {
+    font-size: 1.24rem;
+  }
+
+  .brand-stack small {
+    font-size: 0.66rem;
+    letter-spacing: 0.16em;
+  }
+
+  .site-nav {
+    gap: 3px;
+  }
+
+  .nav-link {
+    font-size: 0.66rem;
+    letter-spacing: 0.03em;
+    padding: 8px 6px;
+  }
+
+  .site-header .btn-primary {
+    padding-inline: 24px;
+    min-height: 46px;
+    font-size: 0.8rem;
+    letter-spacing: 0.06em;
   }
 }
 
@@ -2630,7 +2667,7 @@ body.nav-open .mobile-nav-panel {
   .portfolio-stage {
     border-radius: 16px;
     padding: 8px;
-    width: min(100%, 420px);
+    width: min(100%, 380px);
   }
 
   .portfolio-slide figcaption {
@@ -2642,7 +2679,9 @@ body.nav-open .mobile-nav-panel {
   }
 
   .portfolio-slide img {
-    height: 100%;
+    height: auto;
+    max-height: min(64vh, 520px);
+    object-fit: contain;
   }
 
   .portfolio-dot {
@@ -2795,7 +2834,9 @@ body.nav-open .mobile-nav-panel {
   }
 
   .portfolio-slide img {
-    height: 100%;
+    height: auto;
+    max-height: min(58vh, 430px);
+    object-fit: contain;
   }
 
   .portfolio-dot {
