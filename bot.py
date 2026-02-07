@@ -2492,8 +2492,16 @@ async def portfolio_streams(call: CallbackQuery):
 @dp.callback_query(F.data == "portfolio_pdf")
 async def portfolio_pdf(call: CallbackQuery):
     try:
+        base_dir = Path(__file__).resolve().parent
+        candidates = [
+            base_dir / "media" / "portfolio.pdf",
+            base_dir / "web" / "assets" / "portfolio.pdf",
+        ]
+        pdf_path = next((p for p in candidates if p.exists()), None)
+        if not pdf_path:
+            raise FileNotFoundError("portfolio.pdf не найден ни в media, ни в web/assets")
         msg = await call.message.answer_document(
-            FSInputFile("media/portfolio.pdf")
+            FSInputFile(str(pdf_path))
         )
         track_portfolio_media(call.from_user.id, [msg.message_id])
         await safe_call_answer(call)
