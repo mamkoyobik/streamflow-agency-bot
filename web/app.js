@@ -6,6 +6,74 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 });
 
+function initScrollProgress() {
+  const update = () => {
+    const doc = document.documentElement;
+    const scrollTop = doc.scrollTop || document.body.scrollTop;
+    const scrollHeight = doc.scrollHeight - doc.clientHeight;
+    const progress = scrollHeight > 0 ? Math.min(100, Math.max(0, (scrollTop / scrollHeight) * 100)) : 0;
+    document.body.style.setProperty('--scroll-progress', `${progress}%`);
+  };
+
+  let ticking = false;
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      update();
+      ticking = false;
+    });
+  };
+
+  update();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+}
+
+initScrollProgress();
+
+const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+function initHeroParallax() {
+  if (prefersReduced) return;
+  if (window.matchMedia('(max-width: 1100px)').matches) return;
+  const hero = document.querySelector('.hero');
+  if (!hero) return;
+
+  let targetX = 0;
+  let targetY = 0;
+  let currentX = 0;
+  let currentY = 0;
+  const maxShift = 14;
+
+  function render() {
+    currentX += (targetX - currentX) * 0.1;
+    currentY += (targetY - currentY) * 0.1;
+    hero.style.setProperty('--hero-parallax-x', `${currentX}px`);
+    hero.style.setProperty('--hero-parallax-y', `${currentY}px`);
+    hero.style.setProperty('--hero-parallax-x2', `${-currentX * 0.55}px`);
+    hero.style.setProperty('--hero-parallax-y2', `${-currentY * 0.55}px`);
+    requestAnimationFrame(render);
+  }
+
+  hero.addEventListener('pointermove', (event) => {
+    const rect = hero.getBoundingClientRect();
+    const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    targetX = nx * maxShift;
+    targetY = ny * maxShift;
+  });
+
+  hero.addEventListener('pointerleave', () => {
+    targetX = 0;
+    targetY = 0;
+  });
+
+  render();
+}
+
+initHeroParallax();
+
 const revealElements = document.querySelectorAll('.reveal');
 if (revealElements.length) {
   const observer = new IntersectionObserver((entries) => {
@@ -19,8 +87,6 @@ if (revealElements.length) {
 
   revealElements.forEach((el) => observer.observe(el));
 }
-
-const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
 if (!prefersReduced) {
   document.querySelectorAll('a[href]').forEach((link) => {
@@ -66,6 +132,26 @@ videoCards.forEach((card) => {
     });
   }
 });
+
+const ambientVideos = Array.from(document.querySelectorAll('video[autoplay][muted][loop]'));
+if (ambientVideos.length) {
+  const ambientObserver = new IntersectionObserver((entries) => {
+    entries.forEach((entry) => {
+      const video = entry.target;
+      if (!(video instanceof HTMLVideoElement)) return;
+      if (entry.isIntersecting && entry.intersectionRatio > 0.35) {
+        video.play().catch(() => {});
+      } else {
+        video.pause();
+      }
+    });
+  }, { threshold: [0, 0.35, 0.7] });
+
+  ambientVideos.forEach((video) => {
+    video.pause();
+    ambientObserver.observe(video);
+  });
+}
 
 const videoModal = document.getElementById('video-modal');
 const modalVideo = videoModal ? videoModal.querySelector('video') : null;
@@ -340,7 +426,67 @@ async function loadConfig() {
   }
 }
 
-loadConfig();
+function initSmartCta() {
+  const ctas = Array.from(document.querySelectorAll('[data-smart-cta]'));
+  if (!ctas.length) return;
+
+  ctas.forEach((cta) => {
+    cta.dataset.defaultText = cta.textContent.trim();
+    cta.dataset.defaultHref = cta.getAttribute('href') || '#apply';
+  });
+
+  function getTelegramHref() {
+    const link = document.querySelector('[data-telegram-link]');
+    return link ? link.getAttribute('href') || '#apply' : '#apply';
+  }
+
+  function detectSection() {
+    const sections = ['apply', 'portfolio', 'streams'];
+    const marker = window.scrollY + window.innerHeight * 0.42;
+    for (const id of sections) {
+      const section = document.getElementById(id);
+      if (!section) continue;
+      const top = section.offsetTop;
+      const bottom = top + section.offsetHeight;
+      if (marker >= top && marker < bottom) return id;
+    }
+    return null;
+  }
+
+  function applyState(sectionId) {
+    let text = ctas[0]?.dataset.defaultText || 'Оставить заявку';
+    let href = ctas[0]?.dataset.defaultHref || '#apply';
+    if (sectionId === 'streams' || sectionId === 'portfolio') {
+      text = 'Смотреть примеры';
+      href = '#streams';
+    } else if (sectionId === 'apply') {
+      text = 'Telegram канал';
+      href = getTelegramHref();
+    }
+    ctas.forEach((cta) => {
+      cta.textContent = text;
+      cta.setAttribute('href', href);
+    });
+  }
+
+  let ticking = false;
+  const onChange = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      applyState(detectSection());
+      ticking = false;
+    });
+  };
+
+  onChange();
+  window.addEventListener('scroll', onChange, { passive: true });
+  window.addEventListener('resize', onChange);
+}
+
+loadConfig().finally(() => {
+  initSmartCta();
+});
 
 function initMultiStep(form) {
   const steps = Array.from(form.querySelectorAll('.form-step'));
@@ -354,21 +500,26 @@ function initMultiStep(form) {
   const btnPrev = form.querySelector('[data-step-prev]');
   const btnNext = form.querySelector('[data-step-next]');
   const btnSubmit = form.querySelector('[data-step-submit]');
+  const progressCurrentSide = form.querySelector('[data-step-current-side]');
+  const progressTotalSide = form.querySelector('[data-step-total-side]');
+  const progressBarSide = form.querySelector('[data-step-bar-side]');
+  const sidePoints = Array.from(form.querySelectorAll('[data-step-point]'));
 
   form.setAttribute('novalidate', 'novalidate');
 
   if (progressTotal) progressTotal.textContent = String(total);
+  if (progressTotalSide) progressTotalSide.textContent = String(total);
 
   const validators = {
     name: (value) => (value.trim().length >= 2 ? '' : 'Введите имя полностью.'),
     city: (value) => (value.trim().length >= 2 ? '' : 'Укажи город и страну.'),
     phone: (value) => (isValidPhone(value) ? '' : 'Введите телефон в формате +7 900 000 00 00.'),
     age: (value) => (isValidBirthdate(value) ? '' : 'Дата рождения в формате 01.01.2000.'),
-    living: (value) => (value.trim().length ? '' : 'Ответь «да» или «нет».'),
+    living: (value) => (normalizeYesNo(value) ? '' : 'Ответь «да» или «нет».'),
     devices: (value) => (value.trim().length >= 2 ? '' : 'Уточни, какие устройства есть.'),
     device_model: (value) => (value.trim().length >= 2 ? '' : 'Напиши модель устройства.'),
     work_time: (value) => (/\d/.test(value) ? '' : 'Укажи количество часов цифрами.'),
-    headphones: (value) => (value.trim().length >= 2 ? '' : 'Ответь про наушники с микрофоном.'),
+    headphones: (value) => (normalizeYesNo(value) ? '' : 'Ответь «да» или «нет».'),
     telegram: (value) => (normalizeTelegram(value) ? '' : 'Укажи Telegram в формате @username.'),
     experience: (value) => (value.trim().length >= 1 ? '' : 'Напиши, есть ли опыт.'),
     photo_face: (_value, field) => (field.files && field.files.length ? '' : 'Загрузи фото анфас.'),
@@ -432,6 +583,18 @@ function initMultiStep(form) {
     steps.forEach((step, idx) => step.classList.toggle('is-active', idx === current));
     if (progressCurrent) progressCurrent.textContent = String(current + 1);
     if (progressBar) progressBar.style.width = `${((current + 1) / total) * 100}%`;
+    if (progressCurrentSide) progressCurrentSide.textContent = String(current + 1);
+    if (progressBarSide) progressBarSide.style.width = `${((current + 1) / total) * 100}%`;
+    if (sidePoints.length) {
+      sidePoints.forEach((point, idx) => {
+        point.classList.toggle('is-active', idx === current);
+        point.classList.toggle('is-done', idx < current);
+      });
+      const active = sidePoints[current];
+      if (active) {
+        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+      }
+    }
     if (btnPrev) btnPrev.classList.toggle('hidden', current === 0);
     if (btnNext) btnNext.classList.toggle('hidden', current >= total - 1);
     if (btnSubmit) btnSubmit.classList.toggle('hidden', current < total - 1);
@@ -480,7 +643,11 @@ function initMultiStep(form) {
         }
       });
       field.addEventListener('change', () => {
-        if (idx === current && validateField(field) && current < total - 1) {
+        const isAutoStepField =
+          field.hasAttribute('data-autonext') ||
+          field.tagName === 'SELECT' ||
+          field.type === 'file';
+        if (idx === current && isAutoStepField && validateField(field) && current < total - 1) {
           goTo(current + 1);
         }
       });
@@ -518,7 +685,12 @@ async function sendApplication(formData, elements, options = {}) {
       method: 'POST',
       body: formData,
     });
-    const payload = await response.json();
+    let payload = {};
+    try {
+      payload = await response.json();
+    } catch (err) {
+      payload = {};
+    }
     if (response.ok && payload.ok) {
       if (formStatus) {
         formStatus.classList.add('is-success');

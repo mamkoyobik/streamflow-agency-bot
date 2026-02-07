@@ -4,6 +4,7 @@ import os
 import re
 import ssl
 import uuid
+from functools import lru_cache
 import urllib.parse
 import urllib.request
 import urllib.error
@@ -24,6 +25,8 @@ ENV_PATH = ROOT_DIR / ".env"
 MAX_BODY_SIZE = 30 * 1024 * 1024
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
+YES_RE = re.compile(r"\b(да|ага|есть|имеется|конечно|yes|y|da|ок|ok)\b", re.IGNORECASE)
+NO_RE = re.compile(r"\b(нет|нету|неа|no|n)\b", re.IGNORECASE)
 
 
 def load_env_file(path: Path) -> None:
@@ -61,6 +64,7 @@ except Exception:
     certifi = None
 
 
+@lru_cache(maxsize=1)
 def get_ssl_context():
     disable_verify = os.getenv("SSL_NO_VERIFY", "").strip().lower() in {"1", "true", "yes"}
     if disable_verify:
@@ -136,11 +140,9 @@ def normalize_yes_no(text: str) -> str | None:
     value = text.strip().lower()
     if not value:
         return None
-    yes_re = re.compile(r"\b(да|ага|есть|имеется|конечно|yes|y|da|ок|ok)\b", re.IGNORECASE)
-    no_re = re.compile(r"\b(нет|нету|неа|no|n)\b", re.IGNORECASE)
-    if yes_re.search(value):
+    if YES_RE.search(value):
         return "Да"
-    if no_re.search(value):
+    if NO_RE.search(value):
         return "Нет"
     return None
 
@@ -387,14 +389,17 @@ def parse_multipart(body: bytes, content_type: str):
             charset = part.get_content_charset() or "utf-8"
             value = ""
             if isinstance(raw, (bytes, bytearray)):
-                for enc in (charset, "utf-8", "cp1251", "latin-1"):
+                # Prefer utf-8/cp1251 first to avoid mojibake when browser sends wrong charset.
+                for enc in ("utf-8", "cp1251", charset, "latin-1"):
+                    if not enc:
+                        continue
                     try:
                         value = raw.decode(enc, errors="strict")
                         break
                     except Exception:
                         value = ""
                 if not value:
-                    value = raw.decode(charset or "utf-8", errors="replace")
+                    value = raw.decode("utf-8", errors="replace")
             else:
                 value = str(raw)
             fields[name] = value.strip()
@@ -438,7 +443,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json(payload)
 
     def handle_apply(self):
-        content_length = int(self.headers.get("Content-Length", "0"))
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            return self.send_json({"ok": False, "message": "Некорректный размер запроса."}, status=400)
         if content_length > MAX_BODY_SIZE:
             return self.send_json({"ok": False, "message": "Файлы слишком большие."}, status=413)
 
@@ -481,9 +489,7 @@ class Handler(SimpleHTTPRequestHandler):
         living_raw = clean_text(fields.get("living") or "")
         living = normalize_yes_no(living_raw)
         if not living:
-            if len(living_raw) < 1:
-                return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
-            living = living_raw
+            return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
 
         devices = clean_text(fields.get("devices") or "")
         if len(devices) < 2:
@@ -497,9 +503,10 @@ class Handler(SimpleHTTPRequestHandler):
         if not has_any_digit(work_time):
             return error("🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):", field="work_time")
 
-        headphones = clean_text(fields.get("headphones") or "")
-        if len(headphones) < 2:
-            return error("🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:", field="headphones")
+        headphones_raw = clean_text(fields.get("headphones") or "")
+        headphones = normalize_yes_no(headphones_raw)
+        if not headphones:
+            return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="headphones")
 
         telegram_raw = clean_text(fields.get("telegram") or "")
         telegram = normalize_telegram(telegram_raw)

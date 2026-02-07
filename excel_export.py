@@ -89,7 +89,7 @@ def _format_submit_time(ts: str | None) -> str:
         dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
         return dt.astimezone().strftime("%d.%m.%Y %H:%M")
     except Exception:
-    return ts
+        return ts
 
 def _format_source(value: str | None) -> str:
     if not value:

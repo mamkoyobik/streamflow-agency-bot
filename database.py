@@ -144,33 +144,20 @@ def _ensure_columns():
                 conn.commit()
             return
 
+        alter_statements = [
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS created_at TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_state TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_apply_at TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS data_json TEXT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS admin_message_id BIGINT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS menu_message_id BIGINT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS flow_message_id BIGINT",
+            "ALTER TABLE applications ADD COLUMN IF NOT EXISTS source TEXT",
+        ]
         try:
-            _execute(
-                "SELECT column_name FROM information_schema.columns "
-                "WHERE table_name = 'applications'"
-            )
-            cols = {row[0] for row in cursor.fetchall()}
-        except Exception as err:
-            print(f"[db] warning: failed to read columns: {err}")
-            return
-
-        alter_map = {
-            "created_at": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS created_at TEXT",
-            "updated_at": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS updated_at TEXT",
-            "last_state": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_state TEXT",
-            "last_apply_at": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS last_apply_at TEXT",
-            "data_json": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS data_json TEXT",
-            "admin_message_id": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS admin_message_id BIGINT",
-            "menu_message_id": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS menu_message_id BIGINT",
-            "flow_message_id": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS flow_message_id BIGINT",
-            "source": "ALTER TABLE applications ADD COLUMN IF NOT EXISTS source TEXT",
-        }
-        missing = [name for name in alter_map.keys() if name not in cols]
-        if not missing:
-            return
-        try:
-            for name in missing:
-                _execute(alter_map[name])
+            for statement in alter_statements:
+                _execute(statement)
             conn.commit()
         except Exception as err:
             print(f"[db] warning: migration failed: {err}")

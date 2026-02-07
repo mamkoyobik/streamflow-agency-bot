@@ -116,10 +116,12 @@ async def global_error_handler(event: ErrorEvent):
         )
     )
     try:
+        exc_name = html.escape(type(exception).__name__)
+        exc_text = html.escape(str(exception))[:1200]
         await bot.send_message(
             ADMIN_GROUP_ID,
             "⚠️ <b>Ошибка в боте</b>\n\n"
-            f"{type(exception).__name__}: {exception}"
+            f"{exc_name}: {exc_text}"
         )
     except Exception:
         pass
@@ -180,13 +182,30 @@ def normalize_phone(text: str) -> str | None:
 
 def normalize_yes_no(text: str) -> str | None:
     value = text.strip().lower()
-    yes = {"да", "есть", "имеется", "конечно", "ага", "y", "yes"}
-    no = {"нет", "не", "нету", "no", "n"}
-    if value in yes:
-        return "Да"
-    if value in no:
-        return "Нет"
+    if not value:
+        return None
+    tokens = re.findall(r"[a-zA-Zа-яА-ЯёЁ]+", value)
+    if not tokens:
+        tokens = [value]
+    yes = {"да", "есть", "имеется", "конечно", "ага", "y", "yes", "ok", "ок", "da"}
+    no = {"нет", "нету", "неа", "no", "n"}
+    for token in tokens:
+        t = token.lower()
+        if t in yes:
+            return "Да"
+        if t in no:
+            return "Нет"
     return None
+
+
+async def safe_call_answer(call: CallbackQuery, text: str | None = None, show_alert: bool = False):
+    try:
+        if text is None:
+            await call.answer()
+        else:
+            await call.answer(text, show_alert=show_alert)
+    except Exception:
+        pass
 
 def normalize_telegram(text: str) -> str | None:
     value = text.strip()
@@ -763,7 +782,7 @@ async def send_admin_list(
             f"🤍 {label}: пока пусто ✨",
             admin_menu_keyboard(get_status_counts())
         )
-        await call.answer()
+        await safe_call_answer(call)
         return
 
     total = len(apps)
@@ -791,7 +810,7 @@ async def send_admin_list(
         admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
         photo_id
     )
-    await call.answer()
+    await safe_call_answer(call)
 
 async def send_menu(
     message: Message,
@@ -970,9 +989,6 @@ async def start_application(message: Message, state: FSMContext):
     set_status(message.from_user.id, "new")
     set_last_state(message.from_user.id, ApplicationStates.name.state)
     return True
-    await state.clear()
-    set_last_state(message.from_user.id, None)
-    return False
 
 async def send_next_question(
     message: Message,
