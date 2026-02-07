@@ -518,6 +518,7 @@ function initMultiStep(form) {
   const progressTotalSide = form.querySelector('[data-step-total-side]');
   const progressBarSide = form.querySelector('[data-step-bar-side]');
   const sidePoints = Array.from(form.querySelectorAll('[data-step-point]'));
+  let userNavigated = false;
 
   form.setAttribute('novalidate', 'novalidate');
 
@@ -605,7 +606,7 @@ function initMultiStep(form) {
         point.classList.toggle('is-done', idx < current);
       });
       const active = sidePoints[current];
-      if (active) {
+      if (active && userNavigated) {
         active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
@@ -633,6 +634,7 @@ function initMultiStep(form) {
 
   function goTo(index) {
     const nextIndex = Math.max(0, Math.min(total - 1, index));
+    if (nextIndex !== current) userNavigated = true;
     current = nextIndex;
     update();
     const nextStep = steps[current];
