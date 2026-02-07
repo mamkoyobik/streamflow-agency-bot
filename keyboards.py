@@ -1,10 +1,15 @@
+import os
+
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+
+SITE_URL = (os.getenv("SITE_URL") or "https://extraordinary-upliftment-production-0407.up.railway.app").strip()
 
 # ================= MAIN MENU =================
 
 def main_menu():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🌸 Стать моделью", callback_data="apply")],
+        [InlineKeyboardButton(text="🌐 Наш сайт", url=SITE_URL)],
         [InlineKeyboardButton(text="📁 Портфолио моделей", callback_data="portfolio")],
         [InlineKeyboardButton(text="ℹ️ Подробнее о работе", callback_data="about")],
         [InlineKeyboardButton(text="💬 Связь с администратором", callback_data="contact")],
