@@ -656,7 +656,17 @@ class Handler(SimpleHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    host = os.getenv("HOST", "0.0.0.0")
+    host = os.getenv("HOST", "").strip()
+    railway_runtime = bool(
+        os.getenv("RAILWAY_ENVIRONMENT")
+        or os.getenv("RAILWAY_PROJECT_ID")
+        or os.getenv("RAILWAY_PUBLIC_DOMAIN")
+    )
+    if not host:
+        host = "0.0.0.0"
+    # Railway requires binding to 0.0.0.0, localhost causes 502.
+    if railway_runtime and host in {"127.0.0.1", "localhost"}:
+        host = "0.0.0.0"
     port = int(os.getenv("PORT", "8080"))
     server = ThreadingHTTPServer((host, port), Handler)
     print(f"Running on http://{host}:{port}")
