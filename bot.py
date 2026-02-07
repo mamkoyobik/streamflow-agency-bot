@@ -405,6 +405,19 @@ def contact_url_for_user(user_id: int, data: dict | None) -> str:
 def is_site_source(user_id: int) -> bool:
     return get_source(user_id) == "site"
 
+def submit_time_label_for_user(user_id: int) -> str:
+    app = get_application(user_id) or {}
+    raw = app.get("last_apply_at") or app.get("created_at")
+    if not raw:
+        return "—"
+    try:
+        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
+        if dt.tzinfo is None:
+            dt = dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone().strftime("%d.%m.%Y %H:%M")
+    except Exception:
+        return _safe_text(raw)
+
 def _safe_text(value) -> str:
     if value is None:
         return "—"
@@ -435,6 +448,7 @@ def build_admin_summary(
 ) -> str:
     status_label = STATUS_LABELS.get(status, status)
     header = "🔔 <b>Новая анкета — требуется просмотр</b>\n\n" if is_new else "🧾 <b>Кратко по заявке</b>\n\n"
+    submit_time = submit_time_label_for_user(user_id)
     text = (
         f"{header}"
         f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
@@ -444,6 +458,7 @@ def build_admin_summary(
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
         f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
+        f"🕒 Время подачи: {submit_time}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
     if archived:
@@ -452,6 +467,7 @@ def build_admin_summary(
 
 def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
     status_label = STATUS_LABELS.get(status, status)
+    submit_time = submit_time_label_for_user(user_id)
     return (
         "📋 <b>Полная анкета</b>\n\n"
         f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
@@ -467,6 +483,7 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
         f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
+        f"🕒 Время подачи: {submit_time}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
 
