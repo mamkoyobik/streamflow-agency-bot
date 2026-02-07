@@ -1316,7 +1316,7 @@ body[data-page="home"] .page {
   border: 1px solid rgba(255, 255, 255, 0.14);
   padding: clamp(16px, 2.6vw, 30px);
   min-width: 0;
-  max-width: 980px;
+  max-width: none;
   margin: 0 auto;
   box-shadow: 0 22px 44px rgba(0, 0, 0, 0.38);
 }
@@ -1347,7 +1347,7 @@ body[data-page="home"] .page {
 
 .portfolio-slider {
   display: grid;
-  gap: 12px;
+  gap: 0;
 }
 
 .portfolio-stage {
@@ -1355,10 +1355,10 @@ body[data-page="home"] .page {
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 20px;
   background: rgba(10, 8, 13, 0.88);
-  padding: 10px;
+  padding: 12px;
   min-width: 0;
   overflow: hidden;
-  width: min(100%, 450px);
+  width: 100%;
   margin: 0 auto;
 }
 
@@ -1390,32 +1390,23 @@ body[data-page="home"] .page {
   box-shadow: 0 18px 34px rgba(0, 0, 0, 0.44);
   position: relative;
   aspect-ratio: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: clamp(420px, 58vw, 820px);
 }
 
 .portfolio-slide img {
   width: 100%;
   height: auto;
-  max-height: min(74vh, 640px);
+  max-height: min(82vh, 920px);
   object-fit: contain;
   background: #07060b;
   display: block;
 }
 
 .portfolio-slide figcaption {
-  position: absolute;
-  left: 14px;
-  bottom: 14px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(9, 7, 12, 0.76);
-  color: #f7f0f4;
-  font-size: 0.72rem;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
+  display: none;
 }
 
 .portfolio-slide figcaption span {
@@ -1452,7 +1443,7 @@ body[data-page="home"] .page {
 .portfolio-btn.next { right: 14px; }
 
 .portfolio-dots {
-  display: flex;
+  display: none;
   gap: 10px;
   overflow-x: auto;
   padding: 2px 2px 6px;
@@ -2667,20 +2658,16 @@ body.nav-open .mobile-nav-panel {
   .portfolio-stage {
     border-radius: 16px;
     padding: 8px;
-    width: min(100%, 380px);
+    width: 100%;
   }
 
-  .portfolio-slide figcaption {
-    left: 10px;
-    bottom: 10px;
-    font-size: 0.64rem;
-    letter-spacing: 0.08em;
-    padding: 5px 8px;
+  .portfolio-slide {
+    min-height: clamp(360px, 72vw, 600px);
   }
 
   .portfolio-slide img {
     height: auto;
-    max-height: min(64vh, 520px);
+    max-height: min(68vh, 620px);
     object-fit: contain;
   }
 
@@ -2833,9 +2820,13 @@ body.nav-open .mobile-nav-panel {
     min-height: 292px;
   }
 
+  .portfolio-slide {
+    min-height: clamp(300px, 84vw, 520px);
+  }
+
   .portfolio-slide img {
     height: auto;
-    max-height: min(58vh, 430px);
+    max-height: min(62vh, 520px);
     object-fit: contain;
   }
 
