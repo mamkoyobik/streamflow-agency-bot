@@ -774,43 +774,49 @@ async def send_admin_list(
     filter_key: str,
     offset: int = 0
 ):
-    status = None if filter_key == "all" else filter_key
-    apps = list_applications(status)
-    label = _admin_list_label(filter_key)
-    if not apps:
+    await safe_call_answer(call)
+    try:
+        status = None if filter_key == "all" else filter_key
+        apps = list_applications(status)
+        label = _admin_list_label(filter_key)
+        if not apps:
+            await update_admin_menu_message(
+                f"🤍 {label}: пока пусто ✨",
+                admin_menu_keyboard(get_status_counts())
+            )
+            return
+
+        total = len(apps)
+        if offset < 0:
+            offset = 0
+        if offset >= total:
+            offset = max(total - 1, 0)
+        slice_items = apps[offset: offset + ADMIN_LIST_LIMIT]
+        page = offset // ADMIN_LIST_LIMIT + 1
+        pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
+        current = slice_items[0]
+        user_id = current["user_id"]
+        item_status = current["status"] or status or "pending"
+        data = get_form_data(user_id) or {}
+        contact_url = contact_url_for_user(user_id, data)
+        text = (
+            f"🗂 <b>{label}</b>\n\n"
+            f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
+            f"Страница: <b>{page}/{pages}</b>\n\n"
+            f"{build_admin_full_text(data, user_id, item_status)}"
+        )
+        photo_id = data.get("photo_face") or data.get("photo_full")
+        await update_admin_view_message(
+            text,
+            admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
+            photo_id
+        )
+    except Exception:
+        logger.exception("Ошибка отображения списка заявок")
         await update_admin_menu_message(
-            f"🤍 {label}: пока пусто ✨",
+            "⚠️ Не удалось открыть список заявок. Попробуй ещё раз.",
             admin_menu_keyboard(get_status_counts())
         )
-        await safe_call_answer(call)
-        return
-
-    total = len(apps)
-    if offset < 0:
-        offset = 0
-    if offset >= total:
-        offset = max(total - 1, 0)
-    slice_items = apps[offset: offset + ADMIN_LIST_LIMIT]
-    page = offset // ADMIN_LIST_LIMIT + 1
-    pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
-    current = slice_items[0]
-    user_id = current["user_id"]
-    item_status = current["status"] or status or "pending"
-    data = get_form_data(user_id) or {}
-    contact_url = contact_url_for_user(user_id, data)
-    text = (
-        f"🗂 <b>{label}</b>\n\n"
-        f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
-        f"Страница: <b>{page}/{pages}</b>\n\n"
-        f"{build_admin_full_text(data, user_id, item_status)}"
-    )
-    photo_id = data.get("photo_face") or data.get("photo_full")
-    await update_admin_view_message(
-        text,
-        admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
-        photo_id
-    )
-    await safe_call_answer(call)
 
 async def send_menu(
     message: Message,
@@ -1111,6 +1117,7 @@ async def apply(call: CallbackQuery, state: FSMContext):
         await call.answer()
     except Exception:
         logger.exception("Ошибка в apply")
+        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
 
 @dp.callback_query(F.data == "apply_restart")
 async def apply_restart(call: CallbackQuery, state: FSMContext):
@@ -1674,6 +1681,7 @@ async def portfolio(call: CallbackQuery):
         )
     except Exception:
         logger.exception("Ошибка в portfolio")
+        await safe_call_answer(call, "Не удалось открыть раздел", show_alert=False)
 
 @dp.callback_query(F.data == "about")
 async def about(call: CallbackQuery):
@@ -1690,6 +1698,7 @@ async def about(call: CallbackQuery):
         )
     except Exception:
         logger.exception("Ошибка в about")
+        await safe_call_answer(call, "Не удалось открыть раздел", show_alert=False)
 
 @dp.callback_query(F.data == "contact")
 async def contact(call: CallbackQuery):
@@ -1704,15 +1713,17 @@ async def contact(call: CallbackQuery):
         )
     except Exception:
         logger.exception("Ошибка в contact")
+        await safe_call_answer(call, "Не удалось открыть раздел", show_alert=False)
 
 @dp.callback_query(F.data == "back")
 async def back_handler(call: CallbackQuery, state: FSMContext):
     try:
         await state.clear()
         await start(call.message, state)
-        await call.answer()
+        await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в back_handler")
+        await safe_call_answer(call, "Ошибка возврата в меню", show_alert=False)
 
 # ================= PREVIEW =================
 
@@ -1921,6 +1932,7 @@ async def show_preview(m: Message, state: FSMContext):
 @dp.callback_query(F.data == "preview_confirm")
 async def preview_confirm(call: CallbackQuery, state: FSMContext):
     try:
+        await safe_call_answer(call)
         data = await state.get_data()
         user = call.from_user
         app = get_application(user.id)
@@ -1931,7 +1943,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 "🤍 Похоже, недавно уже была отправлена заявка.\n\n"
                 "Немного позже можно будет отправить новую ✨"
             )
-            await call.answer()
+            await safe_call_answer(call)
             return
         if not REQUIRED_PREVIEW_FIELDS.issubset(data):
             await send_or_edit_user_text(
@@ -1941,9 +1953,9 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             )
             started = await start_application(call.message, state)
             if not started:
-                await call.answer("🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
                 return
-            await call.answer()
+            await safe_call_answer(call)
             return
 
         await gentle_typing(call.message.chat.id)
@@ -1978,9 +1990,10 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
         except Exception:
             logger.exception("Ошибка отправки меню после заявки")
         await clear_user_flow_message(call.from_user.id)
-        await call.answer()
+        await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в preview_confirm")
+        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
 
 @dp.callback_query(F.data == "edit_cancel")
 async def edit_cancel(call: CallbackQuery, state: FSMContext):
@@ -1996,6 +2009,7 @@ async def admin_accept(call: CallbackQuery):
         if call.message.chat.id != ADMIN_GROUP_ID:
             await call.answer("Недостаточно прав", show_alert=True)
             return
+        await safe_call_answer(call)
         parts = call.data.split(":")
         uid = int(parts[1])
         view_mode = len(parts) > 2 and parts[2] == "view"
@@ -2021,9 +2035,10 @@ async def admin_accept(call: CallbackQuery):
             await post_admin_menu()
         except Exception:
             logger.exception("Ошибка возврата в админ-меню")
-        await call.answer("Принято")
+        await safe_call_answer(call, "Принято")
     except Exception:
         logger.exception("Ошибка в admin_accept")
+        await safe_call_answer(call, "Ошибка при принятии заявки", show_alert=True)
 
 @dp.callback_query(F.data.startswith("admin_reject:"))
 async def admin_reject(call: CallbackQuery, state: FSMContext):
@@ -2031,6 +2046,7 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
         if call.message.chat.id != ADMIN_GROUP_ID:
             await call.answer("Недостаточно прав", show_alert=True)
             return
+        await safe_call_answer(call)
         parts = call.data.split(":")
         uid = int(parts[1])
         view_mode = len(parts) > 2 and parts[2] == "view"
@@ -2041,9 +2057,10 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
             "Можно выбрать готовый вариант или написать свой текст.",
             reject_templates_keyboard()
         )
-        await call.answer()
+        await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в admin_reject")
+        await safe_call_answer(call, "Ошибка при открытии отказа", show_alert=True)
 
 @dp.callback_query(F.data.startswith("reject_tpl:"))
 async def reject_template(call: CallbackQuery, state: FSMContext):
@@ -2051,11 +2068,12 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
         if call.message.chat.id != ADMIN_GROUP_ID:
             await call.answer("Недостаточно прав", show_alert=True)
             return
+        await safe_call_answer(call)
         tpl_code = call.data.split(":", 1)[1]
         data = await state.get_data()
         uid = data.get("reject_uid")
         if not uid:
-            await call.answer("🤍 Не вижу кандидата")
+            await safe_call_answer(call, "🤍 Не вижу кандидата")
             return
 
         templates = {
@@ -2069,12 +2087,12 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 "✍️ Напиши свою причину отказа:",
                 reject_reason_keyboard()
             )
-            await call.answer()
+            await safe_call_answer(call)
             return
 
         reason = templates.get(tpl_code)
         if not reason:
-            await call.answer("🤍 Шаблон не найден")
+            await safe_call_answer(call, "🤍 Шаблон не найден")
             return
 
         try:
@@ -2106,9 +2124,10 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
         except Exception:
             logger.exception("Ошибка возврата в админ-меню")
         await state.clear()
-        await call.answer()
+        await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в reject_template")
+        await safe_call_answer(call, "Ошибка при отклонении", show_alert=True)
 
 @dp.message(StateFilter(ApplicationStates.admin_reject_reason), F.text)
 async def reject_reason(m: Message, state: FSMContext):
@@ -2191,78 +2210,82 @@ async def admin_menu(message: Message):
 
 @dp.callback_query(F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery):
-    if call.message.chat.id != ADMIN_GROUP_ID:
-        await call.answer("Недостаточно прав", show_alert=True)
-        return
-    action = call.data.split(":", 1)[1]
-    if action in {"pending", "accepted", "rejected", "all"}:
-        await clear_admin_notify()
-        await send_admin_list(call, action, 0)
-        return
-    if action == "stats":
-        await clear_admin_view_message()
-        await update_admin_menu_message(
-            build_admin_stats_text(),
-            admin_menu_keyboard(get_status_counts())
-        )
-        await call.answer()
-        return
-    if action == "excel":
-        await clear_admin_view_message()
-        if not append_application_row:
+    try:
+        if call.message.chat.id != ADMIN_GROUP_ID:
+            await call.answer("Недостаточно прав", show_alert=True)
+            return
+        action = call.data.split(":", 1)[1]
+        if action in {"pending", "accepted", "rejected", "all"}:
+            await clear_admin_notify()
+            await send_admin_list(call, action, 0)
+            return
+        if action == "stats":
+            await clear_admin_view_message()
             await update_admin_menu_message(
-                "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
+                build_admin_stats_text(),
                 admin_menu_keyboard(get_status_counts())
             )
-            await call.answer()
+            await safe_call_answer(call)
             return
-        file_path = Path("applications.xlsx")
-        if not file_path.exists():
-            await update_admin_menu_message(
-                "🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨",
-                admin_menu_keyboard(get_status_counts())
-            )
-            await call.answer()
-            return
-        await call.message.answer_document(FSInputFile(str(file_path)))
-        await call.answer()
-        return
-    if action == "archive":
-        await clear_admin_view_message()
-        try:
-            archived = await archive_admin_messages_once()
-            if archived:
+        if action == "excel":
+            await clear_admin_view_message()
+            if not append_application_row:
                 await update_admin_menu_message(
-                    f"🧹 Архивировано: {archived}",
+                    "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
                     admin_menu_keyboard(get_status_counts())
                 )
-            else:
+                await safe_call_answer(call)
+                return
+            file_path = Path("applications.xlsx")
+            if not file_path.exists():
                 await update_admin_menu_message(
-                    "🤍 Пока нет заявок для архивации ✨",
+                    "🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨",
                     admin_menu_keyboard(get_status_counts())
                 )
-        except Exception:
-            logger.exception("Ошибка ручной архивации")
+                await safe_call_answer(call)
+                return
+            await call.message.answer_document(FSInputFile(str(file_path)))
+            await safe_call_answer(call)
+            return
+        if action == "archive":
+            await clear_admin_view_message()
+            try:
+                archived = await archive_admin_messages_once()
+                if archived:
+                    await update_admin_menu_message(
+                        f"🧹 Архивировано: {archived}",
+                        admin_menu_keyboard(get_status_counts())
+                    )
+                else:
+                    await update_admin_menu_message(
+                        "🤍 Пока нет заявок для архивации ✨",
+                        admin_menu_keyboard(get_status_counts())
+                    )
+            except Exception:
+                logger.exception("Ошибка ручной архивации")
+                await update_admin_menu_message(
+                    "⚠️ Не удалось архивировать сейчас.",
+                    admin_menu_keyboard(get_status_counts())
+                )
+            await safe_call_answer(call)
+            return
+        if action == "reset":
+            await clear_admin_view_message()
             await update_admin_menu_message(
-                "⚠️ Не удалось архивировать сейчас.",
-                admin_menu_keyboard(get_status_counts())
+                "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
+                confirm_reset_db_keyboard()
             )
-        await call.answer()
-        return
-    if action == "reset":
-        await clear_admin_view_message()
-        await update_admin_menu_message(
-            "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
-            confirm_reset_db_keyboard()
-        )
-        await call.answer()
-        return
-    if action == "refresh":
-        await clear_admin_view_message()
-        await post_admin_menu()
-        await call.answer()
-        return
-    await call.answer("Неизвестная команда", show_alert=False)
+            await safe_call_answer(call)
+            return
+        if action == "refresh":
+            await clear_admin_view_message()
+            await post_admin_menu()
+            await safe_call_answer(call)
+            return
+        await safe_call_answer(call, "Неизвестная команда", show_alert=False)
+    except Exception:
+        logger.exception("Ошибка в admin_menu_action")
+        await safe_call_answer(call, "Ошибка выполнения команды", show_alert=False)
 
 @dp.callback_query(F.data.startswith("admin_list:"))
 async def admin_list_pagination(call: CallbackQuery):
@@ -2270,9 +2293,13 @@ async def admin_list_pagination(call: CallbackQuery):
         _, filter_key, offset_raw = call.data.split(":", 2)
         offset = int(offset_raw)
     except Exception:
-        await call.answer("Ошибка пагинации", show_alert=False)
+        await safe_call_answer(call, "Ошибка пагинации", show_alert=False)
         return
-    await send_admin_list(call, filter_key, offset)
+    try:
+        await send_admin_list(call, filter_key, offset)
+    except Exception:
+        logger.exception("Ошибка пагинации списка")
+        await safe_call_answer(call, "Не удалось открыть страницу", show_alert=False)
 
 @dp.callback_query(F.data.startswith("admin_view_photo:"))
 async def admin_view_photo(call: CallbackQuery):
@@ -2344,35 +2371,47 @@ async def admin_reset_db_cancel(call: CallbackQuery):
         
 @dp.callback_query(F.data == "portfolio_reviews")
 async def portfolio_reviews(call: CallbackQuery):
-    messages = await call.message.answer_media_group([
-        InputMediaPhoto(media=FSInputFile("media/review1.jpg")),
-        InputMediaPhoto(media=FSInputFile("media/review2.jpg")),
-    ])
-    track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
-    await call.answer()
+    try:
+        messages = await call.message.answer_media_group([
+            InputMediaPhoto(media=FSInputFile("media/review1.jpg")),
+            InputMediaPhoto(media=FSInputFile("media/review2.jpg")),
+        ])
+        track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка в portfolio_reviews")
+        await safe_call_answer(call, "Не удалось отправить материалы", show_alert=False)
 
 @dp.callback_query(F.data == "portfolio_videos")
 async def portfolio_streams(call: CallbackQuery):
-    now = datetime.now(timezone.utc)
-    last = PORTFOLIO_VIDEO_LAST.get(call.from_user.id)
-    if last and (now - last).total_seconds() < PORTFOLIO_COOLDOWN_SECONDS:
-        await call.answer("🤍 Видео уже отправлены, посмотри, пожалуйста ✨")
-        return
-    PORTFOLIO_VIDEO_LAST[call.from_user.id] = now
-    messages = await call.message.answer_media_group([
-        InputMediaVideo(media=FSInputFile("media/stream1.MP4")),
-        InputMediaVideo(media=FSInputFile("media/stream2.MP4")),
-    ])
-    track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
-    await call.answer()
+    try:
+        now = datetime.now(timezone.utc)
+        last = PORTFOLIO_VIDEO_LAST.get(call.from_user.id)
+        if last and (now - last).total_seconds() < PORTFOLIO_COOLDOWN_SECONDS:
+            await safe_call_answer(call, "🤍 Видео уже отправлены, посмотри, пожалуйста ✨")
+            return
+        PORTFOLIO_VIDEO_LAST[call.from_user.id] = now
+        messages = await call.message.answer_media_group([
+            InputMediaVideo(media=FSInputFile("media/stream1.MP4")),
+            InputMediaVideo(media=FSInputFile("media/stream2.MP4")),
+        ])
+        track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка в portfolio_streams")
+        await safe_call_answer(call, "Не удалось отправить видео", show_alert=False)
 
 @dp.callback_query(F.data == "portfolio_pdf")
 async def portfolio_pdf(call: CallbackQuery):
-    msg = await call.message.answer_document(
-        FSInputFile("media/portfolio.pdf")
-    )
-    track_portfolio_media(call.from_user.id, [msg.message_id])
-    await call.answer()
+    try:
+        msg = await call.message.answer_document(
+            FSInputFile("media/portfolio.pdf")
+        )
+        track_portfolio_media(call.from_user.id, [msg.message_id])
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка в portfolio_pdf")
+        await safe_call_answer(call, "Не удалось отправить документ", show_alert=False)
 
 # ================= ADMIN STATS =================
 
