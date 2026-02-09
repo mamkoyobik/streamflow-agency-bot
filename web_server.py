@@ -17,6 +17,7 @@ from pathlib import Path
 
 from database import save_web_application, get_status_counts, get_setting, set_setting
 from texts import STATUS_LABELS
+from time_utils import format_submit_time
 
 ROOT_DIR = Path(__file__).parent
 WEB_DIR = ROOT_DIR / "web"
@@ -50,10 +51,13 @@ def load_settings():
     admin_username = os.getenv("ADMIN_USERNAME", "").strip()
     bot_username = os.getenv("BOT_USERNAME", "").strip()
     channel_link = os.getenv("CHANNEL_LINK", "https://t.me/+uuVr5gJFwoJjYmRi").strip()
-    return bot_token, admin_group_id, admin_username, bot_username, channel_link
+    site_url = (os.getenv("SITE_URL", "https://streamflowagency.com") or "https://streamflowagency.com").strip()
+    return bot_token, admin_group_id, admin_username, bot_username, channel_link, site_url
 
 
-BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK = load_settings()
+BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK, SITE_URL = load_settings()
+SITE_URL = SITE_URL.rstrip("/")
+CANONICAL_HOST = (urllib.parse.urlparse(SITE_URL).netloc or "").split(":", 1)[0].lower()
 try:
     from excel_export import append_application_row
 except Exception:
@@ -169,7 +173,7 @@ def _safe(value: str | None) -> str:
 
 def build_admin_full_text(data: dict, web_id: str) -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
-    submitted_at = datetime.now().astimezone().strftime("%d.%m.%Y %H:%M")
+    submitted_at = format_submit_time(None)
     return (
         "📋 <b>Полная анкета</b>\n\n"
         f"👤 Имя: {_safe(data.get('name'))}\n"
@@ -410,6 +414,15 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_DIR), **kwargs)
 
+    def end_headers(self):
+        self.send_header("X-Content-Type-Options", "nosniff")
+        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        proto = (self.headers.get("X-Forwarded-Proto") or "").strip().lower()
+        if proto == "https":
+            self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+        super().end_headers()
+
     def copyfile(self, source, outputfile):
         try:
             super().copyfile(source, outputfile)
@@ -417,7 +430,37 @@ class Handler(SimpleHTTPRequestHandler):
             # Client closed connection early (browser navigation/refresh).
             pass
 
+    def _host_header(self) -> str:
+        return (self.headers.get("Host") or "").split(":", 1)[0].strip().lower()
+
+    def _should_redirect_to_canonical(self) -> bool:
+        if not CANONICAL_HOST:
+            return False
+        host = self._host_header()
+        if not host:
+            return False
+        if host == CANONICAL_HOST:
+            return False
+        if host in {"127.0.0.1", "localhost"}:
+            return False
+        if host.endswith(".railway.internal"):
+            return False
+        return True
+
+    def _redirect_canonical(self):
+        target = f"{SITE_URL}{self.path}"
+        self.send_response(301)
+        self.send_header("Location", target)
+        self.end_headers()
+
+    def do_HEAD(self):
+        if self._should_redirect_to_canonical():
+            return self._redirect_canonical()
+        return super().do_HEAD()
+
     def do_GET(self):
+        if self._should_redirect_to_canonical():
+            return self._redirect_canonical()
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/config":
             return self.handle_config()
@@ -439,6 +482,7 @@ class Handler(SimpleHTTPRequestHandler):
         payload = {
             "telegram_link": CHANNEL_LINK or (f"https://t.me/{admin_username}" if admin_username else None),
             "bot_link": bot_link,
+            "site_url": SITE_URL,
         }
         self.send_json(payload)
 

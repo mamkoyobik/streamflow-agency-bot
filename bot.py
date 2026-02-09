@@ -48,7 +48,9 @@ from database import (
     set_flow_message_id,
     get_flow_message_id,
     set_source,
-    get_source
+    get_source,
+    get_user_language,
+    set_user_language,
 )
 try:
     from excel_export import append_application_row, update_application_status
@@ -58,15 +60,17 @@ except Exception:
     logging.getLogger(__name__).warning("Excel export недоступен (нет openpyxl?)")
 from utils import edit_or_send
 from texts import (
-    MENU_CAPTION,
-    ACCEPT_CAPTION,
-    ACK_TEXT,
-    SUPPORT_LINES,
-    LOADING_TEXT,
     STATUS_LABELS,
     FORM_QUESTIONS,
-    FIELD_TITLES
+    t,
+    normalize_lang,
+    form_question,
+    field_title,
+    status_label,
+    support_lines,
+    LANGUAGE_NAMES,
 )
+from time_utils import format_submit_time
 from pathlib import Path
 
 # ================= LOGGING =================
@@ -271,8 +275,10 @@ STATE_TO_FIELD = {
     ApplicationStates.photo_full: "photo_full",
 }
 
-def build_ack() -> str:
-    return f"{ACK_TEXT}\n{random.choice(SUPPORT_LINES)}"
+def build_ack(user_id: int | None = None) -> str:
+    lang = lang_for(user_id) if user_id is not None else "ru"
+    lines = support_lines(lang)
+    return f"{t(lang, 'ack_text')}\n{random.choice(lines)}"
 
 async def gentle_typing(chat_id: int, duration: float | None = None):
     try:
@@ -281,17 +287,18 @@ async def gentle_typing(chat_id: int, duration: float | None = None):
         return
     await asyncio.sleep(duration or random.uniform(0.4, 0.8))
 
-def build_status_line(status: str | None) -> str | None:
+def build_status_line(status: str | None, lang: str = "ru") -> str | None:
     if not status or status == "new":
         return None
-    label = STATUS_LABELS.get(status)
+    label = status_label(status, lang)
     if not label:
         return None
-    return f"Статус заявки: {label}"
+    return t(lang, "status_line", status=label)
 
 def build_menu_caption_with_status(
     status: str,
     base_caption: str,
+    lang: str = "ru",
     intro: str | None = None,
     tail: str | None = None
 ) -> str:
@@ -301,7 +308,7 @@ def build_menu_caption_with_status(
     parts.append(base_caption)
     if tail:
         parts.append(tail)
-    status_line = build_status_line(status)
+    status_line = build_status_line(status, lang=lang)
     if status_line:
         parts.append(status_line)
     return "\n\n".join(parts)
@@ -313,7 +320,6 @@ PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
 PORTFOLIO_CLEANUP_TASKS: dict[int, asyncio.Task] = {}
 ADMIN_TEMP_MESSAGE_IDS: list[int] = []
 CAPTION_LIMIT = 1024
-
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
@@ -373,7 +379,7 @@ async def try_edit_message(message: Message, text: str, reply_markup=None) -> bo
     return False
 
 async def send_status_message(message: Message, status: str | None):
-    line = build_status_line(status)
+    line = build_status_line(status, lang_for(message.from_user.id))
     if line:
         try:
             temp = await message.answer("✨ Проверяю статус…")
@@ -405,18 +411,20 @@ def contact_url_for_user(user_id: int, data: dict | None) -> str:
 def is_site_source(user_id: int) -> bool:
     return get_source(user_id) == "site"
 
+
+def lang_for(user_id: int) -> str:
+    return get_user_language(user_id)
+
+
+def tr_user(user_id: int, key: str, **kwargs) -> str:
+    return t(lang_for(user_id), key, **kwargs)
+
 def submit_time_label_for_user(user_id: int) -> str:
     app = get_application(user_id) or {}
     raw = app.get("last_apply_at") or app.get("created_at")
     if not raw:
         return "—"
-    try:
-        dt = datetime.fromisoformat(str(raw).replace("Z", "+00:00"))
-        if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
-        return dt.astimezone().strftime("%d.%m.%Y %H:%M")
-    except Exception:
-        return _safe_text(raw)
+    return _safe_text(format_submit_time(str(raw)))
 
 def _safe_text(value) -> str:
     if value is None:
@@ -868,27 +876,32 @@ async def send_admin_list(
 
 async def send_menu(
     message: Message,
-    caption: str = MENU_CAPTION,
+    caption: str | None = None,
     status: str | None = None,
     intro: str | None = None,
 
     tail: str | None = None
 ):
+    lang = lang_for(message.chat.id)
+    base_caption = caption or t(lang, "menu_caption")
     await gentle_typing(message.chat.id)
     final_caption = (
-        build_menu_caption_with_status(status, caption, intro, tail)
+        build_menu_caption_with_status(status, base_caption, lang=lang, intro=intro, tail=tail)
         if status
-        else caption
+        else base_caption
     )
     await send_or_edit_user_menu(
         message.chat.id,
-        final_caption
+        final_caption,
+        lang=lang,
     )
 
 async def send_or_edit_user_menu(
     user_id: int,
-    caption: str
+    caption: str,
+    lang: str | None = None,
 ):
+    locale = normalize_lang(lang or lang_for(user_id))
     message_id = get_menu_message_id(user_id)
     if message_id:
         try:
@@ -896,7 +909,7 @@ async def send_or_edit_user_menu(
                 chat_id=user_id,
                 message_id=message_id,
                 caption=caption,
-                reply_markup=main_menu()
+                reply_markup=main_menu(locale)
             )
             return
         except TelegramBadRequest as e:
@@ -919,7 +932,7 @@ async def send_or_edit_user_menu(
             user_id,
             FSInputFile("media/menu.jpg"),
             caption=caption,
-            reply_markup=main_menu()
+            reply_markup=main_menu(locale)
         )
         set_menu_message_id(user_id, msg.message_id)
     except TelegramForbiddenError:
@@ -1061,20 +1074,22 @@ async def start_application(message: Message, state: FSMContext):
     clear_form_data(message.from_user.id)
     await state.set_state(ApplicationStates.name)
     await gentle_typing(message.chat.id)
+    lang = lang_for(message.from_user.id)
     question = format_question(
         ApplicationStates.name,
-        FORM_QUESTIONS[ApplicationStates.name]
+        form_question(ApplicationStates.name, lang),
+        user_id=message.from_user.id,
     )
     edited = False
     if message and message.chat.type == "private":
-        edited = await try_edit_message(message, question, reply_markup=form_keyboard())
+        edited = await try_edit_message(message, question, reply_markup=form_keyboard(lang))
         if edited:
             set_menu_message_id(message.from_user.id, message.message_id)
     if not edited:
         sent = await send_or_edit_user_text(
             message.from_user.id,
             question,
-            reply_markup=form_keyboard()
+            reply_markup=form_keyboard(lang)
         )
         if not sent:
             await state.clear()
@@ -1088,19 +1103,21 @@ async def send_next_question(
     message: Message,
     state: FSMContext,
     next_state: ApplicationStates,
-    question: str,
+    question: str | None = None,
     note: str | None = None
 ):
     await state.set_state(next_state)
     set_last_state(message.from_user.id, next_state.state)
     await gentle_typing(message.chat.id)
-    ack = build_ack()
+    lang = lang_for(message.from_user.id)
+    ack = build_ack(message.from_user.id)
     if note:
         ack = f"{ack}\n{note}"
+    next_question = form_question(next_state, lang)
     await send_or_edit_user_text(
         message.from_user.id,
-        f"{ack}\n\n{format_question(next_state, question)}",
-        reply_markup=form_keyboard()
+        f"{ack}\n\n{format_question(next_state, next_question, user_id=message.from_user.id)}",
+        reply_markup=form_keyboard(lang)
     )
 
 # ================= START =================
@@ -1109,21 +1126,21 @@ async def send_next_question(
 async def start(message: Message, state: FSMContext):
     try:
         if message.chat.type != "private":
-            await message.answer("🤍 Напиши мне в личку и нажми /start ✨")
+            await message.answer(t("ru", "start_private_only"))
             return
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
         app = get_application(message.from_user.id)
         status = app.get("status") if app else None
-        await send_menu(message, status=status)
+        lang = lang_for(message.from_user.id)
+        await send_menu(message, caption=t(lang, "menu_caption"), status=status)
         if app and app.get("last_state") in FORM_PROGRESS_STATES and not get_form_data(message.from_user.id):
             set_last_state(message.from_user.id, None)
         if app and app.get("status") in {None, "new"} and app.get("last_state") in FORM_PROGRESS_STATES:
             await send_or_edit_user_text(
                 message.from_user.id,
-                "🤍 Похоже, анкета не завершена.\n\n"
-                "Хочешь продолжить заполнение?",
-                reply_markup=continue_form_keyboard()
+                t(lang, "resume_prompt"),
+                reply_markup=continue_form_keyboard(lang)
             )
     except Exception:
         logger.exception("Ошибка в /start")
@@ -1131,24 +1148,75 @@ async def start(message: Message, state: FSMContext):
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     if not call.message or call.message.chat.type != "private":
-        await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+        await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
         return
     await safe_call_answer(call)
     await state.clear()
     await clear_portfolio_media(call.from_user.id)
     app = get_application(call.from_user.id)
     status = app.get("status") if app else None
-    await send_menu(call.message, status=status)
+    lang = lang_for(call.from_user.id)
+    await send_menu(call.message, caption=t(lang, "menu_caption"), status=status)
     await clear_user_flow_message(call.from_user.id)
+
+
+@dp.message(F.text == "/language")
+async def language_command(message: Message):
+    if message.chat.type != "private":
+        await message.answer(t("ru", "start_private_only"))
+        return
+    lang = lang_for(message.from_user.id)
+    await send_or_edit_user_text(
+        message.from_user.id,
+        t(lang, "language_menu_title"),
+        reply_markup=language_keyboard(lang),
+    )
+
+
+@dp.callback_query(F.data == "language_menu")
+async def language_menu_handler(call: CallbackQuery):
+    if not call.message or call.message.chat.type != "private":
+        await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+        return
+    lang = lang_for(call.from_user.id)
+    await send_or_edit_user_text(
+        call.from_user.id,
+        t(lang, "language_menu_title"),
+        reply_markup=language_keyboard(lang),
+    )
+    await safe_call_answer(call)
+
+
+@dp.callback_query(F.data.startswith("set_lang:"))
+async def set_language_handler(call: CallbackQuery, state: FSMContext):
+    if not call.message or call.message.chat.type != "private":
+        await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+        return
+    lang_code = call.data.split(":", 1)[1].strip().lower()
+    set_user_language(call.from_user.id, lang_code)
+    lang = lang_for(call.from_user.id)
+    app = get_application(call.from_user.id)
+    status = app.get("status") if app else None
+    await state.clear()
+    await clear_portfolio_media(call.from_user.id)
+    await send_menu(
+        call.message,
+        caption=t(lang, "menu_caption"),
+        status=status,
+        intro=t(lang, "language_changed", language=LANGUAGE_NAMES.get(lang, lang)),
+    )
+    await clear_user_flow_message(call.from_user.id)
+    await safe_call_answer(call)
 # ================= APPLY =================
 
 @dp.callback_query(F.data == "apply")
 async def apply(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
+        lang = lang_for(call.from_user.id)
         logger.info(
             "APPLY_CLICK user_id=%s is_bot=%s chat_id=%s chat_type=%s",
             call.from_user.id,
@@ -1163,24 +1231,22 @@ async def apply(call: CallbackQuery, state: FSMContext):
 
         if status in {"pending", "accepted", "rejected"}:
             status_text = {
-                "pending": "🤍 Твоя заявка сейчас на рассмотрении.",
-                "accepted": "🤍 Твоя заявка уже одобрена.",
-                "rejected": "🤍 Мы уже отвечали по твоей заявке."
-            }.get(status, "🤍 Твоя заявка уже есть в системе.")
+                "pending": t(lang, "pending_status_text"),
+                "accepted": t(lang, "accepted_status_text"),
+                "rejected": t(lang, "rejected_status_text")
+            }.get(status, t(lang, "pending_status_text"))
             await edit_or_send(
                 call,
-                f"{status_text}\n\n"
-                "Если хочешь заполнить новую — подтверди, пожалуйста:",
-                reply_markup=reapply_keyboard()
+                f"{status_text}\n\n{t(lang, 'reapply_confirm')}",
+                reply_markup=reapply_keyboard(lang)
             )
             return
 
         if app and is_rate_limited(app.get("last_apply_at")):
             await edit_or_send(
                 call,
-                "🤍 Спасибо! Сейчас уже есть недавняя заявка.\n\n"
-                "Новую можно отправить немного позже ✨",
-                reply_markup=main_menu()
+                t(lang, "rate_limited"),
+                reply_markup=main_menu(lang)
             )
             return
 
@@ -1192,53 +1258,53 @@ async def apply(call: CallbackQuery, state: FSMContext):
         if (current and current in FORM_PROGRESS_STATES) or (last_state in FORM_PROGRESS_STATES):
             await send_or_edit_user_text(
                 call.from_user.id,
-                "🤍 Похоже, анкета уже начата.\n\n"
-                "Продолжим с того места, где остановились?",
-                reply_markup=continue_form_keyboard()
+                t(lang, "already_started_prompt"),
+                reply_markup=continue_form_keyboard(lang)
             )
             return
 
         started = await start_application(call.message, state)
         if not started:
-            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
     except Exception:
         logger.exception("Ошибка в apply")
-        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
 
 @dp.callback_query(F.data == "apply_restart")
 async def apply_restart(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
+        lang = lang_for(call.from_user.id)
         app = get_application(call.from_user.id)
         if app and is_rate_limited(app.get("last_apply_at")):
             await edit_or_send(
                 call,
-                "🤍 Спасибо! Сейчас уже есть недавняя заявка.\n\n"
-                "Новую можно отправить немного позже ✨",
-                reply_markup=main_menu()
+                t(lang, "rate_limited"),
+                reply_markup=main_menu(lang)
             )
             return
 
         await state.clear()
         started = await start_application(call.message, state)
         if not started:
-            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
     except Exception:
         logger.exception("Ошибка в apply_restart")
-        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
 
 @dp.callback_query(F.data == "form_continue")
 async def form_continue(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
+        lang = lang_for(call.from_user.id)
         current = await state.get_state()
         if not current:
             app = get_application(call.from_user.id)
@@ -1253,7 +1319,7 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
             else:
                 started = await start_application(call.message, state)
                 if not started:
-                    await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                    await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
                     return
                 return
 
@@ -1262,7 +1328,7 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
             if not REQUIRED_PREVIEW_FIELDS.issubset(data):
                 started = await start_application(call.message, state)
                 if not started:
-                    await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                    await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
                     return
                 return
             await show_preview(call.message, state)
@@ -1273,58 +1339,71 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
             if not field:
                 await show_preview(call.message, state)
                 return
-            title = FIELD_TITLES.get(field, "Поле")
+            title = field_title(field, lang_for(call.from_user.id))
             await send_or_edit_user_text(
                 call.from_user.id,
-                f"✏️ <b>Редактирование поля:</b>\n\n"
-                f"{title}\n\n"
-                f"👉 Введи новое значение:"
+                (
+                    f"✏️ <b>Редактирование поля:</b>\n\n{title}\n\n👉 Введи новое значение:"
+                    if lang == "ru"
+                    else (
+                        f"✏️ <b>Edit field:</b>\n\n{title}\n\n👉 Enter new value:"
+                        if lang == "en"
+                        else (
+                            f"✏️ <b>Editar campo:</b>\n\n{title}\n\n👉 Digite o novo valor:"
+                            if lang == "pt"
+                            else f"✏️ <b>Editar campo:</b>\n\n{title}\n\n👉 Escribe el nuevo valor:"
+                        )
+                    )
+                )
             )
             return
 
         for st in FORM_ORDER:
             if st.state == current:
+                lang = lang_for(call.from_user.id)
                 await send_or_edit_user_text(
                     call.from_user.id,
-                    format_question(st, FORM_QUESTIONS[st]),
-                    reply_markup=form_keyboard()
+                    format_question(st, form_question(st, lang), user_id=call.from_user.id),
+                    reply_markup=form_keyboard(lang)
                 )
                 return
 
         started = await start_application(call.message, state)
         if not started:
-            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
     except Exception:
         logger.exception("Ошибка в form_continue")
-        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
 
 @dp.callback_query(F.data == "form_restart")
 async def form_restart(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, "🤍 Открой чат с ботом и нажми /start ✨", show_alert=True)
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
+        lang = lang_for(call.from_user.id)
         started = await start_application(call.message, state)
         if not started:
-            await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+            await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
     except Exception:
         logger.exception("Ошибка в form_restart")
-        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
 
 # ================= FORM STEPS =================
 
 @dp.message(StateFilter(ApplicationStates.name), F.text)
 async def step_name(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     name = m.text.strip()
     await delete_user_message(m)
     if len(name) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:",
-            reply_markup=form_keyboard()
+            t(lang, "field_name_short"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, name=name)
@@ -1337,13 +1416,14 @@ async def step_name(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.city), F.text)
 async def step_city(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     city = m.text.strip()
     await delete_user_message(m)
     if len(city) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Подскажи город и страну проживания ещё раз:",
-            reply_markup=form_keyboard()
+            t(lang, "field_city_short"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, city=city)
@@ -1356,13 +1436,14 @@ async def step_city(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.phone), F.text)
 async def step_phone(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     phone = m.text.strip()
     await delete_user_message(m)
     if not is_valid_phone(phone):
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00",
-            reply_markup=form_keyboard()
+            t(lang, "field_phone_invalid"),
+            reply_markup=form_keyboard(lang)
         )
         return
     normalized = normalize_phone(phone) or phone
@@ -1380,13 +1461,14 @@ async def step_phone(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.age), F.text)
 async def step_age(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     birthdate = m.text.strip()
     await delete_user_message(m)
     if not is_valid_birthdate(birthdate):
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Напиши дату рождения в формате 01.01.2000:",
-            reply_markup=form_keyboard()
+            t(lang, "field_age_invalid"),
+            reply_markup=form_keyboard(lang)
         )
         return
     normalized = normalize_birthdate(birthdate) or birthdate
@@ -1408,14 +1490,15 @@ async def step_age(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.living), F.text)
 async def step_living(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     living_raw = m.text.strip()
     await delete_user_message(m)
     normalized = normalize_yes_no(living_raw)
     if not normalized:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Ответь, пожалуйста, «да» или «нет»:",
-            reply_markup=form_keyboard()
+            t(lang, "field_yes_no"),
+            reply_markup=form_keyboard(lang)
         )
         return
     note = None
@@ -1432,13 +1515,14 @@ async def step_living(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.devices), F.text)
 async def step_devices(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     devices = m.text.strip()
     await delete_user_message(m)
     if len(devices) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Уточни, пожалуйста, какие устройства есть:",
-            reply_markup=form_keyboard()
+            t(lang, "field_devices_short"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, devices=devices)
@@ -1451,13 +1535,14 @@ async def step_devices(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.device_model), F.text)
 async def step_device_model(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     device_model = m.text.strip()
     await delete_user_message(m)
     if len(device_model) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Напиши модель устройства, пожалуйста:",
-            reply_markup=form_keyboard()
+            t(lang, "field_device_model_short"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, device_model=device_model)
@@ -1470,13 +1555,14 @@ async def step_device_model(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.work_time), F.text)
 async def step_work_time(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     work_time = m.text.strip()
     await delete_user_message(m)
     if not has_any_digit(work_time):
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):",
-            reply_markup=form_keyboard()
+            t(lang, "field_work_time_invalid"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, work_time=work_time)
@@ -1489,13 +1575,14 @@ async def step_work_time(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.headphones), F.text)
 async def step_headphones(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     headphones = m.text.strip()
     await delete_user_message(m)
     if len(headphones) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:",
-            reply_markup=form_keyboard()
+            t(lang, "field_headphones_prompt"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, headphones=headphones)
@@ -1508,14 +1595,15 @@ async def step_headphones(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.telegram), F.text)
 async def step_tg(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     raw = m.text.strip()
     await delete_user_message(m)
     normalized = normalize_telegram(raw)
     if not normalized:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Укажи, пожалуйста, Telegram в формате @username:",
-            reply_markup=form_keyboard()
+            t(lang, "field_telegram_invalid"),
+            reply_markup=form_keyboard(lang)
         )
         return
     note = None
@@ -1532,13 +1620,14 @@ async def step_tg(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.experience), F.text)
 async def step_exp(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     experience = m.text.strip()
     await delete_user_message(m)
     if len(experience) < 1:
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Напиши, пожалуйста, есть ли опыт:",
-            reply_markup=form_keyboard()
+            t(lang, "field_experience_prompt"),
+            reply_markup=form_keyboard(lang)
         )
         return
     await update_form_field(state, m.from_user.id, experience=experience)
@@ -1564,27 +1653,27 @@ async def step_face(m: Message, state: FSMContext):
 async def step_full(m: Message, state: FSMContext):
     await update_form_field(state, m.from_user.id, photo_full=m.photo[-1].file_id)
     await delete_user_message(m)
-    await send_or_edit_user_text(m.from_user.id, build_ack())
+    await send_or_edit_user_text(m.from_user.id, build_ack(m.from_user.id))
     await show_preview(m, state)
 
 @dp.message(StateFilter(ApplicationStates.photo_face), ~F.photo)
 async def reject_non_photo_face(m: Message):
+    lang = lang_for(m.from_user.id)
     await delete_user_message(m)
     await send_or_edit_user_text(
         m.from_user.id,
-        "🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n"
-        "📷 Пришли фотографию, пожалуйста",
-        reply_markup=form_keyboard()
+        t(lang, "photo_face_required"),
+        reply_markup=form_keyboard(lang)
     )
 
 @dp.message(StateFilter(ApplicationStates.photo_full), ~F.photo)
 async def reject_non_photo_full(m: Message):
+    lang = lang_for(m.from_user.id)
     await delete_user_message(m)
     await send_or_edit_user_text(
         m.from_user.id,
-        "🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n"
-        "📷 Пришли фотографию, пожалуйста",
-        reply_markup=form_keyboard()
+        t(lang, "photo_full_required"),
+        reply_markup=form_keyboard(lang)
     )
 # ================= FORM CONSTANTS =================
 
@@ -1612,10 +1701,22 @@ FORM_PROGRESS_STATES = {s.state for s in FORM_ORDER} | {
     ApplicationStates.edit_value.state,
 }
 
-def format_question(state: ApplicationStates, question: str) -> str:
+def format_question(
+    state: ApplicationStates,
+    question: str,
+    user_id: int | None = None,
+) -> str:
     step = FORM_STEP_INDEX.get(state)
     if not step:
         return question
+    if user_id is not None:
+        lang = lang_for(user_id)
+        if lang == "en":
+            return f"Step {step}/{TOTAL_STEPS}\n\n{question}"
+        if lang == "pt":
+            return f"Etapa {step}/{TOTAL_STEPS}\n\n{question}"
+        if lang == "es":
+            return f"Paso {step}/{TOTAL_STEPS}\n\n{question}"
     return f"Шаг {step}/{TOTAL_STEPS}\n\n{question}"
 
 # ================= FORM VALIDATION =================
@@ -1637,11 +1738,12 @@ TEXT_STATES = (
 
 @dp.message(StateFilter(*TEXT_STATES), ~F.text)
 async def reject_non_text(m: Message):
+    lang = lang_for(m.from_user.id)
     await delete_user_message(m)
     await send_or_edit_user_text(
         m.from_user.id,
-        "🤍 Пожалуйста, отправь ответ текстом.",
-        reply_markup=form_keyboard()
+        t(lang, "reject_non_text"),
+        reply_markup=form_keyboard(lang)
     )
 
 @dp.message(StateFilter(ApplicationStates.admin_reject_reason), ~F.text)
@@ -1665,7 +1767,7 @@ async def form_back(call: CallbackQuery, state: FSMContext):
         idx = FORM_ORDER.index(current)
 
         if idx == 0:
-            await safe_call_answer(call, "🤍 Это первый пункт анкеты")
+            await safe_call_answer(call, t(lang_for(call.from_user.id), "first_step_notice"))
             return
 
         prev_state = FORM_ORDER[idx - 1]
@@ -1676,16 +1778,41 @@ async def form_back(call: CallbackQuery, state: FSMContext):
         field_key = STATE_TO_FIELD.get(prev_state)
         prev_value = data.get(field_key) if field_key else None
 
-        question = format_question(prev_state, FORM_QUESTIONS[prev_state])
+        lang = lang_for(call.from_user.id)
+        question = format_question(
+            prev_state,
+            form_question(prev_state, lang),
+            user_id=call.from_user.id,
+        )
         if prev_state in {ApplicationStates.photo_face, ApplicationStates.photo_full}:
-            question += "\n\nЕсли нужно заменить — пришли новое фото."
+            question += (
+                "\n\nЕсли нужно заменить — пришли новое фото."
+                if lang == "ru"
+                else (
+                    "\n\nIf you want to replace it, send a new photo."
+                    if lang == "en"
+                    else ("\n\nSe quiser trocar, envie uma nova foto." if lang == "pt" else "\n\nSi quieres reemplazarla, envía una foto nueva.")
+                )
+            )
         elif prev_value:
-            question += f"\n\nТвой прошлый ответ: {prev_value}\nЕсли нужно — отправь новый."
+            question += (
+                f"\n\nТвой прошлый ответ: {prev_value}\nЕсли нужно — отправь новый."
+                if lang == "ru"
+                else (
+                    f"\n\nYour previous answer: {prev_value}\nSend a new one if needed."
+                    if lang == "en"
+                    else (
+                        f"\n\nSua resposta anterior: {prev_value}\nEnvie uma nova se precisar."
+                        if lang == "pt"
+                        else f"\n\nTu respuesta anterior: {prev_value}\nEnvía una nueva si hace falta."
+                    )
+                )
+            )
 
         await send_or_edit_user_text(
             call.from_user.id,
             question,
-            reply_markup=form_keyboard()
+            reply_markup=form_keyboard(lang)
         )
     except Exception:
         logger.exception("Ошибка в form_back")
@@ -1694,92 +1821,129 @@ async def form_back(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(F.data == "about_work")
 async def about_work(call: CallbackQuery):
+    lang = lang_for(call.from_user.id)
     await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
-        "🌷 <b>О работе в нашем проекте</b>\n\n"
-        "Мы предлагаем современную онлайн-работу в формате стриминга.\n"
-        "Это не офис и не «работа по расписанию», а гибкий формат, который\n"
-        "можно легко встроить в свою жизнь 🤍\n\n"
-        "<b>Как всё проходит:</b>\n"
-        "• ты работаешь из любой точки мира\n"
-        "• находишься в комфортной для себя обстановке\n"
-        "• общаешься с аудиторией в дружелюбном формате\n"
-        "• создаёшь свой образ и стиль общения\n\n"
-        "<b>График:</b>\n"
-        "Он гибкий и подбирается индивидуально.\n"
-        "Обычно это от 6 часов в день, но всё обсуждается — мы за комфорт,\n"
-        "а не за выгорание.\n\n"
-        "<b>Стажировка:</b>\n"
-        "Перед стартом есть короткий промо-период (2–5 дней).\n"
-        "В это время ты:\n"
-        "• знакомишься с форматом\n"
-        "• получаешь поддержку и подсказки\n"
-        "• и — важно — <b>каждый день оплачивается</b>\n\n"
-        "Мы сопровождаем тебя на каждом этапе и всегда на связи ✨",
-        reply_markup=about_menu()
+        (
+            "🌷 <b>О работе в нашем проекте</b>\n\n"
+            "Мы предлагаем современную онлайн-работу в формате стриминга.\n"
+            "Это не офис и не «работа по расписанию», а гибкий формат, который\n"
+            "можно легко встроить в свою жизнь 🤍\n\n"
+            "<b>Как всё проходит:</b>\n"
+            "• ты работаешь из любой точки мира\n"
+            "• находишься в комфортной для себя обстановке\n"
+            "• общаешься с аудиторией в дружелюбном формате\n"
+            "• создаёшь свой образ и стиль общения\n\n"
+            "<b>График:</b>\n"
+            "Он гибкий и подбирается индивидуально.\n"
+            "Обычно это от 6 часов в день, но всё обсуждается — мы за комфорт,\n"
+            "а не за выгорание.\n\n"
+            "<b>Стажировка:</b>\n"
+            "Перед стартом есть короткий промо-период (2–5 дней).\n"
+            "В это время ты:\n"
+            "• знакомишься с форматом\n"
+            "• получаешь поддержку и подсказки\n"
+            "• и — важно — <b>каждый день оплачивается</b>\n\n"
+            "Мы сопровождаем тебя на каждом этапе и всегда на связи ✨"
+        ) if lang == "ru" else (
+            "🌷 <b>About the work format</b>\n\n"
+            "Remote work, clear steps and team support at every stage.\n"
+            "Flexible schedule, careful onboarding and transparent communication."
+            if lang == "en"
+            else (
+                "🌷 <b>Sobre o formato de trabalho</b>\n\n"
+                "Trabalho remoto, etapas claras e suporte da equipe em cada fase.\n"
+                "Agenda flexível, onboarding cuidadoso e comunicação transparente."
+                if lang == "pt"
+                else "🌷 <b>Sobre el formato de trabajo</b>\n\nTrabajo remoto, pasos claros y apoyo del equipo en cada etapa.\nHorario flexible, incorporación cuidada y comunicación transparente."
+            )
+        ),
+        reply_markup=about_menu(lang)
     )
 
 
 @dp.callback_query(F.data == "about_platforms")
 async def about_platforms(call: CallbackQuery):
+    lang = lang_for(call.from_user.id)
     await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
-        "💻 <b>Площадки и формат работы</b>\n\n"
-        "Работа проходит на современных онлайн-платформах,\n"
-        "где важно качество картинки и стабильная связь.\n\n"
-        "Мы заранее уточняем технику — не потому что «строго»,\n"
-        "а чтобы ты чувствовала себя уверенно и комфортно в процессе 🌸\n\n"
-        "<b>Что обычно подходит:</b>\n"
-        "• современные модели смартфонов\n"
-        "• либо ноутбук / ПК с камерой\n\n"
-        "Если вдруг текущее устройство не идеально подходит —\n"
-        "это не проблема.\n"
-        "Мы просто подскажем, какие варианты лучше,\n"
-        "или ты сможешь вернуться к нам позже 🤍\n\n"
-        "Наша цель — чтобы работа приносила удовольствие,\n"
-        "а не стресс из-за техники.",
-        reply_markup=about_menu()
+        (
+            "💻 <b>Площадки и формат работы</b>\n\n"
+            "Работа проходит на современных онлайн-платформах,\n"
+            "где важно качество картинки и стабильная связь.\n\n"
+            "Мы заранее уточняем технику — не потому что «строго»,\n"
+            "а чтобы ты чувствовала себя уверенно и комфортно в процессе 🌸\n\n"
+            "<b>Что обычно подходит:</b>\n"
+            "• современные модели смартфонов\n"
+            "• либо ноутбук / ПК с камерой\n\n"
+            "Если вдруг текущее устройство не идеально подходит —\n"
+            "это не проблема.\n"
+            "Мы просто подскажем, какие варианты лучше,\n"
+            "или ты сможешь вернуться к нам позже 🤍\n\n"
+            "Наша цель — чтобы работа приносила удовольствие,\n"
+            "а не стресс из-за техники."
+        ) if lang == "ru" else (
+            "💻 <b>Platforms and setup</b>\n\nWe work on modern online platforms.\nWe'll help you choose the best setup for a stable and comfortable start."
+            if lang == "en"
+            else (
+                "💻 <b>Plataformas e setup</b>\n\nTrabalhamos em plataformas online modernas.\nVamos ajudar você a escolher a melhor configuração para um início estável e confortável."
+                if lang == "pt"
+                else "💻 <b>Plataformas y setup</b>\n\nTrabajamos en plataformas online modernas.\nTe ayudamos a elegir la mejor configuración para empezar de forma estable y cómoda."
+            )
+        ),
+        reply_markup=about_menu(lang)
     )
 
 
 @dp.callback_query(F.data == "about_income")
 async def about_income(call: CallbackQuery):
+    lang = lang_for(call.from_user.id)
     await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
-        "💰 <b>Доход и выплаты</b>\n\n"
-        "На старте большинство моделей выходят\n"
-        "на доход <b>$800–1000 в месяц</b>.\n\n"
-        "<b>Что влияет на доход:</b>\n"
-        "• твоя активность\n"
-        "• умение общаться\n"
-        "• регулярность выходов\n"
-        "• следование рекомендациям менеджера\n\n"
-        "<b>Выплаты:</b>\n"
-        "• происходят еженедельно\n"
-        "• без задержек\n"
-        "• в удобном формате\n\n"
-        "<b>Валюта:</b>\n"
-        "USD или USDT\n\n"
-        "<b>Способ получения:</b>\n"
-        "• для РФ — банковская карта\n"
-        "• для других стран — криптокошелёк\n\n"
-        "Это стабильный формат работы,\n"
-        "а не разовые подработки ✨",
-        reply_markup=about_menu()
+        (
+            "💰 <b>Доход и выплаты</b>\n\n"
+            "На старте большинство моделей выходят\n"
+            "на доход <b>$800–1000 в месяц</b>.\n\n"
+            "<b>Что влияет на доход:</b>\n"
+            "• твоя активность\n"
+            "• умение общаться\n"
+            "• регулярность выходов\n"
+            "• следование рекомендациям менеджера\n\n"
+            "<b>Выплаты:</b>\n"
+            "• происходят еженедельно\n"
+            "• без задержек\n"
+            "• в удобном формате\n\n"
+            "<b>Валюта:</b>\n"
+            "USD или USDT\n\n"
+            "<b>Способ получения:</b>\n"
+            "• для РФ — банковская карта\n"
+            "• для других стран — криптокошелёк\n\n"
+            "Это стабильный формат работы,\n"
+            "а не разовые подработки ✨"
+        ) if lang == "ru" else (
+            "💰 <b>Income and payouts</b>\n\nAt start, many models reach <b>$800–1000 per month</b>.\nPayouts are weekly and stable."
+            if lang == "en"
+            else (
+                "💰 <b>Ganhos e pagamentos</b>\n\nNo início, muitas modelos alcançam <b>$800–1000 por mês</b>.\nPagamentos semanais e estáveis."
+                if lang == "pt"
+                else "💰 <b>Ingresos y pagos</b>\n\nAl inicio, muchas modelos llegan a <b>$800–1000 al mes</b>.\nPagos semanales y estables."
+            )
+        ),
+        reply_markup=about_menu(lang)
     )
 
 @dp.callback_query(F.data == "portfolio")
 async def portfolio(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         await clear_portfolio_media(call.from_user.id)
         await edit_or_send(
             call,
-            "📁 <b>Портфолио моделей</b>\n\n"
-            "Здесь ты можешь посмотреть примеры работы, отзывы и реальные кейсы.",
-            reply_markup=portfolio_menu()
+            t(lang, "profile_portfolio_title"),
+            reply_markup=portfolio_menu(lang)
         )
     except Exception:
         logger.exception("Ошибка в portfolio")
@@ -1788,15 +1952,12 @@ async def portfolio(call: CallbackQuery):
 @dp.callback_query(F.data == "about")
 async def about(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         await clear_portfolio_media(call.from_user.id)
         await edit_or_send(
             call,
-            "ℹ️ <b>Подробнее о работе</b>\n\n"
-            "• Удалённый формат\n"
-            "• Без 18+\n"
-            "• Поддержка 24/7\n"
-            "• Обучение с нуля",
-            reply_markup=about_menu()
+            t(lang, "profile_about_title"),
+            reply_markup=about_menu(lang)
         )
     except Exception:
         logger.exception("Ошибка в about")
@@ -1805,13 +1966,13 @@ async def about(call: CallbackQuery):
 @dp.callback_query(F.data == "contact")
 async def contact(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         await clear_portfolio_media(call.from_user.id)
         username = ADMIN_USERNAME.lstrip("@")
         await edit_or_send(
             call,
-            f"💬 <b>Связь с администратором</b>\n\n"
-            f"https://t.me/{username}",
-            reply_markup=main_menu()
+            t(lang, "profile_contact_title", link=f"https://t.me/{username}"),
+            reply_markup=main_menu(lang)
         )
     except Exception:
         logger.exception("Ошибка в contact")
@@ -1835,10 +1996,15 @@ async def back_handler(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "preview_edit")
 async def preview_edit(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         await edit_or_send(
             call,
-            "✏️ <b>Что хочешь исправить?</b>\n\nВыбери пункт:",
-            reply_markup=preview_edit_menu()
+            "✏️ <b>Что хочешь исправить?</b>\n\nВыбери пункт:" if lang == "ru" else (
+                "✏️ <b>What would you like to edit?</b>\n\nChoose a field:"
+                if lang == "en"
+                else ("✏️ <b>O que você quer editar?</b>\n\nEscolha um campo:" if lang == "pt" else "✏️ <b>¿Qué quieres editar?</b>\n\nElige un campo:")
+            ),
+            reply_markup=preview_edit_menu(lang)
         )
     except Exception:
         logger.exception("Ошибка в preview_edit")
@@ -1856,13 +2022,24 @@ async def edit_field(call: CallbackQuery, state: FSMContext):
         await state.set_state(ApplicationStates.edit_value)
         set_last_state(call.from_user.id, ApplicationStates.edit_value.state)
 
-        title = FIELD_TITLES.get(field, "Поле")
+        lang = lang_for(call.from_user.id)
+        title = field_title(field, lang)
 
         await send_or_edit_user_text(
             call.from_user.id,
-            f"✏️ <b>Редактирование поля:</b>\n\n"
-            f"{title}\n\n"
-            f"👉 Введи новое значение:"
+            (
+                f"✏️ <b>Редактирование поля:</b>\n\n{title}\n\n👉 Введи новое значение:"
+                if lang == "ru"
+                else (
+                    f"✏️ <b>Edit field:</b>\n\n{title}\n\n👉 Enter new value:"
+                    if lang == "en"
+                    else (
+                        f"✏️ <b>Editar campo:</b>\n\n{title}\n\n👉 Digite o novo valor:"
+                        if lang == "pt"
+                        else f"✏️ <b>Editar campo:</b>\n\n{title}\n\n👉 Escribe el nuevo valor:"
+                    )
+                )
+            )
         )
         await safe_call_answer(call)
     except Exception:
@@ -1871,65 +2048,73 @@ async def edit_field(call: CallbackQuery, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.edit_value), F.text)
 async def save_edited_value(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     value = m.text.strip()
     await delete_user_message(m)
 
     # 🚫 запрет пустых значений
     if not value:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Значение не может быть пустым. Введи ещё раз:")
+        await send_or_edit_user_text(
+            m.from_user.id,
+            "🤍 Значение не может быть пустым. Введи ещё раз:" if lang == "ru" else (
+                "🤍 Value cannot be empty. Please enter it again:" if lang == "en" else (
+                    "🤍 O valor não pode ficar vazio. Digite novamente:" if lang == "pt" else "🤍 El valor no puede estar vacío. Escríbelo nuevamente:"
+                )
+            )
+        )
         return
 
     data = await state.get_data()
     field = data.get("edit_field")
 
     if not field:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Похоже, что-то пошло не так. Попробуй ещё раз.")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "temp_error_retry"))
         await state.clear()
         return
 
     # базовая валидация при редактировании
     if field == "name" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Имя должно быть чуть длиннее. Напиши ещё раз:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_name_short"))
         return
     if field == "city" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Подскажи город и страну ещё раз:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_city_short"))
         return
     if field == "phone" and not is_valid_phone(value):
-        await send_or_edit_user_text(m.from_user.id, "🤍 Номер выглядит некорректно. Пример: +7 900 000 00 00")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_phone_invalid"))
         return
     if field == "phone":
         value = normalize_phone(value) or value
     if field == "age" and not is_valid_birthdate(value):
-        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши дату рождения в формате 01.01.2000:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_age_invalid"))
         return
     if field == "age":
         value = normalize_birthdate(value) or value
     if field == "living":
         normalized = normalize_yes_no(value)
         if not normalized:
-            await send_or_edit_user_text(m.from_user.id, "🤍 Ответь, пожалуйста, «да» или «нет»:")
+            await send_or_edit_user_text(m.from_user.id, t(lang, "field_yes_no"))
             return
         value = normalized
     if field == "devices" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Уточни, пожалуйста, какие устройства есть:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_devices_short"))
         return
     if field == "device_model" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши модель устройства, пожалуйста:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_device_model_short"))
         return
     if field == "work_time" and not has_any_digit(value):
-        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши, пожалуйста, количество часов цифрами:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_work_time_invalid"))
         return
     if field == "headphones" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_headphones_prompt"))
         return
     if field == "telegram":
         normalized = normalize_telegram(value)
         if not normalized:
-            await send_or_edit_user_text(m.from_user.id, "🤍 Укажи, пожалуйста, Telegram в формате @username:")
+            await send_or_edit_user_text(m.from_user.id, t(lang, "field_telegram_invalid"))
             return
         value = normalized
     if field == "experience" and len(value) < 1:
-        await send_or_edit_user_text(m.from_user.id, "🤍 Напиши, пожалуйста, есть ли опыт:")
+        await send_or_edit_user_text(m.from_user.id, t(lang, "field_experience_prompt"))
         return
 
     # сохраняем новое значение
@@ -1942,10 +2127,15 @@ async def save_edited_value(m: Message, state: FSMContext):
 @dp.callback_query(F.data == "preview_edit_photo")
 async def preview_edit_photo(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         await edit_or_send(
             call,
-            "📷 <b>Какое фото хочешь заменить?</b>",
-            reply_markup=preview_edit_photo_menu()
+            "📷 <b>Какое фото хочешь заменить?</b>" if lang == "ru" else (
+                "📷 <b>Which photo do you want to replace?</b>"
+                if lang == "en"
+                else ("📷 <b>Qual foto você quer trocar?</b>" if lang == "pt" else "📷 <b>¿Qué foto quieres reemplazar?</b>")
+            ),
+            reply_markup=preview_edit_photo_menu(lang)
         )
     except Exception:
         logger.exception("Ошибка в preview_edit_photo")
@@ -1961,6 +2151,7 @@ async def edit_photo(call: CallbackQuery, state: FSMContext):
 
         await state.update_data(edit_photo=photo_type)
 
+        lang = lang_for(call.from_user.id)
         text = (
             "📷 <b>Замена фото</b>\n\n"
             "Отправь новое фото:\n"
@@ -1968,12 +2159,16 @@ async def edit_photo(call: CallbackQuery, state: FSMContext):
             "• без фильтров\n"
             "• хорошее освещение\n\n"
             "⬅️ Если передумала — нажми «Отмена»"
+        ) if lang == "ru" else (
+            "📷 <b>Photo replacement</b>\n\nSend a new photo.\n⬅️ If you changed your mind, press Cancel."
+            if lang == "en"
+            else ("📷 <b>Troca de foto</b>\n\nEnvie uma nova foto.\n⬅️ Se mudou de ideia, pressione Cancelar." if lang == "pt" else "📷 <b>Reemplazo de foto</b>\n\nEnvía una foto nueva.\n⬅️ Si cambiaste de idea, pulsa Cancelar.")
         )
 
         await send_or_edit_user_text(
             call.from_user.id,
             text,
-            reply_markup=cancel_keyboard()
+            reply_markup=cancel_keyboard(lang)
         )
         await safe_call_answer(call)
     except Exception:
@@ -2004,11 +2199,21 @@ async def reject_text_when_waiting_photo(m: Message, state: FSMContext):
     data = await state.get_data()
 
     if data.get("edit_photo"):
+        lang = lang_for(m.from_user.id)
         await delete_user_message(m)
         await send_or_edit_user_text(
             m.from_user.id,
-            "🤍 Сейчас нужно отправить <b>ФОТО</b>, а не текст.\n\n"
-            "📷 Пришли фотографию или нажми «Отмена»."
+            "🤍 Сейчас нужно отправить <b>ФОТО</b>, а не текст.\n\n📷 Пришли фотографию или нажми «Отмена»."
+            if lang == "ru"
+            else (
+                "🤍 Please send a <b>PHOTO</b>, not text.\n\n📷 Send a photo or press Cancel."
+                if lang == "en"
+                else (
+                    "🤍 Agora envie uma <b>FOTO</b>, não texto.\n\n📷 Envie uma foto ou pressione Cancelar."
+                    if lang == "pt"
+                    else "🤍 Ahora debes enviar una <b>FOTO</b>, no texto.\n\n📷 Envía una foto o pulsa Cancelar."
+                )
+            )
         )
 
 @dp.callback_query(F.data == "preview_back")
@@ -2023,48 +2228,44 @@ async def preview_back(call: CallbackQuery, state: FSMContext):
         await safe_call_answer(call, "Не удалось открыть предпросмотр", show_alert=False)
 
 async def show_preview(m: Message, state: FSMContext):
+    lang = lang_for(m.from_user.id)
     data = await state.get_data()
-    await send_or_edit_user_text(m.from_user.id, LOADING_TEXT)
+    await send_or_edit_user_text(m.from_user.id, t(lang, "loading_text"))
     for text in (
-        "✨ Проверяю детали...\nЕщё секунду 🌸",
-        "🌷 Оформляю карточку...\nПочти готово 🤍",
+        t(lang, "loading_stage_1"),
+        t(lang, "loading_stage_2"),
     ):
         await asyncio.sleep(random.uniform(0.4, 0.8))
         await send_or_edit_user_text(m.from_user.id, text)
     await asyncio.sleep(random.uniform(0.3, 0.6))
     status = get_status(m.from_user.id) or "new"
-    status_label = STATUS_LABELS.get(status, "📝 Черновик")
-    text = (
-        "🌸 <b>АНКЕТА КАНДИДАТА</b> 🌸\n"
-        "<i>Проверь, всё ли верно 🤍</i>\n\n"
-        "🌷 <b>Личные данные</b>\n"
-        f"👤 <b>Имя:</b> {data['name']}\n"
-        f"🌍 <b>Город и страна:</b> {data['city']}\n"
-        f"📅 <b>Дата рождения:</b> {data['age']}\n"
-        f"📞 <b>Телефон:</b> {data['phone']}\n"
-        f"🏠 <b>Помещение без посторонних:</b> {data['living']}\n\n"
-        "💻 <b>Техника</b>\n"
-        f"📱 <b>Устройства:</b> {data['devices']}\n"
-        f"📲 <b>Модель:</b> {data['device_model']}\n"
-        f"🎧 <b>Наушники:</b> {data['headphones']}\n\n"
-        "🕒 <b>График и опыт</b>\n"
-        f"⏱ <b>Время работы:</b> {data['work_time']}\n"
-        f"💼 <b>Опыт:</b> {data['experience']}\n\n"
-        "💬 <b>Контакт</b>\n"
-        f"💬 <b>Telegram:</b> {data['telegram']}\n\n"
-        "────────\n"
-        f"🧾 <b>Статус:</b> {status_label}\n\n"
-        "<i>Если нужно, используй кнопки ниже ✨</i>"
+    status_caption = status_label(status, lang)
+    text = t(
+        lang,
+        "preview_title",
+        name=data["name"],
+        city=data["city"],
+        age=data["age"],
+        phone=data["phone"],
+        living=data["living"],
+        devices=data["devices"],
+        device_model=data["device_model"],
+        headphones=data["headphones"],
+        work_time=data["work_time"],
+        experience=data["experience"],
+        telegram=data["telegram"],
+        status=status_caption,
     )
     await state.set_state(ApplicationStates.preview)
     set_last_state(m.from_user.id, ApplicationStates.preview.state)
-    await send_or_edit_user_text(m.from_user.id, text, reply_markup=preview_keyboard())
+    await send_or_edit_user_text(m.from_user.id, text, reply_markup=preview_keyboard(lang))
 
 # ================= CONFIRM SEND =================
 
 @dp.callback_query(F.data == "preview_confirm")
 async def preview_confirm(call: CallbackQuery, state: FSMContext):
     try:
+        lang = lang_for(call.from_user.id)
         await safe_call_answer(call)
         data = await state.get_data()
         user = call.from_user
@@ -2073,20 +2274,18 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
         if app and is_rate_limited(app.get("last_apply_at")):
             await send_or_edit_user_text(
                 call.from_user.id,
-                "🤍 Похоже, недавно уже была отправлена заявка.\n\n"
-                "Немного позже можно будет отправить новую ✨"
+                t(lang, "recent_already_sent")
             )
             await safe_call_answer(call)
             return
         if not REQUIRED_PREVIEW_FIELDS.issubset(data):
             await send_or_edit_user_text(
                 call.from_user.id,
-                "🤍 Кажется, анкета заполнена не полностью.\n\n"
-                "Давай продолжим заполнение ✨"
+                t(lang, "application_missing")
             )
             started = await start_application(call.message, state)
             if not started:
-                await safe_call_answer(call, "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.", show_alert=True)
+                await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
                 return
             await safe_call_answer(call)
             return
@@ -2113,12 +2312,14 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
         try:
             caption = build_menu_caption_with_status(
                 "pending",
-                MENU_CAPTION,
-                intro="🤍 Спасибо! Анкета отправлена администратору ✨"
+                t(lang, "menu_caption"),
+                lang=lang,
+                intro=t(lang, "application_sent")
             )
             await send_or_edit_user_menu(
                 call.from_user.id,
-                caption
+                caption,
+                lang=lang,
             )
         except Exception:
             logger.exception("Ошибка отправки меню после заявки")
@@ -2126,7 +2327,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в preview_confirm")
-        await safe_call_answer(call, "Временная ошибка. Попробуй ещё раз.", show_alert=True)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
 
 @dp.callback_query(F.data == "edit_cancel")
 async def edit_cancel(call: CallbackQuery, state: FSMContext):
@@ -2136,7 +2337,8 @@ async def edit_cancel(call: CallbackQuery, state: FSMContext):
         if not call.message:
             return
         await show_preview(call.message, state)
-        await safe_call_answer(call, "Отменено")
+        lang = lang_for(call.from_user.id)
+        await safe_call_answer(call, "Отменено" if lang == "ru" else ("Canceled" if lang == "en" else ("Cancelado" if lang == "pt" else "Cancelado")))
     except Exception:
         logger.exception("Ошибка в edit_cancel")
         await safe_call_answer(call, "Не удалось отменить редактирование", show_alert=False)
@@ -2154,13 +2356,15 @@ async def admin_accept(call: CallbackQuery):
         uid = int(parts[1])
         view_mode = len(parts) > 2 and parts[2] == "view"
         try:
+            user_lang = lang_for(uid)
             caption = build_menu_caption_with_status(
                 "accepted",
-                ACCEPT_CAPTION,
-                tail="🤍 Ожидайте, скоро админ напишет вам для записи на собеседование ✨"
+                t(user_lang, "accept_caption"),
+                lang=user_lang,
+                tail=t(user_lang, "approved_tail")
             )
             if not is_site_source(uid):
-                await send_or_edit_user_menu(uid, caption)
+                await send_or_edit_user_menu(uid, caption, lang=user_lang)
                 await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после принятия")
@@ -2236,19 +2440,16 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             return
 
         try:
-            intro = (
-                "🤍 Спасибо за твою заявку!\n\n"
-                "К сожалению, сейчас мы не можем принять её.\n\n"
-                f"Причина:\n{reason}\n\n"
-                "Если появится возможность — мы обязательно напишем ✨"
-            )
+            user_lang = lang_for(uid)
+            intro = t(user_lang, "rejected_reason_intro", reason=reason)
             caption = build_menu_caption_with_status(
                 "rejected",
-                MENU_CAPTION,
+                t(user_lang, "menu_caption"),
+                lang=user_lang,
                 intro=intro
             )
             if not is_site_source(uid):
-                await send_or_edit_user_menu(uid, caption)
+                await send_or_edit_user_menu(uid, caption, lang=user_lang)
                 await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
@@ -2282,19 +2483,16 @@ async def reject_reason(m: Message, state: FSMContext):
             return
 
         try:
-            intro = (
-                "🤍 Спасибо за твою заявку!\n\n"
-                "К сожалению, сейчас мы не можем принять её.\n\n"
-                f"Причина:\n{m.text}\n\n"
-                "Если появится возможность — мы обязательно напишем ✨"
-            )
+            user_lang = lang_for(uid)
+            intro = t(user_lang, "rejected_reason_intro", reason=m.text)
             caption = build_menu_caption_with_status(
                 "rejected",
-                MENU_CAPTION,
+                t(user_lang, "menu_caption"),
+                lang=user_lang,
                 intro=intro
             )
             if not is_site_source(uid):
-                await send_or_edit_user_menu(uid, caption)
+                await send_or_edit_user_menu(uid, caption, lang=user_lang)
                 await clear_user_flow_message(uid)
         except Exception:
             logger.exception("Ошибка отправки меню после отказа")
@@ -2521,8 +2719,9 @@ async def admin_reset_db_cancel(call: CallbackQuery):
 @dp.callback_query(F.data == "portfolio_reviews")
 async def portfolio_reviews(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         if not call.message:
-            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
         await clear_portfolio_media(call.from_user.id)
         messages = await call.message.answer_media_group([
@@ -2533,19 +2732,20 @@ async def portfolio_reviews(call: CallbackQuery):
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_reviews")
-        await safe_call_answer(call, "Не удалось отправить материалы", show_alert=False)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
 
 @dp.callback_query(F.data == "portfolio_videos")
 async def portfolio_streams(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         if not call.message:
-            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
         await clear_portfolio_media(call.from_user.id)
         now = datetime.now(timezone.utc)
         last = PORTFOLIO_VIDEO_LAST.get(call.from_user.id)
         if last and (now - last).total_seconds() < PORTFOLIO_COOLDOWN_SECONDS:
-            await safe_call_answer(call, "🤍 Видео уже отправлены, посмотри, пожалуйста ✨")
+            await safe_call_answer(call, t(lang, "video_cooldown"))
             return
         PORTFOLIO_VIDEO_LAST[call.from_user.id] = now
         messages = await call.message.answer_media_group([
@@ -2556,13 +2756,14 @@ async def portfolio_streams(call: CallbackQuery):
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_streams")
-        await safe_call_answer(call, "Не удалось отправить видео", show_alert=False)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "video_send_error"), show_alert=False)
 
 @dp.callback_query(F.data == "portfolio_pdf")
 async def portfolio_pdf(call: CallbackQuery):
     try:
+        lang = lang_for(call.from_user.id)
         if not call.message:
-            await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
+            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
         await clear_portfolio_media(call.from_user.id)
         base_dir = Path(__file__).resolve().parent
@@ -2580,7 +2781,7 @@ async def portfolio_pdf(call: CallbackQuery):
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_pdf")
-        await safe_call_answer(call, "Не удалось отправить документ", show_alert=False)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "pdf_send_error"), show_alert=False)
 
 # ================= ADMIN STATS =================
 

@@ -9,6 +9,11 @@ window.addEventListener('DOMContentLoaded', () => {
 function normalizeInitialScrollPosition() {
   if (!('scrollRestoration' in history)) return;
   history.scrollRestoration = 'manual';
+  const allowHashScroll = sessionStorage.getItem('allow_hash_scroll') === '1';
+  if (window.location.hash && !allowHashScroll) {
+    history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
+  }
+  sessionStorage.removeItem('allow_hash_scroll');
   window.addEventListener('load', () => {
     if (!window.location.hash) {
       window.scrollTo(0, 0);
@@ -88,6 +93,67 @@ function initHeroParallax() {
 
 initHeroParallax();
 
+function initLiquidEtherBackground() {
+  const layer = document.querySelector('.liquid-ether-bg');
+  const hero = document.querySelector('.hero');
+  if (!layer || !hero || prefersReduced) return;
+
+  let targetX = 0;
+  let targetY = 0;
+  let currentX = 0;
+  let currentY = 0;
+  const maxShift = 20;
+
+  const update = () => {
+    currentX += (targetX - currentX) * 0.08;
+    currentY += (targetY - currentY) * 0.08;
+    layer.style.setProperty('--ether-x', `${currentX}px`);
+    layer.style.setProperty('--ether-y', `${currentY}px`);
+    requestAnimationFrame(update);
+  };
+
+  hero.addEventListener('pointermove', (event) => {
+    const rect = hero.getBoundingClientRect();
+    const nx = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / rect.height) * 2 - 1;
+    targetX = nx * maxShift;
+    targetY = ny * maxShift;
+  });
+
+  hero.addEventListener('pointerleave', () => {
+    targetX = 0;
+    targetY = 0;
+  });
+
+  update();
+}
+
+initLiquidEtherBackground();
+
+function initSpotlightCards() {
+  const cards = document.querySelectorAll(
+    '.card-spotlight, .offer-item, .steps-item, .income-card, .video-card, .portfolio-block, .trust-item'
+  );
+  if (!cards.length) return;
+
+  cards.forEach((card) => {
+    card.addEventListener('pointermove', (event) => {
+      const rect = card.getBoundingClientRect();
+      const x = event.clientX - rect.left;
+      const y = event.clientY - rect.top;
+      card.style.setProperty('--mouse-x', `${x}px`);
+      card.style.setProperty('--mouse-y', `${y}px`);
+      card.classList.add('is-spotlight-active');
+    });
+
+    card.addEventListener('pointerleave', () => {
+      card.classList.remove('is-spotlight-active');
+    });
+  });
+}
+
+initSpotlightCards();
+
 const revealElements = document.querySelectorAll('.reveal');
 if (revealElements.length) {
   const observer = new IntersectionObserver((entries) => {
@@ -105,11 +171,20 @@ if (revealElements.length) {
 if (!prefersReduced) {
   document.querySelectorAll('a[href]').forEach((link) => {
     const href = link.getAttribute('href');
-    if (!href || href.startsWith('#') || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if (!href || href.startsWith('mailto:') || href.startsWith('tel:')) return;
+    if (href.startsWith('#')) {
+      link.addEventListener('click', () => {
+        sessionStorage.setItem('allow_hash_scroll', '1');
+      });
+      return;
+    }
     if (link.target === '_blank' || link.hasAttribute('download')) return;
     if (href.startsWith('http')) return;
     link.addEventListener('click', (event) => {
       event.preventDefault();
+      if (href.includes('#')) {
+        sessionStorage.setItem('allow_hash_scroll', '1');
+      }
       document.body.classList.add('is-transitioning');
       setTimeout(() => {
         window.location.href = href;

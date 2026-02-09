@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -8,6 +7,7 @@ from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font
 
 from database import get_application
+from time_utils import format_submit_time
 
 EXCEL_PATH = Path("applications.xlsx")
 
@@ -83,13 +83,7 @@ def _fit_columns(ws):
         ws.column_dimensions[col_letter].width = min(max_len + 2, 45)
 
 def _format_submit_time(ts: str | None) -> str:
-    if not ts:
-        return datetime.now().strftime("%d.%m.%Y %H:%M")
-    try:
-        dt = datetime.fromisoformat(ts.replace("Z", "+00:00"))
-        return dt.astimezone().strftime("%d.%m.%Y %H:%M")
-    except Exception:
-        return ts
+    return format_submit_time(ts)
 
 def _format_source(value: str | None) -> str:
     if not value:

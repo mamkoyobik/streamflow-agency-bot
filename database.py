@@ -507,6 +507,28 @@ def get_setting(key: str) -> str | None:
             return None
         return row[0]
 
+
+SUPPORTED_LANGUAGES = {"ru", "en", "pt", "es"}
+DEFAULT_LANGUAGE = "ru"
+
+
+def _lang_setting_key(user_id: int) -> str:
+    return f"user_lang:{int(user_id)}"
+
+
+def set_user_language(user_id: int, language: str) -> None:
+    lang = (language or "").strip().lower()
+    if lang not in SUPPORTED_LANGUAGES:
+        lang = DEFAULT_LANGUAGE
+    set_setting(_lang_setting_key(user_id), lang)
+
+
+def get_user_language(user_id: int) -> str:
+    value = (get_setting(_lang_setting_key(user_id)) or "").strip().lower()
+    if value in SUPPORTED_LANGUAGES:
+        return value
+    return DEFAULT_LANGUAGE
+
 def list_applications(status: str | None = None) -> list[dict]:
     with DB_LOCK:
         if status:

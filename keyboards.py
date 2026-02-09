@@ -1,112 +1,114 @@
 import os
 
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from texts import t, field_title
 
-SITE_URL = (os.getenv("SITE_URL") or "https://extraordinary-upliftment-production-0407.up.railway.app").strip()
+SITE_URL = (os.getenv("SITE_URL") or "https://streamflowagency.com").strip().rstrip("/")
 
 # ================= MAIN MENU =================
 
-def main_menu():
+def main_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌸 Стать моделью", callback_data="apply")],
-        [InlineKeyboardButton(text="🌐 Наш сайт", url=SITE_URL)],
-        [InlineKeyboardButton(text="📁 Портфолио моделей", callback_data="portfolio")],
-        [InlineKeyboardButton(text="ℹ️ Подробнее о работе", callback_data="about")],
-        [InlineKeyboardButton(text="💬 Связь с администратором", callback_data="contact")],
-        [InlineKeyboardButton(text="📣 Наш канал", url="https://t.me/+uuVr5gJFwoJjYmRi")],
+        [InlineKeyboardButton(text=t(lang, "menu_be_model"), callback_data="apply")],
+        [InlineKeyboardButton(text=t(lang, "menu_website"), url=SITE_URL)],
+        [InlineKeyboardButton(text=t(lang, "menu_portfolio"), callback_data="portfolio")],
+        [InlineKeyboardButton(text=t(lang, "menu_about"), callback_data="about")],
+        [InlineKeyboardButton(text=t(lang, "menu_contact"), callback_data="contact")],
+        [InlineKeyboardButton(text=t(lang, "menu_channel"), url="https://t.me/+uuVr5gJFwoJjYmRi")],
+        [InlineKeyboardButton(text=t(lang, "menu_lang"), callback_data="language_menu")],
     ])
 
 # ================= UNIVERSAL =================
 
-def back_to_menu():
+def back_to_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")]
+        [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")]
     ])
 
 # ================= FORM =================
 
-def form_keyboard():
+def form_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅ Назад", callback_data="form_back")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")]
+        [InlineKeyboardButton(text=t(lang, "btn_back"), callback_data="form_back")],
+        [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")]
     ])
 
 # ================= PREVIEW =================
 
-def preview_keyboard():
+def preview_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="✏️ Исправить данные", callback_data="preview_edit"),
-            InlineKeyboardButton(text="📷 Исправить фото", callback_data="preview_edit_photo")
+            InlineKeyboardButton(text=t(lang, "btn_edit_data"), callback_data="preview_edit"),
+            InlineKeyboardButton(text=t(lang, "btn_edit_photo"), callback_data="preview_edit_photo")
         ],
         [
-            InlineKeyboardButton(text="✅ Отправить", callback_data="preview_confirm")
+            InlineKeyboardButton(text=t(lang, "btn_send"), callback_data="preview_confirm")
         ],
         [
-            InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")
+            InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")
         ]
     ])
 
 # ================= PREVIEW EDIT FIELDS =================
 
-def preview_edit_menu():
+def preview_edit_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="👤 Имя", callback_data="edit:name")],
-        [InlineKeyboardButton(text="🌍 Город и страна", callback_data="edit:city")],
-        [InlineKeyboardButton(text="📞 Телефон", callback_data="edit:phone")],
-        [InlineKeyboardButton(text="📅 Дата рождения", callback_data="edit:age")],
-        [InlineKeyboardButton(text="🏠 Помещение без посторонних", callback_data="edit:living")],
-        [InlineKeyboardButton(text="📱 Устройства", callback_data="edit:devices")],
-        [InlineKeyboardButton(text="📲 Модель устройства", callback_data="edit:device_model")],
-        [InlineKeyboardButton(text="⏱ Время работы", callback_data="edit:work_time")],
-        [InlineKeyboardButton(text="🎧 Наушники", callback_data="edit:headphones")],
-        [InlineKeyboardButton(text="💬 Telegram", callback_data="edit:telegram")],
-        [InlineKeyboardButton(text="💼 Опыт", callback_data="edit:experience")],
-        [InlineKeyboardButton(text="⬅ Назад к предпросмотру", callback_data="preview_back")]
+        [InlineKeyboardButton(text=field_title("name", lang), callback_data="edit:name")],
+        [InlineKeyboardButton(text=field_title("city", lang), callback_data="edit:city")],
+        [InlineKeyboardButton(text=field_title("phone", lang), callback_data="edit:phone")],
+        [InlineKeyboardButton(text=field_title("age", lang), callback_data="edit:age")],
+        [InlineKeyboardButton(text=field_title("living", lang), callback_data="edit:living")],
+        [InlineKeyboardButton(text=field_title("devices", lang), callback_data="edit:devices")],
+        [InlineKeyboardButton(text=field_title("device_model", lang), callback_data="edit:device_model")],
+        [InlineKeyboardButton(text=field_title("work_time", lang), callback_data="edit:work_time")],
+        [InlineKeyboardButton(text=field_title("headphones", lang), callback_data="edit:headphones")],
+        [InlineKeyboardButton(text=field_title("telegram", lang), callback_data="edit:telegram")],
+        [InlineKeyboardButton(text=field_title("experience", lang), callback_data="edit:experience")],
+        [InlineKeyboardButton(text=t(lang, "btn_back"), callback_data="preview_back")]
     ])
 
 # ================= PREVIEW EDIT PHOTO =================
 
-def preview_edit_photo_menu():
+def preview_edit_photo_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="📷 Фото анфас", callback_data="edit_photo:face")],
-        [InlineKeyboardButton(text="🧍 Фото в полный рост", callback_data="edit_photo:full")],
-        [InlineKeyboardButton(text="⬅ Назад к предпросмотру", callback_data="preview_back")]
+        [InlineKeyboardButton(text=t(lang, "photo_face_label"), callback_data="edit_photo:face")],
+        [InlineKeyboardButton(text=t(lang, "photo_full_label"), callback_data="edit_photo:full")],
+        [InlineKeyboardButton(text=t(lang, "btn_back_to_preview"), callback_data="preview_back")]
     ])
 
 # ================= ABOUT =================
 
-def about_menu():
+def about_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🌷 О формате работы", callback_data="about_work")],
-        [InlineKeyboardButton(text="💻 Площадки", callback_data="about_platforms")],
-        [InlineKeyboardButton(text="💰 Доход и выплаты", callback_data="about_income")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")],
+        [InlineKeyboardButton(text=t(lang, "about_menu_work"), callback_data="about_work")],
+        [InlineKeyboardButton(text=t(lang, "about_menu_platforms"), callback_data="about_platforms")],
+        [InlineKeyboardButton(text=t(lang, "about_menu_income"), callback_data="about_income")],
+        [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")],
     ])
 
 # ================= PORTFOLIO =================
 
-def portfolio_menu():
+def portfolio_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🤍 Отзывы моделей", callback_data="portfolio_reviews")],
-        [InlineKeyboardButton(text="🎥 Примеры стримов", callback_data="portfolio_videos")],
-        [InlineKeyboardButton(text="📄 PDF портфолио", callback_data="portfolio_pdf")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")],
+        [InlineKeyboardButton(text=t(lang, "portfolio_menu_reviews"), callback_data="portfolio_reviews")],
+        [InlineKeyboardButton(text=t(lang, "portfolio_menu_videos"), callback_data="portfolio_videos")],
+        [InlineKeyboardButton(text=t(lang, "portfolio_menu_pdf"), callback_data="portfolio_pdf")],
+        [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")],
     ])
 
 # ================= APPLY / CONTINUE =================
 
-def reapply_keyboard():
+def reapply_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✅ Заполнить заново", callback_data="apply_restart")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")]
+        [InlineKeyboardButton(text=t(lang, "btn_apply_again"), callback_data="apply_restart")],
+        [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")]
     ])
 
-def continue_form_keyboard():
+def continue_form_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="form_continue")],
-        [InlineKeyboardButton(text="🔄 Начать сначала", callback_data="form_restart")],
-        [InlineKeyboardButton(text="🏠 В меню", callback_data="main_menu")]
+        [InlineKeyboardButton(text=t(lang, "btn_continue"), callback_data="form_continue")],
+        [InlineKeyboardButton(text=t(lang, "btn_restart"), callback_data="form_restart")],
+        [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")]
     ])
 
 # ================= ADMIN =================
@@ -192,10 +194,29 @@ def admin_rejected_keyboard(user_id: int, contact_url: str | None = None):
             )
         ]
     ])
-def cancel_keyboard():
+def cancel_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅️ Отмена", callback_data="edit_cancel")]
+        [InlineKeyboardButton(text=t(lang, "btn_cancel"), callback_data="edit_cancel")]
     ])
+
+
+def language_keyboard(current_lang: str = "ru"):
+    def lang_label(code: str, title: str) -> str:
+        return f"✅ {title}" if code == current_lang else title
+
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(text=lang_label("ru", "Русский"), callback_data="set_lang:ru"),
+                InlineKeyboardButton(text=lang_label("en", "English"), callback_data="set_lang:en"),
+            ],
+            [
+                InlineKeyboardButton(text=lang_label("pt", "Português"), callback_data="set_lang:pt"),
+                InlineKeyboardButton(text=lang_label("es", "Español"), callback_data="set_lang:es"),
+            ],
+            [InlineKeyboardButton(text=t(current_lang, "menu_home"), callback_data="main_menu")],
+        ]
+    )
 
 def reject_templates_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
