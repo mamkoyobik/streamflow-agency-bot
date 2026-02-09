@@ -421,6 +421,13 @@ class Handler(SimpleHTTPRequestHandler):
         proto = (self.headers.get("X-Forwarded-Proto") or "").strip().lower()
         if proto == "https":
             self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
+        # Keep HTML always fresh after deploys; static assets are versioned in URLs.
+        path = urllib.parse.urlparse(self.path).path.lower()
+        if path.endswith(".html") or path in {"", "/"}:
+            self.send_header("Cache-Control", "no-store, no-cache, must-revalidate, max-age=0")
+            self.send_header("Pragma", "no-cache")
+        else:
+            self.send_header("Cache-Control", "public, max-age=3600")
         super().end_headers()
 
     def copyfile(self, source, outputfile):
