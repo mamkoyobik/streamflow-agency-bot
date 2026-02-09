@@ -10,12 +10,14 @@ try:
 except Exception:  # pragma: no cover
     ZoneInfo = None
 
-DEFAULT_DISPLAY_TZ = timezone(timedelta(hours=6))
+DEFAULT_DISPLAY_TZ = timezone(timedelta(hours=3))
 _OFFSET_RE = re.compile(
     r"^(?:UTC|GMT)?\s*([+-])?\s*(\d{1,2})(?::?(\d{2}))?$",
     re.IGNORECASE,
 )
-_ENV_TZ_KEYS = ("APP_TIMEZONE", "TIMEZONE", "TZ", "DISPLAY_TZ")
+# Do not prioritize generic `TZ` from hosting platform because it is often `UTC`
+# and causes confusing offsets in user-facing timestamps.
+_ENV_TZ_KEYS = ("APP_TIMEZONE", "DISPLAY_TZ", "TIMEZONE")
 
 
 def _parse_offset_timezone(value: str):
@@ -58,7 +60,8 @@ def format_submit_time(timestamp: str | None) -> str:
     try:
         dt = datetime.fromisoformat(str(timestamp).replace("Z", "+00:00"))
         if dt.tzinfo is None:
-            dt = dt.replace(tzinfo=timezone.utc)
+            # Legacy records may be saved without timezone and already in display timezone.
+            dt = dt.replace(tzinfo=tz)
         return dt.astimezone(tz).strftime("%d.%m.%Y %H:%M")
     except Exception:
         return str(timestamp)

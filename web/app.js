@@ -7,26 +7,33 @@ window.addEventListener('DOMContentLoaded', () => {
 });
 
 function normalizeInitialScrollPosition() {
-  if (!('scrollRestoration' in history)) return;
-  history.scrollRestoration = 'manual';
-  const timestampRaw = sessionStorage.getItem('allow_hash_scroll_ts');
-  const timestamp = Number(timestampRaw || 0);
-  const now = Date.now();
-  const allowHashScroll = Number.isFinite(timestamp) && timestamp > 0 && now - timestamp < 3500;
-  const navEntry = performance.getEntriesByType('navigation')[0];
-  const isReload = !!(navEntry && navEntry.type === 'reload');
-
-  if (window.location.hash && (!allowHashScroll || isReload)) {
+  if ('scrollRestoration' in history) {
+    history.scrollRestoration = 'manual';
+  }
+  if (window.location.hash) {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   }
-  sessionStorage.removeItem('allow_hash_scroll');
-  sessionStorage.removeItem('allow_hash_scroll_ts');
-  window.addEventListener('load', () => {
-    if (!window.location.hash) {
+  const resetToTop = () => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+    requestAnimationFrame(() => {
       window.scrollTo(0, 0);
-      requestAnimationFrame(() => window.scrollTo(0, 0));
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    });
+  };
+  window.addEventListener('load', () => {
+    resetToTop();
+    if ('scrollRestoration' in history) {
+      history.scrollRestoration = 'auto';
     }
-    history.scrollRestoration = 'auto';
+  });
+  window.addEventListener('DOMContentLoaded', () => {
+    resetToTop();
+  });
+  window.addEventListener('pageshow', () => {
+    resetToTop();
   });
 }
 
@@ -59,6 +66,640 @@ function initScrollProgress() {
 initScrollProgress();
 
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const SITE_LANG_STORAGE_KEY = 'streamflow_site_lang';
+const SITE_LANGS = ['ru', 'en', 'pt', 'es'];
+const DEFAULT_SITE_LANG = 'ru';
+let CURRENT_SITE_LANG = DEFAULT_SITE_LANG;
+
+function safeStorageGet(storage, key) {
+  try {
+    return storage.getItem(key);
+  } catch (err) {
+    return null;
+  }
+}
+
+function safeStorageSet(storage, key, value) {
+  try {
+    storage.setItem(key, value);
+  } catch (err) {
+    // ignore storage write issues (private mode/restrictions)
+  }
+}
+
+const I18N = {
+  ru: {
+    'brand.name': 'Streamflow',
+    'brand.subtitle': 'Model Agency',
+    'langGate.title': 'Выберите язык',
+    'langGate.subtitle': 'Select your language to continue',
+    'langGate.ru': 'Русский',
+    'langGate.en': 'English',
+    'langGate.pt': 'Português',
+    'langGate.es': 'Español',
+    'nav.home': 'Главная',
+    'nav.about': 'О работе',
+    'nav.conditions': 'Условия',
+    'nav.income': 'Доходы',
+    'nav.steps': 'Этапы',
+    'nav.streams': 'Видеопримеры',
+    'nav.portfolio': 'Портфолио',
+    'nav.apply': 'Заявка',
+    'nav.telegram': 'Telegram',
+    'cta.apply': 'Оставить заявку',
+    'cta.telegram': 'Telegram канал',
+    'cta.watchExamples': 'Смотреть примеры',
+    'mobile.menu': 'Меню',
+    'mobile.close': 'Закрыть',
+    'hero.eyebrow': 'Model Agency',
+    'hero.title': 'Агентство стриминговых моделей',
+    'hero.lead': 'Спокойный старт, ясные шаги и поддержка команды на каждом этапе. Без спешки, без давления, с понятной коммуникацией.',
+    'hero.card1Title': 'Старт',
+    'hero.card1Text': 'Спокойный старт и понятные шаги без давления.',
+    'hero.card2Title': 'Образ',
+    'hero.card2Text': 'Образ остаётся в твоих руках.',
+    'hero.card3Title': 'Поддержка',
+    'hero.card3Text': 'Команда рядом на каждом шаге.',
+    'hero.card4Title': 'Уверенность',
+    'hero.card4Text': 'Спокойный рост без давления и стресса.',
+    'trust.supportTitle': 'Персональная поддержка старта',
+    'trust.supportText': 'Каждую анкету ведёт менеджер и даёт обратную связь по шагам.',
+    'trust.communicationTitle': 'Прозрачная коммуникация',
+    'trust.communicationText': 'Ответ и обратная связь приходят в Telegram.',
+    'trust.channelTitle': 'Канал Streamflow',
+    'trust.channelLink': 'Перейти в канал',
+    'about.eyebrow': 'О работе',
+    'about.title': 'Комфортный формат для моделей, которые ценят спокойствие.',
+    'about.text': 'Streamflow помогает начать уверенно: сопровождение, поддержка и прозрачные правила работы.',
+    'about.cta': 'Условия и преимущества',
+    'offer.eyebrow': 'Условия и преимущества',
+    'offer.title': 'Всё по шагам и без лишнего стресса.',
+    'offer.subtitle': 'Три базовых фокуса, которые дают уверенность на старте и стабильность в работе.',
+    'offer.item1Title': 'Комфортный вход',
+    'offer.item1Text': 'Объясняем, настраиваем, показываем, как выглядит работа изнутри.',
+    'offer.item2Title': 'Визуал и безопасность',
+    'offer.item2Text': 'Только аккуратный визуал и спокойный формат без давления.',
+    'offer.item3Title': 'Стабильный рост',
+    'offer.item3Text': 'Поддержка и рекомендации, чтобы результат рос плавно.',
+    'offer.ctaSecondary': 'Смотреть этапы',
+    'income.eyebrow': 'Примеры дохода',
+    'income.title': 'Примеры дохода',
+    'income.subtitle': 'Это реальные цифры моделей, которые работают с нами несколько месяцев.',
+    'streams.eyebrow': 'Видеопримеры',
+    'streams.title': 'Смотри атмосферу и ритм стримов.',
+    'streams.subtitle': 'Фрагменты реальных стримов, снятых моделями дома.',
+    'steps.eyebrow': 'Этапы',
+    'steps.title': 'Три шага до уверенного старта.',
+    'steps.subtitle': 'Прозрачный путь без давления и хаоса — всё по шагам.',
+    'steps.item1Title': 'Заявка',
+    'steps.item1Text': 'Заполняешь анкету, мы аккуратно проверяем и возвращаемся с ответом.',
+    'steps.item2Title': 'Подготовка',
+    'steps.item2Text': 'Подготовка профиля, образа и понятный план первого эфира.',
+    'steps.item3Title': 'Старт',
+    'steps.item3Text': 'Запуск с поддержкой команды и понятной обратной связью.',
+    'portfolio.eyebrow': 'Портфолио',
+    'portfolio.title': 'Портфолио моделей Streamflow.',
+    'form.eyebrow': 'Заявка',
+    'form.title': 'Анкета Streamflow',
+    'form.subtitle': 'После каждого ответа ты переходишь к следующему шагу.',
+    'form.mini1': 'Заполни анкету и прикрепи фото.',
+    'form.mini2': 'Мы вернёмся с ответом в Telegram.',
+    'form.mini3': 'Стартуем подготовку вместе с командой.',
+    'form.progressTitle': 'Прогресс анкеты',
+    'form.side1': 'Имя',
+    'form.side2': 'Город и страна',
+    'form.side3': 'Телефон',
+    'form.side4': 'Дата рождения',
+    'form.side5': 'Помещение',
+    'form.side6': 'Устройства',
+    'form.side7': 'Модель устройства',
+    'form.side8': 'Время работы',
+    'form.side9': 'Наушники',
+    'form.side10': 'Telegram',
+    'form.side11': 'Опыт',
+    'form.side12': 'Фото анфас',
+    'form.side13': 'Фото в полный рост',
+    'form.q1': '1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:',
+    'form.q2': '2️⃣ Город и страна проживания:',
+    'form.q3': '3️⃣ Контактный телефон (+код):',
+    'form.q4': '4️⃣ Дата рождения<br><br>Пример: 01.01.2000',
+    'form.q5': '5️⃣ Есть ли помещение без посторонних?',
+    'form.q6': '6️⃣ Устройства:',
+    'form.q6Placeholder': 'Например: смартфон, ноутбук',
+    'form.q7': '7️⃣ Модель устройства:',
+    'form.q8': '8️⃣ Время работы (часов в день):',
+    'form.q9': '9️⃣ Есть ли наушники с микрофоном:',
+    'form.q10': '🔟 Telegram (@username):',
+    'form.q11': '1️⃣1️⃣ Опыт (если нет — напиши «нет»):',
+    'form.q12': '1️⃣2️⃣ Фото анфас:',
+    'form.q13': '1️⃣3️⃣ Фото в полный рост:',
+    'form.prev': 'Назад',
+    'form.next': 'Далее',
+    'form.submit': 'Отправить',
+    'form.openTelegram': 'Открыть Telegram',
+    'form.sending': 'Отправка...',
+    'form.success': 'Готово.',
+    'form.sendError': 'Ошибка отправки.',
+    'form.invalid': 'Поле заполнено неверно.',
+    'footer.channel': 'Канал Streamflow',
+    'footer.rights': '© Streamflow. Все права защищены.',
+    'validation.name': 'Введите имя полностью.',
+    'validation.city': 'Укажи город и страну.',
+    'validation.phone': 'Введите телефон в формате +7 900 000 00 00.',
+    'validation.age': 'Дата рождения в формате 01.01.2000.',
+    'validation.yesNo': 'Ответь «да» или «нет».',
+    'validation.devices': 'Уточни, какие устройства есть.',
+    'validation.deviceModel': 'Напиши модель устройства.',
+    'validation.workTime': 'Укажи количество часов цифрами.',
+    'validation.telegram': 'Укажи Telegram в формате @username.',
+    'validation.experience': 'Напиши, есть ли опыт.',
+    'validation.photoFace': 'Загрузи фото анфас.',
+    'validation.photoFull': 'Загрузи фото в полный рост.',
+    'validation.required': 'Поле обязательно.',
+  },
+  en: {
+    'brand.name': 'Streamflow',
+    'brand.subtitle': 'Model Agency',
+    'langGate.title': 'Choose language',
+    'langGate.subtitle': 'Select your language to continue',
+    'langGate.ru': 'Russian',
+    'langGate.en': 'English',
+    'langGate.pt': 'Portuguese',
+    'langGate.es': 'Spanish',
+    'nav.home': 'Home',
+    'nav.about': 'About',
+    'nav.conditions': 'Conditions',
+    'nav.income': 'Income',
+    'nav.steps': 'Steps',
+    'nav.streams': 'Stream samples',
+    'nav.portfolio': 'Portfolio',
+    'nav.apply': 'Apply',
+    'nav.telegram': 'Telegram',
+    'cta.apply': 'Apply now',
+    'cta.telegram': 'Telegram channel',
+    'cta.watchExamples': 'View samples',
+    'mobile.menu': 'Menu',
+    'mobile.close': 'Close',
+    'hero.eyebrow': 'Model Agency',
+    'hero.title': 'Streaming model agency',
+    'hero.lead': 'Calm start, clear steps and team support on every stage. No pressure, no rush, clear communication.',
+    'hero.card1Title': 'Start',
+    'hero.card1Text': 'Calm launch and clear steps without pressure.',
+    'hero.card2Title': 'Style',
+    'hero.card2Text': 'Your image stays under your control.',
+    'hero.card3Title': 'Support',
+    'hero.card3Text': 'The team is near on every step.',
+    'hero.card4Title': 'Confidence',
+    'hero.card4Text': 'Steady growth without stress.',
+    'trust.supportTitle': 'Personal launch support',
+    'trust.supportText': 'Every profile is handled by a manager with clear feedback.',
+    'trust.communicationTitle': 'Transparent communication',
+    'trust.communicationText': 'Response and updates are sent via Telegram.',
+    'trust.channelTitle': 'Streamflow channel',
+    'trust.channelLink': 'Open channel',
+    'about.eyebrow': 'About work',
+    'about.title': 'A comfortable format for models who value calm growth.',
+    'about.text': 'Streamflow helps you start confidently with guidance, support and transparent rules.',
+    'about.cta': 'Conditions and benefits',
+    'offer.eyebrow': 'Conditions and benefits',
+    'offer.title': 'Everything step by step without stress.',
+    'offer.subtitle': 'Three key focus points that build confidence at launch and stable growth.',
+    'offer.item1Title': 'Comfortable onboarding',
+    'offer.item1Text': 'We explain, set up and show how work looks in practice.',
+    'offer.item2Title': 'Visual and safety',
+    'offer.item2Text': 'Only clean visual style and calm workflow without pressure.',
+    'offer.item3Title': 'Stable growth',
+    'offer.item3Text': 'Support and recommendations for steady results.',
+    'offer.ctaSecondary': 'View steps',
+    'income.eyebrow': 'Income examples',
+    'income.title': 'Income examples',
+    'income.subtitle': 'Real numbers from models working with us for several months.',
+    'streams.eyebrow': 'Stream examples',
+    'streams.title': 'See the atmosphere and stream rhythm.',
+    'streams.subtitle': 'Real stream fragments recorded by models at home.',
+    'steps.eyebrow': 'Steps',
+    'steps.title': 'Three steps to a confident start.',
+    'steps.subtitle': 'A clear path without chaos or pressure.',
+    'steps.item1Title': 'Application',
+    'steps.item1Text': 'You complete the form, we review it carefully and reply.',
+    'steps.item2Title': 'Preparation',
+    'steps.item2Text': 'Profile prep, visual prep and a clear first-stream plan.',
+    'steps.item3Title': 'Start',
+    'steps.item3Text': 'Launch with team support and clear feedback.',
+    'portfolio.eyebrow': 'Portfolio',
+    'portfolio.title': 'Streamflow model portfolio.',
+    'form.eyebrow': 'Application',
+    'form.title': 'Streamflow form',
+    'form.subtitle': 'After each answer you move to the next step.',
+    'form.mini1': 'Fill out the form and attach photos.',
+    'form.mini2': 'We will reply in Telegram.',
+    'form.mini3': 'We start preparation together.',
+    'form.progressTitle': 'Form progress',
+    'form.side1': 'Name',
+    'form.side2': 'City and country',
+    'form.side3': 'Phone',
+    'form.side4': 'Birth date',
+    'form.side5': 'Room',
+    'form.side6': 'Devices',
+    'form.side7': 'Device model',
+    'form.side8': 'Work time',
+    'form.side9': 'Headphones',
+    'form.side10': 'Telegram',
+    'form.side11': 'Experience',
+    'form.side12': 'Front photo',
+    'form.side13': 'Full-body photo',
+    'form.q1': '1️⃣ What is your full name?',
+    'form.q2': '2️⃣ City and country of residence:',
+    'form.q3': '3️⃣ Contact phone (+code):',
+    'form.q4': '4️⃣ Birth date<br><br>Example: 01.01.2000',
+    'form.q5': '5️⃣ Do you have a private room without outsiders?',
+    'form.q6': '6️⃣ Devices:',
+    'form.q6Placeholder': 'Example: smartphone, laptop',
+    'form.q7': '7️⃣ Device model:',
+    'form.q8': '8️⃣ Work time (hours per day):',
+    'form.q9': '9️⃣ Do you have headphones with microphone?',
+    'form.q10': '🔟 Telegram (@username):',
+    'form.q11': '1️⃣1️⃣ Experience (if none, write "none"):',
+    'form.q12': '1️⃣2️⃣ Front photo:',
+    'form.q13': '1️⃣3️⃣ Full-body photo:',
+    'form.prev': 'Back',
+    'form.next': 'Next',
+    'form.submit': 'Submit',
+    'form.openTelegram': 'Open Telegram',
+    'form.sending': 'Sending...',
+    'form.success': 'Done.',
+    'form.sendError': 'Sending error.',
+    'form.invalid': 'Invalid field value.',
+    'footer.channel': 'Streamflow channel',
+    'footer.rights': '© Streamflow. All rights reserved.',
+    'validation.name': 'Enter full name.',
+    'validation.city': 'Enter city and country.',
+    'validation.phone': 'Enter phone like +1 555 123 4567.',
+    'validation.age': 'Birth date format: 01.01.2000.',
+    'validation.yesNo': 'Answer "yes" or "no".',
+    'validation.devices': 'Specify available devices.',
+    'validation.deviceModel': 'Enter your device model.',
+    'validation.workTime': 'Enter work hours using digits.',
+    'validation.telegram': 'Enter Telegram as @username.',
+    'validation.experience': 'Tell us if you have experience.',
+    'validation.photoFace': 'Upload front-face photo.',
+    'validation.photoFull': 'Upload full-body photo.',
+    'validation.required': 'This field is required.',
+  },
+  pt: {
+    'brand.name': 'Streamflow',
+    'brand.subtitle': 'Model Agency',
+    'langGate.title': 'Escolha o idioma',
+    'langGate.subtitle': 'Selecione seu idioma para continuar',
+    'langGate.ru': 'Russo',
+    'langGate.en': 'Inglês',
+    'langGate.pt': 'Português',
+    'langGate.es': 'Espanhol',
+    'nav.home': 'Início',
+    'nav.about': 'Sobre',
+    'nav.conditions': 'Condições',
+    'nav.income': 'Renda',
+    'nav.steps': 'Etapas',
+    'nav.streams': 'Exemplos',
+    'nav.portfolio': 'Portfólio',
+    'nav.apply': 'Candidatura',
+    'nav.telegram': 'Telegram',
+    'cta.apply': 'Enviar candidatura',
+    'cta.telegram': 'Canal Telegram',
+    'cta.watchExamples': 'Ver exemplos',
+    'mobile.menu': 'Menu',
+    'mobile.close': 'Fechar',
+    'hero.eyebrow': 'Model Agency',
+    'hero.title': 'Agência de modelos de streaming',
+    'hero.lead': 'Começo tranquilo, passos claros e suporte da equipe em cada etapa. Sem pressão, sem correria.',
+    'hero.card1Title': 'Início',
+    'hero.card1Text': 'Começo tranquilo com passos claros.',
+    'hero.card2Title': 'Imagem',
+    'hero.card2Text': 'Sua imagem permanece sob seu controle.',
+    'hero.card3Title': 'Suporte',
+    'hero.card3Text': 'A equipe está ao seu lado em cada etapa.',
+    'hero.card4Title': 'Confiança',
+    'hero.card4Text': 'Crescimento estável sem estresse.',
+    'trust.supportTitle': 'Suporte pessoal no início',
+    'trust.supportText': 'Cada candidatura é acompanhada por um gerente.',
+    'trust.communicationTitle': 'Comunicação transparente',
+    'trust.communicationText': 'Resposta e acompanhamento via Telegram.',
+    'trust.channelTitle': 'Canal Streamflow',
+    'trust.channelLink': 'Abrir canal',
+    'about.eyebrow': 'Sobre o trabalho',
+    'about.title': 'Formato confortável para modelos que valorizam tranquilidade.',
+    'about.text': 'A Streamflow ajuda você a começar com orientação, suporte e regras claras.',
+    'about.cta': 'Condições e benefícios',
+    'offer.eyebrow': 'Condições e benefícios',
+    'offer.title': 'Tudo por etapas, sem estresse.',
+    'offer.subtitle': 'Três focos que dão confiança no começo e estabilidade no trabalho.',
+    'offer.item1Title': 'Entrada confortável',
+    'offer.item1Text': 'Explicamos, configuramos e mostramos o processo por dentro.',
+    'offer.item2Title': 'Visual e segurança',
+    'offer.item2Text': 'Somente visual limpo e formato tranquilo, sem pressão.',
+    'offer.item3Title': 'Crescimento estável',
+    'offer.item3Text': 'Suporte e recomendações para resultados consistentes.',
+    'offer.ctaSecondary': 'Ver etapas',
+    'income.eyebrow': 'Exemplos de renda',
+    'income.title': 'Exemplos de renda',
+    'income.subtitle': 'Números reais de modelos que trabalham conosco há alguns meses.',
+    'streams.eyebrow': 'Exemplos de stream',
+    'streams.title': 'Veja o ritmo e a atmosfera das lives.',
+    'streams.subtitle': 'Trechos reais de streams gravados pelas modelos em casa.',
+    'steps.eyebrow': 'Etapas',
+    'steps.title': 'Três passos para um início confiante.',
+    'steps.subtitle': 'Caminho claro, sem pressão e sem caos.',
+    'steps.item1Title': 'Candidatura',
+    'steps.item1Text': 'Você preenche o formulário e retornamos com resposta.',
+    'steps.item2Title': 'Preparação',
+    'steps.item2Text': 'Preparação do perfil, imagem e plano do primeiro stream.',
+    'steps.item3Title': 'Início',
+    'steps.item3Text': 'Lançamento com suporte da equipe e feedback claro.',
+    'portfolio.eyebrow': 'Portfólio',
+    'portfolio.title': 'Portfólio de modelos Streamflow.',
+    'form.eyebrow': 'Candidatura',
+    'form.title': 'Formulário Streamflow',
+    'form.subtitle': 'Após cada resposta você passa para a próxima etapa.',
+    'form.mini1': 'Preencha o formulário e anexe as fotos.',
+    'form.mini2': 'Retornaremos no Telegram.',
+    'form.mini3': 'Começamos a preparação juntos.',
+    'form.progressTitle': 'Progresso do formulário',
+    'form.side1': 'Nome',
+    'form.side2': 'Cidade e país',
+    'form.side3': 'Telefone',
+    'form.side4': 'Data de nascimento',
+    'form.side5': 'Ambiente',
+    'form.side6': 'Dispositivos',
+    'form.side7': 'Modelo do dispositivo',
+    'form.side8': 'Tempo de trabalho',
+    'form.side9': 'Fones',
+    'form.side10': 'Telegram',
+    'form.side11': 'Experiência',
+    'form.side12': 'Foto frontal',
+    'form.side13': 'Foto corpo inteiro',
+    'form.q1': '1️⃣ Qual é o seu nome completo?',
+    'form.q2': '2️⃣ Cidade e país de residência:',
+    'form.q3': '3️⃣ Telefone de contato (+código):',
+    'form.q4': '4️⃣ Data de nascimento<br><br>Exemplo: 01.01.2000',
+    'form.q5': '5️⃣ Você tem um ambiente sem pessoas de fora?',
+    'form.q6': '6️⃣ Dispositivos:',
+    'form.q6Placeholder': 'Exemplo: smartphone, notebook',
+    'form.q7': '7️⃣ Modelo do dispositivo:',
+    'form.q8': '8️⃣ Tempo de trabalho (horas por dia):',
+    'form.q9': '9️⃣ Você tem fones com microfone?',
+    'form.q10': '🔟 Telegram (@username):',
+    'form.q11': '1️⃣1️⃣ Experiência (se não tiver, escreva "não"):',
+    'form.q12': '1️⃣2️⃣ Foto frontal:',
+    'form.q13': '1️⃣3️⃣ Foto de corpo inteiro:',
+    'form.prev': 'Voltar',
+    'form.next': 'Avançar',
+    'form.submit': 'Enviar',
+    'form.openTelegram': 'Abrir Telegram',
+    'form.sending': 'Enviando...',
+    'form.success': 'Pronto.',
+    'form.sendError': 'Erro ao enviar.',
+    'form.invalid': 'Campo preenchido incorretamente.',
+    'footer.channel': 'Canal Streamflow',
+    'footer.rights': '© Streamflow. Todos os direitos reservados.',
+    'validation.name': 'Digite o nome completo.',
+    'validation.city': 'Informe cidade e país.',
+    'validation.phone': 'Digite telefone no formato +55 11 99999 9999.',
+    'validation.age': 'Data no formato 01.01.2000.',
+    'validation.yesNo': 'Responda "sim" ou "não".',
+    'validation.devices': 'Informe quais dispositivos você tem.',
+    'validation.deviceModel': 'Informe o modelo do dispositivo.',
+    'validation.workTime': 'Informe as horas com números.',
+    'validation.telegram': 'Informe o Telegram no formato @username.',
+    'validation.experience': 'Escreva se você tem experiência.',
+    'validation.photoFace': 'Envie a foto frontal.',
+    'validation.photoFull': 'Envie a foto de corpo inteiro.',
+    'validation.required': 'Campo obrigatório.',
+  },
+  es: {
+    'brand.name': 'Streamflow',
+    'brand.subtitle': 'Model Agency',
+    'langGate.title': 'Elige idioma',
+    'langGate.subtitle': 'Selecciona tu idioma para continuar',
+    'langGate.ru': 'Ruso',
+    'langGate.en': 'Inglés',
+    'langGate.pt': 'Portugués',
+    'langGate.es': 'Español',
+    'nav.home': 'Inicio',
+    'nav.about': 'Sobre',
+    'nav.conditions': 'Condiciones',
+    'nav.income': 'Ingresos',
+    'nav.steps': 'Etapas',
+    'nav.streams': 'Ejemplos',
+    'nav.portfolio': 'Portafolio',
+    'nav.apply': 'Solicitud',
+    'nav.telegram': 'Telegram',
+    'cta.apply': 'Enviar solicitud',
+    'cta.telegram': 'Canal Telegram',
+    'cta.watchExamples': 'Ver ejemplos',
+    'mobile.menu': 'Menú',
+    'mobile.close': 'Cerrar',
+    'hero.eyebrow': 'Model Agency',
+    'hero.title': 'Agencia de modelos de streaming',
+    'hero.lead': 'Inicio tranquilo, pasos claros y apoyo del equipo en cada etapa. Sin presión, sin prisa.',
+    'hero.card1Title': 'Inicio',
+    'hero.card1Text': 'Inicio tranquilo y pasos claros sin presión.',
+    'hero.card2Title': 'Imagen',
+    'hero.card2Text': 'Tu imagen queda en tus manos.',
+    'hero.card3Title': 'Apoyo',
+    'hero.card3Text': 'El equipo está contigo en cada paso.',
+    'hero.card4Title': 'Confianza',
+    'hero.card4Text': 'Crecimiento estable sin estrés.',
+    'trust.supportTitle': 'Soporte personal de inicio',
+    'trust.supportText': 'Cada solicitud la revisa un manager con feedback claro.',
+    'trust.communicationTitle': 'Comunicación transparente',
+    'trust.communicationText': 'Respuesta y seguimiento por Telegram.',
+    'trust.channelTitle': 'Canal Streamflow',
+    'trust.channelLink': 'Abrir canal',
+    'about.eyebrow': 'Sobre el trabajo',
+    'about.title': 'Formato cómodo para modelos que valoran la calma.',
+    'about.text': 'Streamflow te ayuda a empezar con acompañamiento, soporte y reglas claras.',
+    'about.cta': 'Condiciones y beneficios',
+    'offer.eyebrow': 'Condiciones y beneficios',
+    'offer.title': 'Todo por pasos, sin estrés.',
+    'offer.subtitle': 'Tres focos clave para un inicio seguro y crecimiento estable.',
+    'offer.item1Title': 'Entrada cómoda',
+    'offer.item1Text': 'Explicamos, configuramos y mostramos cómo funciona el trabajo.',
+    'offer.item2Title': 'Visual y seguridad',
+    'offer.item2Text': 'Solo visual limpio y formato tranquilo, sin presión.',
+    'offer.item3Title': 'Crecimiento estable',
+    'offer.item3Text': 'Soporte y recomendaciones para resultados constantes.',
+    'offer.ctaSecondary': 'Ver etapas',
+    'income.eyebrow': 'Ejemplos de ingresos',
+    'income.title': 'Ejemplos de ingresos',
+    'income.subtitle': 'Cifras reales de modelos que trabajan con nosotros hace meses.',
+    'streams.eyebrow': 'Ejemplos de stream',
+    'streams.title': 'Mira el ritmo y la atmósfera de los streams.',
+    'streams.subtitle': 'Fragmentos reales grabados por modelos desde casa.',
+    'steps.eyebrow': 'Etapas',
+    'steps.title': 'Tres pasos para empezar con confianza.',
+    'steps.subtitle': 'Un camino claro sin presión ni caos.',
+    'steps.item1Title': 'Solicitud',
+    'steps.item1Text': 'Rellenas el formulario y te respondemos con cuidado.',
+    'steps.item2Title': 'Preparación',
+    'steps.item2Text': 'Preparación del perfil, imagen y plan del primer stream.',
+    'steps.item3Title': 'Inicio',
+    'steps.item3Text': 'Lanzamiento con apoyo del equipo y feedback claro.',
+    'portfolio.eyebrow': 'Portafolio',
+    'portfolio.title': 'Portafolio de modelos Streamflow.',
+    'form.eyebrow': 'Solicitud',
+    'form.title': 'Formulario Streamflow',
+    'form.subtitle': 'Después de cada respuesta pasas al siguiente paso.',
+    'form.mini1': 'Completa el formulario y adjunta fotos.',
+    'form.mini2': 'Te responderemos en Telegram.',
+    'form.mini3': 'Empezamos la preparación juntos.',
+    'form.progressTitle': 'Progreso del formulario',
+    'form.side1': 'Nombre',
+    'form.side2': 'Ciudad y país',
+    'form.side3': 'Teléfono',
+    'form.side4': 'Fecha de nacimiento',
+    'form.side5': 'Espacio',
+    'form.side6': 'Dispositivos',
+    'form.side7': 'Modelo del dispositivo',
+    'form.side8': 'Horas de trabajo',
+    'form.side9': 'Auriculares',
+    'form.side10': 'Telegram',
+    'form.side11': 'Experiencia',
+    'form.side12': 'Foto frontal',
+    'form.side13': 'Foto cuerpo completo',
+    'form.q1': '1️⃣ ¿Cuál es tu nombre completo?',
+    'form.q2': '2️⃣ Ciudad y país de residencia:',
+    'form.q3': '3️⃣ Teléfono de contacto (+código):',
+    'form.q4': '4️⃣ Fecha de nacimiento<br><br>Ejemplo: 01.01.2000',
+    'form.q5': '5️⃣ ¿Tienes un espacio sin personas ajenas?',
+    'form.q6': '6️⃣ Dispositivos:',
+    'form.q6Placeholder': 'Ejemplo: smartphone, portátil',
+    'form.q7': '7️⃣ Modelo del dispositivo:',
+    'form.q8': '8️⃣ Tiempo de trabajo (horas por día):',
+    'form.q9': '9️⃣ ¿Tienes auriculares con micrófono?',
+    'form.q10': '🔟 Telegram (@username):',
+    'form.q11': '1️⃣1️⃣ Experiencia (si no tienes, escribe "no"):',
+    'form.q12': '1️⃣2️⃣ Foto frontal:',
+    'form.q13': '1️⃣3️⃣ Foto cuerpo completo:',
+    'form.prev': 'Atrás',
+    'form.next': 'Siguiente',
+    'form.submit': 'Enviar',
+    'form.openTelegram': 'Abrir Telegram',
+    'form.sending': 'Enviando...',
+    'form.success': 'Listo.',
+    'form.sendError': 'Error al enviar.',
+    'form.invalid': 'Campo inválido.',
+    'footer.channel': 'Canal Streamflow',
+    'footer.rights': '© Streamflow. Todos los derechos reservados.',
+    'validation.name': 'Escribe el nombre completo.',
+    'validation.city': 'Indica ciudad y país.',
+    'validation.phone': 'Escribe teléfono en formato internacional.',
+    'validation.age': 'Fecha en formato 01.01.2000.',
+    'validation.yesNo': 'Responde "sí" o "no".',
+    'validation.devices': 'Indica qué dispositivos tienes.',
+    'validation.deviceModel': 'Escribe el modelo del dispositivo.',
+    'validation.workTime': 'Indica las horas con números.',
+    'validation.telegram': 'Indica Telegram en formato @username.',
+    'validation.experience': 'Escribe si tienes experiencia.',
+    'validation.photoFace': 'Sube una foto frontal.',
+    'validation.photoFull': 'Sube una foto de cuerpo completo.',
+    'validation.required': 'Campo obligatorio.',
+  },
+};
+
+function normalizeSiteLang(lang) {
+  const value = String(lang || '').trim().toLowerCase();
+  return SITE_LANGS.includes(value) ? value : DEFAULT_SITE_LANG;
+}
+
+function siteText(key, lang = CURRENT_SITE_LANG) {
+  const locale = normalizeSiteLang(lang);
+  return I18N[locale][key] || I18N[DEFAULT_SITE_LANG][key] || '';
+}
+
+function updateMenuToggleText() {
+  const isOpen = document.body.classList.contains('nav-open');
+  const text = isOpen ? siteText('mobile.close') : siteText('mobile.menu');
+  document.querySelectorAll('[data-menu-text]').forEach((node) => {
+    node.textContent = text;
+  });
+}
+
+function applySiteTranslations(lang) {
+  CURRENT_SITE_LANG = normalizeSiteLang(lang);
+  document.documentElement.lang = CURRENT_SITE_LANG;
+  document.querySelectorAll('[data-i18n]').forEach((element) => {
+    const key = element.getAttribute('data-i18n');
+    const value = siteText(key, CURRENT_SITE_LANG);
+    if (!value) return;
+    element.innerHTML = value;
+  });
+  document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
+    const key = element.getAttribute('data-i18n-placeholder');
+    const value = siteText(key, CURRENT_SITE_LANG);
+    if (value) element.setAttribute('placeholder', value);
+  });
+  const langField = document.getElementById('site-lang-field');
+  if (langField) langField.value = CURRENT_SITE_LANG;
+  const desktopSelect = document.getElementById('site-lang-select');
+  const mobileSelect = document.getElementById('site-lang-select-mobile');
+  if (desktopSelect) desktopSelect.value = CURRENT_SITE_LANG;
+  if (mobileSelect) mobileSelect.value = CURRENT_SITE_LANG;
+  updateMenuToggleText();
+  document.dispatchEvent(new CustomEvent('site-language-changed', { detail: { lang: CURRENT_SITE_LANG } }));
+}
+
+function setSiteLanguage(lang, options = {}) {
+  const locale = normalizeSiteLang(lang);
+  if (options.persist !== false) {
+    safeStorageSet(localStorage, SITE_LANG_STORAGE_KEY, locale);
+  }
+  applySiteTranslations(locale);
+}
+
+function hideLanguageGate() {
+  const gate = document.getElementById('language-gate');
+  if (!gate) return;
+  gate.classList.remove('is-visible');
+  gate.setAttribute('aria-hidden', 'true');
+  document.body.classList.remove('lang-locked');
+}
+
+function showLanguageGate() {
+  const gate = document.getElementById('language-gate');
+  if (!gate) return;
+  gate.classList.add('is-visible');
+  gate.setAttribute('aria-hidden', 'false');
+  document.body.classList.add('lang-locked');
+}
+
+function initSiteLanguage() {
+  const savedRaw = safeStorageGet(localStorage, SITE_LANG_STORAGE_KEY);
+  const hasSaved = !!savedRaw && SITE_LANGS.includes(savedRaw.toLowerCase());
+  const initialLang = hasSaved ? savedRaw : DEFAULT_SITE_LANG;
+  applySiteTranslations(initialLang);
+
+  const desktopSelect = document.getElementById('site-lang-select');
+  const mobileSelect = document.getElementById('site-lang-select-mobile');
+  [desktopSelect, mobileSelect].forEach((select) => {
+    if (!select) return;
+    select.addEventListener('change', () => {
+      setSiteLanguage(select.value, { persist: true });
+    });
+  });
+
+  document.querySelectorAll('[data-language-option]').forEach((button) => {
+    button.addEventListener('click', () => {
+      const locale = button.getAttribute('data-language-option') || DEFAULT_SITE_LANG;
+      setSiteLanguage(locale, { persist: true });
+      hideLanguageGate();
+    });
+  });
+
+  showLanguageGate();
+}
+
+initSiteLanguage();
 
 function initHeroParallax() {
   if (prefersReduced) return;
@@ -235,7 +876,7 @@ if (!prefersReduced) {
     if (!href || href.startsWith('mailto:') || href.startsWith('tel:')) return;
     if (href.startsWith('#')) {
       link.addEventListener('click', () => {
-        sessionStorage.setItem('allow_hash_scroll_ts', String(Date.now()));
+        safeStorageSet(sessionStorage, 'allow_hash_scroll_ts', String(Date.now()));
       });
       return;
     }
@@ -244,7 +885,7 @@ if (!prefersReduced) {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       if (href.includes('#')) {
-        sessionStorage.setItem('allow_hash_scroll_ts', String(Date.now()));
+        safeStorageSet(sessionStorage, 'allow_hash_scroll_ts', String(Date.now()));
       }
       document.body.classList.add('is-transitioning');
       setTimeout(() => {
@@ -364,9 +1005,7 @@ const menuTextNodes = document.querySelectorAll('[data-menu-text]');
 function setNavState(isOpen) {
   document.body.classList.toggle('nav-open', isOpen);
   navOpenButtons.forEach((btn) => btn.setAttribute('aria-expanded', String(isOpen)));
-  menuTextNodes.forEach((node) => {
-    node.textContent = isOpen ? 'Закрыть' : 'Меню';
-  });
+  updateMenuToggleText();
   if (mobileNav) {
     mobileNav.setAttribute('aria-hidden', String(!isOpen));
   }
@@ -382,6 +1021,24 @@ if (mobileNav) {
   navCloseButtons.forEach((btn) => btn.addEventListener('click', () => setNavState(false)));
   mobileNav.querySelectorAll('a').forEach((link) => link.addEventListener('click', () => setNavState(false)));
 }
+
+function initFloatingMenuVisibility() {
+  const floatingBtn = document.querySelector('.floating-menu-btn');
+  const footer = document.querySelector('.site-footer');
+  if (!floatingBtn || !footer) return;
+
+  const observer = new IntersectionObserver(
+    (entries) => {
+      const isFooterVisible = entries.some((entry) => entry.isIntersecting);
+      floatingBtn.classList.toggle('is-hidden', isFooterVisible);
+    },
+    { threshold: 0.1 }
+  );
+
+  observer.observe(footer);
+}
+
+initFloatingMenuVisibility();
 
 const carousels = document.querySelectorAll('[data-carousel]');
 carousels.forEach((carousel) => {
@@ -662,19 +1319,19 @@ function initMultiStep(form) {
   if (progressTotalSide) progressTotalSide.textContent = String(total);
 
   const validators = {
-    name: (value) => (value.trim().length >= 2 ? '' : 'Введите имя полностью.'),
-    city: (value) => (value.trim().length >= 2 ? '' : 'Укажи город и страну.'),
-    phone: (value) => (isValidPhone(value) ? '' : 'Введите телефон в формате +7 900 000 00 00.'),
-    age: (value) => (isValidBirthdate(value) ? '' : 'Дата рождения в формате 01.01.2000.'),
-    living: (value) => (normalizeYesNo(value) ? '' : 'Ответь «да» или «нет».'),
-    devices: (value) => (value.trim().length >= 2 ? '' : 'Уточни, какие устройства есть.'),
-    device_model: (value) => (value.trim().length >= 2 ? '' : 'Напиши модель устройства.'),
-    work_time: (value) => (/\d/.test(value) ? '' : 'Укажи количество часов цифрами.'),
-    headphones: (value) => (normalizeYesNo(value) ? '' : 'Ответь «да» или «нет».'),
-    telegram: (value) => (normalizeTelegram(value) ? '' : 'Укажи Telegram в формате @username.'),
-    experience: (value) => (value.trim().length >= 1 ? '' : 'Напиши, есть ли опыт.'),
-    photo_face: (_value, field) => (field.files && field.files.length ? '' : 'Загрузи фото анфас.'),
-    photo_full: (_value, field) => (field.files && field.files.length ? '' : 'Загрузи фото в полный рост.'),
+    name: (value) => (value.trim().length >= 2 ? '' : siteText('validation.name')),
+    city: (value) => (value.trim().length >= 2 ? '' : siteText('validation.city')),
+    phone: (value) => (isValidPhone(value) ? '' : siteText('validation.phone')),
+    age: (value) => (isValidBirthdate(value) ? '' : siteText('validation.age')),
+    living: (value) => (normalizeYesNo(value) ? '' : siteText('validation.yesNo')),
+    devices: (value) => (value.trim().length >= 2 ? '' : siteText('validation.devices')),
+    device_model: (value) => (value.trim().length >= 2 ? '' : siteText('validation.deviceModel')),
+    work_time: (value) => (/\d/.test(value) ? '' : siteText('validation.workTime')),
+    headphones: (value) => (normalizeYesNo(value) ? '' : siteText('validation.yesNo')),
+    telegram: (value) => (normalizeTelegram(value) ? '' : siteText('validation.telegram')),
+    experience: (value) => (value.trim().length >= 1 ? '' : siteText('validation.experience')),
+    photo_face: (_value, field) => (field.files && field.files.length ? '' : siteText('validation.photoFace')),
+    photo_full: (_value, field) => (field.files && field.files.length ? '' : siteText('validation.photoFull')),
   };
 
   function ensureFieldError(field) {
@@ -716,9 +1373,9 @@ function initMultiStep(form) {
       message = rule(value, field) || '';
     } else if (field.required) {
       if (field.type === 'file') {
-        message = field.files && field.files.length ? '' : 'Поле обязательно.';
+        message = field.files && field.files.length ? '' : siteText('validation.required');
       } else {
-        message = value.trim() ? '' : 'Поле обязательно.';
+        message = value.trim() ? '' : siteText('validation.required');
       }
     }
 
@@ -822,7 +1479,7 @@ function initMultiStep(form) {
 }
 
 async function sendApplication(formData, elements, options = {}) {
-  const { pendingMessage = 'Отправка...', resetForm = false } = options;
+  const { pendingMessage = siteText('form.sending'), resetForm = false } = options;
   const { form, formStatus, formNext, formNextLink, submitButton } = elements;
   if (formStatus) {
     formStatus.textContent = pendingMessage;
@@ -846,7 +1503,7 @@ async function sendApplication(formData, elements, options = {}) {
     if (response.ok && payload.ok) {
       if (formStatus) {
         formStatus.classList.add('is-success');
-        formStatus.innerHTML = payload.message || 'Готово.';
+        formStatus.innerHTML = payload.message || siteText('form.success');
       }
       if (resetForm && form) {
         form.reset();
@@ -871,7 +1528,7 @@ async function sendApplication(formData, elements, options = {}) {
                 stepper.goTo(stepIndex);
               }
             }
-            stepper.setFieldError(field, payload.message || 'Поле заполнено неверно.');
+            stepper.setFieldError(field, payload.message || siteText('form.invalid'));
           }
           field.focus();
           field.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -884,14 +1541,14 @@ async function sendApplication(formData, elements, options = {}) {
           formStatus.classList.remove('is-error');
         } else {
           formStatus.classList.add('is-error');
-          formStatus.innerHTML = payload.message || 'Ошибка отправки.';
+          formStatus.innerHTML = payload.message || siteText('form.sendError');
         }
       }
     }
   } catch (err) {
     if (formStatus) {
       formStatus.classList.add('is-error');
-      formStatus.textContent = 'Ошибка отправки.';
+      formStatus.textContent = siteText('form.sendError');
     }
   } finally {
     if (submitButton) submitButton.disabled = false;
@@ -958,8 +1615,8 @@ function normalizeYesNo(value) {
   const v = (value || '').trim().toLowerCase();
   if (!v) return null;
   const tokens = v.match(/[a-zA-Zа-яА-ЯёЁ]+/g) || [v];
-  const yes = new Set(['да', 'ага', 'есть', 'имеется', 'конечно', 'yes', 'y', 'da', 'ок', 'ok']);
-  const no = new Set(['нет', 'нету', 'неа', 'no', 'n']);
+  const yes = new Set(['да', 'ага', 'есть', 'имеется', 'конечно', 'yes', 'y', 'da', 'ок', 'ok', 'si', 'sí', 'sim']);
+  const no = new Set(['нет', 'нету', 'неа', 'no', 'n', 'nao', 'não']);
   for (const raw of tokens) {
     const token = raw.toLowerCase();
     if (yes.has(token)) return 'Да';

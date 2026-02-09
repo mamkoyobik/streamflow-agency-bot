@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import time
-from datetime import datetime
+from datetime import datetime, timezone
 from email.parser import BytesParser
 from email.policy import default
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -26,8 +26,141 @@ ENV_PATH = ROOT_DIR / ".env"
 MAX_BODY_SIZE = 30 * 1024 * 1024
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
-YES_RE = re.compile(r"\b(да|ага|есть|имеется|конечно|yes|y|da|ок|ok)\b", re.IGNORECASE)
-NO_RE = re.compile(r"\b(нет|нету|неа|no|n)\b", re.IGNORECASE)
+YES_RE = re.compile(
+    r"\b(да|ага|есть|имеется|конечно|yes|y|da|ok|okay|si|sí|sim)\b",
+    re.IGNORECASE,
+)
+NO_RE = re.compile(
+    r"\b(нет|нету|неа|no|n|nao|não|nao)\b",
+    re.IGNORECASE,
+)
+
+SUPPORTED_SITE_LANGS = {"ru", "en", "pt", "es"}
+
+FIELD_ERRORS = {
+    "ru": {
+        "name": "🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:",
+        "city": "🤍 Подскажи город и страну проживания ещё раз:",
+        "phone": "🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00",
+        "age": "🤍 Напиши дату рождения в формате 01.01.2000:",
+        "yes_no": "🤍 Ответь, пожалуйста, «да» или «нет»:",
+        "devices": "🤍 Уточни, пожалуйста, какие устройства есть:",
+        "device_model": "🤍 Напиши модель устройства, пожалуйста:",
+        "work_time": "🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):",
+        "telegram": "🤍 Укажи, пожалуйста, Telegram в формате @username:",
+        "experience": "🤍 Напиши, пожалуйста, есть ли опыт:",
+        "photo_face": "🤍 Здесь нужно отправить ФОТО АНФАС.",
+        "photo_full": "🤍 Здесь нужно отправить ФОТО В ПОЛНЫЙ РОСТ.",
+    },
+    "en": {
+        "name": "Please enter your full name.",
+        "city": "Please enter your city and country.",
+        "phone": "Phone number looks incorrect. Example: +1 555 123 4567",
+        "age": "Please enter birth date as 01.01.2000",
+        "yes_no": "Please answer yes or no.",
+        "devices": "Please specify available devices.",
+        "device_model": "Please enter your device model.",
+        "work_time": "Please enter work hours as a number (example: 6).",
+        "telegram": "Please enter Telegram as @username.",
+        "experience": "Please tell us about your experience.",
+        "photo_face": "Please upload a front-face photo.",
+        "photo_full": "Please upload a full-body photo.",
+    },
+    "pt": {
+        "name": "Digite seu nome completo.",
+        "city": "Informe sua cidade e país.",
+        "phone": "Telefone inválido. Exemplo: +55 11 99999 9999",
+        "age": "Informe a data no formato 01.01.2000",
+        "yes_no": "Responda sim ou não.",
+        "devices": "Informe os dispositivos disponíveis.",
+        "device_model": "Informe o modelo do dispositivo.",
+        "work_time": "Informe as horas com número (ex.: 6).",
+        "telegram": "Informe o Telegram no formato @username.",
+        "experience": "Informe se você tem experiência.",
+        "photo_face": "Envie a foto frontal.",
+        "photo_full": "Envie a foto de corpo inteiro.",
+    },
+    "es": {
+        "name": "Escribe tu nombre completo.",
+        "city": "Indica ciudad y país.",
+        "phone": "Número de teléfono inválido. Ejemplo: +34 600 000 000",
+        "age": "Indica la fecha en formato 01.01.2000",
+        "yes_no": "Responde sí o no.",
+        "devices": "Indica qué dispositivos tienes.",
+        "device_model": "Indica el modelo del dispositivo.",
+        "work_time": "Indica horas con número (ej.: 6).",
+        "telegram": "Indica Telegram en formato @username.",
+        "experience": "Indica si tienes experiencia.",
+        "photo_face": "Sube una foto frontal.",
+        "photo_full": "Sube una foto de cuerpo completo.",
+    },
+}
+
+GENERAL_MESSAGES = {
+    "ru": {
+        "bad_size": "Некорректный размер запроса.",
+        "too_big": "Файлы слишком большие.",
+        "bad_type": "Неверный тип данных.",
+        "send_error": "Ошибка отправки анкеты. Попробуй ещё раз.",
+        "group_not_found": "Бот не видит админ‑группу. Проверь ADMIN_GROUP_ID и что бот добавлен в группу.",
+        "group_no_rights": "Бот без прав отправки в группу. Добавь бота и выдай права.",
+        "photo_too_big": "Фото слишком большое. Пришли файл меньше 10 МБ.",
+        "token_missing": "Не настроен BOT_TOKEN или ADMIN_GROUP_ID.",
+        "db_error": "Ошибка сохранения анкеты. Попробуй ещё раз.",
+        "success": "🤍 Спасибо! Анкета отправлена администратору ✨",
+    },
+    "en": {
+        "bad_size": "Invalid request size.",
+        "too_big": "Files are too large.",
+        "bad_type": "Unsupported payload type.",
+        "send_error": "Failed to send application. Please try again.",
+        "group_not_found": "Bot cannot reach admin group. Check ADMIN_GROUP_ID and bot membership.",
+        "group_no_rights": "Bot has no permission to post in admin group.",
+        "photo_too_big": "Photo is too large. Please upload under 10MB.",
+        "token_missing": "BOT_TOKEN or ADMIN_GROUP_ID is not configured.",
+        "db_error": "Failed to save application. Please try again.",
+        "success": "Thank you. Your application was sent.",
+    },
+    "pt": {
+        "bad_size": "Tamanho da requisição inválido.",
+        "too_big": "Arquivos muito grandes.",
+        "bad_type": "Tipo de dados não suportado.",
+        "send_error": "Falha ao enviar candidatura. Tente novamente.",
+        "group_not_found": "O bot não alcança o grupo admin. Verifique ADMIN_GROUP_ID.",
+        "group_no_rights": "O bot não tem permissão para enviar no grupo admin.",
+        "photo_too_big": "Foto muito grande. Envie arquivo menor que 10MB.",
+        "token_missing": "BOT_TOKEN ou ADMIN_GROUP_ID não configurado.",
+        "db_error": "Falha ao salvar candidatura. Tente novamente.",
+        "success": "Obrigado. Sua candidatura foi enviada.",
+    },
+    "es": {
+        "bad_size": "Tamaño de solicitud inválido.",
+        "too_big": "Los archivos son demasiado grandes.",
+        "bad_type": "Tipo de datos no soportado.",
+        "send_error": "Error al enviar la solicitud. Inténtalo de nuevo.",
+        "group_not_found": "El bot no puede llegar al grupo admin. Revisa ADMIN_GROUP_ID.",
+        "group_no_rights": "El bot no tiene permisos para enviar en el grupo admin.",
+        "photo_too_big": "La foto es demasiado grande. Sube un archivo menor de 10MB.",
+        "token_missing": "BOT_TOKEN o ADMIN_GROUP_ID no están configurados.",
+        "db_error": "Error al guardar la solicitud. Inténtalo de nuevo.",
+        "success": "Gracias. Tu solicitud fue enviada.",
+    },
+}
+
+
+def normalize_site_lang(value: str | None) -> str:
+    raw = (value or "").strip().lower()
+    return raw if raw in SUPPORTED_SITE_LANGS else "ru"
+
+
+def msg(lang: str, key: str) -> str:
+    locale = normalize_site_lang(lang)
+    return GENERAL_MESSAGES.get(locale, GENERAL_MESSAGES["ru"]).get(key, GENERAL_MESSAGES["ru"][key])
+
+
+def field_error(lang: str, key: str) -> str:
+    locale = normalize_site_lang(lang)
+    return FIELD_ERRORS.get(locale, FIELD_ERRORS["ru"]).get(key, FIELD_ERRORS["ru"].get(key, ""))
 
 
 def load_env_file(path: Path) -> None:
@@ -171,9 +304,8 @@ def normalize_telegram(text: str) -> str | None:
 def _safe(value: str | None) -> str:
     return html.escape(str(value)) if value is not None else "—"
 
-def build_admin_full_text(data: dict, web_id: str) -> str:
+def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
-    submitted_at = format_submit_time(None)
     return (
         "📋 <b>Полная анкета</b>\n\n"
         f"👤 Имя: {_safe(data.get('name'))}\n"
@@ -497,9 +629,9 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
-            return self.send_json({"ok": False, "message": "Некорректный размер запроса."}, status=400)
+            return self.send_json({"ok": False, "message": msg("ru", "bad_size")}, status=400)
         if content_length > MAX_BODY_SIZE:
-            return self.send_json({"ok": False, "message": "Файлы слишком большие."}, status=413)
+            return self.send_json({"ok": False, "message": msg("ru", "too_big")}, status=413)
 
         body = self.rfile.read(content_length)
         content_type = self.headers.get("Content-Type", "")
@@ -511,7 +643,9 @@ class Handler(SimpleHTTPRequestHandler):
             fields = {k: v[0] for k, v in data.items()}
             files = {}
         else:
-            return self.send_json({"ok": False, "message": "Неверный тип данных."}, status=400)
+            return self.send_json({"ok": False, "message": msg("ru", "bad_type")}, status=400)
+
+        site_lang = normalize_site_lang(fields.get("site_lang"))
 
         def error(message: str, status: int = 400, field: str | None = None):
             payload = {"ok": False, "message": message}
@@ -521,60 +655,60 @@ class Handler(SimpleHTTPRequestHandler):
 
         name = clean_text(fields.get("name") or "")
         if len(name) < 2:
-            return error("🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:", field="name")
+            return error(field_error(site_lang, "name"), field="name")
 
         city = clean_text(fields.get("city") or "")
         if len(city) < 2:
-            return error("🤍 Подскажи город и страну проживания ещё раз:", field="city")
+            return error(field_error(site_lang, "city"), field="city")
 
         phone_raw = clean_text(fields.get("phone") or "")
         if not is_valid_phone(phone_raw):
-            return error("🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00", field="phone")
+            return error(field_error(site_lang, "phone"), field="phone")
         phone = normalize_phone(phone_raw) or phone_raw
 
         age_raw = clean_text(fields.get("age") or "")
         if not is_valid_birthdate(age_raw):
-            return error("🤍 Напиши дату рождения в формате 01.01.2000:", field="age")
+            return error(field_error(site_lang, "age"), field="age")
         age = normalize_birthdate(age_raw) or age_raw
 
         living_raw = clean_text(fields.get("living") or "")
         living = normalize_yes_no(living_raw)
         if not living:
-            return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="living")
+            return error(field_error(site_lang, "yes_no"), field="living")
 
         devices = clean_text(fields.get("devices") or "")
         if len(devices) < 2:
-            return error("🤍 Уточни, пожалуйста, какие устройства есть:", field="devices")
+            return error(field_error(site_lang, "devices"), field="devices")
 
         device_model = clean_text(fields.get("device_model") or "")
         if len(device_model) < 2:
-            return error("🤍 Напиши модель устройства, пожалуйста:", field="device_model")
+            return error(field_error(site_lang, "device_model"), field="device_model")
 
         work_time = clean_text(fields.get("work_time") or "")
         if not has_any_digit(work_time):
-            return error("🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):", field="work_time")
+            return error(field_error(site_lang, "work_time"), field="work_time")
 
         headphones_raw = clean_text(fields.get("headphones") or "")
         headphones = normalize_yes_no(headphones_raw)
         if not headphones:
-            return error("🤍 Ответь, пожалуйста, «да» или «нет»:", field="headphones")
+            return error(field_error(site_lang, "yes_no"), field="headphones")
 
         telegram_raw = clean_text(fields.get("telegram") or "")
         telegram = normalize_telegram(telegram_raw)
         if not telegram:
-            return error("🤍 Укажи, пожалуйста, Telegram в формате @username:", field="telegram")
+            return error(field_error(site_lang, "telegram"), field="telegram")
 
         experience = clean_text(fields.get("experience") or "")
         if len(experience) < 1:
-            return error("🤍 Напиши, пожалуйста, есть ли опыт:", field="experience")
+            return error(field_error(site_lang, "experience"), field="experience")
 
         photo_face = files.get("photo_face")
         if not photo_face or not photo_face.get("data"):
-            return error("🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n📷 Пришли фотографию, пожалуйста", field="photo_face")
+            return error(field_error(site_lang, "photo_face"), field="photo_face")
 
         photo_full = files.get("photo_full")
         if not photo_full or not photo_full.get("data"):
-            return error("🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n📷 Пришли фотографию, пожалуйста", field="photo_full")
+            return error(field_error(site_lang, "photo_full"), field="photo_full")
 
         payload = {
             "name": name,
@@ -592,6 +726,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         user_id = -int(time.time_ns())
         web_id = str(user_id)
+        submitted_at = format_submit_time(datetime.now(timezone.utc).isoformat())
 
         try:
             send_full = os.getenv("WEB_SEND_FULL_TO_ADMIN", "").strip().lower() in {"1", "true", "yes"}
@@ -600,7 +735,7 @@ class Handler(SimpleHTTPRequestHandler):
                     "sendMessage",
                     {
                         "chat_id": str(ADMIN_GROUP_ID),
-                        "text": build_admin_full_text(payload, web_id),
+                        "text": build_admin_full_text(payload, web_id, submitted_at),
                         "parse_mode": "HTML",
                     },
                 )
@@ -664,15 +799,15 @@ class Handler(SimpleHTTPRequestHandler):
                     description = str(payload_err.get("description", ""))
                 else:
                     description = str(payload_err)
-            message = "Ошибка отправки анкеты. Попробуй ещё раз."
+            message = msg(site_lang, "send_error")
             if "not found" in description or "chat not found" in description:
-                message = "Бот не видит админ‑группу. Проверь ADMIN_GROUP_ID и что бот добавлен в группу."
+                message = msg(site_lang, "group_not_found")
             elif "not enough rights" in description or "not a member" in description:
-                message = "Бот без прав отправки в группу. Добавь бота и выдай права."
+                message = msg(site_lang, "group_no_rights")
             elif "file is too big" in description:
-                message = "Фото слишком большое. Пришли файл меньше 10 МБ."
+                message = msg(site_lang, "photo_too_big")
             elif "TOKEN" in description or "not set" in description:
-                message = "Не настроен BOT_TOKEN или ADMIN_GROUP_ID."
+                message = msg(site_lang, "token_missing")
             return error(message, status=500)
 
         try:
@@ -684,7 +819,7 @@ class Handler(SimpleHTTPRequestHandler):
                     print("Excel error:", err)
         except Exception as err:
             print("DB error:", err)
-            return error("Ошибка сохранения анкеты. Попробуй ещё раз.", status=500)
+            return error(msg(site_lang, "db_error"), status=500)
 
         # синхронизируем админ-меню и уведомление так же, как в боте
         notify_admin_new_application()
@@ -693,7 +828,7 @@ class Handler(SimpleHTTPRequestHandler):
         bot_link = f"https://t.me/{BOT_USERNAME.strip().lstrip('@')}" if BOT_USERNAME.strip() else None
         return self.send_json({
             "ok": True,
-            "message": "🤍 Спасибо! Анкета отправлена администратору ✨",
+            "message": msg(site_lang, "success"),
             "bot_link": bot_link,
         })
 

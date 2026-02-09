@@ -1,6 +1,7 @@
 import asyncio
 import html
 import logging
+import os
 import random
 import re
 import traceback
@@ -51,12 +52,14 @@ from database import (
     get_source,
     get_user_language,
     set_user_language,
+    has_user_language,
 )
 try:
-    from excel_export import append_application_row, update_application_status
+    from excel_export import append_application_row, update_application_status, rebuild_excel_from_db
 except Exception:
     append_application_row = None
     update_application_status = None
+    rebuild_excel_from_db = None
     logging.getLogger(__name__).warning("Excel export недоступен (нет openpyxl?)")
 from utils import edit_or_send
 from texts import (
@@ -191,8 +194,8 @@ def normalize_yes_no(text: str) -> str | None:
     tokens = re.findall(r"[a-zA-Zа-яА-ЯёЁ]+", value)
     if not tokens:
         tokens = [value]
-    yes = {"да", "есть", "имеется", "конечно", "ага", "y", "yes", "ok", "ок", "da"}
-    no = {"нет", "нету", "неа", "no", "n"}
+    yes = {"да", "есть", "имеется", "конечно", "ага", "y", "yes", "ok", "ок", "da", "sim", "si", "sí"}
+    no = {"нет", "нету", "неа", "no", "n", "nao", "não"}
     for token in tokens:
         t = token.lower()
         if t in yes:
@@ -329,6 +332,7 @@ ADMIN_LIST_LIMIT = 1
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
 ADMIN_VIEW_SETTING_KEY = "admin_view_message_id"
 ADMIN_PHOTOS_SETTING_KEY = "admin_photos_message_ids"
+FORCE_LANGUAGE_PICK_ON_START = os.getenv("FORCE_LANGUAGE_PICK_ON_START", "1").strip().lower() in {"1", "true", "yes"}
 
 def build_admin_menu_text(counts: dict) -> str:
     return (
@@ -881,7 +885,7 @@ async def send_menu(
     intro: str | None = None,
 
     tail: str | None = None
-):
+)-> bool:
     lang = lang_for(message.chat.id)
     base_caption = caption or t(lang, "menu_caption")
     await gentle_typing(message.chat.id)
@@ -890,17 +894,29 @@ async def send_menu(
         if status
         else base_caption
     )
-    await send_or_edit_user_menu(
+    return await send_or_edit_user_menu(
         message.chat.id,
         final_caption,
         lang=lang,
     )
 
+
+async def ensure_language_selected(user_id: int, allow_home_button: bool = False, force_prompt: bool = False) -> bool:
+    if has_user_language(user_id) and not force_prompt:
+        return True
+    current_lang = lang_for(user_id) if has_user_language(user_id) else "ru"
+    await send_or_edit_user_text(
+        user_id,
+        t(current_lang, "language_menu_title"),
+        reply_markup=language_keyboard(current_lang, include_home=allow_home_button),
+    )
+    return False
+
 async def send_or_edit_user_menu(
     user_id: int,
     caption: str,
     lang: str | None = None,
-):
+) -> bool:
     locale = normalize_lang(lang or lang_for(user_id))
     message_id = get_menu_message_id(user_id)
     if message_id:
@@ -911,15 +927,15 @@ async def send_or_edit_user_menu(
                 caption=caption,
                 reply_markup=main_menu(locale)
             )
-            return
+            return True
         except TelegramBadRequest as e:
             text = str(e).lower()
             if "message is not modified" in text:
-                return
+                return True
             # fall through to send new menu on other edit errors
         except TelegramForbiddenError:
             logger.warning("Нет прав на обновление меню пользователя")
-            return
+            return False
         except Exception:
             logger.exception("Не удалось обновить меню пользователя")
     if message_id:
@@ -935,10 +951,13 @@ async def send_or_edit_user_menu(
             reply_markup=main_menu(locale)
         )
         set_menu_message_id(user_id, msg.message_id)
+        return True
     except TelegramForbiddenError:
         logger.warning("Нет прав на отправку меню пользователю")
+        return False
     except Exception:
         logger.exception("Ошибка отправки меню пользователю")
+        return False
 
 async def send_or_edit_user_text(
     user_id: int,
@@ -1130,6 +1149,12 @@ async def start(message: Message, state: FSMContext):
             return
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
+        if not await ensure_language_selected(
+            message.from_user.id,
+            allow_home_button=False,
+            force_prompt=FORCE_LANGUAGE_PICK_ON_START,
+        ):
+            return
         app = get_application(message.from_user.id)
         status = app.get("status") if app else None
         lang = lang_for(message.from_user.id)
@@ -1189,24 +1214,41 @@ async def language_menu_handler(call: CallbackQuery):
 
 @dp.callback_query(F.data.startswith("set_lang:"))
 async def set_language_handler(call: CallbackQuery, state: FSMContext):
-    if not call.message or call.message.chat.type != "private":
-        await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
-        return
-    lang_code = call.data.split(":", 1)[1].strip().lower()
-    set_user_language(call.from_user.id, lang_code)
-    lang = lang_for(call.from_user.id)
-    app = get_application(call.from_user.id)
-    status = app.get("status") if app else None
-    await state.clear()
-    await clear_portfolio_media(call.from_user.id)
-    await send_menu(
-        call.message,
-        caption=t(lang, "menu_caption"),
-        status=status,
-        intro=t(lang, "language_changed", language=LANGUAGE_NAMES.get(lang, lang)),
-    )
-    await clear_user_flow_message(call.from_user.id)
-    await safe_call_answer(call)
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            return
+        await safe_call_answer(call)
+        lang_code = call.data.split(":", 1)[1].strip().lower()
+        if lang_code not in LANGUAGE_NAMES:
+            lang_code = "ru"
+        set_user_language(call.from_user.id, lang_code)
+        lang = lang_for(call.from_user.id)
+        app = get_application(call.from_user.id)
+        status = app.get("status") if app else None
+        await state.clear()
+        await clear_portfolio_media(call.from_user.id)
+        intro_text = t(lang, "language_changed", language=LANGUAGE_NAMES.get(lang, lang))
+        menu_ok = False
+        try:
+            menu_ok = await send_menu(
+                call.message,
+                caption=t(lang, "menu_caption"),
+                status=status,
+                intro=intro_text,
+            )
+        except Exception:
+            logger.exception("Не удалось обновить меню после смены языка")
+        if not menu_ok:
+            await send_or_edit_user_text(
+                call.from_user.id,
+                f"{intro_text}\n\n{t(lang, 'menu_caption')}",
+                reply_markup=main_menu(lang),
+            )
+        await clear_user_flow_message(call.from_user.id)
+    except Exception:
+        logger.exception("Ошибка выбора языка")
+        await safe_call_answer(call, t("ru", "temp_error_retry"), show_alert=True)
 # ================= APPLY =================
 
 @dp.callback_query(F.data == "apply")
@@ -2556,6 +2598,7 @@ async def admin_menu_action(call: CallbackQuery):
         if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
+        await safe_call_answer(call)
         await clear_admin_temp_messages()
         action = call.data.split(":", 1)[1]
         if action in {"pending", "accepted", "rejected", "all"}:
@@ -2568,28 +2611,24 @@ async def admin_menu_action(call: CallbackQuery):
                 build_admin_stats_text(),
                 admin_menu_keyboard(get_status_counts())
             )
-            await safe_call_answer(call)
             return
         if action == "excel":
             await clear_admin_view_message()
-            if not append_application_row:
+            if not rebuild_excel_from_db:
                 await update_admin_menu_message(
                     "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
                     admin_menu_keyboard(get_status_counts())
                 )
-                await safe_call_answer(call)
                 return
-            file_path = Path("applications.xlsx")
-            if not file_path.exists():
+            file_path = rebuild_excel_from_db()
+            if not file_path:
                 await update_admin_menu_message(
                     "🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨",
                     admin_menu_keyboard(get_status_counts())
                 )
-                await safe_call_answer(call)
                 return
             msg = await call.message.answer_document(FSInputFile(str(file_path)))
             track_admin_temp_message(msg.message_id)
-            await safe_call_answer(call)
             return
         if action == "archive":
             await clear_admin_view_message()
@@ -2611,7 +2650,6 @@ async def admin_menu_action(call: CallbackQuery):
                     "⚠️ Не удалось архивировать сейчас.",
                     admin_menu_keyboard(get_status_counts())
                 )
-            await safe_call_answer(call)
             return
         if action == "reset":
             await clear_admin_view_message()
@@ -2619,12 +2657,10 @@ async def admin_menu_action(call: CallbackQuery):
                 "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
                 confirm_reset_db_keyboard()
             )
-            await safe_call_answer(call)
             return
         if action == "refresh":
             await clear_admin_view_message()
             await post_admin_menu()
-            await safe_call_answer(call)
             return
         await safe_call_answer(call, "Неизвестная команда", show_alert=False)
     except Exception:
@@ -2794,12 +2830,12 @@ async def admin_stats(message: Message):
 @dp.message(F.text == "/excel", F.chat.id == ADMIN_GROUP_ID)
 async def admin_excel(message: Message):
     await clear_admin_temp_messages()
-    if not append_application_row:
+    if not rebuild_excel_from_db:
         msg = await message.answer("🤍 Экспорт в Excel недоступен. Установи openpyxl.")
         track_admin_temp_message(msg.message_id)
         return
-    file_path = Path("applications.xlsx")
-    if not file_path.exists():
+    file_path = rebuild_excel_from_db()
+    if not file_path:
         msg = await message.answer("🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨")
         track_admin_temp_message(msg.message_id)
         return

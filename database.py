@@ -110,7 +110,7 @@ if DB_KIND == "postgres":
     else:
         ssl_context = ssl.create_default_context()
 
-    connect_timeout = float(os.getenv("DB_CONNECT_TIMEOUT", "8"))
+    connect_timeout = float(os.getenv("DB_CONNECT_TIMEOUT", "30"))
     _PG_CONNECT_KWARGS = {
         "user": db_user,
         "password": db_password,
@@ -529,6 +529,11 @@ def get_user_language(user_id: int) -> str:
         return value
     return DEFAULT_LANGUAGE
 
+
+def has_user_language(user_id: int) -> bool:
+    value = (get_setting(_lang_setting_key(user_id)) or "").strip().lower()
+    return value in SUPPORTED_LANGUAGES
+
 def list_applications(status: str | None = None) -> list[dict]:
     with DB_LOCK:
         if status:
@@ -544,6 +549,21 @@ def list_applications(status: str | None = None) -> list[dict]:
                 "WHERE status IN ('pending', 'accepted', 'rejected') "
                 "ORDER BY updated_at DESC"
             )
+        rows = cursor.fetchall()
+        return [
+            {"user_id": row[0], "status": row[1], "updated_at": row[2]}
+            for row in rows
+        ]
+
+
+def list_applications_for_export() -> list[dict]:
+    with DB_LOCK:
+        _execute(
+            "SELECT user_id, status, updated_at FROM applications "
+            "ORDER BY "
+            "CASE WHEN updated_at IS NULL OR updated_at = '' THEN 1 ELSE 0 END, "
+            "updated_at DESC"
+        )
         rows = cursor.fetchall()
         return [
             {"user_id": row[0], "status": row[1], "updated_at": row[2]}

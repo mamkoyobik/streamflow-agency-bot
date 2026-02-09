@@ -200,23 +200,23 @@ def cancel_keyboard(lang: str = "ru"):
     ])
 
 
-def language_keyboard(current_lang: str = "ru"):
+def language_keyboard(current_lang: str = "ru", include_home: bool = True):
     def lang_label(code: str, title: str) -> str:
         return f"✅ {title}" if code == current_lang else title
 
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(text=lang_label("ru", "Русский"), callback_data="set_lang:ru"),
-                InlineKeyboardButton(text=lang_label("en", "English"), callback_data="set_lang:en"),
-            ],
-            [
-                InlineKeyboardButton(text=lang_label("pt", "Português"), callback_data="set_lang:pt"),
-                InlineKeyboardButton(text=lang_label("es", "Español"), callback_data="set_lang:es"),
-            ],
-            [InlineKeyboardButton(text=t(current_lang, "menu_home"), callback_data="main_menu")],
-        ]
-    )
+    rows = [
+        [
+            InlineKeyboardButton(text=lang_label("ru", "Русский"), callback_data="set_lang:ru"),
+            InlineKeyboardButton(text=lang_label("en", "English"), callback_data="set_lang:en"),
+        ],
+        [
+            InlineKeyboardButton(text=lang_label("pt", "Português"), callback_data="set_lang:pt"),
+            InlineKeyboardButton(text=lang_label("es", "Español"), callback_data="set_lang:es"),
+        ],
+    ]
+    if include_home:
+        rows.append([InlineKeyboardButton(text=t(current_lang, "menu_home"), callback_data="main_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 def reject_templates_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[

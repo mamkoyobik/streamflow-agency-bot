@@ -31,7 +31,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260209-02">
+  <link rel="stylesheet" href="styles.css?v=20260210-02">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -62,30 +62,48 @@
     }
   </script>
 </head>
-<body class="preload" data-page="home">
+<body class="preload lang-locked" data-page="home">
   <div class="grain"></div>
+  <div class="language-gate is-visible" id="language-gate" aria-hidden="false">
+    <div class="language-gate-card">
+      <h2 data-i18n="langGate.title">Выберите язык</h2>
+      <p data-i18n="langGate.subtitle">Select your language to continue</p>
+      <div class="language-gate-options">
+        <button class="language-gate-option" type="button" data-language-option="ru" data-i18n="langGate.ru">Русский</button>
+        <button class="language-gate-option" type="button" data-language-option="en" data-i18n="langGate.en">English</button>
+        <button class="language-gate-option" type="button" data-language-option="pt" data-i18n="langGate.pt">Português</button>
+        <button class="language-gate-option" type="button" data-language-option="es" data-i18n="langGate.es">Español</button>
+      </div>
+    </div>
+  </div>
 
   <header class="site-header">
     <div class="container header-grid">
       <a class="brand" href="index.html" aria-label="Streamflow">
         <img src="assets/favicon.png" alt="Streamflow">
         <span class="brand-stack">
-          <strong>Streamflow</strong>
-          <small>Model Agency</small>
+          <strong data-i18n="brand.name">Streamflow</strong>
+          <small data-i18n="brand.subtitle">Model Agency</small>
         </span>
       </a>
       <nav class="site-nav" aria-label="Навигация">
-        <a class="nav-link" href="index.html">Главная</a>
-        <a class="nav-link" href="#about">О работе</a>
-        <a class="nav-link" href="#offer">Условия</a>
-        <a class="nav-link" href="#income">Доходы</a>
-        <a class="nav-link" href="#steps">Этапы</a>
-        <a class="nav-link" href="#streams">Видеопримеры</a>
-        <a class="nav-link" href="#portfolio">Портфолио</a>
-        <a class="nav-link" href="#apply">Заявка</a>
-        <a class="nav-link nav-telegram" data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Telegram</a>
+        <a class="nav-link" href="index.html" data-i18n="nav.home">Главная</a>
+        <a class="nav-link" href="#about" data-i18n="nav.about">О работе</a>
+        <a class="nav-link" href="#offer" data-i18n="nav.conditions">Условия</a>
+        <a class="nav-link" href="#income" data-i18n="nav.income">Доходы</a>
+        <a class="nav-link" href="#steps" data-i18n="nav.steps">Этапы</a>
+        <a class="nav-link" href="#streams" data-i18n="nav.streams">Видеопримеры</a>
+        <a class="nav-link" href="#portfolio" data-i18n="nav.portfolio">Портфолио</a>
       </nav>
-      <a class="btn btn-primary" href="#apply">Оставить заявку</a>
+      <div class="header-actions">
+        <select class="lang-select" id="site-lang-select" aria-label="Language">
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+          <option value="es">ES</option>
+        </select>
+        <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
+      </div>
     </div>
   </header>
 
@@ -93,21 +111,27 @@
     <div class="mobile-nav-backdrop" data-nav-close></div>
     <div class="mobile-nav-panel">
       <div class="mobile-nav-header">
-        <span>Меню</span>
+        <span data-i18n="mobile.menu">Меню</span>
+        <select class="lang-select lang-select-mobile" id="site-lang-select-mobile" aria-label="Language">
+          <option value="ru">RU</option>
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+          <option value="es">ES</option>
+        </select>
         <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
-        <a href="index.html">Главная</a>
-        <a href="#about">О работе</a>
-        <a href="#offer">Условия</a>
-        <a href="#income">Доходы</a>
-        <a href="#steps">Этапы</a>
-        <a href="#streams">Видеопримеры</a>
-        <a href="#portfolio">Портфолио</a>
-        <a href="#apply">Заявка</a>
+        <a href="index.html" data-i18n="nav.home">Главная</a>
+        <a href="#about" data-i18n="nav.about">О работе</a>
+        <a href="#offer" data-i18n="nav.conditions">Условия</a>
+        <a href="#income" data-i18n="nav.income">Доходы</a>
+        <a href="#steps" data-i18n="nav.steps">Этапы</a>
+        <a href="#streams" data-i18n="nav.streams">Видеопримеры</a>
+        <a href="#portfolio" data-i18n="nav.portfolio">Портфолио</a>
+        <a href="#apply" data-i18n="nav.apply">Заявка</a>
       </nav>
-      <a class="btn btn-telegram" data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Telegram канал</a>
-      <a class="btn btn-primary" href="#apply">Оставить заявку</a>
+      <a class="btn btn-telegram" data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram канал</a>
+      <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
     </div>
   </div>
 
@@ -118,15 +142,15 @@
       <div class="gradual-blur gradual-blur-bottom" aria-hidden="true"></div>
       <div class="container hero-grid">
         <div class="hero-text reveal">
-          <span class="hero-eyebrow">Model Agency</span>
-          <h1>Агентство стриминговых моделей</h1>
-          <p class="hero-lead">
+          <span class="hero-eyebrow" data-i18n="hero.eyebrow">Model Agency</span>
+          <h1 data-i18n="hero.title">Агентство стриминговых моделей</h1>
+          <p class="hero-lead" data-i18n="hero.lead">
             Спокойный старт, ясные шаги и поддержка команды на каждом этапе.
             Без спешки, без давления, с понятной коммуникацией.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-primary" href="#apply">Оставить заявку</a>
-            <a class="btn btn-telegram" data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Telegram канал</a>
+            <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
+            <a class="btn btn-telegram" data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram канал</a>
           </div>
         </div>
         <div class="hero-media reveal">
@@ -134,20 +158,20 @@
             <div class="carousel-viewport">
               <div class="carousel-track">
                 <article class="carousel-slide" style="--slide-bg: url('assets/models/model-1.jpg');">
-                  <h3>Старт</h3>
-                  <p>Спокойный старт и понятные шаги без давления.</p>
+                  <h3 data-i18n="hero.card1Title">Старт</h3>
+                  <p data-i18n="hero.card1Text">Спокойный старт и понятные шаги без давления.</p>
                 </article>
                 <article class="carousel-slide" style="--slide-bg: url('assets/models/milena.jpg');">
-                  <h3>Образ</h3>
-                  <p>Образ остаётся в твоих руках.</p>
+                  <h3 data-i18n="hero.card2Title">Образ</h3>
+                  <p data-i18n="hero.card2Text">Образ остаётся в твоих руках.</p>
                 </article>
                 <article class="carousel-slide" style="--slide-bg: url('assets/models/model-3.jpg');">
-                  <h3>Поддержка</h3>
-                  <p>Команда рядом на каждом шаге.</p>
+                  <h3 data-i18n="hero.card3Title">Поддержка</h3>
+                  <p data-i18n="hero.card3Text">Команда рядом на каждом шаге.</p>
                 </article>
                 <article class="carousel-slide" style="--slide-bg: url('assets/models/confident.jpg');">
-                  <h3>Уверенность</h3>
-                  <p>Спокойный рост без давления и стресса.</p>
+                  <h3 data-i18n="hero.card4Title">Уверенность</h3>
+                  <p data-i18n="hero.card4Text">Спокойный рост без давления и стресса.</p>
                 </article>
               </div>
             </div>
@@ -165,16 +189,16 @@
     <section class="trust-strip reveal reveal-mask" aria-label="Гарантии Streamflow">
       <div class="container trust-strip-grid">
         <article class="trust-item">
-          <strong>Персональная поддержка старта</strong>
-          <p>Каждую анкету ведёт менеджер и даёт обратную связь по шагам.</p>
+          <strong data-i18n="trust.supportTitle">Персональная поддержка старта</strong>
+          <p data-i18n="trust.supportText">Каждую анкету ведёт менеджер и даёт обратную связь по шагам.</p>
         </article>
         <article class="trust-item">
-          <strong>Прозрачная коммуникация</strong>
-          <p>Ответ и обратная связь приходят в Telegram.</p>
+          <strong data-i18n="trust.communicationTitle">Прозрачная коммуникация</strong>
+          <p data-i18n="trust.communicationText">Ответ и обратная связь приходят в Telegram.</p>
         </article>
         <article class="trust-item">
-          <strong>Канал Streamflow</strong>
-          <a data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Перейти в канал</a>
+          <strong data-i18n="trust.channelTitle">Канал Streamflow</strong>
+          <a data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener" data-i18n="trust.channelLink">Перейти в канал</a>
         </article>
       </div>
     </section>
@@ -182,14 +206,14 @@
     <section class="section content-section" id="about">
       <div class="container split">
         <div class="split-content reveal">
-          <span class="eyebrow">О работе</span>
-          <h2 class="section-title-global">Комфортный формат для моделей, которые ценят спокойствие.</h2>
-          <p>
+          <span class="eyebrow" data-i18n="about.eyebrow">О работе</span>
+          <h2 class="section-title-global" data-i18n="about.title">Комфортный формат для моделей, которые ценят спокойствие.</h2>
+          <p data-i18n="about.text">
             Streamflow помогает начать уверенно: сопровождение,
             поддержка и прозрачные правила работы.
           </p>
           <div class="hero-actions">
-            <a class="btn btn-ghost" href="#offer">Условия и преимущества</a>
+            <a class="btn btn-ghost" href="#offer" data-i18n="about.cta">Условия и преимущества</a>
           </div>
         </div>
         <div class="about-mosaic reveal">
@@ -208,40 +232,40 @@
 
     <section class="section section-center content-section" id="offer">
       <div class="container">
-        <span class="eyebrow">Условия и преимущества</span>
-        <h2 class="section-title-global">Всё по шагам и без лишнего стресса.</h2>
-        <p class="section-lead section-subtitle-global">Три базовых фокуса, которые дают уверенность на старте и стабильность в работе.</p>
+        <span class="eyebrow" data-i18n="offer.eyebrow">Условия и преимущества</span>
+        <h2 class="section-title-global" data-i18n="offer.title">Всё по шагам и без лишнего стресса.</h2>
+        <p class="section-lead section-subtitle-global" data-i18n="offer.subtitle">Три базовых фокуса, которые дают уверенность на старте и стабильность в работе.</p>
         <div class="offer-list">
           <div class="offer-item reveal">
             <span class="offer-step">01</span>
-            <h3 class="offer-title">Комфортный вход</h3>
-            <p>Объясняем, настраиваем, показываем, как выглядит работа изнутри.</p>
+            <h3 class="offer-title" data-i18n="offer.item1Title">Комфортный вход</h3>
+            <p data-i18n="offer.item1Text">Объясняем, настраиваем, показываем, как выглядит работа изнутри.</p>
             <div class="offer-divider"></div>
           </div>
           <div class="offer-item reveal">
             <span class="offer-step">02</span>
-            <h3 class="offer-title">Визуал и безопасность</h3>
-            <p>Только аккуратный визуал и спокойный формат без давления.</p>
+            <h3 class="offer-title" data-i18n="offer.item2Title">Визуал и безопасность</h3>
+            <p data-i18n="offer.item2Text">Только аккуратный визуал и спокойный формат без давления.</p>
             <div class="offer-divider"></div>
           </div>
           <div class="offer-item reveal">
             <span class="offer-step">03</span>
-            <h3 class="offer-title">Стабильный рост</h3>
-            <p>Поддержка и рекомендации, чтобы результат рос плавно.</p>
+            <h3 class="offer-title" data-i18n="offer.item3Title">Стабильный рост</h3>
+            <p data-i18n="offer.item3Text">Поддержка и рекомендации, чтобы результат рос плавно.</p>
           </div>
         </div>
         <div class="hero-actions section-cta">
-          <a class="btn btn-primary" href="#apply">Оставить заявку</a>
-          <a class="btn btn-ghost" href="#steps">Смотреть этапы</a>
+          <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
+          <a class="btn btn-ghost" href="#steps" data-i18n="offer.ctaSecondary">Смотреть этапы</a>
         </div>
       </div>
     </section>
 
     <section class="section section-center content-section" id="income">
       <div class="container">
-        <span class="eyebrow">Примеры дохода</span>
-        <h2 class="section-title-global">Примеры дохода</h2>
-        <p class="section-lead section-subtitle-global">Это реальные цифры моделей, которые работают с нами несколько месяцев.</p>
+        <span class="eyebrow" data-i18n="income.eyebrow">Примеры дохода</span>
+        <h2 class="section-title-global" data-i18n="income.title">Примеры дохода</h2>
+        <p class="section-lead section-subtitle-global" data-i18n="income.subtitle">Это реальные цифры моделей, которые работают с нами несколько месяцев.</p>
         <div class="income-grid">
           <article class="income-card reveal">
             <img src="assets/models/model-1.jpg" alt="Анастасия" loading="lazy">
@@ -282,9 +306,9 @@
     <section class="section content-section" id="streams">
       <div class="container">
         <div class="section-head">
-          <span class="eyebrow">Видеопримеры</span>
-          <h2 class="section-title-global">Смотри атмосферу и ритм стримов.</h2>
-          <p class="section-lead section-subtitle-global">Фрагменты реальных стримов, снятых моделями дома.</p>
+          <span class="eyebrow" data-i18n="streams.eyebrow">Видеопримеры</span>
+          <h2 class="section-title-global" data-i18n="streams.title">Смотри атмосферу и ритм стримов.</h2>
+          <p class="section-lead section-subtitle-global" data-i18n="streams.subtitle">Фрагменты реальных стримов, снятых моделями дома.</p>
         </div>
         <div class="video-grid">
           <button class="video-card reveal" type="button" data-video="assets/videos/stream-1.mp4">
@@ -308,29 +332,29 @@
 
     <section class="section section-center content-section" id="steps">
       <div class="container">
-        <span class="eyebrow">Этапы</span>
-        <h2 class="section-title-global">Три шага до уверенного старта.</h2>
-        <p class="section-lead section-subtitle-global">Прозрачный путь без давления и хаоса — всё по шагам.</p>
+        <span class="eyebrow" data-i18n="steps.eyebrow">Этапы</span>
+        <h2 class="section-title-global" data-i18n="steps.title">Три шага до уверенного старта.</h2>
+        <p class="section-lead section-subtitle-global" data-i18n="steps.subtitle">Прозрачный путь без давления и хаоса — всё по шагам.</p>
         <div class="steps-list">
           <div class="steps-item reveal">
             <div class="steps-number">01</div>
             <div class="steps-content">
-              <h3>Заявка</h3>
-              <p>Заполняешь анкету, мы аккуратно проверяем и возвращаемся с ответом.</p>
+                <h3 data-i18n="steps.item1Title">Заявка</h3>
+                <p data-i18n="steps.item1Text">Заполняешь анкету, мы аккуратно проверяем и возвращаемся с ответом.</p>
             </div>
           </div>
           <div class="steps-item reveal">
             <div class="steps-number">02</div>
             <div class="steps-content">
-              <h3>Подготовка</h3>
-              <p>Подготовка профиля, образа и понятный план первого эфира.</p>
+                <h3 data-i18n="steps.item2Title">Подготовка</h3>
+                <p data-i18n="steps.item2Text">Подготовка профиля, образа и понятный план первого эфира.</p>
             </div>
           </div>
           <div class="steps-item reveal">
             <div class="steps-number">03</div>
             <div class="steps-content">
-              <h3>Старт</h3>
-              <p>Запуск с поддержкой команды и понятной обратной связью.</p>
+                <h3 data-i18n="steps.item3Title">Старт</h3>
+                <p data-i18n="steps.item3Text">Запуск с поддержкой команды и понятной обратной связью.</p>
             </div>
           </div>
         </div>
@@ -339,8 +363,8 @@
 
     <section class="section section-center content-section" id="portfolio">
       <div class="container">
-        <span class="eyebrow">Портфолио</span>
-        <h2 class="section-title-global">Портфолио моделей Streamflow.</h2>
+        <span class="eyebrow" data-i18n="portfolio.eyebrow">Портфолио</span>
+        <h2 class="section-title-global" data-i18n="portfolio.title">Портфолио моделей Streamflow.</h2>
       </div>
       <div class="container portfolio-grid">
         <div class="portfolio-block reveal card-spotlight">
@@ -393,21 +417,21 @@
     <section class="section content-section" id="apply">
       <div class="container form-section">
         <div class="form-intro reveal">
-          <span class="eyebrow">Заявка</span>
-          <h2 class="section-title-global">Анкета Streamflow</h2>
-          <p>После каждого ответа ты переходишь к следующему шагу.</p>
+          <span class="eyebrow" data-i18n="form.eyebrow">Заявка</span>
+          <h2 class="section-title-global" data-i18n="form.title">Анкета Streamflow</h2>
+          <p data-i18n="form.subtitle">После каждого ответа ты переходишь к следующему шагу.</p>
           <div class="mini-steps">
             <div class="mini-step">
               <span>1</span>
-              <p>Заполни анкету и прикрепи фото.</p>
+              <p data-i18n="form.mini1">Заполни анкету и прикрепи фото.</p>
             </div>
             <div class="mini-step">
               <span>2</span>
-              <p>Мы вернёмся с ответом в Telegram.</p>
+              <p data-i18n="form.mini2">Мы вернёмся с ответом в Telegram.</p>
             </div>
             <div class="mini-step">
               <span>3</span>
-              <p>Стартуем подготовку вместе с командой.</p>
+              <p data-i18n="form.mini3">Стартуем подготовку вместе с командой.</p>
             </div>
           </div>
         </div>
@@ -416,26 +440,26 @@
           <div class="form-card-layout">
             <aside class="form-side-progress" data-form-side-progress>
               <div class="form-side-header">
-                <h3>Прогресс анкеты</h3>
+                <h3 data-i18n="form.progressTitle">Прогресс анкеты</h3>
                 <span><span data-step-current-side>1</span> / <span data-step-total-side>13</span></span>
               </div>
               <div class="form-side-bar">
                 <span data-step-bar-side></span>
               </div>
               <ol class="form-side-list">
-                <li data-step-point="1">Имя</li>
-                <li data-step-point="2">Город и страна</li>
-                <li data-step-point="3">Телефон</li>
-                <li data-step-point="4">Дата рождения</li>
-                <li data-step-point="5">Помещение</li>
-                <li data-step-point="6">Устройства</li>
-                <li data-step-point="7">Модель устройства</li>
-                <li data-step-point="8">Время работы</li>
-                <li data-step-point="9">Наушники</li>
-                <li data-step-point="10">Telegram</li>
-                <li data-step-point="11">Опыт</li>
-                <li data-step-point="12">Фото анфас</li>
-                <li data-step-point="13">Фото в полный рост</li>
+                <li data-step-point="1" data-i18n="form.side1">Имя</li>
+                <li data-step-point="2" data-i18n="form.side2">Город и страна</li>
+                <li data-step-point="3" data-i18n="form.side3">Телефон</li>
+                <li data-step-point="4" data-i18n="form.side4">Дата рождения</li>
+                <li data-step-point="5" data-i18n="form.side5">Помещение</li>
+                <li data-step-point="6" data-i18n="form.side6">Устройства</li>
+                <li data-step-point="7" data-i18n="form.side7">Модель устройства</li>
+                <li data-step-point="8" data-i18n="form.side8">Время работы</li>
+                <li data-step-point="9" data-i18n="form.side9">Наушники</li>
+                <li data-step-point="10" data-i18n="form.side10">Telegram</li>
+                <li data-step-point="11" data-i18n="form.side11">Опыт</li>
+                <li data-step-point="12" data-i18n="form.side12">Фото анфас</li>
+                <li data-step-point="13" data-i18n="form.side13">Фото в полный рост</li>
               </ol>
             </aside>
 
@@ -446,97 +470,98 @@
               </div>
 
               <div class="form-steps">
+                <input id="site-lang-field" name="site_lang" type="hidden" value="ru">
                 <div class="form-step is-active" data-step="1">
                   <div class="field">
-                    <label for="name">1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:</label>
+                    <label for="name" data-i18n="form.q1">1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:</label>
                     <input id="name" name="name" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="2">
                   <div class="field">
-                    <label for="city">2️⃣ Город и страна проживания:</label>
+                    <label for="city" data-i18n="form.q2">2️⃣ Город и страна проживания:</label>
                     <input id="city" name="city" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="3">
                   <div class="field">
-                    <label for="phone">3️⃣ Контактный телефон (+код):</label>
+                    <label for="phone" data-i18n="form.q3">3️⃣ Контактный телефон (+код):</label>
                     <input id="phone" name="phone" type="tel" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="4">
                   <div class="field">
-                    <label for="age">4️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
+                    <label for="age" data-i18n="form.q4">4️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
                     <input id="age" name="age" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="5">
                   <div class="field">
-                    <label for="living">5️⃣ Есть ли помещение без посторонних?</label>
+                    <label for="living" data-i18n="form.q5">5️⃣ Есть ли помещение без посторонних?</label>
                     <input id="living" name="living" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="6">
                   <div class="field">
-                    <label for="devices">6️⃣ Устройства:</label>
-                    <input id="devices" name="devices" type="text" required placeholder="Например: смартфон, ноутбук">
+                    <label for="devices" data-i18n="form.q6">6️⃣ Устройства:</label>
+                    <input id="devices" name="devices" type="text" required placeholder="Например: смартфон, ноутбук" data-i18n-placeholder="form.q6Placeholder">
                   </div>
                 </div>
                 <div class="form-step" data-step="7">
                   <div class="field">
-                    <label for="device_model">7️⃣ Модель устройства:</label>
+                    <label for="device_model" data-i18n="form.q7">7️⃣ Модель устройства:</label>
                     <input id="device_model" name="device_model" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="8">
                   <div class="field">
-                    <label for="work_time">8️⃣ Время работы (часов в день):</label>
+                    <label for="work_time" data-i18n="form.q8">8️⃣ Время работы (часов в день):</label>
                     <input id="work_time" name="work_time" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="9">
                   <div class="field">
-                    <label for="headphones">9️⃣ Есть ли наушники с микрофоном:</label>
+                    <label for="headphones" data-i18n="form.q9">9️⃣ Есть ли наушники с микрофоном:</label>
                     <input id="headphones" name="headphones" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="10">
                   <div class="field">
-                    <label for="telegram">🔟 Telegram (@username):</label>
+                    <label for="telegram" data-i18n="form.q10">🔟 Telegram (@username):</label>
                     <input id="telegram" name="telegram" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="11">
                   <div class="field">
-                    <label for="experience">1️⃣1️⃣ Опыт (если нет — напиши «нет»):</label>
+                    <label for="experience" data-i18n="form.q11">1️⃣1️⃣ Опыт (если нет — напиши «нет»):</label>
                     <textarea id="experience" name="experience" rows="3" required></textarea>
                   </div>
                 </div>
                 <div class="form-step" data-step="12">
                   <div class="field">
-                    <label for="photo_face">1️⃣2️⃣ Фото анфас:</label>
+                    <label for="photo_face" data-i18n="form.q12">1️⃣2️⃣ Фото анфас:</label>
                     <input id="photo_face" name="photo_face" type="file" accept="image/*" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="13">
                   <div class="field">
-                    <label for="photo_full">1️⃣3️⃣ Фото в полный рост:</label>
+                    <label for="photo_full" data-i18n="form.q13">1️⃣3️⃣ Фото в полный рост:</label>
                     <input id="photo_full" name="photo_full" type="file" accept="image/*" required>
                   </div>
                 </div>
               </div>
 
               <div class="form-nav">
-                <button class="btn btn-ghost" type="button" data-step-prev>Назад</button>
-                <button class="btn btn-primary" type="button" data-step-next>Далее</button>
-                <button class="btn btn-primary hidden" type="submit" data-step-submit>Отправить</button>
+                <button class="btn btn-ghost" type="button" data-step-prev data-i18n="form.prev">Назад</button>
+                <button class="btn btn-primary" type="button" data-step-next data-i18n="form.next">Далее</button>
+                <button class="btn btn-primary hidden" type="submit" data-step-submit data-i18n="form.submit">Отправить</button>
               </div>
             </div>
           </div>
 
           <div class="form-status" data-form-status role="status" aria-live="polite"></div>
           <div class="form-next hidden" data-form-next>
-            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Открыть Telegram</a>
+            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-i18n="form.openTelegram">Открыть Telegram</a>
           </div>
         </form>
       </div>
@@ -548,21 +573,21 @@
       <div class="footer-brand">
         <img src="assets/favicon.png" alt="Streamflow">
         <div class="footer-brand-text">
-          <strong>Streamflow</strong>
-          <span>Model Agency</span>
+          <strong data-i18n="brand.name">Streamflow</strong>
+          <span data-i18n="brand.subtitle">Model Agency</span>
         </div>
       </div>
       <div class="footer-links">
-        <a data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener">Канал Streamflow</a>
-        <a href="#apply">Оставить заявку</a>
+        <a data-telegram-link href="https://t.me/+uuVr5gJFwoJjYmRi" target="_blank" rel="noopener" data-i18n="footer.channel">Канал Streamflow</a>
+        <a href="#apply" data-i18n="cta.apply">Оставить заявку</a>
       </div>
-      <div class="footer-note">© Streamflow. Все права защищены.</div>
+      <div class="footer-note" data-i18n="footer.rights">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
 
   <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
     <img class="floating-menu-logo" src="assets/favicon.png" alt="Streamflow">
-    <span data-menu-text>Меню</span>
+    <span data-menu-text data-i18n="mobile.menu">Меню</span>
   </button>
 
   <div id="video-modal" class="modal" aria-hidden="true">
@@ -575,6 +600,6 @@
 
   
 
-  <script src="app.js?v=20260209-02"></script>
+  <script src="app.js?v=20260210-02"></script>
 </body>
 </html>

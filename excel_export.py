@@ -6,7 +6,7 @@ from typing import Any
 from openpyxl import Workbook, load_workbook
 from openpyxl.styles import Alignment, Font
 
-from database import get_application
+from database import get_application, get_form_data, list_applications_for_export
 from time_utils import format_submit_time
 
 EXCEL_PATH = Path("applications.xlsx")
@@ -141,3 +141,45 @@ def update_application_status(user_id: int, status: str):
         return
     ws.cell(row=target_row, column=HEADERS.index("Статус") + 1).value = status
     wb.save(EXCEL_PATH)
+
+
+def rebuild_excel_from_db() -> Path | None:
+    applications = list_applications_for_export()
+    if not applications:
+        return None
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Заявки"
+    _init_sheet(ws)
+
+    # Сохраняем стабильный порядок: от старых к новым.
+    for item in reversed(applications):
+        user_id = int(item.get("user_id"))
+        data = get_form_data(user_id) or {}
+        app = get_application(user_id) or {}
+        ts = _format_submit_time(app.get("last_apply_at") or app.get("created_at"))
+        source = _format_source(app.get("source"))
+        status = item.get("status") or app.get("status") or "pending"
+        row = [
+            ts,
+            data.get("name", ""),
+            data.get("age", ""),
+            data.get("city", ""),
+            data.get("phone", ""),
+            data.get("living", ""),
+            data.get("devices", ""),
+            data.get("device_model", ""),
+            data.get("headphones", ""),
+            data.get("work_time", ""),
+            data.get("experience", ""),
+            data.get("telegram", ""),
+            source,
+            status,
+            str(user_id),
+        ]
+        ws.append(row)
+
+    _fit_columns(ws)
+    wb.save(EXCEL_PATH)
+    return EXCEL_PATH
