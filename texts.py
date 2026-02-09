@@ -62,6 +62,65 @@ TRANSLATIONS = {
         "about_menu_work": "🌷 О формате работы",
         "about_menu_platforms": "💻 Площадки",
         "about_menu_income": "💰 Доход и выплаты",
+        "about_work_text": (
+            "🌷 <b>О работе в нашем проекте</b>\n\n"
+            "Мы предлагаем современную онлайн-работу в формате стриминга.\n"
+            "Это не офис и не «работа по расписанию», а гибкий формат, который\n"
+            "можно легко встроить в свою жизнь 🤍\n\n"
+            "<b>Как всё проходит:</b>\n"
+            "• ты работаешь из любой точки мира\n"
+            "• находишься в комфортной для себя обстановке\n"
+            "• общаешься с аудиторией в дружелюбном формате\n"
+            "• создаёшь свой образ и стиль общения\n\n"
+            "<b>График:</b>\n"
+            "Он гибкий и подбирается индивидуально.\n"
+            "Обычно это от 6 часов в день, но всё обсуждается — мы за комфорт,\n"
+            "а не за выгорание.\n\n"
+            "<b>Стажировка:</b>\n"
+            "Перед стартом есть короткий промо-период (2–5 дней).\n"
+            "В это время ты:\n"
+            "• знакомишься с форматом\n"
+            "• получаешь поддержку и подсказки\n"
+            "• и — важно — <b>каждый день оплачивается</b>\n\n"
+            "Мы сопровождаем тебя на каждом этапе и всегда на связи ✨"
+        ),
+        "about_platforms_text": (
+            "💻 <b>Площадки и формат работы</b>\n\n"
+            "Работа проходит на современных онлайн-платформах,\n"
+            "где важно качество картинки и стабильная связь.\n\n"
+            "Мы заранее уточняем технику — не потому что «строго»,\n"
+            "а чтобы ты чувствовала себя уверенно и комфортно в процессе 🌸\n\n"
+            "<b>Что обычно подходит:</b>\n"
+            "• современные модели смартфонов\n"
+            "• либо ноутбук / ПК с камерой\n\n"
+            "Если вдруг текущее устройство не идеально подходит —\n"
+            "это не проблема.\n"
+            "Мы просто подскажем, какие варианты лучше,\n"
+            "или ты сможешь вернуться к нам позже 🤍\n\n"
+            "Наша цель — чтобы работа приносила удовольствие,\n"
+            "а не стресс из-за техники."
+        ),
+        "about_income_text": (
+            "💰 <b>Доход и выплаты</b>\n\n"
+            "На старте большинство моделей выходят\n"
+            "на доход <b>$800–1000 в месяц</b>.\n\n"
+            "<b>Что влияет на доход:</b>\n"
+            "• твоя активность\n"
+            "• умение общаться\n"
+            "• регулярность выходов\n"
+            "• следование рекомендациям менеджера\n\n"
+            "<b>Выплаты:</b>\n"
+            "• происходят еженедельно\n"
+            "• без задержек\n"
+            "• в удобном формате\n\n"
+            "<b>Валюта:</b>\n"
+            "USD или USDT\n\n"
+            "<b>Способ получения:</b>\n"
+            "• для РФ — банковская карта\n"
+            "• для других стран — криптокошелёк\n\n"
+            "Это стабильный формат работы,\n"
+            "а не разовые подработки ✨"
+        ),
         "portfolio_menu_reviews": "🤍 Отзывы моделей",
         "portfolio_menu_videos": "🎥 Примеры стримов",
         "portfolio_menu_pdf": "📄 PDF портфолио",
@@ -87,6 +146,10 @@ TRANSLATIONS = {
         "field_headphones_prompt": "🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:",
         "field_telegram_invalid": "🤍 Укажи, пожалуйста, Telegram в формате @username:",
         "field_experience_prompt": "🤍 Напиши, пожалуйста, есть ли опыт:",
+        "normalized_phone_note": "🤍 Сохранила номер как: {value}",
+        "normalized_birthdate_note": "🤍 Сохранила дату как: {value}",
+        "normalized_yes_no_note": "🤍 Сохранила ответ как: {value}",
+        "normalized_telegram_note": "🤍 Сохранила Telegram как: {value}",
         "photo_face_required": "🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n📷 Пришли фотографию, пожалуйста",
         "photo_full_required": "🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n📷 Пришли фотографию, пожалуйста",
         "photo_face_label": "📷 Фото анфас",
@@ -163,6 +226,62 @@ TRANSLATIONS = {
         "about_menu_work": "🌷 Work format",
         "about_menu_platforms": "💻 Platforms",
         "about_menu_income": "💰 Income & payouts",
+        "about_work_text": (
+            "🌷 <b>About working in our project</b>\n\n"
+            "We offer modern online work in a streaming format.\n"
+            "This is not an office and not a rigid 9-to-5 schedule.\n"
+            "It is a flexible setup you can fit into your lifestyle 🤍\n\n"
+            "<b>How it works:</b>\n"
+            "• you work from any location\n"
+            "• you stay in a comfortable environment\n"
+            "• you communicate with the audience in a friendly format\n"
+            "• you build your own style and presentation\n\n"
+            "<b>Schedule:</b>\n"
+            "Flexible and personalized.\n"
+            "Usually from 6 hours per day, but we discuss details with you.\n"
+            "Our goal is consistency without burnout.\n\n"
+            "<b>Onboarding period:</b>\n"
+            "Before launch, there is a short promo period (2-5 days).\n"
+            "During this stage you:\n"
+            "• learn the format\n"
+            "• get support and practical guidance\n"
+            "• and importantly, <b>each day is paid</b>\n\n"
+            "We stay with you at every step and remain available for support ✨"
+        ),
+        "about_platforms_text": (
+            "💻 <b>Platforms and work setup</b>\n\n"
+            "Work is done on modern online platforms where stable connection\n"
+            "and clear video are important for comfortable streaming.\n\n"
+            "We ask about equipment in advance not to be strict,\n"
+            "but to make your start calm and predictable 🌸\n\n"
+            "<b>What usually works well:</b>\n"
+            "• modern smartphones\n"
+            "• or a laptop / desktop with camera\n\n"
+            "If your current setup is not ideal yet, that's okay.\n"
+            "We'll suggest practical options,\n"
+            "or you can return a bit later when ready 🤍\n\n"
+            "Our goal is enjoyable work, not technical stress."
+        ),
+        "about_income_text": (
+            "💰 <b>Income and payouts</b>\n\n"
+            "At the start, many models reach\n"
+            "<b>$800-1000 per month</b>.\n\n"
+            "<b>What affects income:</b>\n"
+            "• your activity level\n"
+            "• communication skills\n"
+            "• regular streaming schedule\n"
+            "• following manager recommendations\n\n"
+            "<b>Payouts:</b>\n"
+            "• weekly\n"
+            "• without delays\n"
+            "• in a convenient format\n\n"
+            "<b>Currency:</b>\n"
+            "USD or USDT\n\n"
+            "<b>How you receive funds:</b>\n"
+            "• bank card for Russia\n"
+            "• crypto wallet for other countries\n\n"
+            "This is a stable work format, not one-time gigs ✨"
+        ),
         "portfolio_menu_reviews": "🤍 Model reviews",
         "portfolio_menu_videos": "🎥 Stream samples",
         "portfolio_menu_pdf": "📄 Portfolio PDF",
@@ -188,6 +307,10 @@ TRANSLATIONS = {
         "field_headphones_prompt": "🤍 Please tell us if you have headphones with mic:",
         "field_telegram_invalid": "🤍 Please provide Telegram in format @username:",
         "field_experience_prompt": "🤍 Please write your experience (or none):",
+        "normalized_phone_note": "🤍 Saved phone as: {value}",
+        "normalized_birthdate_note": "🤍 Saved birth date as: {value}",
+        "normalized_yes_no_note": "🤍 Saved answer as: {value}",
+        "normalized_telegram_note": "🤍 Saved Telegram as: {value}",
         "photo_face_required": "🤍 A <b>FRONT-FACE PHOTO</b> is required here.\n\n📷 Please send a photo",
         "photo_full_required": "🤍 A <b>FULL-BODY PHOTO</b> is required here.\n\n📷 Please send a photo",
         "photo_face_label": "📷 Front-face photo",
@@ -199,6 +322,28 @@ TRANSLATIONS = {
         "video_cooldown": "🤍 Videos were already sent, please check them ✨",
         "video_send_error": "Failed to send videos",
         "pdf_send_error": "Failed to send document",
+        "preview_title": (
+            "🌸 <b>CANDIDATE APPLICATION</b> 🌸\n"
+            "<i>Please review your details 🤍</i>\n\n"
+            "🌷 <b>Personal details</b>\n"
+            "👤 <b>Name:</b> {name}\n"
+            "🌍 <b>City and country:</b> {city}\n"
+            "📅 <b>Birth date:</b> {age}\n"
+            "📞 <b>Phone:</b> {phone}\n"
+            "🏠 <b>Private room:</b> {living}\n\n"
+            "💻 <b>Equipment</b>\n"
+            "📱 <b>Devices:</b> {devices}\n"
+            "📲 <b>Model:</b> {device_model}\n"
+            "🎧 <b>Headphones:</b> {headphones}\n\n"
+            "🕒 <b>Schedule and experience</b>\n"
+            "⏱ <b>Work time:</b> {work_time}\n"
+            "💼 <b>Experience:</b> {experience}\n\n"
+            "💬 <b>Contact</b>\n"
+            "💬 <b>Telegram:</b> {telegram}\n\n"
+            "────────\n"
+            "🧾 <b>Status:</b> {status}\n\n"
+            "<i>Use buttons below if you want to edit anything ✨</i>"
+        ),
         "loading_stage_1": "✨ Checking details...\nOne more second 🌸",
         "loading_stage_2": "🌷 Building your card...\nAlmost done 🤍",
         "application_sent": "🤍 Thank you! Your application has been sent to the admin ✨",
@@ -242,6 +387,63 @@ TRANSLATIONS = {
         "about_menu_work": "🌷 Formato de trabalho",
         "about_menu_platforms": "💻 Plataformas",
         "about_menu_income": "💰 Ganhos e pagamentos",
+        "about_work_text": (
+            "🌷 <b>Sobre o trabalho no nosso projeto</b>\n\n"
+            "Oferecemos um formato moderno de trabalho online com streaming.\n"
+            "Não é escritório e não é uma rotina rígida.\n"
+            "É um formato flexível que se adapta à sua vida 🤍\n\n"
+            "<b>Como funciona:</b>\n"
+            "• você trabalha de qualquer lugar\n"
+            "• em um ambiente confortável para você\n"
+            "• conversa com a audiência em um formato amigável\n"
+            "• constrói seu próprio estilo e apresentação\n\n"
+            "<b>Horário:</b>\n"
+            "Flexível e ajustado individualmente.\n"
+            "Geralmente a partir de 6 horas por dia, mas tudo é conversado.\n"
+            "Nosso foco é constância sem esgotamento.\n\n"
+            "<b>Período inicial:</b>\n"
+            "Antes do início oficial, existe um período curto de 2-5 dias.\n"
+            "Nesse período você:\n"
+            "• entende o formato\n"
+            "• recebe suporte e orientações\n"
+            "• e, importante: <b>cada dia é pago</b>\n\n"
+            "Acompanhamos você em cada etapa e ficamos sempre disponíveis ✨"
+        ),
+        "about_platforms_text": (
+            "💻 <b>Plataformas e formato de trabalho</b>\n\n"
+            "O trabalho acontece em plataformas online modernas,\n"
+            "onde conexão estável e imagem clara ajudam no conforto.\n\n"
+            "Perguntamos sobre os dispositivos com antecedência não para impor,\n"
+            "mas para garantir um início tranquilo 🌸\n\n"
+            "<b>O que normalmente funciona bem:</b>\n"
+            "• smartphones atuais\n"
+            "• ou notebook / PC com câmera\n\n"
+            "Se o dispositivo atual ainda não for ideal, sem problema.\n"
+            "Vamos sugerir opções práticas,\n"
+            "ou você pode voltar depois 🤍\n\n"
+            "Nosso objetivo é trabalho estável, sem estresse técnico."
+        ),
+        "about_income_text": (
+            "💰 <b>Ganhos e pagamentos</b>\n\n"
+            "No início, muitas modelos chegam a\n"
+            "<b>$800-1000 por mês</b>.\n\n"
+            "<b>O que influencia o ganho:</b>\n"
+            "• sua atividade\n"
+            "• sua comunicação\n"
+            "• regularidade nas transmissões\n"
+            "• seguir recomendações da gestão\n\n"
+            "<b>Pagamentos:</b>\n"
+            "• semanais\n"
+            "• sem atrasos\n"
+            "• em formato conveniente\n\n"
+            "<b>Moeda:</b>\n"
+            "USD ou USDT\n\n"
+            "<b>Forma de recebimento:</b>\n"
+            "• cartão bancário na Rússia\n"
+            "• carteira cripto em outros países\n\n"
+            "É um formato de trabalho estável,\n"
+            "não uma renda pontual ✨"
+        ),
         "portfolio_menu_reviews": "🤍 Avaliações",
         "portfolio_menu_videos": "🎥 Exemplos de stream",
         "portfolio_menu_pdf": "📄 PDF do portfólio",
@@ -267,6 +469,10 @@ TRANSLATIONS = {
         "field_headphones_prompt": "🤍 Você tem fones com microfone?",
         "field_telegram_invalid": "🤍 Informe o Telegram no formato @username:",
         "field_experience_prompt": "🤍 Escreva sua experiência (ou nenhuma):",
+        "normalized_phone_note": "🤍 Número salvo como: {value}",
+        "normalized_birthdate_note": "🤍 Data salva como: {value}",
+        "normalized_yes_no_note": "🤍 Resposta salva como: {value}",
+        "normalized_telegram_note": "🤍 Telegram salvo como: {value}",
         "photo_face_required": "🤍 Aqui precisa de <b>FOTO DE FRENTE</b>.\n\n📷 Envie uma foto, por favor",
         "photo_full_required": "🤍 Aqui precisa de <b>FOTO DE CORPO INTEIRO</b>.\n\n📷 Envie uma foto, por favor",
         "photo_face_label": "📷 Foto de frente",
@@ -278,6 +484,28 @@ TRANSLATIONS = {
         "video_cooldown": "🤍 Os vídeos já foram enviados, confira por favor ✨",
         "video_send_error": "Não foi possível enviar os vídeos",
         "pdf_send_error": "Não foi possível enviar o documento",
+        "preview_title": (
+            "🌸 <b>FICHA DA CANDIDATA</b> 🌸\n"
+            "<i>Confira seus dados, por favor 🤍</i>\n\n"
+            "🌷 <b>Dados pessoais</b>\n"
+            "👤 <b>Nome:</b> {name}\n"
+            "🌍 <b>Cidade e país:</b> {city}\n"
+            "📅 <b>Data de nascimento:</b> {age}\n"
+            "📞 <b>Telefone:</b> {phone}\n"
+            "🏠 <b>Espaço privado:</b> {living}\n\n"
+            "💻 <b>Equipamentos</b>\n"
+            "📱 <b>Dispositivos:</b> {devices}\n"
+            "📲 <b>Modelo:</b> {device_model}\n"
+            "🎧 <b>Fones:</b> {headphones}\n\n"
+            "🕒 <b>Agenda e experiência</b>\n"
+            "⏱ <b>Tempo de trabalho:</b> {work_time}\n"
+            "💼 <b>Experiência:</b> {experience}\n\n"
+            "💬 <b>Contato</b>\n"
+            "💬 <b>Telegram:</b> {telegram}\n\n"
+            "────────\n"
+            "🧾 <b>Status:</b> {status}\n\n"
+            "<i>Use os botões abaixo se quiser ajustar algo ✨</i>"
+        ),
         "loading_stage_1": "✨ Verificando detalhes...\nSó mais um segundo 🌸",
         "loading_stage_2": "🌷 Montando seu cartão...\nQuase pronto 🤍",
         "application_sent": "🤍 Obrigada! Sua candidatura foi enviada para o admin ✨",
@@ -321,6 +549,63 @@ TRANSLATIONS = {
         "about_menu_work": "🌷 Formato de trabajo",
         "about_menu_platforms": "💻 Plataformas",
         "about_menu_income": "💰 Ingresos y pagos",
+        "about_work_text": (
+            "🌷 <b>Sobre el trabajo en nuestro proyecto</b>\n\n"
+            "Ofrecemos trabajo online moderno en formato de streaming.\n"
+            "No es oficina ni un horario rígido.\n"
+            "Es un formato flexible que puedes adaptar a tu vida 🤍\n\n"
+            "<b>Cómo funciona:</b>\n"
+            "• trabajas desde cualquier lugar\n"
+            "• en un entorno cómodo para ti\n"
+            "• te comunicas con la audiencia en un formato amigable\n"
+            "• construyes tu propio estilo y presentación\n\n"
+            "<b>Horario:</b>\n"
+            "Flexible e individual.\n"
+            "Normalmente desde 6 horas al día, pero se ajusta contigo.\n"
+            "Buscamos constancia sin agotamiento.\n\n"
+            "<b>Período inicial:</b>\n"
+            "Antes de empezar, hay un período corto de 2-5 días.\n"
+            "En ese tiempo tú:\n"
+            "• conoces el formato\n"
+            "• recibes apoyo y guía\n"
+            "• y, lo importante: <b>cada día es pagado</b>\n\n"
+            "Te acompañamos en cada etapa y siempre estamos disponibles ✨"
+        ),
+        "about_platforms_text": (
+            "💻 <b>Plataformas y formato de trabajo</b>\n\n"
+            "El trabajo se realiza en plataformas online modernas,\n"
+            "donde la conexión estable y la imagen clara mejoran la experiencia.\n\n"
+            "Pedimos datos de equipo con antelación no por rigidez,\n"
+            "sino para que empieces con confianza 🌸\n\n"
+            "<b>Qué suele funcionar bien:</b>\n"
+            "• smartphones actuales\n"
+            "• o portátil / PC con cámara\n\n"
+            "Si tu equipo actual aún no es ideal, no pasa nada.\n"
+            "Te diremos opciones prácticas,\n"
+            "o puedes volver más adelante 🤍\n\n"
+            "Nuestro objetivo es trabajo cómodo, sin estrés técnico."
+        ),
+        "about_income_text": (
+            "💰 <b>Ingresos y pagos</b>\n\n"
+            "Al inicio, muchas modelos alcanzan\n"
+            "<b>$800-1000 al mes</b>.\n\n"
+            "<b>Qué influye en los ingresos:</b>\n"
+            "• tu actividad\n"
+            "• tu comunicación\n"
+            "• regularidad de salidas\n"
+            "• seguir recomendaciones del manager\n\n"
+            "<b>Pagos:</b>\n"
+            "• semanales\n"
+            "• sin retrasos\n"
+            "• en formato cómodo\n\n"
+            "<b>Moneda:</b>\n"
+            "USD o USDT\n\n"
+            "<b>Forma de cobro:</b>\n"
+            "• tarjeta bancaria en Rusia\n"
+            "• billetera cripto en otros países\n\n"
+            "Es un formato estable de trabajo,\n"
+            "no ingresos puntuales ✨"
+        ),
         "portfolio_menu_reviews": "🤍 Reseñas",
         "portfolio_menu_videos": "🎥 Ejemplos de stream",
         "portfolio_menu_pdf": "📄 PDF del portafolio",
@@ -346,6 +631,10 @@ TRANSLATIONS = {
         "field_headphones_prompt": "🤍 ¿Tienes auriculares con micrófono?",
         "field_telegram_invalid": "🤍 Indica Telegram en formato @username:",
         "field_experience_prompt": "🤍 Escribe tu experiencia (o ninguna):",
+        "normalized_phone_note": "🤍 Número guardado como: {value}",
+        "normalized_birthdate_note": "🤍 Fecha guardada como: {value}",
+        "normalized_yes_no_note": "🤍 Respuesta guardada como: {value}",
+        "normalized_telegram_note": "🤍 Telegram guardado como: {value}",
         "photo_face_required": "🤍 Aquí necesitas <b>FOTO DE FRENTE</b>.\n\n📷 Envía una foto, por favor",
         "photo_full_required": "🤍 Aquí necesitas <b>FOTO DE CUERPO COMPLETO</b>.\n\n📷 Envía una foto, por favor",
         "photo_face_label": "📷 Foto de frente",
@@ -357,6 +646,28 @@ TRANSLATIONS = {
         "video_cooldown": "🤍 Los videos ya fueron enviados, revísalos por favor ✨",
         "video_send_error": "No se pudieron enviar los videos",
         "pdf_send_error": "No se pudo enviar el documento",
+        "preview_title": (
+            "🌸 <b>SOLICITUD DE CANDIDATA</b> 🌸\n"
+            "<i>Revisa tus datos, por favor 🤍</i>\n\n"
+            "🌷 <b>Datos personales</b>\n"
+            "👤 <b>Nombre:</b> {name}\n"
+            "🌍 <b>Ciudad y país:</b> {city}\n"
+            "📅 <b>Fecha de nacimiento:</b> {age}\n"
+            "📞 <b>Teléfono:</b> {phone}\n"
+            "🏠 <b>Espacio privado:</b> {living}\n\n"
+            "💻 <b>Equipo</b>\n"
+            "📱 <b>Dispositivos:</b> {devices}\n"
+            "📲 <b>Modelo:</b> {device_model}\n"
+            "🎧 <b>Auriculares:</b> {headphones}\n\n"
+            "🕒 <b>Horario y experiencia</b>\n"
+            "⏱ <b>Tiempo de trabajo:</b> {work_time}\n"
+            "💼 <b>Experiencia:</b> {experience}\n\n"
+            "💬 <b>Contacto</b>\n"
+            "💬 <b>Telegram:</b> {telegram}\n\n"
+            "────────\n"
+            "🧾 <b>Estado:</b> {status}\n\n"
+            "<i>Usa los botones de abajo si quieres corregir algo ✨</i>"
+        ),
         "loading_stage_1": "✨ Revisando detalles...\nUn segundo más 🌸",
         "loading_stage_2": "🌷 Preparando tu ficha...\nCasi listo 🤍",
         "application_sent": "🤍 ¡Gracias! Tu solicitud fue enviada al admin ✨",

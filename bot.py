@@ -64,7 +64,6 @@ except Exception:
 from utils import edit_or_send
 from texts import (
     STATUS_LABELS,
-    FORM_QUESTIONS,
     t,
     normalize_lang,
     form_question,
@@ -1122,7 +1121,6 @@ async def send_next_question(
     message: Message,
     state: FSMContext,
     next_state: ApplicationStates,
-    question: str | None = None,
     note: str | None = None
 ):
     await state.set_state(next_state)
@@ -1452,8 +1450,7 @@ async def step_name(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.city,
-        FORM_QUESTIONS[ApplicationStates.city]
+        ApplicationStates.city
     )
 
 @dp.message(StateFilter(ApplicationStates.city), F.text)
@@ -1472,8 +1469,7 @@ async def step_city(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.phone,
-        FORM_QUESTIONS[ApplicationStates.phone]
+        ApplicationStates.phone
     )
 
 @dp.message(StateFilter(ApplicationStates.phone), F.text)
@@ -1491,13 +1487,12 @@ async def step_phone(m: Message, state: FSMContext):
     normalized = normalize_phone(phone) or phone
     note = None
     if normalized != phone:
-        note = f"🤍 Сохранила номер как: {normalized}"
+        note = t(lang, "normalized_phone_note", value=normalized)
     await update_form_field(state, m.from_user.id, phone=normalized)
     await send_next_question(
         m,
         state,
         ApplicationStates.age,
-        FORM_QUESTIONS[ApplicationStates.age],
         note=note
     )
 
@@ -1516,7 +1511,7 @@ async def step_age(m: Message, state: FSMContext):
     normalized = normalize_birthdate(birthdate) or birthdate
     note = None
     if normalized != birthdate:
-        note = f"🤍 Сохранила дату как: {normalized}"
+        note = t(lang, "normalized_birthdate_note", value=normalized)
     await update_form_field(
         state,
         m.from_user.id,
@@ -1526,7 +1521,6 @@ async def step_age(m: Message, state: FSMContext):
         m,
         state,
         ApplicationStates.living,
-        FORM_QUESTIONS[ApplicationStates.living],
         note=note
     )
 
@@ -1545,13 +1539,12 @@ async def step_living(m: Message, state: FSMContext):
         return
     note = None
     if normalized != living_raw:
-        note = f"🤍 Сохранила ответ как: {normalized}"
+        note = t(lang, "normalized_yes_no_note", value=normalized)
     await update_form_field(state, m.from_user.id, living=normalized)
     await send_next_question(
         m,
         state,
         ApplicationStates.devices,
-        FORM_QUESTIONS[ApplicationStates.devices],
         note=note
     )
 
@@ -1571,8 +1564,7 @@ async def step_devices(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.device_model,
-        FORM_QUESTIONS[ApplicationStates.device_model]
+        ApplicationStates.device_model
     )
 
 @dp.message(StateFilter(ApplicationStates.device_model), F.text)
@@ -1591,8 +1583,7 @@ async def step_device_model(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.work_time,
-        FORM_QUESTIONS[ApplicationStates.work_time]
+        ApplicationStates.work_time
     )
 
 @dp.message(StateFilter(ApplicationStates.work_time), F.text)
@@ -1611,8 +1602,7 @@ async def step_work_time(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.headphones,
-        FORM_QUESTIONS[ApplicationStates.headphones]
+        ApplicationStates.headphones
     )
 
 @dp.message(StateFilter(ApplicationStates.headphones), F.text)
@@ -1631,8 +1621,7 @@ async def step_headphones(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.telegram,
-        FORM_QUESTIONS[ApplicationStates.telegram]
+        ApplicationStates.telegram
     )
 
 @dp.message(StateFilter(ApplicationStates.telegram), F.text)
@@ -1650,13 +1639,12 @@ async def step_tg(m: Message, state: FSMContext):
         return
     note = None
     if normalized != raw:
-        note = f"🤍 Сохранила Telegram как: {normalized}"
+        note = t(lang, "normalized_telegram_note", value=normalized)
     await update_form_field(state, m.from_user.id, telegram=normalized)
     await send_next_question(
         m,
         state,
         ApplicationStates.experience,
-        FORM_QUESTIONS[ApplicationStates.experience],
         note=note
     )
 
@@ -1676,8 +1664,7 @@ async def step_exp(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.photo_face,
-        FORM_QUESTIONS[ApplicationStates.photo_face]
+        ApplicationStates.photo_face
     )
 
 @dp.message(StateFilter(ApplicationStates.photo_face), F.photo)
@@ -1687,8 +1674,7 @@ async def step_face(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.photo_full,
-        FORM_QUESTIONS[ApplicationStates.photo_full]
+        ApplicationStates.photo_full
     )
 
 @dp.message(StateFilter(ApplicationStates.photo_full), F.photo)
@@ -1867,40 +1853,7 @@ async def about_work(call: CallbackQuery):
     await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
-        (
-            "🌷 <b>О работе в нашем проекте</b>\n\n"
-            "Мы предлагаем современную онлайн-работу в формате стриминга.\n"
-            "Это не офис и не «работа по расписанию», а гибкий формат, который\n"
-            "можно легко встроить в свою жизнь 🤍\n\n"
-            "<b>Как всё проходит:</b>\n"
-            "• ты работаешь из любой точки мира\n"
-            "• находишься в комфортной для себя обстановке\n"
-            "• общаешься с аудиторией в дружелюбном формате\n"
-            "• создаёшь свой образ и стиль общения\n\n"
-            "<b>График:</b>\n"
-            "Он гибкий и подбирается индивидуально.\n"
-            "Обычно это от 6 часов в день, но всё обсуждается — мы за комфорт,\n"
-            "а не за выгорание.\n\n"
-            "<b>Стажировка:</b>\n"
-            "Перед стартом есть короткий промо-период (2–5 дней).\n"
-            "В это время ты:\n"
-            "• знакомишься с форматом\n"
-            "• получаешь поддержку и подсказки\n"
-            "• и — важно — <b>каждый день оплачивается</b>\n\n"
-            "Мы сопровождаем тебя на каждом этапе и всегда на связи ✨"
-        ) if lang == "ru" else (
-            "🌷 <b>About the work format</b>\n\n"
-            "Remote work, clear steps and team support at every stage.\n"
-            "Flexible schedule, careful onboarding and transparent communication."
-            if lang == "en"
-            else (
-                "🌷 <b>Sobre o formato de trabalho</b>\n\n"
-                "Trabalho remoto, etapas claras e suporte da equipe em cada fase.\n"
-                "Agenda flexível, onboarding cuidadoso e comunicação transparente."
-                if lang == "pt"
-                else "🌷 <b>Sobre el formato de trabajo</b>\n\nTrabajo remoto, pasos claros y apoyo del equipo en cada etapa.\nHorario flexible, incorporación cuidada y comunicación transparente."
-            )
-        ),
+        t(lang, "about_work_text"),
         reply_markup=about_menu(lang)
     )
 
@@ -1911,30 +1864,7 @@ async def about_platforms(call: CallbackQuery):
     await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
-        (
-            "💻 <b>Площадки и формат работы</b>\n\n"
-            "Работа проходит на современных онлайн-платформах,\n"
-            "где важно качество картинки и стабильная связь.\n\n"
-            "Мы заранее уточняем технику — не потому что «строго»,\n"
-            "а чтобы ты чувствовала себя уверенно и комфортно в процессе 🌸\n\n"
-            "<b>Что обычно подходит:</b>\n"
-            "• современные модели смартфонов\n"
-            "• либо ноутбук / ПК с камерой\n\n"
-            "Если вдруг текущее устройство не идеально подходит —\n"
-            "это не проблема.\n"
-            "Мы просто подскажем, какие варианты лучше,\n"
-            "или ты сможешь вернуться к нам позже 🤍\n\n"
-            "Наша цель — чтобы работа приносила удовольствие,\n"
-            "а не стресс из-за техники."
-        ) if lang == "ru" else (
-            "💻 <b>Platforms and setup</b>\n\nWe work on modern online platforms.\nWe'll help you choose the best setup for a stable and comfortable start."
-            if lang == "en"
-            else (
-                "💻 <b>Plataformas e setup</b>\n\nTrabalhamos em plataformas online modernas.\nVamos ajudar você a escolher a melhor configuração para um início estável e confortável."
-                if lang == "pt"
-                else "💻 <b>Plataformas y setup</b>\n\nTrabajamos en plataformas online modernas.\nTe ayudamos a elegir la mejor configuración para empezar de forma estable y cómoda."
-            )
-        ),
+        t(lang, "about_platforms_text"),
         reply_markup=about_menu(lang)
     )
 
@@ -1945,35 +1875,7 @@ async def about_income(call: CallbackQuery):
     await clear_portfolio_media(call.from_user.id)
     await edit_or_send(
         call,
-        (
-            "💰 <b>Доход и выплаты</b>\n\n"
-            "На старте большинство моделей выходят\n"
-            "на доход <b>$800–1000 в месяц</b>.\n\n"
-            "<b>Что влияет на доход:</b>\n"
-            "• твоя активность\n"
-            "• умение общаться\n"
-            "• регулярность выходов\n"
-            "• следование рекомендациям менеджера\n\n"
-            "<b>Выплаты:</b>\n"
-            "• происходят еженедельно\n"
-            "• без задержек\n"
-            "• в удобном формате\n\n"
-            "<b>Валюта:</b>\n"
-            "USD или USDT\n\n"
-            "<b>Способ получения:</b>\n"
-            "• для РФ — банковская карта\n"
-            "• для других стран — криптокошелёк\n\n"
-            "Это стабильный формат работы,\n"
-            "а не разовые подработки ✨"
-        ) if lang == "ru" else (
-            "💰 <b>Income and payouts</b>\n\nAt start, many models reach <b>$800–1000 per month</b>.\nPayouts are weekly and stable."
-            if lang == "en"
-            else (
-                "💰 <b>Ganhos e pagamentos</b>\n\nNo início, muitas modelos alcançam <b>$800–1000 por mês</b>.\nPagamentos semanais e estáveis."
-                if lang == "pt"
-                else "💰 <b>Ingresos y pagos</b>\n\nAl inicio, muchas modelos llegan a <b>$800–1000 al mes</b>.\nPagos semanales y estables."
-            )
-        ),
+        t(lang, "about_income_text"),
         reply_markup=about_menu(lang)
     )
 
