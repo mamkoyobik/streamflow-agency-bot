@@ -1082,7 +1082,10 @@ carousels.forEach((carousel) => {
   }
 
   function goTo(index) {
-    const target = positions[index] ?? slides[index].offsetLeft;
+    const target =
+      typeof positions[index] === 'number'
+        ? positions[index]
+        : slides[index].offsetLeft;
     track.scrollTo({ left: target, behavior: 'smooth' });
     activeIndex = index;
     setActive(index);
@@ -1178,7 +1181,8 @@ portfolioSliders.forEach((slider) => {
   };
 
   const goTo = (index) => {
-    const target = slides[index]?.offsetLeft ?? 0;
+    const slide = slides[index];
+    const target = slide ? slide.offsetLeft : 0;
     track.scrollTo({ left: target, behavior: 'smooth' });
     updateDots(index);
   };
@@ -1261,8 +1265,9 @@ function initSmartCta() {
   }
 
   function applyState(sectionId) {
-    let text = ctas[0]?.dataset.defaultText || 'Оставить заявку';
-    let href = ctas[0]?.dataset.defaultHref || '#apply';
+    const firstCta = ctas.length ? ctas[0] : null;
+    let text = (firstCta && firstCta.dataset.defaultText) || 'Оставить заявку';
+    let href = (firstCta && firstCta.dataset.defaultHref) || '#apply';
     if (sectionId === 'streams' || sectionId === 'portfolio') {
       text = 'Смотреть примеры';
       href = '#streams';
@@ -1437,17 +1442,22 @@ function initMultiStep(form) {
     }
   }
 
-  btnPrev?.addEventListener('click', () => goTo(current - 1));
-  btnNext?.addEventListener('click', () => {
-    if (validateStep(current)) {
-      goTo(current + 1);
-    }
-  });
+  if (btnPrev) {
+    btnPrev.addEventListener('click', () => goTo(current - 1));
+  }
+  if (btnNext) {
+    btnNext.addEventListener('click', () => {
+      if (validateStep(current)) {
+        goTo(current + 1);
+      }
+    });
+  }
 
   steps.forEach((step, idx) => {
     step.querySelectorAll('input, textarea, select').forEach((field) => {
       field.addEventListener('input', () => {
-        if (field.closest('.field')?.classList.contains('is-error')) {
+        const fieldWrap = field.closest('.field');
+        if (fieldWrap && fieldWrap.classList.contains('is-error')) {
           validateField(field);
         }
       });
