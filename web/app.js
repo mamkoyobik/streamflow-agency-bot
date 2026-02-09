@@ -9,11 +9,18 @@ window.addEventListener('DOMContentLoaded', () => {
 function normalizeInitialScrollPosition() {
   if (!('scrollRestoration' in history)) return;
   history.scrollRestoration = 'manual';
-  const allowHashScroll = sessionStorage.getItem('allow_hash_scroll') === '1';
-  if (window.location.hash && !allowHashScroll) {
+  const timestampRaw = sessionStorage.getItem('allow_hash_scroll_ts');
+  const timestamp = Number(timestampRaw || 0);
+  const now = Date.now();
+  const allowHashScroll = Number.isFinite(timestamp) && timestamp > 0 && now - timestamp < 3500;
+  const navEntry = performance.getEntriesByType('navigation')[0];
+  const isReload = !!(navEntry && navEntry.type === 'reload');
+
+  if (window.location.hash && (!allowHashScroll || isReload)) {
     history.replaceState(null, '', `${window.location.pathname}${window.location.search}`);
   }
   sessionStorage.removeItem('allow_hash_scroll');
+  sessionStorage.removeItem('allow_hash_scroll_ts');
   window.addEventListener('load', () => {
     if (!window.location.hash) {
       window.scrollTo(0, 0);
@@ -130,6 +137,60 @@ function initLiquidEtherBackground() {
 
 initLiquidEtherBackground();
 
+function initGradualBlur() {
+  const blurBlocks = Array.from(document.querySelectorAll('.gradual-blur'));
+  if (!blurBlocks.length) return;
+
+  blurBlocks.forEach((block) => {
+    if (!block.querySelector('.gradual-blur-inner')) {
+      const inner = document.createElement('div');
+      inner.className = 'gradual-blur-inner';
+      for (let i = 0; i < 5; i += 1) {
+        const layer = document.createElement('div');
+        layer.className = 'gradual-blur-layer';
+        inner.appendChild(layer);
+      }
+      block.appendChild(inner);
+    }
+  });
+
+  const hero = document.querySelector('.hero');
+  if (!hero) return;
+
+  let ticking = false;
+  const update = () => {
+    const rect = hero.getBoundingClientRect();
+    const viewport = Math.max(window.innerHeight || 1, 1);
+    const offset = Math.max(0, -rect.top);
+    const travel = Math.max(rect.height - viewport, 1);
+    const progress = Math.min(1, Math.max(0, offset / travel));
+
+    blurBlocks.forEach((block) => {
+      const isTop = block.classList.contains('gradual-blur-top');
+      const baseOpacity = isTop ? 0.52 : 0.68;
+      const extraOpacity = isTop ? 0.24 : 0.28;
+      const blurStrength = isTop ? 0.9 + progress * 0.85 : 1 + progress * 1.1;
+      block.style.setProperty('--blur-opacity', String((baseOpacity + extraOpacity * progress).toFixed(3)));
+      block.style.setProperty('--blur-strength', String(blurStrength.toFixed(3)));
+    });
+  };
+
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      update();
+      ticking = false;
+    });
+  };
+
+  update();
+  window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', onScroll);
+}
+
+initGradualBlur();
+
 function initSpotlightCards() {
   const cards = document.querySelectorAll(
     '.card-spotlight, .offer-item, .steps-item, .income-card, .video-card, .portfolio-block, .trust-item'
@@ -174,7 +235,7 @@ if (!prefersReduced) {
     if (!href || href.startsWith('mailto:') || href.startsWith('tel:')) return;
     if (href.startsWith('#')) {
       link.addEventListener('click', () => {
-        sessionStorage.setItem('allow_hash_scroll', '1');
+        sessionStorage.setItem('allow_hash_scroll_ts', String(Date.now()));
       });
       return;
     }
@@ -183,7 +244,7 @@ if (!prefersReduced) {
     link.addEventListener('click', (event) => {
       event.preventDefault();
       if (href.includes('#')) {
-        sessionStorage.setItem('allow_hash_scroll', '1');
+        sessionStorage.setItem('allow_hash_scroll_ts', String(Date.now()));
       }
       document.body.classList.add('is-transitioning');
       setTimeout(() => {
