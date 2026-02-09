@@ -77,8 +77,8 @@
     </div>
   </div>
 
-  <header class="site-header">
-    <div class="container header-grid">
+  <header class="site-header card-nav-container">
+    <div class="container header-grid card-nav">
       <a class="brand" href="index.html" aria-label="Streamflow">
         <img src="assets/favicon.png" alt="Streamflow">
         <span class="brand-stack">
@@ -86,6 +86,10 @@
           <small data-i18n="brand.subtitle">Model Agency</small>
         </span>
       </a>
+      <button class="hamburger-menu header-hamburger" type="button" data-nav-open aria-expanded="false" aria-label="Открыть меню">
+        <span class="hamburger-line"></span>
+        <span class="hamburger-line"></span>
+      </button>
       <nav class="site-nav" aria-label="Навигация">
         <a class="nav-link" href="index.html" data-i18n="nav.home">Главная</a>
         <a class="nav-link" href="#about" data-i18n="nav.about">О работе</a>
@@ -584,11 +588,6 @@
       <div class="footer-note" data-i18n="footer.rights">© Streamflow. Все права защищены.</div>
     </div>
   </footer>
-
-  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
-    <img class="floating-menu-logo" src="assets/favicon.png" alt="Streamflow">
-    <span data-menu-text data-i18n="mobile.menu">Меню</span>
-  </button>
 
   <div id="video-modal" class="modal" aria-hidden="true">
     <div class="modal-backdrop" data-close></div>

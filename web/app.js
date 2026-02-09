@@ -1004,7 +1004,12 @@ const menuTextNodes = document.querySelectorAll('[data-menu-text]');
 
 function setNavState(isOpen) {
   document.body.classList.toggle('nav-open', isOpen);
-  navOpenButtons.forEach((btn) => btn.setAttribute('aria-expanded', String(isOpen)));
+  navOpenButtons.forEach((btn) => {
+    btn.setAttribute('aria-expanded', String(isOpen));
+    btn.classList.toggle('open', isOpen);
+    const label = isOpen ? siteText('mobile.close') : siteText('mobile.menu');
+    btn.setAttribute('aria-label', label);
+  });
   updateMenuToggleText();
   if (mobileNav) {
     mobileNav.setAttribute('aria-hidden', String(!isOpen));
