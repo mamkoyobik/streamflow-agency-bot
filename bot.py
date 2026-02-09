@@ -1087,34 +1087,35 @@ async def clear_admin_temp_messages():
         except Exception:
             pass
 
-async def start_application(message: Message, state: FSMContext):
+async def start_application(message: Message, state: FSMContext, user_id: int | None = None):
+    target_user_id = user_id or message.chat.id
     await state.clear()
-    clear_form_data(message.from_user.id)
+    clear_form_data(target_user_id)
     await state.set_state(ApplicationStates.name)
     await gentle_typing(message.chat.id)
-    lang = lang_for(message.from_user.id)
+    lang = lang_for(target_user_id)
     question = format_question(
         ApplicationStates.name,
         form_question(ApplicationStates.name, lang),
-        user_id=message.from_user.id,
+        user_id=target_user_id,
     )
     edited = False
     if message and message.chat.type == "private":
         edited = await try_edit_message(message, question, reply_markup=form_keyboard(lang))
         if edited:
-            set_menu_message_id(message.from_user.id, message.message_id)
+            set_menu_message_id(target_user_id, message.message_id)
     if not edited:
         sent = await send_or_edit_user_text(
-            message.from_user.id,
+            target_user_id,
             question,
             reply_markup=form_keyboard(lang)
         )
         if not sent:
             await state.clear()
-            set_last_state(message.from_user.id, None)
+            set_last_state(target_user_id, None)
             return False
-    set_status(message.from_user.id, "new")
-    set_last_state(message.from_user.id, ApplicationStates.name.state)
+    set_status(target_user_id, "new")
+    set_last_state(target_user_id, ApplicationStates.name.state)
     return True
 
 async def send_next_question(
@@ -1303,7 +1304,7 @@ async def apply(call: CallbackQuery, state: FSMContext):
             )
             return
 
-        started = await start_application(call.message, state)
+        started = await start_application(call.message, state, user_id=call.from_user.id)
         if not started:
             await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
@@ -1329,7 +1330,7 @@ async def apply_restart(call: CallbackQuery, state: FSMContext):
             return
 
         await state.clear()
-        started = await start_application(call.message, state)
+        started = await start_application(call.message, state, user_id=call.from_user.id)
         if not started:
             await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
@@ -1357,7 +1358,7 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
                 await restore_form_data(state, call.from_user.id)
                 current = last_state
             else:
-                started = await start_application(call.message, state)
+                started = await start_application(call.message, state, user_id=call.from_user.id)
                 if not started:
                     await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
                     return
@@ -1366,18 +1367,18 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
         if current == ApplicationStates.preview.state:
             data = await state.get_data()
             if not REQUIRED_PREVIEW_FIELDS.issubset(data):
-                started = await start_application(call.message, state)
+                started = await start_application(call.message, state, user_id=call.from_user.id)
                 if not started:
                     await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
                     return
                 return
-            await show_preview(call.message, state)
+            await show_preview(call.message, state, user_id=call.from_user.id)
             return
         if current == ApplicationStates.edit_value.state:
             data = await state.get_data()
             field = data.get("edit_field")
             if not field:
-                await show_preview(call.message, state)
+                await show_preview(call.message, state, user_id=call.from_user.id)
                 return
             title = field_title(field, lang_for(call.from_user.id))
             await send_or_edit_user_text(
@@ -1408,7 +1409,7 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
                 )
                 return
 
-        started = await start_application(call.message, state)
+        started = await start_application(call.message, state, user_id=call.from_user.id)
         if not started:
             await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
@@ -1424,7 +1425,7 @@ async def form_restart(call: CallbackQuery, state: FSMContext):
             return
         await safe_call_answer(call)
         lang = lang_for(call.from_user.id)
-        started = await start_application(call.message, state)
+        started = await start_application(call.message, state, user_id=call.from_user.id)
         if not started:
             await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
             return
@@ -2166,23 +2167,24 @@ async def preview_back(call: CallbackQuery, state: FSMContext):
         await safe_call_answer(call)
         if not call.message:
             return
-        await show_preview(call.message, state)
+        await show_preview(call.message, state, user_id=call.from_user.id)
     except Exception:
         logger.exception("Ошибка в preview_back")
         await safe_call_answer(call, "Не удалось открыть предпросмотр", show_alert=False)
 
-async def show_preview(m: Message, state: FSMContext):
-    lang = lang_for(m.from_user.id)
+async def show_preview(m: Message, state: FSMContext, user_id: int | None = None):
+    target_user_id = user_id or m.chat.id
+    lang = lang_for(target_user_id)
     data = await state.get_data()
-    await send_or_edit_user_text(m.from_user.id, t(lang, "loading_text"))
+    await send_or_edit_user_text(target_user_id, t(lang, "loading_text"))
     for text in (
         t(lang, "loading_stage_1"),
         t(lang, "loading_stage_2"),
     ):
         await asyncio.sleep(random.uniform(0.4, 0.8))
-        await send_or_edit_user_text(m.from_user.id, text)
+        await send_or_edit_user_text(target_user_id, text)
     await asyncio.sleep(random.uniform(0.3, 0.6))
-    status = get_status(m.from_user.id) or "new"
+    status = get_status(target_user_id) or "new"
     status_caption = status_label(status, lang)
     text = t(
         lang,
@@ -2201,8 +2203,8 @@ async def show_preview(m: Message, state: FSMContext):
         status=status_caption,
     )
     await state.set_state(ApplicationStates.preview)
-    set_last_state(m.from_user.id, ApplicationStates.preview.state)
-    await send_or_edit_user_text(m.from_user.id, text, reply_markup=preview_keyboard(lang))
+    set_last_state(target_user_id, ApplicationStates.preview.state)
+    await send_or_edit_user_text(target_user_id, text, reply_markup=preview_keyboard(lang))
 
 # ================= CONFIRM SEND =================
 
@@ -2227,7 +2229,7 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
                 call.from_user.id,
                 t(lang, "application_missing")
             )
-            started = await start_application(call.message, state)
+            started = await start_application(call.message, state, user_id=call.from_user.id)
             if not started:
                 await safe_call_answer(call, t(lang, "cannot_send_message"), show_alert=True)
                 return
@@ -2280,7 +2282,7 @@ async def edit_cancel(call: CallbackQuery, state: FSMContext):
         await state.update_data(edit_field=None, edit_photo=None)
         if not call.message:
             return
-        await show_preview(call.message, state)
+        await show_preview(call.message, state, user_id=call.from_user.id)
         lang = lang_for(call.from_user.id)
         await safe_call_answer(call, "Отменено" if lang == "ru" else ("Canceled" if lang == "en" else ("Cancelado" if lang == "pt" else "Cancelado")))
     except Exception:
