@@ -68,17 +68,44 @@ BOT_TOKEN = _get_env("BOT_TOKEN", required=True)
 ADMIN_GROUP_ID = _get_int_env("ADMIN_GROUP_ID", required=True)
 CHANNEL_ID = _get_int_env("CHANNEL_ID", required=True)
 CHANNEL_EN_ID = _get_int_env_any(
-    ("CHANNEL_EN_ID", "CHANNEL_ID_EN", "EN_CHANNEL_ID", "CHANNEL_ENG_ID"),
+    (
+        "CHANNEL_EN_ID",
+        "CHANNEL_ID_EN",
+        "EN_CHANNEL_ID",
+        "CHANNEL_ENG_ID",
+        "CHANNEL_EN",
+        "CHANNEL_ENGLISH_ID",
+    ),
     required=False,
 )
 CHANNEL_PT_ID = _get_int_env_any(
-    ("CHANNEL_PT_ID", "CHANNEL_ID_PT", "PT_CHANNEL_ID", "CHANNEL_BR_ID"),
+    (
+        "CHANNEL_PT_ID",
+        "CHANNEL_ID_PT",
+        "PT_CHANNEL_ID",
+        "CHANNEL_BR_ID",
+        "CHANNEL_PT",
+        "CHANNEL_PORTUGUESE_ID",
+    ),
     required=False,
 )
 CHANNEL_ES_ID = _get_int_env_any(
-    ("CHANNEL_ES_ID", "CHANNEL_ID_ES", "ES_CHANNEL_ID", "CHANNEL_SPANISH_ID"),
+    (
+        "CHANNEL_ES_ID",
+        "CHANNEL_ID_ES",
+        "ES_CHANNEL_ID",
+        "CHANNEL_SPANISH_ID",
+        "CHANNEL_ES",
+        "CHANNEL_LATAM_ID",
+    ),
     required=False,
 )
+if CHANNEL_EN_ID is None:
+    CHANNEL_EN_ID = -1003828410953
+if CHANNEL_PT_ID is None:
+    CHANNEL_PT_ID = -1003867037992
+if CHANNEL_ES_ID is None:
+    CHANNEL_ES_ID = -1003713812781
 CHANNEL_ID_BY_LANG = {
     "ru": CHANNEL_ID,
     "en": CHANNEL_EN_ID,
