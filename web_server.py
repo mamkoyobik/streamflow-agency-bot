@@ -183,7 +183,7 @@ def load_settings():
     admin_group_id = os.getenv("ADMIN_GROUP_ID", "").strip()
     admin_username = os.getenv("ADMIN_USERNAME", "").strip()
     bot_username = os.getenv("BOT_USERNAME", "").strip()
-    channel_link = os.getenv("CHANNEL_LINK", "https://t.me/+uuVr5gJFwoJjYmRi").strip()
+    channel_link = os.getenv("CHANNEL_LINK", "https://t.me/streamflowagency").strip()
     site_url = (os.getenv("SITE_URL", "https://streamflowagency.com") or "https://streamflowagency.com").strip()
     return bot_token, admin_group_id, admin_username, bot_username, channel_link, site_url
 
@@ -304,6 +304,34 @@ def normalize_telegram(text: str) -> str | None:
 def _safe(value: str | None) -> str:
     return html.escape(str(value)) if value is not None else "—"
 
+def extract_country_from_location(location: str | None) -> str | None:
+    raw = (location or "").strip()
+    if not raw:
+        return None
+    raw = re.sub(r"\s+", " ", raw)
+    by_brackets = re.search(r"\(([^()]{2,80})\)\s*$", raw)
+    if by_brackets:
+        candidate = by_brackets.group(1).strip(" .")
+        if candidate:
+            return candidate
+    parts = [
+        part.strip(" .")
+        for part in re.split(r"\s*(?:,|;|/|\|)\s*|\s+[—–-]\s+", raw)
+        if part and part.strip(" .")
+    ]
+    if len(parts) >= 2:
+        return parts[-1]
+    return None
+
+def submission_country(data: dict) -> str:
+    explicit = str(data.get("country") or "").strip()
+    if explicit:
+        return explicit
+    derived = extract_country_from_location(str(data.get("city") or ""))
+    if derived:
+        return derived
+    return "—"
+
 def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
     return (
@@ -311,6 +339,7 @@ def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
         f"👤 Имя: {_safe(data.get('name'))}\n"
         f"📅 Дата рождения: {_safe(data.get('age'))}\n"
         f"🌍 Город и страна: {_safe(data.get('city'))}\n"
+        f"🏳️ Страна подачи: {_safe(submission_country(data))}\n"
         f"📞 Телефон: {_safe(data.get('phone'))}\n"
         f"🏠 Помещение без посторонних: {_safe(data.get('living'))}\n"
         f"📱 Устройства: {_safe(data.get('devices'))}\n"
@@ -341,6 +370,9 @@ def build_admin_menu_keyboard(counts: dict) -> dict:
     total = counts.get("total", pending + accepted + rejected)
     return {
         "inline_keyboard": [
+            [
+                {"text": "📝 Создать пост", "callback_data": "admin_menu:create_post"}
+            ],
             [
                 {
                     "text": f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
@@ -713,6 +745,8 @@ class Handler(SimpleHTTPRequestHandler):
         payload = {
             "name": name,
             "city": city,
+            "country": extract_country_from_location(city),
+            "lang": site_lang,
             "phone": phone,
             "age": age,
             "living": living,

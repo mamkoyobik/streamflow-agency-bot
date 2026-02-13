@@ -27,3 +27,4 @@ class ApplicationStates(StatesGroup):
 
     # ===== Админ =====
     admin_reject_reason = State()
+    admin_create_post = State()

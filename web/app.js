@@ -146,6 +146,7 @@ const I18N = {
     'income.eyebrow': 'Примеры дохода',
     'income.title': 'Примеры дохода',
     'income.subtitle': 'Это реальные цифры моделей, которые работают с нами несколько месяцев.',
+    'income.note': 'Рост дохода',
     'streams.eyebrow': 'Видеопримеры',
     'streams.title': 'Смотри атмосферу и ритм стримов.',
     'streams.subtitle': 'Фрагменты реальных стримов, снятых моделями дома.',
@@ -275,6 +276,7 @@ const I18N = {
     'income.eyebrow': 'Income examples',
     'income.title': 'Income examples',
     'income.subtitle': 'Real numbers from models working with us for several months.',
+    'income.note': 'Income growth',
     'streams.eyebrow': 'Stream examples',
     'streams.title': 'See the atmosphere and stream rhythm.',
     'streams.subtitle': 'Real stream fragments recorded by models at home.',
@@ -404,6 +406,7 @@ const I18N = {
     'income.eyebrow': 'Exemplos de renda',
     'income.title': 'Exemplos de renda',
     'income.subtitle': 'Números reais de modelos que trabalham conosco há alguns meses.',
+    'income.note': 'Crescimento da renda',
     'streams.eyebrow': 'Exemplos de stream',
     'streams.title': 'Veja o ritmo e a atmosfera das lives.',
     'streams.subtitle': 'Trechos reais de streams gravados pelas modelos em casa.',
@@ -533,6 +536,7 @@ const I18N = {
     'income.eyebrow': 'Ejemplos de ingresos',
     'income.title': 'Ejemplos de ingresos',
     'income.subtitle': 'Cifras reales de modelos que trabajan con nosotros hace meses.',
+    'income.note': 'Crecimiento de ingresos',
     'streams.eyebrow': 'Ejemplos de stream',
     'streams.title': 'Mira el ritmo y la atmósfera de los streams.',
     'streams.subtitle': 'Fragmentos reales grabados por modelos desde casa.',
@@ -617,6 +621,36 @@ function siteText(key, lang = CURRENT_SITE_LANG) {
   return I18N[locale][key] || I18N[DEFAULT_SITE_LANG][key] || '';
 }
 
+const INCOME_CURRENCY_BY_LANG = {
+  ru: { locale: 'ru-RU', currency: 'RUB', rateFromRub: 1, roundStep: 1000 },
+  en: { locale: 'en-US', currency: 'USD', rateFromRub: 0.011, roundStep: 50 },
+  pt: { locale: 'pt-BR', currency: 'BRL', rateFromRub: 0.056, roundStep: 100 },
+  es: { locale: 'es-ES', currency: 'EUR', rateFromRub: 0.01, roundStep: 50 },
+};
+
+function formatIncomeAmount(rubValue, lang = CURRENT_SITE_LANG) {
+  const locale = normalizeSiteLang(lang);
+  const config = INCOME_CURRENCY_BY_LANG[locale] || INCOME_CURRENCY_BY_LANG[DEFAULT_SITE_LANG];
+  const raw = Math.max(0, Number(rubValue) || 0) * config.rateFromRub;
+  const rounded = config.roundStep > 1
+    ? Math.max(config.roundStep, Math.round(raw / config.roundStep) * config.roundStep)
+    : raw;
+  return new Intl.NumberFormat(config.locale, {
+    style: 'currency',
+    currency: config.currency,
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(rounded);
+}
+
+function updateIncomeAmounts(lang = CURRENT_SITE_LANG) {
+  document.querySelectorAll('.income-amount[data-income-rub]').forEach((element) => {
+    const rubValue = Number(element.getAttribute('data-income-rub'));
+    if (!Number.isFinite(rubValue) || rubValue <= 0) return;
+    element.textContent = formatIncomeAmount(rubValue, lang);
+  });
+}
+
 function updateMenuToggleText() {
   const isOpen = document.body.classList.contains('nav-open');
   const text = isOpen ? siteText('mobile.close') : siteText('mobile.menu');
@@ -645,6 +679,7 @@ function applySiteTranslations(lang) {
   const mobileSelect = document.getElementById('site-lang-select-mobile');
   if (desktopSelect) desktopSelect.value = CURRENT_SITE_LANG;
   if (mobileSelect) mobileSelect.value = CURRENT_SITE_LANG;
+  updateIncomeAmounts(CURRENT_SITE_LANG);
   updateMenuToggleText();
   document.dispatchEvent(new CustomEvent('site-language-changed', { detail: { lang: CURRENT_SITE_LANG } }));
 }

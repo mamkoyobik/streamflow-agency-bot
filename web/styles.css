@@ -3551,6 +3551,20 @@ body[data-page="home"] .page {
   }
 }
 
+@media (max-width: 768px) {
+  .hero-grid {
+    padding-top: 10px;
+  }
+
+  .hero-text {
+    padding-top: 6px;
+  }
+
+  .hero-eyebrow {
+    margin-top: 4px;
+  }
+}
+
 @media (max-width: 560px) {
   :root {
     --header-height: 68px;

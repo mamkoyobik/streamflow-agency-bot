@@ -38,8 +38,29 @@ def _get_int_env(name: str, required: bool = True) -> int | None:
         raise RuntimeError(f"❌ {name} должен быть числом") from exc
 
 
+def _dedupe_ids(values: list[int | None]) -> tuple[int, ...]:
+    seen: set[int] = set()
+    result: list[int] = []
+    for value in values:
+        if value is None or value in seen:
+            continue
+        seen.add(value)
+        result.append(value)
+    return tuple(result)
+
+
 BOT_TOKEN = _get_env("BOT_TOKEN", required=True)
 ADMIN_GROUP_ID = _get_int_env("ADMIN_GROUP_ID", required=True)
 CHANNEL_ID = _get_int_env("CHANNEL_ID", required=True)
+CHANNEL_EN_ID = _get_int_env("CHANNEL_EN_ID", required=False)
+CHANNEL_PT_ID = _get_int_env("CHANNEL_PT_ID", required=False)
+CHANNEL_ES_ID = _get_int_env("CHANNEL_ES_ID", required=False)
+CHANNEL_ID_BY_LANG = {
+    "ru": CHANNEL_ID,
+    "en": CHANNEL_EN_ID,
+    "pt": CHANNEL_PT_ID,
+    "es": CHANNEL_ES_ID,
+}
+CHANNEL_IDS = _dedupe_ids([CHANNEL_ID, CHANNEL_EN_ID, CHANNEL_PT_ID, CHANNEL_ES_ID])
 ADMIN_USERNAME = _get_env("ADMIN_USERNAME", required=True)
 SITE_URL = (_get_env("SITE_URL", required=False) or "https://streamflowagency.com").strip().rstrip("/")

@@ -4,6 +4,7 @@ from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from texts import t, field_title
 
 SITE_URL = (os.getenv("SITE_URL") or "https://streamflowagency.com").strip().rstrip("/")
+CHANNEL_LINK = (os.getenv("CHANNEL_LINK") or "https://t.me/streamflowagency").strip()
 
 # ================= MAIN MENU =================
 
@@ -14,7 +15,7 @@ def main_menu(lang: str = "ru"):
         [InlineKeyboardButton(text=t(lang, "menu_portfolio"), callback_data="portfolio")],
         [InlineKeyboardButton(text=t(lang, "menu_about"), callback_data="about")],
         [InlineKeyboardButton(text=t(lang, "menu_contact"), callback_data="contact")],
-        [InlineKeyboardButton(text=t(lang, "menu_channel"), url="https://t.me/+uuVr5gJFwoJjYmRi")],
+        [InlineKeyboardButton(text=t(lang, "menu_channel"), url=CHANNEL_LINK)],
         [InlineKeyboardButton(text=t(lang, "menu_lang"), callback_data="language_menu")],
     ])
 
@@ -247,6 +248,9 @@ def admin_menu_keyboard(counts: dict | None = None):
     total = counts.get("total", pending + accepted + rejected) if counts else 0
     return InlineKeyboardMarkup(inline_keyboard=[
         [
+            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post")
+        ],
+        [
             InlineKeyboardButton(
                 text=f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
                 callback_data="admin_menu:pending"
@@ -281,6 +285,12 @@ def admin_menu_keyboard(counts: dict | None = None):
             InlineKeyboardButton(text="⚠️ Сбросить базу", callback_data="admin_menu:reset"),
             InlineKeyboardButton(text="🔄 Обновить меню", callback_data="admin_menu:refresh")
         ]
+    ])
+
+def admin_create_post_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="❌ Отменить", callback_data="admin_post:cancel")],
+        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
     ])
 
 def admin_list_nav_keyboard(filter_key: str, offset: int, total: int, limit: int):

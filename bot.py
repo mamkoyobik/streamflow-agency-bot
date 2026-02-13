@@ -1,17 +1,20 @@
 import asyncio
 import html
+import json
 import logging
 import os
 import random
 import re
 import traceback
+import urllib.error
+import urllib.request
 from datetime import datetime, timedelta, timezone
 
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
     InputMediaPhoto, InputMediaVideo,
-    ChatJoinRequest, InlineKeyboardMarkup
+    ChatJoinRequest, InlineKeyboardMarkup, MessageEntity
 )
 try:
     from aiogram.client.default import DefaultBotProperties
@@ -21,9 +24,19 @@ from aiogram.enums import ParseMode, ChatAction
 from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
-from aiogram.filters import StateFilter
+from aiogram.filters import StateFilter, Command
 
-from config import BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, CHANNEL_ID
+from config import (
+    BOT_TOKEN,
+    ADMIN_GROUP_ID,
+    ADMIN_USERNAME,
+    CHANNEL_ID,
+    CHANNEL_EN_ID,
+    CHANNEL_PT_ID,
+    CHANNEL_ES_ID,
+    CHANNEL_ID_BY_LANG,
+    CHANNEL_IDS,
+)
 from states import ApplicationStates
 from keyboards import *
 from database import (
@@ -135,13 +148,24 @@ async def global_error_handler(event: ErrorEvent):
 
 # ================= JOIN REQUEST =================
 
-@dp.chat_join_request(F.chat.id == CHANNEL_ID)
+@dp.chat_join_request()
 async def on_join_request(req: ChatJoinRequest):
+    chat_id = req.chat.id
+    if chat_id not in CHANNEL_IDS:
+        return
     try:
-        await bot.approve_chat_join_request(CHANNEL_ID, req.from_user.id)
+        await bot.approve_chat_join_request(chat_id, req.from_user.id)
+        if CHANNEL_EN_ID is not None and chat_id == CHANNEL_EN_ID:
+            invite_message = "🤍 Your request to join the private channel is approved.\n\nPress /start ✨"
+        elif CHANNEL_PT_ID is not None and chat_id == CHANNEL_PT_ID:
+            invite_message = "🤍 Sua solicitação para entrar no canal privado foi aprovada.\n\nToque em /start ✨"
+        elif CHANNEL_ES_ID is not None and chat_id == CHANNEL_ES_ID:
+            invite_message = "🤍 Tu solicitud para entrar al canal privado fue aprobada.\n\nPulsa /start ✨"
+        else:
+            invite_message = "🤍 Ты подала заявку в закрытый канал\n\nНажми /start ✨"
         await bot.send_message(
             req.from_user.id,
-            "🤍 Ты подала заявку в закрытый канал\n\nНажми /start ✨"
+            invite_message
         )
     except Exception:
         logger.exception("Ошибка в on_join_request")
@@ -247,6 +271,7 @@ def is_rate_limited(last_apply_at: str | None, hours: int = 24) -> bool:
 FORM_DATA_FIELDS = {
     "name",
     "city",
+    "country",
     "phone",
     "age",
     "living",
@@ -258,8 +283,10 @@ FORM_DATA_FIELDS = {
     "experience",
     "photo_face",
     "photo_full",
+    "lang",
 }
-REQUIRED_PREVIEW_FIELDS = set(FORM_DATA_FIELDS)
+OPTIONAL_FORM_DATA_FIELDS = {"country", "lang"}
+REQUIRED_PREVIEW_FIELDS = FORM_DATA_FIELDS - OPTIONAL_FORM_DATA_FIELDS
 
 STATE_TO_FIELD = {
     ApplicationStates.name: "name",
@@ -332,6 +359,426 @@ ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
 ADMIN_VIEW_SETTING_KEY = "admin_view_message_id"
 ADMIN_PHOTOS_SETTING_KEY = "admin_photos_message_ids"
 FORCE_LANGUAGE_PICK_ON_START = os.getenv("FORCE_LANGUAGE_PICK_ON_START", "1").strip().lower() in {"1", "true", "yes"}
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+OPENAI_TRANSLATE_MODEL = os.getenv("OPENAI_TRANSLATE_MODEL", "gpt-4o-mini").strip()
+OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1").strip().rstrip("/")
+CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
+TELEGRAM_CAPTION_LIMIT = 1024
+TELEGRAM_TEXT_LIMIT = 4096
+POST_LANG_ORDER = ("ru", "en", "pt", "es")
+LANG_TITLES = {"ru": "RU", "en": "EN", "pt": "PT", "es": "ES"}
+TRANSLATION_STYLE = {
+    "en": "natural, conversational English",
+    "pt": "natural, conversational Brazilian Portuguese",
+    "es": "natural, conversational Latin American Spanish",
+}
+CUSTOM_EMOJI_TOKEN_RE = re.compile(r"\[\[CE(\d+)\]\]")
+CUSTOM_EMOJI_PLACEHOLDER = "⭐"
+
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+        return value if value > 0 else default
+    except Exception:
+        return default
+
+
+OPENAI_HTTP_TIMEOUT_SECONDS = _env_int("OPENAI_HTTP_TIMEOUT_SECONDS", 30)
+
+
+def active_post_channels() -> dict[str, int]:
+    result: dict[str, int] = {}
+    for lang in POST_LANG_ORDER:
+        chat_id = CHANNEL_ID_BY_LANG.get(lang)
+        if isinstance(chat_id, int):
+            result[lang] = chat_id
+    return result
+
+
+def extract_post_text(message: Message) -> str:
+    return (message.text or message.caption or "").strip()
+
+
+def extract_post_text_and_entities(message: Message) -> tuple[str, list[MessageEntity]]:
+    if message.text is not None:
+        return message.text, list(message.entities or [])
+    if message.caption is not None:
+        return message.caption, list(message.caption_entities or [])
+    return "", []
+
+
+def post_creator_prompt() -> str:
+    channels = active_post_channels()
+    langs = ", ".join(LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in channels) or "RU"
+    return (
+        "📝 <b>Создание поста</b>\n\n"
+        "Отправь один пост <b>на русском</b> (текст или медиа с подписью).\n"
+        "Я автоматически переведу и опубликую его в каналы:\n"
+        f"{langs}\n\n"
+        "Чтобы выйти без публикации, нажми «Отменить»."
+    )
+
+
+def _extract_openai_text(payload: dict) -> str:
+    choices = payload.get("choices") or []
+    if not choices:
+        return ""
+    message = choices[0].get("message") or {}
+    content = message.get("content")
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        text_parts = []
+        for item in content:
+            if isinstance(item, dict) and item.get("type") == "text" and item.get("text"):
+                text_parts.append(str(item["text"]))
+        return "".join(text_parts).strip()
+    return ""
+
+
+def utf16_length(value: str) -> int:
+    return len(value.encode("utf-16-le")) // 2
+
+
+def utf16_offset_to_index(text: str, utf16_offset: int) -> int:
+    if utf16_offset <= 0:
+        return 0
+    units = 0
+    for idx, char in enumerate(text):
+        units += utf16_length(char)
+        if units >= utf16_offset:
+            return idx + 1
+    return len(text)
+
+
+def markerize_custom_emoji(text: str, entities: list[MessageEntity] | None) -> tuple[str, list[tuple[str, str]]]:
+    if not text or not entities:
+        return text, []
+    custom_items: list[tuple[int, int, int, str]] = []
+    for entity in entities:
+        if getattr(entity, "type", None) != "custom_emoji":
+            continue
+        custom_emoji_id = getattr(entity, "custom_emoji_id", None)
+        if not custom_emoji_id:
+            continue
+        start_u16 = int(getattr(entity, "offset", 0))
+        end_u16 = start_u16 + int(getattr(entity, "length", 0))
+        start = utf16_offset_to_index(text, start_u16)
+        end = utf16_offset_to_index(text, end_u16)
+        if end <= start:
+            continue
+        custom_items.append((start_u16, start, end, str(custom_emoji_id)))
+    if not custom_items:
+        return text, []
+    custom_items.sort(key=lambda item: (item[0], item[1]))
+
+    parts: list[str] = []
+    token_specs: list[tuple[str, str]] = []
+    cursor = 0
+    marker_index = 0
+    for _, start, end, custom_emoji_id in custom_items:
+        if start < cursor:
+            continue
+        token = f"[[CE{marker_index}]]"
+        marker_index += 1
+        parts.append(text[cursor:start])
+        parts.append(token)
+        token_specs.append((token, custom_emoji_id))
+        cursor = end
+    parts.append(text[cursor:])
+    return "".join(parts), token_specs
+
+
+def tokens_intact(text: str, expected_tokens: list[str]) -> bool:
+    if not expected_tokens:
+        return True
+    found_tokens = [match.group(0) for match in CUSTOM_EMOJI_TOKEN_RE.finditer(text)]
+    if found_tokens != expected_tokens:
+        return False
+    return all(text.count(token) == 1 for token in expected_tokens)
+
+
+def apply_custom_emoji_tokens(text: str, token_specs: list[tuple[str, str]]) -> tuple[str, list[MessageEntity] | None]:
+    if not token_specs:
+        return text, None
+    expected_tokens = [token for token, _ in token_specs]
+    if not tokens_intact(text, expected_tokens):
+        raise RuntimeError("⚠️ Переводчик повредил маркеры премиум-эмодзи. Попробуй отправить пост ещё раз.")
+    token_to_id = {token: custom_id for token, custom_id in token_specs}
+
+    result_parts: list[str] = []
+    entities: list[MessageEntity] = []
+    cursor = 0
+    utf16_cursor = 0
+    for match in CUSTOM_EMOJI_TOKEN_RE.finditer(text):
+        token = match.group(0)
+        before = text[cursor:match.start()]
+        if before:
+            result_parts.append(before)
+            utf16_cursor += utf16_length(before)
+        result_parts.append(CUSTOM_EMOJI_PLACEHOLDER)
+        entities.append(
+            MessageEntity(
+                type="custom_emoji",
+                offset=utf16_cursor,
+                length=utf16_length(CUSTOM_EMOJI_PLACEHOLDER),
+                custom_emoji_id=token_to_id[token],
+            )
+        )
+        utf16_cursor += utf16_length(CUSTOM_EMOJI_PLACEHOLDER)
+        cursor = match.end()
+    tail = text[cursor:]
+    if tail:
+        result_parts.append(tail)
+    return "".join(result_parts), entities or None
+
+
+def fit_caption_with_entities(text: str, entities: list[MessageEntity] | None) -> tuple[str, list[MessageEntity] | None]:
+    if utf16_length(text) <= TELEGRAM_CAPTION_LIMIT:
+        return text, entities
+    if entities:
+        raise RuntimeError("⚠️ Подпись после перевода слишком длинная для Telegram. Укороти исходный пост.")
+    return fit_caption(text), None
+
+
+def fit_text_with_entities(text: str, entities: list[MessageEntity] | None) -> tuple[str, list[MessageEntity] | None]:
+    if utf16_length(text) <= TELEGRAM_TEXT_LIMIT:
+        return text, entities
+    if entities:
+        raise RuntimeError("⚠️ Текст после перевода слишком длинный для Telegram. Укороти исходный пост.")
+    return text[:TELEGRAM_TEXT_LIMIT], None
+
+
+def translate_ru_to_lang_sync(ru_text: str, target_lang: str, required_tokens: list[str] | None = None) -> str:
+    if not OPENAI_API_KEY:
+        raise RuntimeError("⚠️ Не найден OPENAI_API_KEY. Добавь ключ в .env для авто-перевода.")
+    if not OPENAI_TRANSLATE_MODEL:
+        raise RuntimeError("⚠️ Не задан OPENAI_TRANSLATE_MODEL в .env.")
+    style = TRANSLATION_STYLE.get(target_lang)
+    if not style:
+        raise RuntimeError(f"⚠️ Неподдерживаемый язык перевода: {target_lang}")
+
+    tokens = list(required_tokens or [])
+    token_hint = ""
+    if tokens:
+        token_hint = (
+            " Token markers in format [[CE0]] must be preserved exactly, without changes, "
+            "without reordering, and each marker must appear exactly once."
+        )
+
+    for attempt in range(3):
+        system_prompt = (
+            f"You translate Russian Telegram posts into {style}. "
+            "Keep tone lively and human, preserve structure, line breaks, emojis, hashtags, and CTA. "
+            "Do not add explanations or comments. Return only translated text."
+            f"{token_hint}"
+        )
+        user_content = ru_text
+        if tokens and attempt > 0:
+            user_content = (
+                f"{ru_text}\n\n"
+                f"STRICT MARKERS (KEEP UNCHANGED): {', '.join(tokens)}"
+            )
+        payload = {
+            "model": OPENAI_TRANSLATE_MODEL,
+            "temperature": 0.4 if tokens else 0.6,
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+        }
+        req = urllib.request.Request(
+            f"{OPENAI_API_BASE}/chat/completions",
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers={
+                "Authorization": f"Bearer {OPENAI_API_KEY}",
+                "Content-Type": "application/json",
+            },
+        )
+        try:
+            with urllib.request.urlopen(req, timeout=OPENAI_HTTP_TIMEOUT_SECONDS) as resp:
+                data = json.loads(resp.read().decode("utf-8"))
+        except urllib.error.HTTPError as exc:
+            detail = ""
+            try:
+                body = exc.read().decode("utf-8")
+                parsed = json.loads(body)
+                detail = parsed.get("error", {}).get("message") or parsed.get("message") or body[:300]
+            except Exception:
+                detail = f"HTTP {exc.code}"
+            raise RuntimeError(f"⚠️ Ошибка перевода: {detail}") from exc
+        except Exception as exc:
+            raise RuntimeError("⚠️ Не удалось выполнить перевод. Проверь сеть и настройки API.") from exc
+
+        translated_text = _extract_openai_text(data)
+        if not translated_text:
+            continue
+        if tokens and not tokens_intact(translated_text, tokens):
+            continue
+        return translated_text
+
+    if tokens:
+        raise RuntimeError("⚠️ Переводчик не смог сохранить премиум-эмодзи маркеры. Отправь пост ещё раз.")
+    raise RuntimeError("⚠️ Сервис перевода вернул пустой ответ.")
+
+
+async def translate_ru_to_lang(ru_text: str, target_lang: str, required_tokens: list[str] | None = None) -> str:
+    if not ru_text:
+        return ""
+    return await asyncio.to_thread(translate_ru_to_lang_sync, ru_text, target_lang, required_tokens)
+
+
+async def translate_ru_to_targets(
+    ru_text: str,
+    target_langs: list[str],
+    required_tokens: list[str] | None = None
+) -> dict[str, str]:
+    result: dict[str, str] = {}
+    if not ru_text or not target_langs:
+        return result
+    for target_lang in target_langs:
+        result[target_lang] = await translate_ru_to_lang(ru_text, target_lang, required_tokens=required_tokens)
+    return result
+
+
+async def is_admin_actor(chat_id: int, user_id: int | None) -> bool:
+    if not user_id:
+        return False
+    try:
+        member = await bot.get_chat_member(chat_id, user_id)
+    except Exception:
+        logger.exception("Не удалось проверить права участника чата")
+        return False
+    return member.status in {"creator", "administrator"}
+
+
+def fit_caption(text: str) -> str:
+    if len(text) <= TELEGRAM_CAPTION_LIMIT:
+        return text
+    return text[: TELEGRAM_CAPTION_LIMIT - 1].rstrip() + "…"
+
+
+async def send_crosspost_to_channels(
+    source_message: Message,
+    ru_text: str,
+    translated_texts: dict[str, str],
+    translated_entities: dict[str, list[MessageEntity] | None] | None = None,
+):
+    channels = active_post_channels()
+    if "ru" not in channels:
+        raise ValueError("⚠️ Не задан CHANNEL_ID (русский канал).")
+
+    if source_message.media_group_id:
+        raise ValueError("⚠️ Для альбома отправь один пост без media-group.")
+
+    if ru_text:
+        required = [lang for lang in channels if lang != "ru"]
+        missing = [lang for lang in required if not translated_texts.get(lang)]
+        if missing:
+            missing_titles = ", ".join(LANG_TITLES.get(lang, lang.upper()) for lang in missing)
+            raise RuntimeError(f"⚠️ Не удалось получить перевод для: {missing_titles}")
+    if source_message.text and not ru_text:
+        raise ValueError("⚠️ Текст поста пустой. Отправь текст заново.")
+    entities_map = translated_entities or {}
+
+    # RU channel gets exact copy to preserve original formatting and premium emoji 1:1.
+    await bot.copy_message(
+        chat_id=channels["ru"],
+        from_chat_id=source_message.chat.id,
+        message_id=source_message.message_id,
+    )
+
+    translated_channels = [lang for lang in POST_LANG_ORDER if lang in channels and lang != "ru"]
+    if not translated_channels:
+        return
+
+    def text_for_lang(lang: str) -> str:
+        return (translated_texts.get(lang) or "").strip()
+
+    if source_message.photo:
+        file_id = source_message.photo[-1].file_id
+        for lang in translated_channels:
+            chat_id = channels[lang]
+            text = text_for_lang(lang)
+            entities = entities_map.get(lang)
+            kwargs = {"chat_id": chat_id, "photo": file_id}
+            if text:
+                text, entities = fit_caption_with_entities(text, entities)
+                kwargs["caption"] = text
+                if entities:
+                    kwargs["caption_entities"] = entities
+                else:
+                    kwargs["parse_mode"] = None
+            await bot.send_photo(**kwargs)
+        return
+    if source_message.video:
+        file_id = source_message.video.file_id
+        for lang in translated_channels:
+            chat_id = channels[lang]
+            text = text_for_lang(lang)
+            entities = entities_map.get(lang)
+            kwargs = {"chat_id": chat_id, "video": file_id}
+            if text:
+                text, entities = fit_caption_with_entities(text, entities)
+                kwargs["caption"] = text
+                if entities:
+                    kwargs["caption_entities"] = entities
+                else:
+                    kwargs["parse_mode"] = None
+            await bot.send_video(**kwargs)
+        return
+    if source_message.document:
+        file_id = source_message.document.file_id
+        for lang in translated_channels:
+            chat_id = channels[lang]
+            text = text_for_lang(lang)
+            entities = entities_map.get(lang)
+            kwargs = {"chat_id": chat_id, "document": file_id}
+            if text:
+                text, entities = fit_caption_with_entities(text, entities)
+                kwargs["caption"] = text
+                if entities:
+                    kwargs["caption_entities"] = entities
+                else:
+                    kwargs["parse_mode"] = None
+            await bot.send_document(**kwargs)
+        return
+    if source_message.animation:
+        file_id = source_message.animation.file_id
+        for lang in translated_channels:
+            chat_id = channels[lang]
+            text = text_for_lang(lang)
+            entities = entities_map.get(lang)
+            kwargs = {"chat_id": chat_id, "animation": file_id}
+            if text:
+                text, entities = fit_caption_with_entities(text, entities)
+                kwargs["caption"] = text
+                if entities:
+                    kwargs["caption_entities"] = entities
+                else:
+                    kwargs["parse_mode"] = None
+            await bot.send_animation(**kwargs)
+        return
+    if source_message.text:
+        for lang in translated_channels:
+            chat_id = channels[lang]
+            text = text_for_lang(lang)
+            if not text:
+                raise RuntimeError(f"⚠️ Пустой перевод для {LANG_TITLES.get(lang, lang.upper())}.")
+            entities = entities_map.get(lang)
+            text, entities = fit_text_with_entities(text, entities)
+            kwargs = {"chat_id": chat_id, "text": text}
+            if entities:
+                kwargs["entities"] = entities
+            else:
+                kwargs["parse_mode"] = None
+            await bot.send_message(**kwargs)
+        return
+    raise ValueError("⚠️ Поддерживаются текст, фото, видео, gif и документ.")
 
 def build_admin_menu_text(counts: dict) -> str:
     return (
@@ -438,6 +885,70 @@ def _safe_text(value) -> str:
     text = re.sub(r"\s+", " ", text).strip()
     return html.escape(text)
 
+def extract_country_from_location(location: str | None) -> str | None:
+    raw = (location or "").strip()
+    if not raw:
+        return None
+    raw = re.sub(r"\s+", " ", raw)
+    by_brackets = re.search(r"\(([^()]{2,80})\)\s*$", raw)
+    if by_brackets:
+        candidate = by_brackets.group(1).strip(" .")
+        if candidate:
+            return candidate
+    parts = [
+        part.strip(" .")
+        for part in re.split(r"\s*(?:,|;|/|\|)\s*|\s+[—–-]\s+", raw)
+        if part and part.strip(" .")
+    ]
+    if len(parts) >= 2:
+        return parts[-1]
+    return None
+
+def submission_country(data: dict | None) -> str:
+    if isinstance(data, dict):
+        explicit = str(data.get("country") or "").strip()
+        if explicit:
+            return explicit
+        derived = extract_country_from_location(str(data.get("city") or ""))
+        if derived:
+            return derived
+    return "—"
+
+def submission_lang_for_user(user_id: int, data: dict | None = None) -> str:
+    payload = data if isinstance(data, dict) else (get_form_data(user_id) or {})
+    payload_lang = normalize_lang((payload.get("lang") if isinstance(payload, dict) else None) or "")
+    if payload_lang in LANGUAGE_NAMES:
+        return payload_lang
+    return lang_for(user_id)
+
+AUTO_REJECT_REASONS = {
+    "ru": {
+        "1": "Сейчас, к сожалению, мы не можем принять заявку.",
+        "2": "Сейчас условия не совпали, но спасибо за интерес.",
+        "3": "Мы вернёмся к твоей анкете чуть позже. Спасибо за понимание.",
+    },
+    "en": {
+        "1": "Unfortunately, we can’t accept your application right now.",
+        "2": "At the moment, your profile doesn’t match the current requirements, but thank you for your interest.",
+        "3": "We’ll return to your application a bit later. Thanks for understanding.",
+    },
+    "pt": {
+        "1": "No momento, infelizmente, não podemos aceitar sua candidatura.",
+        "2": "Neste momento, seu perfil não corresponde aos requisitos atuais, mas obrigada pelo interesse.",
+        "3": "Vamos retornar à sua candidatura um pouco mais tarde. Obrigada pela compreensão.",
+    },
+    "es": {
+        "1": "Por ahora, lamentablemente, no podemos aceptar tu solicitud.",
+        "2": "En este momento, tu perfil no coincide con los requisitos actuales, pero gracias por tu interés.",
+        "3": "Volveremos a tu solicitud un poco más adelante. Gracias por la comprensión.",
+    },
+}
+
+def auto_reject_reason(template_code: str, lang: str) -> str | None:
+    locale = normalize_lang(lang)
+    templates = AUTO_REJECT_REASONS.get(locale, AUTO_REJECT_REASONS["ru"])
+    return templates.get(template_code)
+
 def build_admin_status_text(user_id: int, status: str) -> str:
     data = get_form_data(user_id) or {}
     name = _safe_text(data.get("name", "—"))
@@ -465,6 +976,7 @@ def build_admin_summary(
         f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
         f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
         f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
+        f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
@@ -484,6 +996,7 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
         f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
         f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
+        f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
         f"📞 Телефон: {_safe_text(data.get('phone', '—'))}\n"
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
         f"📱 Устройства: {_safe_text(data.get('devices', '—'))}\n"
@@ -1466,7 +1979,12 @@ async def step_city(m: Message, state: FSMContext):
             reply_markup=form_keyboard(lang)
         )
         return
-    await update_form_field(state, m.from_user.id, city=city)
+    await update_form_field(
+        state,
+        m.from_user.id,
+        city=city,
+        country=extract_country_from_location(city)
+    )
     await send_next_question(
         m,
         state,
@@ -2063,7 +2581,15 @@ async def save_edited_value(m: Message, state: FSMContext):
         return
 
     # сохраняем новое значение
-    await update_form_field(state, m.from_user.id, **{field: value})
+    if field == "city":
+        await update_form_field(
+            state,
+            m.from_user.id,
+            city=value,
+            country=extract_country_from_location(value)
+        )
+    else:
+        await update_form_field(state, m.from_user.id, **{field: value})
 
     # возвращаем предпросмотр
     await show_preview(m, state)
@@ -2236,6 +2762,14 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call)
             return
 
+        await update_form_field(
+            state,
+            user.id,
+            lang=normalize_lang(lang),
+            country=data.get("country") or extract_country_from_location(data.get("city")),
+        )
+        data = await state.get_data()
+
         await gentle_typing(call.message.chat.id)
 
         set_source(user.id, "bot")
@@ -2360,17 +2894,13 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             return
         await safe_call_answer(call)
         tpl_code = call.data.split(":", 1)[1]
-        data = await state.get_data()
-        uid = data.get("reject_uid")
+        state_data = await state.get_data()
+        uid = state_data.get("reject_uid")
         if not uid:
             await safe_call_answer(call, "🤍 Не вижу кандидата")
             return
-
-        templates = {
-            "1": "Сейчас, к сожалению, мы не можем принять заявку.",
-            "2": "Сейчас условия не совпали, но спасибо за интерес.",
-            "3": "Мы вернёмся к твоей анкете чуть позже. Спасибо за понимание.",
-        }
+        form_data = get_form_data(uid) or {}
+        user_lang = submission_lang_for_user(uid, form_data)
 
         if tpl_code == "custom":
             await update_admin_menu_message(
@@ -2380,13 +2910,12 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call)
             return
 
-        reason = templates.get(tpl_code)
+        reason = auto_reject_reason(tpl_code, user_lang)
         if not reason:
             await safe_call_answer(call, "🤍 Шаблон не найден")
             return
 
         try:
-            user_lang = lang_for(uid)
             intro = t(user_lang, "rejected_reason_intro", reason=reason)
             caption = build_menu_caption_with_status(
                 "rejected",
@@ -2429,7 +2958,8 @@ async def reject_reason(m: Message, state: FSMContext):
             return
 
         try:
-            user_lang = lang_for(uid)
+            form_data = get_form_data(uid) or {}
+            user_lang = submission_lang_for_user(uid, form_data)
             intro = t(user_lang, "rejected_reason_intro", reason=m.text)
             caption = build_menu_caption_with_status(
                 "rejected",
@@ -2491,13 +3021,111 @@ async def admin_photos(call: CallbackQuery):
         logger.exception("Ошибка отправки фото админу")
         await safe_call_answer(call, "Не удалось отправить фото", show_alert=False)
 
+async def open_create_post_mode(state: FSMContext):
+    await state.set_state(ApplicationStates.admin_create_post)
+    await clear_admin_view_message()
+    await update_admin_menu_message(
+        post_creator_prompt(),
+        admin_create_post_keyboard()
+    )
+
+
+@dp.message(Command("create_post"), F.chat.id == ADMIN_GROUP_ID)
+@dp.message(Command("crosspost"), F.chat.id == ADMIN_GROUP_ID)
+async def admin_create_post_command(message: Message, state: FSMContext):
+    if not await is_admin_actor(message.chat.id, message.from_user.id if message.from_user else None):
+        await message.answer("Недостаточно прав")
+        return
+    await open_create_post_mode(state)
+    await message.answer("📝 Режим создания поста включен. Отправь пост на русском.")
+
+
+@dp.message(StateFilter(ApplicationStates.admin_create_post), F.chat.id == ADMIN_GROUP_ID)
+async def admin_create_post_submit(message: Message, state: FSMContext):
+    if not message.from_user or message.from_user.is_bot:
+        return
+    if not await is_admin_actor(message.chat.id, message.from_user.id):
+        return
+    if message.text and message.text.strip().startswith("/"):
+        await message.answer("⚠️ Сейчас включён режим публикации. Отправь пост или нажми «Отменить».")
+        return
+    if message.media_group_id:
+        await message.answer("⚠️ Альбомы не поддерживаются. Отправь один пост (одно сообщение).")
+        return
+    if not any([message.text, message.photo, message.video, message.document, message.animation]):
+        await message.answer("⚠️ Поддерживаются: текст, фото, видео, gif или документ.")
+        return
+
+    ru_text, ru_entities = extract_post_text_and_entities(message)
+    if ru_text and not CYRILLIC_RE.search(ru_text):
+        await message.answer("⚠️ Текст поста должен быть на русском, чтобы перевести его автоматически.")
+        return
+
+    try:
+        channels = active_post_channels()
+        target_langs = [lang for lang in POST_LANG_ORDER if lang in channels and lang != "ru"]
+        translated_texts: dict[str, str] = {}
+        translated_entities: dict[str, list[MessageEntity] | None] = {}
+        if ru_text:
+            marked_text, token_specs = markerize_custom_emoji(ru_text, ru_entities)
+            required_tokens = [token for token, _ in token_specs]
+            translated_marked = await translate_ru_to_targets(
+                marked_text,
+                target_langs,
+                required_tokens=required_tokens,
+            )
+            if token_specs:
+                for lang in target_langs:
+                    translated_marked_text = translated_marked.get(lang, "")
+                    restored_text, emoji_entities = apply_custom_emoji_tokens(
+                        translated_marked_text,
+                        token_specs,
+                    )
+                    translated_texts[lang] = restored_text
+                    translated_entities[lang] = emoji_entities
+            else:
+                translated_texts = translated_marked
+        await send_crosspost_to_channels(
+            message,
+            ru_text,
+            translated_texts,
+            translated_entities=translated_entities,
+        )
+        await state.clear()
+        langs = ", ".join(LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in channels)
+        await update_admin_menu_message(
+            f"✅ Пост опубликован в каналы: {langs}",
+            admin_menu_keyboard(get_status_counts())
+        )
+    except ValueError as exc:
+        await message.answer(str(exc))
+    except RuntimeError as exc:
+        await message.answer(str(exc))
+    except Exception:
+        logger.exception("Ошибка публикации в режиме create_post")
+        await message.answer("⚠️ Не удалось опубликовать пост. Попробуй ещё раз.")
+
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
-async def admin_menu(message: Message):
+async def admin_menu(message: Message, state: FSMContext):
+    await state.clear()
     await clear_admin_temp_messages()
     await ensure_admin_menu_posted()
 
+@dp.callback_query(F.data == "admin_post:cancel")
+async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        await state.clear()
+        await post_admin_menu()
+        await safe_call_answer(call, "Отменено")
+    except Exception:
+        logger.exception("Ошибка отмены режима создания поста")
+        await safe_call_answer(call, "Не удалось отменить", show_alert=False)
+
 @dp.callback_query(F.data.startswith("admin_menu:"))
-async def admin_menu_action(call: CallbackQuery):
+async def admin_menu_action(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
@@ -2505,6 +3133,16 @@ async def admin_menu_action(call: CallbackQuery):
         await safe_call_answer(call)
         await clear_admin_temp_messages()
         action = call.data.split(":", 1)[1]
+        if action != "create_post":
+            current_state = await state.get_state()
+            if current_state == ApplicationStates.admin_create_post.state:
+                await state.clear()
+        if action == "create_post":
+            if not await is_admin_actor(call.message.chat.id, call.from_user.id if call.from_user else None):
+                await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+                return
+            await open_create_post_mode(state)
+            return
         if action in {"pending", "accepted", "rejected", "all"}:
             await clear_admin_notify()
             await send_admin_list(call, action, 0)

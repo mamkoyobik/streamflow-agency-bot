@@ -23,6 +23,11 @@
 - `BOT_TOKEN`
 - `ADMIN_GROUP_ID`
 - `CHANNEL_ID`
+- `CHANNEL_EN_ID`
+- `CHANNEL_PT_ID`
+- `CHANNEL_ES_ID`
+- `OPENAI_API_KEY=...`
+- `OPENAI_TRANSLATE_MODEL=gpt-4o-mini`
 - `ADMIN_USERNAME`
 - `SITE_URL=https://streamflowagency.com`
 - `DATABASE_URL=...`
@@ -57,4 +62,3 @@ curl https://streamflowagency.com/api/config
 - `robots.txt` и `sitemap.xml` переведены на `streamflowagency.com`.
 - Дефолтный `SITE_URL` в боте переведен на `https://streamflowagency.com`.
 - В `web_server.py` добавлен canonical redirect и secure headers.
-
