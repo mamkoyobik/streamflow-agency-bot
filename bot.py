@@ -3232,9 +3232,6 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
                 await state.clear()
                 await sync_anonymous_create_post_state(enabled=False)
         if action == "create_post":
-            if not await is_admin_actor(call.message.chat.id, call.from_user.id if call.from_user else None):
-                await safe_call_answer(call, "Недостаточно прав", show_alert=True)
-                return
             await open_create_post_mode(state)
             return
         if action in {"pending", "accepted", "rejected", "all"}:
