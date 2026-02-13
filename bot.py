@@ -374,6 +374,7 @@ TRANSLATION_STYLE = {
 }
 CUSTOM_EMOJI_TOKEN_RE = re.compile(r"\[\[CE(\d+)\]\]")
 CUSTOM_EMOJI_PLACEHOLDER = "⭐"
+ANONYMOUS_ADMIN_BOT_ID = 1087968824
 
 
 def _env_int(name: str, default: int) -> int:
@@ -654,6 +655,36 @@ async def is_admin_actor(chat_id: int, user_id: int | None) -> bool:
         logger.exception("Не удалось проверить права участника чата")
         return False
     return member.status in {"creator", "administrator"}
+
+
+def is_anonymous_admin_post(message: Message) -> bool:
+    sender_chat = getattr(message, "sender_chat", None)
+    return bool(sender_chat and sender_chat.id == message.chat.id)
+
+
+async def can_manage_admin_group(message: Message) -> bool:
+    if message.chat.id != ADMIN_GROUP_ID:
+        return False
+    if is_anonymous_admin_post(message):
+        return True
+    if not message.from_user:
+        return False
+    return await is_admin_actor(message.chat.id, message.from_user.id)
+
+
+async def sync_anonymous_create_post_state(enabled: bool):
+    try:
+        anon_ctx = dp.fsm.get_context(
+            bot=bot,
+            chat_id=ADMIN_GROUP_ID,
+            user_id=ANONYMOUS_ADMIN_BOT_ID,
+        )
+        if enabled:
+            await anon_ctx.set_state(ApplicationStates.admin_create_post)
+        else:
+            await anon_ctx.clear()
+    except Exception:
+        logger.exception("Не удалось синхронизировать состояние create_post для анонимного админа")
 
 
 def fit_caption(text: str) -> str:
@@ -2646,7 +2677,7 @@ async def edit_photo(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка в edit_photo")
         await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
 
-@dp.message(F.photo)
+@dp.message(StateFilter(ApplicationStates.preview), F.photo)
 async def receive_edited_photo(m: Message, state: FSMContext):
     data = await state.get_data()
 
@@ -3023,6 +3054,7 @@ async def admin_photos(call: CallbackQuery):
 
 async def open_create_post_mode(state: FSMContext):
     await state.set_state(ApplicationStates.admin_create_post)
+    await sync_anonymous_create_post_state(enabled=True)
     await clear_admin_view_message()
     await update_admin_menu_message(
         post_creator_prompt(),
@@ -3033,18 +3065,19 @@ async def open_create_post_mode(state: FSMContext):
 @dp.message(Command("create_post"), F.chat.id == ADMIN_GROUP_ID)
 @dp.message(Command("crosspost"), F.chat.id == ADMIN_GROUP_ID)
 async def admin_create_post_command(message: Message, state: FSMContext):
-    if not await is_admin_actor(message.chat.id, message.from_user.id if message.from_user else None):
+    if not await can_manage_admin_group(message):
         await message.answer("Недостаточно прав")
         return
     await open_create_post_mode(state)
-    await message.answer("📝 Режим создания поста включен. Отправь пост на русском.")
+    await message.answer("📝 Режим создания поста включен. Отправь пост на русском (если в группе включена анонимность — тоже сработает).")
 
 
 @dp.message(StateFilter(ApplicationStates.admin_create_post), F.chat.id == ADMIN_GROUP_ID)
 async def admin_create_post_submit(message: Message, state: FSMContext):
-    if not message.from_user or message.from_user.is_bot:
+    if message.from_user and message.from_user.is_bot and not is_anonymous_admin_post(message):
         return
-    if not await is_admin_actor(message.chat.id, message.from_user.id):
+    if not await can_manage_admin_group(message):
+        await message.answer("⚠️ Для публикации нужны права администратора этой группы.")
         return
     if message.text and message.text.strip().startswith("/"):
         await message.answer("⚠️ Сейчас включён режим публикации. Отправь пост или нажми «Отменить».")
@@ -3092,6 +3125,7 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
             translated_entities=translated_entities,
         )
         await state.clear()
+        await sync_anonymous_create_post_state(enabled=False)
         langs = ", ".join(LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in channels)
         await update_admin_menu_message(
             f"✅ Пост опубликован в каналы: {langs}",
@@ -3108,6 +3142,7 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message, state: FSMContext):
     await state.clear()
+    await sync_anonymous_create_post_state(enabled=False)
     await clear_admin_temp_messages()
     await ensure_admin_menu_posted()
 
@@ -3118,6 +3153,7 @@ async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await state.clear()
+        await sync_anonymous_create_post_state(enabled=False)
         await post_admin_menu()
         await safe_call_answer(call, "Отменено")
     except Exception:
@@ -3137,6 +3173,7 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             current_state = await state.get_state()
             if current_state == ApplicationStates.admin_create_post.state:
                 await state.clear()
+                await sync_anonymous_create_post_state(enabled=False)
         if action == "create_post":
             if not await is_admin_actor(call.message.chat.id, call.from_user.id if call.from_user else None):
                 await safe_call_answer(call, "Недостаточно прав", show_alert=True)
