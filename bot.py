@@ -151,18 +151,43 @@ async def global_error_handler(event: ErrorEvent):
 @dp.chat_join_request()
 async def on_join_request(req: ChatJoinRequest):
     chat_id = req.chat.id
-    if chat_id not in CHANNEL_IDS:
-        return
     try:
         await bot.approve_chat_join_request(chat_id, req.from_user.id)
-        if CHANNEL_EN_ID is not None and chat_id == CHANNEL_EN_ID:
-            invite_message = "🤍 Your request to join the private channel is approved.\n\nPress /start ✨"
-        elif CHANNEL_PT_ID is not None and chat_id == CHANNEL_PT_ID:
-            invite_message = "🤍 Sua solicitação para entrar no canal privado foi aprovada.\n\nToque em /start ✨"
-        elif CHANNEL_ES_ID is not None and chat_id == CHANNEL_ES_ID:
-            invite_message = "🤍 Tu solicitud para entrar al canal privado fue aprobada.\n\nPulsa /start ✨"
+
+        channel_lang = "ru"
+        for lang_code, configured_chat_id in CHANNEL_ID_BY_LANG.items():
+            if configured_chat_id is not None and chat_id == configured_chat_id:
+                channel_lang = lang_code
+                break
         else:
-            invite_message = "🤍 Ты подала заявку в закрытый канал\n\nНажми /start ✨"
+            title = (req.chat.title or "").strip().lower()
+            username = (req.chat.username or "").strip().lower()
+            hint = f"{title} {username}"
+            if any(token in hint for token in ("english", " eng", "_en", "-en", " en ")):
+                channel_lang = "en"
+            elif any(token in hint for token in ("portugu", "brazil", "brasil", " pt", "_pt", "-pt")):
+                channel_lang = "pt"
+            elif any(token in hint for token in ("spanish", "españ", "espan", " latino", " latam", " es", "_es", "-es")):
+                channel_lang = "es"
+
+            logger.warning(
+                "Join request from unconfigured channel: id=%s title=%r username=%r; inferred_lang=%s",
+                chat_id,
+                req.chat.title,
+                req.chat.username,
+                channel_lang,
+            )
+
+        if not has_user_language(req.from_user.id):
+            set_user_language(req.from_user.id, channel_lang)
+
+        invite_by_lang = {
+            "en": "🤍 Your request to join the private channel is approved.\n\nPress /start ✨",
+            "pt": "🤍 Sua solicitação para entrar no canal privado foi aprovada.\n\nToque em /start ✨",
+            "es": "🤍 Tu solicitud para entrar al canal privado fue aprobada.\n\nPulsa /start ✨",
+            "ru": "🤍 Ты подала заявку в закрытый канал\n\nНажми /start ✨",
+        }
+        invite_message = invite_by_lang.get(channel_lang, invite_by_lang["ru"])
         await bot.send_message(
             req.from_user.id,
             invite_message
