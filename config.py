@@ -38,6 +38,21 @@ def _get_int_env(name: str, required: bool = True) -> int | None:
         raise RuntimeError(f"❌ {name} должен быть числом") from exc
 
 
+def _get_int_env_any(names: tuple[str, ...], required: bool = False) -> int | None:
+    for name in names:
+        raw = os.getenv(name)
+        if raw is None or raw.strip() == "":
+            continue
+        try:
+            return int(raw)
+        except ValueError as exc:
+            raise RuntimeError(f"❌ {name} должен быть числом") from exc
+    if required:
+        joined = ", ".join(names)
+        raise RuntimeError(f"❌ Не найдена ни одна переменная: {joined}")
+    return None
+
+
 def _dedupe_ids(values: list[int | None]) -> tuple[int, ...]:
     seen: set[int] = set()
     result: list[int] = []
@@ -52,9 +67,18 @@ def _dedupe_ids(values: list[int | None]) -> tuple[int, ...]:
 BOT_TOKEN = _get_env("BOT_TOKEN", required=True)
 ADMIN_GROUP_ID = _get_int_env("ADMIN_GROUP_ID", required=True)
 CHANNEL_ID = _get_int_env("CHANNEL_ID", required=True)
-CHANNEL_EN_ID = _get_int_env("CHANNEL_EN_ID", required=False)
-CHANNEL_PT_ID = _get_int_env("CHANNEL_PT_ID", required=False)
-CHANNEL_ES_ID = _get_int_env("CHANNEL_ES_ID", required=False)
+CHANNEL_EN_ID = _get_int_env_any(
+    ("CHANNEL_EN_ID", "CHANNEL_ID_EN", "EN_CHANNEL_ID", "CHANNEL_ENG_ID"),
+    required=False,
+)
+CHANNEL_PT_ID = _get_int_env_any(
+    ("CHANNEL_PT_ID", "CHANNEL_ID_PT", "PT_CHANNEL_ID", "CHANNEL_BR_ID"),
+    required=False,
+)
+CHANNEL_ES_ID = _get_int_env_any(
+    ("CHANNEL_ES_ID", "CHANNEL_ID_ES", "ES_CHANNEL_ID", "CHANNEL_SPANISH_ID"),
+    required=False,
+)
 CHANNEL_ID_BY_LANG = {
     "ru": CHANNEL_ID,
     "en": CHANNEL_EN_ID,

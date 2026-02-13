@@ -392,6 +392,12 @@ TELEGRAM_CAPTION_LIMIT = 1024
 TELEGRAM_TEXT_LIMIT = 4096
 POST_LANG_ORDER = ("ru", "en", "pt", "es")
 LANG_TITLES = {"ru": "RU", "en": "EN", "pt": "PT", "es": "ES"}
+REQUIRED_CROSSPOST_LANGS = ("en", "pt", "es")
+LANG_ENV_HINTS = {
+    "en": "CHANNEL_EN_ID / CHANNEL_ID_EN / EN_CHANNEL_ID / CHANNEL_ENG_ID",
+    "pt": "CHANNEL_PT_ID / CHANNEL_ID_PT / PT_CHANNEL_ID / CHANNEL_BR_ID",
+    "es": "CHANNEL_ES_ID / CHANNEL_ID_ES / ES_CHANNEL_ID / CHANNEL_SPANISH_ID",
+}
 TRANSLATION_STYLE = {
     "en": "natural, conversational English",
     "pt": "natural, conversational Brazilian Portuguese",
@@ -425,6 +431,11 @@ def active_post_channels() -> dict[str, int]:
     return result
 
 
+def missing_crosspost_langs(channels: dict[str, int] | None = None) -> list[str]:
+    available = channels or active_post_channels()
+    return [lang for lang in REQUIRED_CROSSPOST_LANGS if lang not in available]
+
+
 def extract_post_text(message: Message) -> str:
     return (message.text or message.caption or "").strip()
 
@@ -440,13 +451,24 @@ def extract_post_text_and_entities(message: Message) -> tuple[str, list[MessageE
 def post_creator_prompt() -> str:
     channels = active_post_channels()
     langs = ", ".join(LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in channels) or "RU"
-    return (
+    text = (
         "📝 <b>Создание поста</b>\n\n"
         "Отправь один пост <b>на русском</b> (текст или медиа с подписью).\n"
         "Я автоматически переведу и опубликую его в каналы:\n"
         f"{langs}\n\n"
         "Чтобы выйти без публикации, нажми «Отменить»."
     )
+    missing_langs = missing_crosspost_langs(channels)
+    if missing_langs:
+        missing_titles = ", ".join(LANG_TITLES[lang] for lang in missing_langs)
+        env_hints = "\n".join(f"{LANG_TITLES[lang]}: {LANG_ENV_HINTS.get(lang, '-')}" for lang in missing_langs)
+        text += (
+            "\n\n⚠️ <b>Кросспост настроен не полностью</b>\n"
+            f"Не хватает каналов: {missing_titles}.\n"
+            "Проверь env bot-сервиса:\n"
+            f"{env_hints}"
+        )
+    return text
 
 
 def _extract_openai_text(payload: dict) -> str:
@@ -3121,6 +3143,16 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
 
     try:
         channels = active_post_channels()
+        missing_langs = missing_crosspost_langs(channels)
+        if missing_langs:
+            missing_titles = ", ".join(LANG_TITLES[lang] for lang in missing_langs)
+            env_hints = "\n".join(f"{LANG_TITLES[lang]}: {LANG_ENV_HINTS.get(lang, '-')}" for lang in missing_langs)
+            raise RuntimeError(
+                "⚠️ Публикация остановлена: кросспост не полностью настроен.\n"
+                f"Отсутствуют каналы: {missing_titles}.\n"
+                "Проверь переменные окружения bot-сервиса:\n"
+                f"{env_hints}"
+            )
         target_langs = [lang for lang in POST_LANG_ORDER if lang in channels and lang != "ru"]
         translated_texts: dict[str, str] = {}
         translated_entities: dict[str, list[MessageEntity] | None] = {}
@@ -3449,6 +3481,11 @@ async def admin_excel(message: Message):
 
 async def main():
     logger.info("БОТ ЗАПУЩЕН")
+    channels = active_post_channels()
+    logger.info("Кросспост каналы: %s", ", ".join(f"{lang}:{chat_id}" for lang, chat_id in channels.items()))
+    missing_langs = missing_crosspost_langs(channels)
+    if missing_langs:
+        logger.warning("Не настроены каналы кросспоста: %s", ", ".join(missing_langs))
     try:
         cleanup_old_form_data()
     except Exception:

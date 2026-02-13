@@ -3619,6 +3619,10 @@ body[data-page="home"] .page {
   margin-right: auto;
 }
 
+.income-card img.income-photo-luana {
+  object-position: center 12%;
+}
+
 .portfolio-swipe-hint {
   margin: 12px auto 0;
   display: inline-flex;
