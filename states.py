@@ -28,3 +28,5 @@ class ApplicationStates(StatesGroup):
     # ===== Админ =====
     admin_reject_reason = State()
     admin_create_post = State()
+    admin_edit_post_text = State()
+    admin_edit_post_photo = State()

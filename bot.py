@@ -66,6 +66,12 @@ from database import (
     get_user_language,
     set_user_language,
     has_user_language,
+    create_posted_message,
+    get_posted_message,
+    list_posted_messages,
+    count_posted_messages,
+    update_posted_message,
+    delete_posted_message,
 )
 try:
     from excel_export import append_application_row, update_application_status, rebuild_excel_from_db
@@ -394,18 +400,39 @@ POST_LANG_ORDER = ("ru", "en", "pt", "es")
 LANG_TITLES = {"ru": "RU", "en": "EN", "pt": "PT", "es": "ES"}
 REQUIRED_CROSSPOST_LANGS = ("en", "pt", "es")
 LANG_ENV_HINTS = {
-    "en": "CHANNEL_EN_ID / CHANNEL_ID_EN / EN_CHANNEL_ID / CHANNEL_ENG_ID",
-    "pt": "CHANNEL_PT_ID / CHANNEL_ID_PT / PT_CHANNEL_ID / CHANNEL_BR_ID",
-    "es": "CHANNEL_ES_ID / CHANNEL_ID_ES / ES_CHANNEL_ID / CHANNEL_SPANISH_ID",
+    "en": "CHANNEL_EN_ID / CHANNEL_ID_EN / EN_CHANNEL_ID / CHANNEL_ENG_ID / CHANNEL_EN / CHANNEL_ENGLISH_ID",
+    "pt": "CHANNEL_PT_ID / CHANNEL_ID_PT / PT_CHANNEL_ID / CHANNEL_BR_ID / CHANNEL_PT / CHANNEL_PORTUGUESE_ID",
+    "es": "CHANNEL_ES_ID / CHANNEL_ID_ES / ES_CHANNEL_ID / CHANNEL_SPANISH_ID / CHANNEL_ES / CHANNEL_LATAM_ID",
 }
 TRANSLATION_STYLE = {
     "en": "natural, conversational English",
     "pt": "natural, conversational Brazilian Portuguese",
     "es": "natural, conversational Latin American Spanish",
 }
-CUSTOM_EMOJI_TOKEN_RE = re.compile(r"\[\[CE(\d+)\]\]")
+GENERIC_MARKER_RE = re.compile(r"\[\[(?:CE\d+|E\d+[SE]|LK\d+)\]\]")
 CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
+TRANSLATABLE_ENTITY_TYPES = {
+    "bold",
+    "italic",
+    "underline",
+    "strikethrough",
+    "spoiler",
+    "code",
+    "pre",
+    "text_link",
+    "blockquote",
+    "expandable_blockquote",
+}
+LOCKED_ENTITY_TYPES = {
+    "url",
+    "mention",
+    "hashtag",
+    "cashtag",
+    "bot_command",
+    "email",
+    "phone_number",
+}
 
 
 def _env_int(name: str, default: int) -> int:
@@ -503,86 +530,257 @@ def utf16_offset_to_index(text: str, utf16_offset: int) -> int:
     return len(text)
 
 
-def markerize_custom_emoji(text: str, entities: list[MessageEntity] | None) -> tuple[str, list[tuple[str, str]]]:
-    if not text or not entities:
-        return text, []
-    custom_items: list[tuple[int, int, int, str]] = []
+def tokens_intact(text: str, expected_tokens: list[str]) -> bool:
+    if not expected_tokens:
+        return True
+    found_tokens = [match.group(0) for match in GENERIC_MARKER_RE.finditer(text)]
+    if found_tokens != expected_tokens:
+        return False
+    return all(text.count(token) == 1 for token in expected_tokens)
+
+
+def entity_to_dict(entity: MessageEntity) -> dict:
+    try:
+        return entity.model_dump(exclude_none=True)
+    except Exception:
+        try:
+            return entity.dict(exclude_none=True)
+        except Exception:
+            return {}
+
+
+def entities_to_dicts(entities: list[MessageEntity] | None) -> list[dict]:
+    if not entities:
+        return []
+    payload: list[dict] = []
     for entity in entities:
-        if getattr(entity, "type", None) != "custom_emoji":
+        data = entity_to_dict(entity)
+        if data:
+            payload.append(data)
+    return payload
+
+
+def dicts_to_entities(payload: list[dict] | None) -> list[MessageEntity] | None:
+    if not payload:
+        return None
+    result: list[MessageEntity] = []
+    for item in payload:
+        if not isinstance(item, dict):
             continue
-        custom_emoji_id = getattr(entity, "custom_emoji_id", None)
-        if not custom_emoji_id:
+        try:
+            result.append(MessageEntity(**item))
+        except Exception:
             continue
+    return result or None
+
+
+def markerize_entities_for_translation(
+    text: str,
+    entities: list[MessageEntity] | None,
+) -> tuple[str, list[str], list[dict], list[tuple[str, str]], list[tuple[str, str, str]]]:
+    if not text:
+        return text, [], [], [], []
+
+    rich_specs: list[dict] = []
+    replacement_spans: dict[int, tuple[int, str, str]] = {}
+    custom_specs: list[tuple[str, str]] = []
+    locked_specs: list[tuple[str, str, str]] = []
+
+    for entity in (entities or []):
+        entity_type = str(getattr(entity, "type", "") or "")
         start_u16 = int(getattr(entity, "offset", 0))
         end_u16 = start_u16 + int(getattr(entity, "length", 0))
         start = utf16_offset_to_index(text, start_u16)
         end = utf16_offset_to_index(text, end_u16)
         if end <= start:
             continue
-        custom_items.append((start_u16, start, end, str(custom_emoji_id)))
-    if not custom_items:
-        return text, []
-    custom_items.sort(key=lambda item: (item[0], item[1]))
 
-    parts: list[str] = []
-    token_specs: list[tuple[str, str]] = []
-    cursor = 0
-    marker_index = 0
-    for _, start, end, custom_emoji_id in custom_items:
-        if start < cursor:
+        if entity_type == "custom_emoji":
+            custom_emoji_id = getattr(entity, "custom_emoji_id", None)
+            if not custom_emoji_id:
+                continue
+            token = f"[[CE{len(custom_specs)}]]"
+            custom_specs.append((token, str(custom_emoji_id)))
+            current = replacement_spans.get(start)
+            if current is None or end > current[0]:
+                replacement_spans[start] = (end, token, "custom")
             continue
-        token = f"[[CE{marker_index}]]"
-        marker_index += 1
-        parts.append(text[cursor:start])
-        parts.append(token)
-        token_specs.append((token, custom_emoji_id))
-        cursor = end
-    parts.append(text[cursor:])
-    return "".join(parts), token_specs
+
+        if entity_type in LOCKED_ENTITY_TYPES:
+            token = f"[[LK{len(locked_specs)}]]"
+            locked_specs.append((token, text[start:end], entity_type))
+            current = replacement_spans.get(start)
+            if current is None or end > current[0]:
+                replacement_spans[start] = (end, token, "locked")
+            continue
+
+        if entity_type not in TRANSLATABLE_ENTITY_TYPES:
+            continue
+
+        spec = {
+            "id": len(rich_specs),
+            "type": entity_type,
+            "start": start,
+            "end": end,
+        }
+        if entity_type == "text_link":
+            url = getattr(entity, "url", None)
+            if url:
+                spec["url"] = str(url)
+        if entity_type == "pre":
+            language = getattr(entity, "language", None)
+            if language:
+                spec["language"] = str(language)
+        rich_specs.append(spec)
+
+    starts: dict[int, list[dict]] = {}
+    ends: dict[int, list[dict]] = {}
+    for spec in rich_specs:
+        starts.setdefault(int(spec["start"]), []).append(spec)
+        ends.setdefault(int(spec["end"]), []).append(spec)
+
+    markerized_parts: list[str] = []
+    expected_tokens: list[str] = []
+    idx = 0
+    text_len = len(text)
+    while idx <= text_len:
+        ending = ends.get(idx, [])
+        if ending:
+            for spec in sorted(ending, key=lambda item: (-int(item["start"]), int(item["id"]))):
+                token = f"[[E{int(spec['id'])}E]]"
+                markerized_parts.append(token)
+                expected_tokens.append(token)
+
+        starting = starts.get(idx, [])
+        if starting:
+            for spec in sorted(starting, key=lambda item: (-int(item["end"]), int(item["id"]))):
+                token = f"[[E{int(spec['id'])}S]]"
+                markerized_parts.append(token)
+                expected_tokens.append(token)
+
+        if idx == text_len:
+            break
+
+        replacement = replacement_spans.get(idx)
+        if replacement:
+            end, token, _kind = replacement
+            markerized_parts.append(token)
+            expected_tokens.append(token)
+            idx = end
+            continue
+
+        markerized_parts.append(text[idx])
+        idx += 1
+
+    return "".join(markerized_parts), expected_tokens, rich_specs, custom_specs, locked_specs
 
 
-def tokens_intact(text: str, expected_tokens: list[str]) -> bool:
+def restore_entities_from_markers(
+    text: str,
+    expected_tokens: list[str],
+    rich_specs: list[dict],
+    custom_specs: list[tuple[str, str]],
+    locked_specs: list[tuple[str, str, str]],
+) -> tuple[str, list[MessageEntity] | None]:
     if not expected_tokens:
-        return True
-    found_tokens = [match.group(0) for match in CUSTOM_EMOJI_TOKEN_RE.finditer(text)]
-    if found_tokens != expected_tokens:
-        return False
-    return all(text.count(token) == 1 for token in expected_tokens)
-
-
-def apply_custom_emoji_tokens(text: str, token_specs: list[tuple[str, str]]) -> tuple[str, list[MessageEntity] | None]:
-    if not token_specs:
         return text, None
-    expected_tokens = [token for token, _ in token_specs]
     if not tokens_intact(text, expected_tokens):
-        raise RuntimeError("⚠️ Переводчик повредил маркеры премиум-эмодзи. Попробуй отправить пост ещё раз.")
-    token_to_id = {token: custom_id for token, custom_id in token_specs}
+        raise RuntimeError("⚠️ Переводчик повредил маркеры форматирования/ссылок. Попробуй отправить пост ещё раз.")
 
+    rich_by_id = {int(spec["id"]): spec for spec in rich_specs}
+    token_actions: dict[str, tuple] = {}
+    for spec_id in rich_by_id:
+        token_actions[f"[[E{spec_id}S]]"] = ("start", spec_id)
+        token_actions[f"[[E{spec_id}E]]"] = ("end", spec_id)
+    for idx, (token, custom_emoji_id) in enumerate(custom_specs):
+        token_actions[token] = ("custom", idx, custom_emoji_id)
+    for idx, (token, value, entity_type) in enumerate(locked_specs):
+        token_actions[token] = ("locked", idx, value, entity_type)
+
+    open_offsets: dict[int, int] = {}
     result_parts: list[str] = []
-    entities: list[MessageEntity] = []
+    result_entities: list[MessageEntity] = []
     cursor = 0
     utf16_cursor = 0
-    for match in CUSTOM_EMOJI_TOKEN_RE.finditer(text):
-        token = match.group(0)
+    for match in GENERIC_MARKER_RE.finditer(text):
         before = text[cursor:match.start()]
         if before:
             result_parts.append(before)
             utf16_cursor += utf16_length(before)
-        result_parts.append(CUSTOM_EMOJI_PLACEHOLDER)
-        entities.append(
-            MessageEntity(
-                type="custom_emoji",
-                offset=utf16_cursor,
-                length=utf16_length(CUSTOM_EMOJI_PLACEHOLDER),
-                custom_emoji_id=token_to_id[token],
+
+        token = match.group(0)
+        action = token_actions.get(token)
+        if action is None:
+            result_parts.append(token)
+            utf16_cursor += utf16_length(token)
+            cursor = match.end()
+            continue
+
+        if action[0] == "start":
+            open_offsets[int(action[1])] = utf16_cursor
+        elif action[0] == "end":
+            spec_id = int(action[1])
+            start_offset = open_offsets.pop(spec_id, None)
+            if start_offset is not None:
+                length = utf16_cursor - start_offset
+                if length > 0:
+                    spec = rich_by_id.get(spec_id) or {}
+                    kwargs = {
+                        "type": str(spec.get("type") or ""),
+                        "offset": start_offset,
+                        "length": length,
+                    }
+                    if kwargs["type"] == "text_link" and spec.get("url"):
+                        kwargs["url"] = str(spec["url"])
+                    if kwargs["type"] == "pre" and spec.get("language"):
+                        kwargs["language"] = str(spec["language"])
+                    try:
+                        result_entities.append(MessageEntity(**kwargs))
+                    except Exception:
+                        pass
+        elif action[0] == "custom":
+            custom_emoji_id = str(action[2])
+            result_parts.append(CUSTOM_EMOJI_PLACEHOLDER)
+            result_entities.append(
+                MessageEntity(
+                    type="custom_emoji",
+                    offset=utf16_cursor,
+                    length=utf16_length(CUSTOM_EMOJI_PLACEHOLDER),
+                    custom_emoji_id=custom_emoji_id,
+                )
             )
-        )
-        utf16_cursor += utf16_length(CUSTOM_EMOJI_PLACEHOLDER)
+            utf16_cursor += utf16_length(CUSTOM_EMOJI_PLACEHOLDER)
+        elif action[0] == "locked":
+            locked_value = str(action[2])
+            locked_type = str(action[3])
+            result_parts.append(locked_value)
+            length = utf16_length(locked_value)
+            if length > 0:
+                try:
+                    result_entities.append(
+                        MessageEntity(
+                            type=locked_type,
+                            offset=utf16_cursor,
+                            length=length,
+                        )
+                    )
+                except Exception:
+                    pass
+            utf16_cursor += length
+
         cursor = match.end()
+
     tail = text[cursor:]
     if tail:
         result_parts.append(tail)
-    return "".join(result_parts), entities or None
+
+    if open_offsets:
+        raise RuntimeError("⚠️ Переводчик повредил маркеры форматирования. Попробуй отправить пост ещё раз.")
+
+    result_text = "".join(result_parts)
+    if result_entities:
+        result_entities.sort(key=lambda item: (int(getattr(item, "offset", 0)), int(getattr(item, "length", 0))))
+    return result_text, (result_entities or None)
 
 
 def fit_caption_with_entities(text: str, entities: list[MessageEntity] | None) -> tuple[str, list[MessageEntity] | None]:
@@ -614,7 +812,7 @@ def translate_ru_to_lang_sync(ru_text: str, target_lang: str, required_tokens: l
     token_hint = ""
     if tokens:
         token_hint = (
-            " Token markers in format [[CE0]] must be preserved exactly, without changes, "
+            " Token markers in formats like [[E0S]], [[E0E]], [[CE0]], [[LK0]] must be preserved exactly, without changes, "
             "without reordering, and each marker must appear exactly once."
         )
 
@@ -745,7 +943,8 @@ async def send_crosspost_to_channels(
     ru_text: str,
     translated_texts: dict[str, str],
     translated_entities: dict[str, list[MessageEntity] | None] | None = None,
-):
+    ru_entities: list[MessageEntity] | None = None,
+) -> dict:
     channels = active_post_channels()
     if "ru" not in channels:
         raise ValueError("⚠️ Не задан CHANNEL_ID (русский канал).")
@@ -762,17 +961,38 @@ async def send_crosspost_to_channels(
     if source_message.text and not ru_text:
         raise ValueError("⚠️ Текст поста пустой. Отправь текст заново.")
     entities_map = translated_entities or {}
+    posted_message_ids: dict[str, int] = {}
+    posted_texts: dict[str, str] = {}
+    posted_entities: dict[str, list[MessageEntity] | None] = {}
+
+    content_type = "text"
+    if source_message.photo:
+        content_type = "photo"
+    elif source_message.video:
+        content_type = "video"
+    elif source_message.document:
+        content_type = "document"
+    elif source_message.animation:
+        content_type = "animation"
 
     # RU channel gets exact copy to preserve original formatting and premium emoji 1:1.
-    await bot.copy_message(
+    ru_copy = await bot.copy_message(
         chat_id=channels["ru"],
         from_chat_id=source_message.chat.id,
         message_id=source_message.message_id,
     )
+    posted_message_ids["ru"] = int(getattr(ru_copy, "message_id", 0))
+    posted_texts["ru"] = (ru_text or "").strip()
+    posted_entities["ru"] = list(ru_entities or [])
 
     translated_channels = [lang for lang in POST_LANG_ORDER if lang in channels and lang != "ru"]
     if not translated_channels:
-        return
+        return {
+            "content_type": content_type,
+            "message_ids": posted_message_ids,
+            "texts": posted_texts,
+            "entities": posted_entities,
+        }
 
     def text_for_lang(lang: str) -> str:
         return (translated_texts.get(lang) or "").strip()
@@ -791,8 +1011,16 @@ async def send_crosspost_to_channels(
                     kwargs["caption_entities"] = entities
                 else:
                     kwargs["parse_mode"] = None
-            await bot.send_photo(**kwargs)
-        return
+            sent = await bot.send_photo(**kwargs)
+            posted_message_ids[lang] = int(sent.message_id)
+            posted_texts[lang] = text or ""
+            posted_entities[lang] = entities
+        return {
+            "content_type": content_type,
+            "message_ids": posted_message_ids,
+            "texts": posted_texts,
+            "entities": posted_entities,
+        }
     if source_message.video:
         file_id = source_message.video.file_id
         for lang in translated_channels:
@@ -807,8 +1035,16 @@ async def send_crosspost_to_channels(
                     kwargs["caption_entities"] = entities
                 else:
                     kwargs["parse_mode"] = None
-            await bot.send_video(**kwargs)
-        return
+            sent = await bot.send_video(**kwargs)
+            posted_message_ids[lang] = int(sent.message_id)
+            posted_texts[lang] = text or ""
+            posted_entities[lang] = entities
+        return {
+            "content_type": content_type,
+            "message_ids": posted_message_ids,
+            "texts": posted_texts,
+            "entities": posted_entities,
+        }
     if source_message.document:
         file_id = source_message.document.file_id
         for lang in translated_channels:
@@ -823,8 +1059,16 @@ async def send_crosspost_to_channels(
                     kwargs["caption_entities"] = entities
                 else:
                     kwargs["parse_mode"] = None
-            await bot.send_document(**kwargs)
-        return
+            sent = await bot.send_document(**kwargs)
+            posted_message_ids[lang] = int(sent.message_id)
+            posted_texts[lang] = text or ""
+            posted_entities[lang] = entities
+        return {
+            "content_type": content_type,
+            "message_ids": posted_message_ids,
+            "texts": posted_texts,
+            "entities": posted_entities,
+        }
     if source_message.animation:
         file_id = source_message.animation.file_id
         for lang in translated_channels:
@@ -839,8 +1083,16 @@ async def send_crosspost_to_channels(
                     kwargs["caption_entities"] = entities
                 else:
                     kwargs["parse_mode"] = None
-            await bot.send_animation(**kwargs)
-        return
+            sent = await bot.send_animation(**kwargs)
+            posted_message_ids[lang] = int(sent.message_id)
+            posted_texts[lang] = text or ""
+            posted_entities[lang] = entities
+        return {
+            "content_type": content_type,
+            "message_ids": posted_message_ids,
+            "texts": posted_texts,
+            "entities": posted_entities,
+        }
     if source_message.text:
         for lang in translated_channels:
             chat_id = channels[lang]
@@ -854,9 +1106,83 @@ async def send_crosspost_to_channels(
                 kwargs["entities"] = entities
             else:
                 kwargs["parse_mode"] = None
-            await bot.send_message(**kwargs)
-        return
+            sent = await bot.send_message(**kwargs)
+            posted_message_ids[lang] = int(sent.message_id)
+            posted_texts[lang] = text or ""
+            posted_entities[lang] = entities
+        return {
+            "content_type": content_type,
+            "message_ids": posted_message_ids,
+            "texts": posted_texts,
+            "entities": posted_entities,
+        }
     raise ValueError("⚠️ Поддерживаются текст, фото, видео, gif и документ.")
+
+
+def entities_map_to_payload(entities_map: dict[str, list[MessageEntity] | None]) -> dict[str, list[dict]]:
+    payload: dict[str, list[dict]] = {}
+    for lang, entities in entities_map.items():
+        payload[lang] = entities_to_dicts(entities)
+    return payload
+
+
+def entities_map_from_payload(payload: dict | None) -> dict[str, list[MessageEntity] | None]:
+    result: dict[str, list[MessageEntity] | None] = {}
+    if not isinstance(payload, dict):
+        return result
+    for lang, raw_entities in payload.items():
+        if isinstance(raw_entities, list):
+            result[str(lang)] = dicts_to_entities(raw_entities)
+        else:
+            result[str(lang)] = None
+    return result
+
+
+def content_type_label(content_type: str | None) -> str:
+    return {
+        "text": "Текст",
+        "photo": "Фото",
+        "video": "Видео",
+        "document": "Документ",
+        "animation": "GIF",
+    }.get((content_type or "").strip().lower(), content_type or "Неизвестно")
+
+
+def post_preview_text(item: dict) -> str:
+    texts = item.get("texts")
+    if isinstance(texts, dict):
+        candidate = (
+            texts.get("ru")
+            or texts.get("en")
+            or texts.get("pt")
+            or texts.get("es")
+            or ""
+        )
+    else:
+        candidate = item.get("source_preview", "") or ""
+    candidate = str(candidate)
+    compact = " ".join(candidate.split())
+    return compact[:300]
+
+
+def build_admin_posted_item_text(item: dict, offset: int, total: int) -> str:
+    preview = html.escape(post_preview_text(item) or "—")
+    created_at = html.escape(str(item.get("created_at") or "—"))
+    content = content_type_label(str(item.get("content_type") or ""))
+    message_ids = item.get("message_ids", {})
+    if not isinstance(message_ids, dict):
+        message_ids = {}
+    langs = [LANG_TITLES.get(lang, lang.upper()) for lang in POST_LANG_ORDER if message_ids.get(lang)]
+    langs_text = ", ".join(langs) if langs else "—"
+    return (
+        "📣 <b>Выложенные посты</b>\n\n"
+        f"Пост <b>{offset + 1}</b> из <b>{total}</b>\n"
+        f"ID: <code>{item.get('id')}</code>\n"
+        f"Тип: <b>{html.escape(content)}</b>\n"
+        f"Каналы: <b>{html.escape(langs_text)}</b>\n"
+        f"Создан: <code>{created_at}</code>\n\n"
+        f"Превью:\n{preview}"
+    )
 
 def build_admin_menu_text(counts: dict) -> str:
     return (
@@ -1202,6 +1528,10 @@ async def ensure_admin_menu_posted():
                     reply_markup=admin_menu_keyboard(counts)
                 )
                 return
+            except TelegramBadRequest as exc:
+                if _is_not_modified_error(exc):
+                    return
+                logger.exception("Не удалось обновить существующее админ-меню")
             except Exception:
                 logger.exception("Не удалось обновить существующее админ-меню")
         try:
@@ -1228,6 +1558,10 @@ async def update_admin_menu_message(text: str, reply_markup: InlineKeyboardMarku
                     reply_markup=reply_markup
                 )
                 return
+            except TelegramBadRequest as exc:
+                if _is_not_modified_error(exc):
+                    return
+                logger.exception("Не удалось обновить админ-сообщение")
             except Exception:
                 logger.exception("Не удалось обновить админ-сообщение")
         try:
@@ -1467,6 +1801,195 @@ async def send_admin_list(
             "⚠️ Не удалось открыть список заявок. Попробуй ещё раз.",
             admin_menu_keyboard(get_status_counts())
         )
+
+
+def _post_message_ids(item: dict | None) -> dict[str, int]:
+    payload = (item or {}).get("message_ids", {})
+    if not isinstance(payload, dict):
+        return {}
+    result: dict[str, int] = {}
+    for lang, raw_value in payload.items():
+        try:
+            message_id = int(raw_value)
+        except Exception:
+            continue
+        if message_id > 0:
+            result[str(lang)] = message_id
+    return result
+
+
+def _post_texts(item: dict | None) -> dict[str, str]:
+    payload = (item or {}).get("texts", {})
+    if not isinstance(payload, dict):
+        return {}
+    result: dict[str, str] = {}
+    for lang, value in payload.items():
+        if value is None:
+            result[str(lang)] = ""
+        else:
+            result[str(lang)] = str(value)
+    return result
+
+
+def _post_entities(item: dict | None) -> dict[str, list[MessageEntity] | None]:
+    return entities_map_from_payload((item or {}).get("entities", {}))
+
+
+async def show_admin_posted_posts(offset: int = 0) -> tuple[dict | None, int, int]:
+    total = count_posted_messages()
+    if total <= 0:
+        await update_admin_menu_message(
+            "🤍 Выложенных постов пока нет ✨",
+            admin_menu_keyboard(get_status_counts())
+        )
+        return None, 0, 0
+
+    if offset < 0:
+        offset = 0
+    if offset >= total:
+        offset = max(total - 1, 0)
+    rows = list_posted_messages(limit=1, offset=offset)
+    if not rows:
+        await update_admin_menu_message(
+            "🤍 Выложенных постов пока нет ✨",
+            admin_menu_keyboard(get_status_counts())
+        )
+        return None, 0, 0
+
+    item = rows[0]
+    await update_admin_menu_message(
+        build_admin_posted_item_text(item, offset, total),
+        admin_posts_view_keyboard(
+            int(item["id"]),
+            offset,
+            total,
+            str(item.get("content_type") or "").strip().lower() == "photo",
+        )
+    )
+    return item, offset, total
+
+
+async def delete_post_from_channels(item: dict) -> None:
+    message_ids = _post_message_ids(item)
+    for lang, message_id in message_ids.items():
+        chat_id = CHANNEL_ID_BY_LANG.get(lang)
+        if not isinstance(chat_id, int):
+            continue
+        try:
+            await bot.delete_message(chat_id, message_id)
+        except Exception:
+            logger.exception("Не удалось удалить пост из канала %s (message_id=%s)", lang, message_id)
+
+
+def _is_not_modified_error(exc: Exception) -> bool:
+    return "message is not modified" in str(exc).lower()
+
+
+async def edit_post_text_in_channels(
+    item: dict,
+    texts_map: dict[str, str],
+    entities_map: dict[str, list[MessageEntity] | None],
+) -> tuple[dict[str, str], dict[str, list[MessageEntity] | None]]:
+    message_ids = _post_message_ids(item)
+    content_type = str(item.get("content_type") or "text").strip().lower()
+    current_texts = _post_texts(item)
+    current_entities = _post_entities(item)
+
+    final_texts = dict(current_texts)
+    final_entities: dict[str, list[MessageEntity] | None] = dict(current_entities)
+
+    for lang, message_id in message_ids.items():
+        chat_id = CHANNEL_ID_BY_LANG.get(lang)
+        if not isinstance(chat_id, int):
+            continue
+        text = texts_map.get(lang, current_texts.get(lang, "")) or ""
+        entities = entities_map.get(lang, current_entities.get(lang))
+
+        if content_type == "text":
+            if not text.strip():
+                raise RuntimeError(f"⚠️ Пустой текст для {LANG_TITLES.get(lang, lang.upper())}.")
+            text, entities = fit_text_with_entities(text, entities)
+            kwargs = {
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "text": text,
+                "parse_mode": None,
+            }
+            if entities:
+                kwargs["entities"] = entities
+                kwargs.pop("parse_mode", None)
+            try:
+                await bot.edit_message_text(**kwargs)
+            except TelegramBadRequest as exc:
+                if not _is_not_modified_error(exc):
+                    raise
+        else:
+            if text:
+                text, entities = fit_caption_with_entities(text, entities)
+            else:
+                entities = None
+            kwargs = {
+                "chat_id": chat_id,
+                "message_id": message_id,
+                "caption": text or "",
+                "parse_mode": None,
+            }
+            if entities:
+                kwargs["caption_entities"] = entities
+                kwargs.pop("parse_mode", None)
+            try:
+                await bot.edit_message_caption(**kwargs)
+            except TelegramBadRequest as exc:
+                if not _is_not_modified_error(exc):
+                    raise
+
+        final_texts[lang] = text
+        final_entities[lang] = entities
+
+    return final_texts, final_entities
+
+
+async def replace_post_photo_in_channels(item: dict, new_file_id: str) -> tuple[dict[str, str], dict[str, list[MessageEntity] | None]]:
+    content_type = str(item.get("content_type") or "").strip().lower()
+    if content_type != "photo":
+        raise RuntimeError("⚠️ Замену фото можно делать только у постов с типом «Фото».")
+
+    message_ids = _post_message_ids(item)
+    texts = _post_texts(item)
+    entities_map = _post_entities(item)
+
+    final_texts = dict(texts)
+    final_entities: dict[str, list[MessageEntity] | None] = dict(entities_map)
+
+    for lang, message_id in message_ids.items():
+        chat_id = CHANNEL_ID_BY_LANG.get(lang)
+        if not isinstance(chat_id, int):
+            continue
+        caption = texts.get(lang, "") or ""
+        entities = entities_map.get(lang)
+        if caption:
+            caption, entities = fit_caption_with_entities(caption, entities)
+        else:
+            entities = None
+        media_kwargs = {"media": new_file_id}
+        if caption:
+            media_kwargs["caption"] = caption
+            if entities:
+                media_kwargs["caption_entities"] = entities
+        media = InputMediaPhoto(**media_kwargs)
+        try:
+            await bot.edit_message_media(
+                chat_id=chat_id,
+                message_id=message_id,
+                media=media,
+            )
+        except TelegramBadRequest as exc:
+            if not _is_not_modified_error(exc):
+                raise
+        final_texts[lang] = caption
+        final_entities[lang] = entities
+
+    return final_texts, final_entities
 
 async def send_menu(
     message: Message,
@@ -3157,30 +3680,50 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
         translated_texts: dict[str, str] = {}
         translated_entities: dict[str, list[MessageEntity] | None] = {}
         if ru_text:
-            marked_text, token_specs = markerize_custom_emoji(ru_text, ru_entities)
-            required_tokens = [token for token, _ in token_specs]
+            marked_text, required_tokens, rich_specs, custom_specs, locked_specs = markerize_entities_for_translation(
+                ru_text,
+                ru_entities,
+            )
             translated_marked = await translate_ru_to_targets(
                 marked_text,
                 target_langs,
                 required_tokens=required_tokens,
             )
-            if token_specs:
-                for lang in target_langs:
-                    translated_marked_text = translated_marked.get(lang, "")
-                    restored_text, emoji_entities = apply_custom_emoji_tokens(
-                        translated_marked_text,
-                        token_specs,
-                    )
-                    translated_texts[lang] = restored_text
-                    translated_entities[lang] = emoji_entities
-            else:
-                translated_texts = translated_marked
-        await send_crosspost_to_channels(
+            for lang in target_langs:
+                translated_marked_text = translated_marked.get(lang, "")
+                restored_text, restored_entities = restore_entities_from_markers(
+                    translated_marked_text,
+                    required_tokens,
+                    rich_specs,
+                    custom_specs,
+                    locked_specs,
+                )
+                translated_texts[lang] = restored_text
+                translated_entities[lang] = restored_entities
+        posted = await send_crosspost_to_channels(
             message,
             ru_text,
             translated_texts,
             translated_entities=translated_entities,
+            ru_entities=ru_entities,
         )
+        try:
+            create_posted_message(
+                content_type=str(posted.get("content_type") or "text"),
+                source_chat_id=message.chat.id,
+                source_message_id=message.message_id,
+                message_ids=posted.get("message_ids", {}),
+                texts=posted.get("texts", {}),
+                entities=entities_map_to_payload(posted.get("entities", {})),
+            )
+        except Exception:
+            logger.exception("Не удалось сохранить информацию о выложенном посте")
+
+        try:
+            await message.delete()
+        except Exception:
+            pass
+
         await state.clear()
         await sync_anonymous_create_post_state(enabled=False)
         langs = ", ".join(LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in channels)
@@ -3228,11 +3771,20 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
         action = call.data.split(":", 1)[1]
         if action != "create_post":
             current_state = await state.get_state()
-            if current_state == ApplicationStates.admin_create_post.state:
+            if current_state in {
+                ApplicationStates.admin_create_post.state,
+                ApplicationStates.admin_edit_post_text.state,
+                ApplicationStates.admin_edit_post_photo.state,
+            }:
                 await state.clear()
-                await sync_anonymous_create_post_state(enabled=False)
+                if current_state == ApplicationStates.admin_create_post.state:
+                    await sync_anonymous_create_post_state(enabled=False)
         if action == "create_post":
             await open_create_post_mode(state)
+            return
+        if action == "posts":
+            await clear_admin_view_message()
+            await show_admin_posted_posts(0)
             return
         if action in {"pending", "accepted", "rejected", "all"}:
             await clear_admin_notify()
@@ -3352,6 +3904,234 @@ async def admin_view_photo(call: CallbackQuery):
     except Exception:
         logger.exception("Ошибка переключения фото")
         await safe_call_answer(call, "Не удалось показать фото", show_alert=False)
+
+@dp.callback_query(F.data.startswith("admin_posts:"))
+async def admin_posts_pagination(call: CallbackQuery):
+    try:
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        _, offset_raw = call.data.split(":", 1)
+        offset = int(offset_raw)
+        await show_admin_posted_posts(offset)
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка открытия выложенных постов")
+        await safe_call_answer(call, "Не удалось открыть посты", show_alert=False)
+
+
+@dp.callback_query(F.data.startswith("admin_post_delete:"))
+async def admin_post_delete(call: CallbackQuery):
+    try:
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        _, post_id_raw, offset_raw = call.data.split(":", 2)
+        post_id = int(post_id_raw)
+        offset = int(offset_raw)
+        item = get_posted_message(post_id)
+        if not item:
+            await safe_call_answer(call, "Пост не найден", show_alert=False)
+            await show_admin_posted_posts(offset)
+            return
+        await delete_post_from_channels(item)
+        delete_posted_message(post_id)
+        _, _, total = await show_admin_posted_posts(offset)
+        if total == 0:
+            await post_admin_menu()
+        await safe_call_answer(call, "Удалено")
+    except Exception:
+        logger.exception("Ошибка удаления выложенного поста")
+        await safe_call_answer(call, "Не удалось удалить пост", show_alert=False)
+
+
+@dp.callback_query(F.data.startswith("admin_post_edit_text:"))
+async def admin_post_edit_text(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        _, post_id_raw, offset_raw = call.data.split(":", 2)
+        post_id = int(post_id_raw)
+        offset = int(offset_raw)
+        item = get_posted_message(post_id)
+        if not item:
+            await safe_call_answer(call, "Пост не найден", show_alert=False)
+            await show_admin_posted_posts(offset)
+            return
+        await state.set_state(ApplicationStates.admin_edit_post_text)
+        await state.update_data(post_id=post_id, posts_offset=offset)
+        await update_admin_menu_message(
+            "✏️ Отправь новый текст поста на русском.\n\n"
+            "Форматирование, ссылки и премиум-эмодзи будут сохранены.\n"
+            "Я обновлю текст во всех каналах автоматически.",
+            admin_posts_edit_keyboard(post_id, offset),
+        )
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка входа в режим редактирования текста поста")
+        await safe_call_answer(call, "Не удалось открыть редактирование", show_alert=False)
+
+
+@dp.callback_query(F.data.startswith("admin_post_edit_photo:"))
+async def admin_post_edit_photo(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        _, post_id_raw, offset_raw = call.data.split(":", 2)
+        post_id = int(post_id_raw)
+        offset = int(offset_raw)
+        item = get_posted_message(post_id)
+        if not item:
+            await safe_call_answer(call, "Пост не найден", show_alert=False)
+            await show_admin_posted_posts(offset)
+            return
+        if str(item.get("content_type") or "").strip().lower() != "photo":
+            await safe_call_answer(call, "Замену фото можно делать только у фото-постов", show_alert=True)
+            return
+        await state.set_state(ApplicationStates.admin_edit_post_photo)
+        await state.update_data(post_id=post_id, posts_offset=offset)
+        await update_admin_menu_message(
+            "🖼 Отправь новое фото одним сообщением.\n\n"
+            "Подписи на всех языках сохранятся, заменится только изображение.",
+            admin_posts_edit_keyboard(post_id, offset),
+        )
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка входа в режим редактирования фото поста")
+        await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
+
+
+@dp.callback_query(F.data.startswith("admin_post_edit_cancel:"))
+async def admin_post_edit_cancel(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        _, post_id_raw, offset_raw = call.data.split(":", 2)
+        _ = int(post_id_raw)
+        offset = int(offset_raw)
+        await state.clear()
+        await show_admin_posted_posts(offset)
+        await safe_call_answer(call, "Отменено")
+    except Exception:
+        logger.exception("Ошибка отмены редактирования поста")
+        await safe_call_answer(call, "Не удалось отменить", show_alert=False)
+
+
+@dp.message(StateFilter(ApplicationStates.admin_edit_post_text), F.chat.id == ADMIN_GROUP_ID)
+async def admin_post_edit_text_submit(message: Message, state: FSMContext):
+    try:
+        if not await can_manage_admin_group(message):
+            await message.answer("⚠️ Для редактирования нужны права администратора этой группы.")
+            return
+        if not message.text:
+            await message.answer("⚠️ Отправь текст поста (не фото и не файл).")
+            return
+        ru_text, ru_entities = extract_post_text_and_entities(message)
+        if not ru_text.strip():
+            await message.answer("⚠️ Текст пустой. Отправь текст заново.")
+            return
+        if not CYRILLIC_RE.search(ru_text):
+            await message.answer("⚠️ Текст должен быть на русском, чтобы сделать автоперевод.")
+            return
+
+        data = await state.get_data()
+        post_id = int(data.get("post_id", 0))
+        offset = int(data.get("posts_offset", 0))
+        item = get_posted_message(post_id)
+        if not item:
+            await message.answer("⚠️ Пост не найден.")
+            await state.clear()
+            await show_admin_posted_posts(offset)
+            return
+
+        message_ids = _post_message_ids(item)
+        target_langs = [lang for lang in POST_LANG_ORDER if lang in message_ids and lang != "ru"]
+        translated_texts: dict[str, str] = {}
+        translated_entities: dict[str, list[MessageEntity] | None] = {}
+
+        marked_text, required_tokens, rich_specs, custom_specs, locked_specs = markerize_entities_for_translation(
+            ru_text,
+            ru_entities,
+        )
+        translated_marked = await translate_ru_to_targets(
+            marked_text,
+            target_langs,
+            required_tokens=required_tokens,
+        )
+        for lang in target_langs:
+            translated_marked_text = translated_marked.get(lang, "")
+            restored_text, restored_entities = restore_entities_from_markers(
+                translated_marked_text,
+                required_tokens,
+                rich_specs,
+                custom_specs,
+                locked_specs,
+            )
+            translated_texts[lang] = restored_text
+            translated_entities[lang] = restored_entities
+
+        texts_map = {"ru": ru_text, **translated_texts}
+        entities_map = {"ru": ru_entities, **translated_entities}
+        final_texts, final_entities = await edit_post_text_in_channels(item, texts_map, entities_map)
+        update_posted_message(
+            post_id,
+            texts=final_texts,
+            entities=entities_map_to_payload(final_entities),
+        )
+        await state.clear()
+        await show_admin_posted_posts(offset)
+        try:
+            await message.delete()
+        except Exception:
+            pass
+    except RuntimeError as exc:
+        await message.answer(str(exc))
+    except Exception:
+        logger.exception("Ошибка редактирования текста выложенного поста")
+        await message.answer("⚠️ Не удалось обновить текст поста.")
+
+
+@dp.message(StateFilter(ApplicationStates.admin_edit_post_photo), F.chat.id == ADMIN_GROUP_ID)
+async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
+    try:
+        if not await can_manage_admin_group(message):
+            await message.answer("⚠️ Для редактирования нужны права администратора этой группы.")
+            return
+        if not message.photo:
+            await message.answer("⚠️ Отправь именно фото одним сообщением.")
+            return
+        new_file_id = message.photo[-1].file_id
+
+        data = await state.get_data()
+        post_id = int(data.get("post_id", 0))
+        offset = int(data.get("posts_offset", 0))
+        item = get_posted_message(post_id)
+        if not item:
+            await message.answer("⚠️ Пост не найден.")
+            await state.clear()
+            await show_admin_posted_posts(offset)
+            return
+
+        final_texts, final_entities = await replace_post_photo_in_channels(item, new_file_id)
+        update_posted_message(
+            post_id,
+            texts=final_texts,
+            entities=entities_map_to_payload(final_entities),
+        )
+        await state.clear()
+        await show_admin_posted_posts(offset)
+        try:
+            await message.delete()
+        except Exception:
+            pass
+    except RuntimeError as exc:
+        await message.answer(str(exc))
+    except Exception:
+        logger.exception("Ошибка замены фото у выложенного поста")
+        await message.answer("⚠️ Не удалось заменить фото.")
 
 @dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
 async def admin_reset_db(message: Message):

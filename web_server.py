@@ -374,6 +374,9 @@ def build_admin_menu_keyboard(counts: dict) -> dict:
                 {"text": "📝 Создать пост", "callback_data": "admin_menu:create_post"}
             ],
             [
+                {"text": "📣 Выложенные посты", "callback_data": "admin_menu:posts"}
+            ],
+            [
                 {
                     "text": f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
                     "callback_data": "admin_menu:pending",
@@ -457,8 +460,15 @@ def update_admin_menu_message():
                 },
             )
             return
-        except Exception:
-            pass
+        except Exception as err:
+            payload = err.args[0] if err.args else {}
+            description = ""
+            if isinstance(payload, dict):
+                description = str(payload.get("description", "")).lower()
+            else:
+                description = str(payload).lower()
+            if "message is not modified" in description:
+                return
     try:
         result = telegram_request(
             "sendMessage",

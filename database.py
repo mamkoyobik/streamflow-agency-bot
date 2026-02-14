@@ -1,3 +1,4 @@
+import importlib
 import json
 import os
 import sqlite3
@@ -20,6 +21,7 @@ DB_LOCK = threading.Lock()
 conn = None
 cursor = None
 _PG_CONNECT_KWARGS: dict = {}
+pg8000 = None
 
 def _sql(sql: str) -> str:
     if DB_KIND == "sqlite":
@@ -49,6 +51,8 @@ def _is_retryable_db_error(exc: Exception) -> bool:
 
 
 def _open_postgres_connection():
+    if pg8000 is None:
+        raise RuntimeError("pg8000 is not available for postgres connection")
     return pg8000.connect(**_PG_CONNECT_KWARGS)
 
 
@@ -88,8 +92,8 @@ def _execute(sql: str, params: tuple = ()):
 
 if DB_KIND == "postgres":
     try:
-        import pg8000
-    except Exception:
+        pg8000 = importlib.import_module("pg8000")
+    except ModuleNotFoundError:
         print("[db] warning: pg8000 is missing, fallback to sqlite")
         DB_KIND = "sqlite"
 
@@ -177,6 +181,39 @@ with DB_LOCK:
         value TEXT
     )
     """)
+    conn.commit()
+
+with DB_LOCK:
+    if DB_KIND == "postgres":
+        _execute("""
+        CREATE TABLE IF NOT EXISTS posted_messages (
+            id BIGSERIAL PRIMARY KEY,
+            created_at TEXT,
+            updated_at TEXT,
+            content_type TEXT,
+            source_chat_id BIGINT,
+            source_message_id BIGINT,
+            source_preview TEXT,
+            message_ids_json TEXT,
+            texts_json TEXT,
+            entities_json TEXT
+        )
+        """)
+    else:
+        _execute("""
+        CREATE TABLE IF NOT EXISTS posted_messages (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            created_at TEXT,
+            updated_at TEXT,
+            content_type TEXT,
+            source_chat_id INTEGER,
+            source_message_id INTEGER,
+            source_preview TEXT,
+            message_ids_json TEXT,
+            texts_json TEXT,
+            entities_json TEXT
+        )
+        """)
     conn.commit()
 
 def _now_ts() -> str:
@@ -483,6 +520,7 @@ def reset_all_data():
     with DB_LOCK:
         _execute("DELETE FROM applications")
         _execute("DELETE FROM settings")
+        _execute("DELETE FROM posted_messages")
         conn.commit()
         if DB_KIND == "sqlite":
             try:
@@ -654,4 +692,216 @@ def cleanup_old_form_data(days: int = 30):
             "WHERE data_json IS NOT NULL AND status = 'new' AND updated_at < ?",
             (cutoff,)
         )
+        conn.commit()
+
+
+def _json_text(value) -> str:
+    return json.dumps(value, ensure_ascii=False)
+
+
+def _safe_json(value: str | None, default):
+    if not value:
+        return default
+    try:
+        return json.loads(value)
+    except Exception:
+        return default
+
+
+def _post_preview(texts: dict | None) -> str:
+    if not isinstance(texts, dict):
+        return ""
+    source = (
+        texts.get("ru")
+        or texts.get("en")
+        or texts.get("pt")
+        or texts.get("es")
+        or ""
+    )
+    if not isinstance(source, str):
+        source = str(source)
+    compact = " ".join(source.split())
+    return compact[:220]
+
+
+def create_posted_message(
+    content_type: str,
+    source_chat_id: int | None,
+    source_message_id: int | None,
+    message_ids: dict,
+    texts: dict,
+    entities: dict | None = None,
+) -> int:
+    ts = _now_ts()
+    preview = _post_preview(texts)
+    message_ids_json = _json_text(message_ids or {})
+    texts_json = _json_text(texts or {})
+    entities_json = _json_text(entities or {})
+    with DB_LOCK:
+        if DB_KIND == "postgres":
+            _execute(
+                """
+                INSERT INTO posted_messages (
+                    created_at, updated_at, content_type,
+                    source_chat_id, source_message_id, source_preview,
+                    message_ids_json, texts_json, entities_json
+                )
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+                RETURNING id
+                """,
+                (
+                    ts,
+                    ts,
+                    content_type,
+                    source_chat_id,
+                    source_message_id,
+                    preview,
+                    message_ids_json,
+                    texts_json,
+                    entities_json,
+                )
+            )
+            row = cursor.fetchone()
+            conn.commit()
+            return int(row[0]) if row else 0
+
+        _execute(
+            """
+            INSERT INTO posted_messages (
+                created_at, updated_at, content_type,
+                source_chat_id, source_message_id, source_preview,
+                message_ids_json, texts_json, entities_json
+            )
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """,
+            (
+                ts,
+                ts,
+                content_type,
+                source_chat_id,
+                source_message_id,
+                preview,
+                message_ids_json,
+                texts_json,
+                entities_json,
+            )
+        )
+        post_id = int(cursor.lastrowid or 0)
+        conn.commit()
+        return post_id
+
+
+def get_posted_message(post_id: int) -> dict | None:
+    with DB_LOCK:
+        _execute(
+            """
+            SELECT id, created_at, updated_at, content_type,
+                   source_chat_id, source_message_id, source_preview,
+                   message_ids_json, texts_json, entities_json
+            FROM posted_messages
+            WHERE id = ?
+            """,
+            (post_id,)
+        )
+        row = cursor.fetchone()
+        if not row:
+            return None
+        return {
+            "id": int(row[0]),
+            "created_at": row[1],
+            "updated_at": row[2],
+            "content_type": row[3],
+            "source_chat_id": row[4],
+            "source_message_id": row[5],
+            "source_preview": row[6] or "",
+            "message_ids": _safe_json(row[7], {}),
+            "texts": _safe_json(row[8], {}),
+            "entities": _safe_json(row[9], {}),
+        }
+
+
+def count_posted_messages() -> int:
+    with DB_LOCK:
+        _execute("SELECT COUNT(*) FROM posted_messages")
+        row = cursor.fetchone()
+        return int(row[0]) if row else 0
+
+
+def list_posted_messages(limit: int = 20, offset: int = 0) -> list[dict]:
+    with DB_LOCK:
+        _execute(
+            """
+            SELECT id, created_at, updated_at, content_type,
+                   source_chat_id, source_message_id, source_preview,
+                   message_ids_json, texts_json, entities_json
+            FROM posted_messages
+            ORDER BY
+                CASE WHEN created_at IS NULL OR created_at = '' THEN 1 ELSE 0 END,
+                created_at DESC,
+                id DESC
+            LIMIT ? OFFSET ?
+            """,
+            (limit, offset)
+        )
+        rows = cursor.fetchall()
+        result: list[dict] = []
+        for row in rows:
+            result.append(
+                {
+                    "id": int(row[0]),
+                    "created_at": row[1],
+                    "updated_at": row[2],
+                    "content_type": row[3],
+                    "source_chat_id": row[4],
+                    "source_message_id": row[5],
+                    "source_preview": row[6] or "",
+                    "message_ids": _safe_json(row[7], {}),
+                    "texts": _safe_json(row[8], {}),
+                    "entities": _safe_json(row[9], {}),
+                }
+            )
+        return result
+
+
+def update_posted_message(
+    post_id: int,
+    texts: dict | None = None,
+    entities: dict | None = None,
+    message_ids: dict | None = None,
+) -> bool:
+    current = get_posted_message(post_id)
+    if not current:
+        return False
+    ts = _now_ts()
+    new_texts = texts if texts is not None else current.get("texts", {})
+    new_entities = entities if entities is not None else current.get("entities", {})
+    new_message_ids = message_ids if message_ids is not None else current.get("message_ids", {})
+    preview = _post_preview(new_texts)
+    with DB_LOCK:
+        _execute(
+            """
+            UPDATE posted_messages
+            SET updated_at = ?,
+                source_preview = ?,
+                message_ids_json = ?,
+                texts_json = ?,
+                entities_json = ?
+            WHERE id = ?
+            """,
+            (
+                ts,
+                preview,
+                _json_text(new_message_ids or {}),
+                _json_text(new_texts or {}),
+                _json_text(new_entities or {}),
+                post_id,
+            )
+        )
+        conn.commit()
+        return True
+
+
+def delete_posted_message(post_id: int) -> None:
+    with DB_LOCK:
+        _execute("DELETE FROM posted_messages WHERE id = ?", (post_id,))
         conn.commit()

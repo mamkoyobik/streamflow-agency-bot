@@ -251,6 +251,9 @@ def admin_menu_keyboard(counts: dict | None = None):
             InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post")
         ],
         [
+            InlineKeyboardButton(text="📣 Выложенные посты", callback_data="admin_menu:posts")
+        ],
+        [
             InlineKeyboardButton(
                 text=f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
                 callback_data="admin_menu:pending"
@@ -292,6 +295,41 @@ def admin_create_post_keyboard():
         [InlineKeyboardButton(text="❌ Отменить", callback_data="admin_post:cancel")],
         [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
     ])
+
+
+def admin_posts_view_keyboard(post_id: int, offset: int, total: int, can_edit_photo: bool):
+    rows = [
+        [InlineKeyboardButton(text="✏️ Изменить текст", callback_data=f"admin_post_edit_text:{post_id}:{offset}")]
+    ]
+    if can_edit_photo:
+        rows.append(
+            [InlineKeyboardButton(text="🖼 Изменить фото", callback_data=f"admin_post_edit_photo:{post_id}:{offset}")]
+        )
+    rows.append(
+        [InlineKeyboardButton(text="🗑 Удалить из каналов", callback_data=f"admin_post_delete:{post_id}:{offset}")]
+    )
+
+    prev_offset = offset - 1
+    next_offset = offset + 1
+    nav_row = []
+    if prev_offset >= 0:
+        nav_row.append(InlineKeyboardButton(text="⬅️ Предыдущий", callback_data=f"admin_posts:{prev_offset}"))
+    if next_offset < total:
+        nav_row.append(InlineKeyboardButton(text="Следующий ➡️", callback_data=f"admin_posts:{next_offset}"))
+    if nav_row:
+        rows.append(nav_row)
+
+    rows.append([InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_posts_edit_keyboard(post_id: int, offset: int):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="❌ Отменить", callback_data=f"admin_post_edit_cancel:{post_id}:{offset}")],
+            [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+        ]
+    )
 
 def admin_list_nav_keyboard(filter_key: str, offset: int, total: int, limit: int):
     buttons = []
