@@ -1007,10 +1007,9 @@ async def send_crosspost_to_channels(
             if text:
                 text, entities = fit_caption_with_entities(text, entities)
                 kwargs["caption"] = text
+                kwargs["parse_mode"] = None
                 if entities:
                     kwargs["caption_entities"] = entities
-                else:
-                    kwargs["parse_mode"] = None
             sent = await bot.send_photo(**kwargs)
             posted_message_ids[lang] = int(sent.message_id)
             posted_texts[lang] = text or ""
@@ -1031,10 +1030,9 @@ async def send_crosspost_to_channels(
             if text:
                 text, entities = fit_caption_with_entities(text, entities)
                 kwargs["caption"] = text
+                kwargs["parse_mode"] = None
                 if entities:
                     kwargs["caption_entities"] = entities
-                else:
-                    kwargs["parse_mode"] = None
             sent = await bot.send_video(**kwargs)
             posted_message_ids[lang] = int(sent.message_id)
             posted_texts[lang] = text or ""
@@ -1055,10 +1053,9 @@ async def send_crosspost_to_channels(
             if text:
                 text, entities = fit_caption_with_entities(text, entities)
                 kwargs["caption"] = text
+                kwargs["parse_mode"] = None
                 if entities:
                     kwargs["caption_entities"] = entities
-                else:
-                    kwargs["parse_mode"] = None
             sent = await bot.send_document(**kwargs)
             posted_message_ids[lang] = int(sent.message_id)
             posted_texts[lang] = text or ""
@@ -1079,10 +1076,9 @@ async def send_crosspost_to_channels(
             if text:
                 text, entities = fit_caption_with_entities(text, entities)
                 kwargs["caption"] = text
+                kwargs["parse_mode"] = None
                 if entities:
                     kwargs["caption_entities"] = entities
-                else:
-                    kwargs["parse_mode"] = None
             sent = await bot.send_animation(**kwargs)
             posted_message_ids[lang] = int(sent.message_id)
             posted_texts[lang] = text or ""
@@ -1101,11 +1097,9 @@ async def send_crosspost_to_channels(
                 raise RuntimeError(f"⚠️ Пустой перевод для {LANG_TITLES.get(lang, lang.upper())}.")
             entities = entities_map.get(lang)
             text, entities = fit_text_with_entities(text, entities)
-            kwargs = {"chat_id": chat_id, "text": text}
+            kwargs = {"chat_id": chat_id, "text": text, "parse_mode": None}
             if entities:
                 kwargs["entities"] = entities
-            else:
-                kwargs["parse_mode"] = None
             sent = await bot.send_message(**kwargs)
             posted_message_ids[lang] = int(sent.message_id)
             posted_texts[lang] = text or ""
@@ -1917,7 +1911,6 @@ async def edit_post_text_in_channels(
             }
             if entities:
                 kwargs["entities"] = entities
-                kwargs.pop("parse_mode", None)
             try:
                 await bot.edit_message_text(**kwargs)
             except TelegramBadRequest as exc:
@@ -1936,7 +1929,6 @@ async def edit_post_text_in_channels(
             }
             if entities:
                 kwargs["caption_entities"] = entities
-                kwargs.pop("parse_mode", None)
             try:
                 await bot.edit_message_caption(**kwargs)
             except TelegramBadRequest as exc:
