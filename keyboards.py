@@ -297,13 +297,30 @@ def admin_create_post_keyboard():
     ])
 
 
-def admin_posts_view_keyboard(post_id: int, offset: int, total: int, can_edit_photo: bool):
+def _post_media_edit_button_label(content_type: str) -> str:
+    normalized = (content_type or "").strip().lower()
+    return {
+        "photo": "🖼 Изменить фото",
+        "video": "🎬 Изменить видео",
+        "document": "📄 Изменить файл",
+        "animation": "🎞 Изменить GIF",
+    }.get(normalized, "🖼 Изменить медиа")
+
+
+def admin_posts_view_keyboard(post_id: int, offset: int, total: int, content_type: str):
+    normalized = (content_type or "").strip().lower()
+    can_edit_media = normalized in {"photo", "video", "document", "animation"}
     rows = [
         [InlineKeyboardButton(text="✏️ Изменить текст", callback_data=f"admin_post_edit_text:{post_id}:{offset}")]
     ]
-    if can_edit_photo:
+    if can_edit_media:
         rows.append(
-            [InlineKeyboardButton(text="🖼 Изменить фото", callback_data=f"admin_post_edit_photo:{post_id}:{offset}")]
+            [
+                InlineKeyboardButton(
+                    text=_post_media_edit_button_label(normalized),
+                    callback_data=f"admin_post_edit_photo:{post_id}:{offset}",
+                )
+            ]
         )
     rows.append(
         [InlineKeyboardButton(text="🗑 Удалить из каналов", callback_data=f"admin_post_delete:{post_id}:{offset}")]

@@ -13,7 +13,7 @@ from datetime import datetime, timedelta, timezone
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
-    InputMediaPhoto, InputMediaVideo,
+    InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaAnimation,
     ChatJoinRequest, InlineKeyboardMarkup, MessageEntity,
     BotCommand, BotCommandScopeDefault, BotCommandScopeChatAdministrators
 )
@@ -410,6 +410,7 @@ TRANSLATION_STYLE = {
     "pt": "natural, conversational Brazilian Portuguese",
     "es": "natural, conversational Latin American Spanish",
 }
+MEDIA_CONTENT_TYPES = {"photo", "video", "document", "animation"}
 GENERIC_MARKER_RE = re.compile(r"\[\[(?:CE\d+|E\d+[SE]|LK\d+)\]\]")
 CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
@@ -1180,8 +1181,31 @@ def post_preview_text(item: dict) -> str:
     return compact[:300]
 
 
+def post_full_text(item: dict) -> str:
+    texts = item.get("texts")
+    if isinstance(texts, dict):
+        ru_value = texts.get("ru")
+        if ru_value is not None and str(ru_value).strip():
+            return str(ru_value)
+        for lang in POST_LANG_ORDER:
+            value = texts.get(lang)
+            if value is not None and str(value).strip():
+                return str(value)
+    source_preview = item.get("source_preview")
+    return str(source_preview or "")
+
+
+def clip_text_for_telegram(text: str, max_chars: int) -> tuple[str, bool]:
+    if max_chars <= 0:
+        return "", bool(text)
+    if len(text) <= max_chars:
+        return text, False
+    return text[: max_chars - 1].rstrip() + "…", True
+
+
 def build_admin_posted_item_text(item: dict, offset: int, total: int) -> str:
-    preview = html.escape(post_preview_text(item) or "—")
+    full_text = post_full_text(item) or ""
+    safe_full_text = full_text if full_text.strip() else "—"
     created_at = html.escape(str(item.get("created_at") or "—"))
     content = content_type_label(str(item.get("content_type") or ""))
     message_ids = item.get("message_ids", {})
@@ -1189,15 +1213,36 @@ def build_admin_posted_item_text(item: dict, offset: int, total: int) -> str:
         message_ids = {}
     langs = [LANG_TITLES.get(lang, lang.upper()) for lang in POST_LANG_ORDER if message_ids.get(lang)]
     langs_text = ", ".join(langs) if langs else "—"
-    return (
+    base = (
         "📣 <b>Выложенные посты</b>\n\n"
         f"Пост <b>{offset + 1}</b> из <b>{total}</b>\n"
         f"ID: <code>{item.get('id')}</code>\n"
         f"Тип: <b>{html.escape(content)}</b>\n"
         f"Каналы: <b>{html.escape(langs_text)}</b>\n"
-        f"Создан: <code>{created_at}</code>\n\n"
-        f"Превью:\n{preview}"
+        f"Создан: <code>{created_at}</code>"
     )
+    header = "\n\n📝 <b>Текст поста (RU):</b>\n"
+    reserve = TELEGRAM_TEXT_LIMIT - len(base) - len(header) - 120
+    shown_text, was_cut = clip_text_for_telegram(safe_full_text, max(reserve, 256))
+    result = f"{base}{header}{html.escape(shown_text)}"
+    while len(result) > TELEGRAM_TEXT_LIMIT and shown_text:
+        was_cut = True
+        overflow = len(result) - TELEGRAM_TEXT_LIMIT
+        trim_by = max(16, overflow + 16)
+        shown_text = shown_text[:-trim_by].rstrip()
+        result = f"{base}{header}{html.escape(shown_text)}"
+    if was_cut:
+        result += (
+            "\n\n⚠️ Текст очень длинный и не помещается целиком в одно сообщение Telegram. "
+            "Для полного изменения нажми «Изменить текст»."
+        )
+        while len(result) > TELEGRAM_TEXT_LIMIT and shown_text:
+            shown_text = shown_text[:-32].rstrip()
+            result = (
+                f"{base}{header}{html.escape(shown_text)}\n\n"
+                "⚠️ Текст длиннее лимита Telegram. Для полного изменения нажми «Изменить текст»."
+            )
+    return result
 
 def build_admin_menu_text(counts: dict) -> str:
     return (
@@ -1850,9 +1895,31 @@ def _post_entities(item: dict | None) -> dict[str, list[MessageEntity] | None]:
     return entities_map_from_payload((item or {}).get("entities", {}))
 
 
+async def show_posted_media_preview(item: dict) -> None:
+    content_type = str(item.get("content_type") or "").strip().lower()
+    if content_type not in MEDIA_CONTENT_TYPES:
+        return
+    message_ids = _post_message_ids(item)
+    ru_message_id = message_ids.get("ru")
+    ru_channel_id = CHANNEL_ID_BY_LANG.get("ru")
+    if not isinstance(ru_channel_id, int) or not isinstance(ru_message_id, int) or ru_message_id <= 0:
+        return
+    try:
+        copied = await bot.copy_message(
+            chat_id=ADMIN_GROUP_ID,
+            from_chat_id=ru_channel_id,
+            message_id=ru_message_id,
+        )
+        track_admin_temp_message(int(getattr(copied, "message_id", 0) or 0))
+    except Exception:
+        logger.exception("Не удалось показать медиа-превью выложенного поста")
+
+
 async def show_admin_posted_posts(offset: int = 0) -> tuple[dict | None, int, int]:
     total = count_posted_messages()
     if total <= 0:
+        await clear_admin_temp_messages()
+        await clear_admin_view_message()
         await update_admin_menu_message(
             "🤍 Выложенных постов пока нет ✨",
             admin_menu_keyboard(get_status_counts())
@@ -1865,6 +1932,8 @@ async def show_admin_posted_posts(offset: int = 0) -> tuple[dict | None, int, in
         offset = max(total - 1, 0)
     rows = list_posted_messages(limit=1, offset=offset)
     if not rows:
+        await clear_admin_temp_messages()
+        await clear_admin_view_message()
         await update_admin_menu_message(
             "🤍 Выложенных постов пока нет ✨",
             admin_menu_keyboard(get_status_counts())
@@ -1872,14 +1941,17 @@ async def show_admin_posted_posts(offset: int = 0) -> tuple[dict | None, int, in
         return None, 0, 0
 
     item = rows[0]
-    await update_admin_menu_message(
+    await clear_admin_temp_messages()
+    await show_posted_media_preview(item)
+    await update_admin_view_message(
         build_admin_posted_item_text(item, offset, total),
         admin_posts_view_keyboard(
             int(item["id"]),
             offset,
             total,
-            str(item.get("content_type") or "").strip().lower() == "photo",
-        )
+            str(item.get("content_type") or ""),
+        ),
+        None,
     )
     return item, offset, total
 
@@ -1962,10 +2034,27 @@ async def edit_post_text_in_channels(
     return final_texts, final_entities
 
 
-async def replace_post_photo_in_channels(item: dict, new_file_id: str) -> tuple[dict[str, str], dict[str, list[MessageEntity] | None]]:
+async def replace_post_media_in_channels(
+    item: dict,
+    new_file_id: str,
+    expected_content_type: str,
+) -> tuple[dict[str, str], dict[str, list[MessageEntity] | None]]:
     content_type = str(item.get("content_type") or "").strip().lower()
-    if content_type != "photo":
-        raise RuntimeError("⚠️ Замену фото можно делать только у постов с типом «Фото».")
+    normalized_expected = (expected_content_type or "").strip().lower()
+    if content_type not in MEDIA_CONTENT_TYPES:
+        raise RuntimeError("⚠️ У этого поста нет медиа для замены.")
+    if normalized_expected != content_type:
+        raise RuntimeError("⚠️ Тип нового медиа не совпадает с типом поста.")
+
+    media_class_map = {
+        "photo": InputMediaPhoto,
+        "video": InputMediaVideo,
+        "document": InputMediaDocument,
+        "animation": InputMediaAnimation,
+    }
+    media_class = media_class_map.get(content_type)
+    if media_class is None:
+        raise RuntimeError("⚠️ Этот тип медиа пока не поддерживается для замены.")
 
     message_ids = _post_message_ids(item)
     texts = _post_texts(item)
@@ -1984,12 +2073,13 @@ async def replace_post_photo_in_channels(item: dict, new_file_id: str) -> tuple[
             caption, entities = fit_caption_with_entities(caption, entities)
         else:
             entities = None
+
         media_kwargs = {"media": new_file_id}
         if caption:
             media_kwargs["caption"] = caption
             if entities:
                 media_kwargs["caption_entities"] = entities
-        media = InputMediaPhoto(**media_kwargs)
+        media = media_class(**media_kwargs)
         try:
             await bot.edit_message_media(
                 chat_id=chat_id,
@@ -3972,18 +4062,69 @@ async def admin_post_edit_text(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, "Пост не найден", show_alert=False)
             await show_admin_posted_posts(offset)
             return
-        await state.set_state(ApplicationStates.admin_edit_post_text)
-        await state.update_data(post_id=post_id, posts_offset=offset)
-        await update_admin_menu_message(
+        current_ru = post_full_text(item)
+        prompt_base = (
             "✏️ Отправь новый текст поста на русском.\n\n"
             "Форматирование, ссылки и премиум-эмодзи будут сохранены.\n"
-            "Я обновлю текст во всех каналах автоматически.",
+            "Я обновлю текст во всех каналах автоматически.\n\n"
+            "<b>Текущий текст RU:</b>\n"
+        )
+        reserve = TELEGRAM_TEXT_LIMIT - len(prompt_base) - 120
+        shown_ru, was_cut = clip_text_for_telegram(current_ru or "—", max(reserve, 256))
+        prompt = f"{prompt_base}{html.escape(shown_ru or '—')}"
+        while len(prompt) > TELEGRAM_TEXT_LIMIT and shown_ru:
+            shown_ru = shown_ru[:-32].rstrip()
+            was_cut = True
+            prompt = f"{prompt_base}{html.escape(shown_ru or '—')}"
+        if was_cut:
+            prompt += "\n\n⚠️ Текущий текст очень длинный, показана часть."
+        await state.set_state(ApplicationStates.admin_edit_post_text)
+        await state.update_data(post_id=post_id, posts_offset=offset)
+        await update_admin_view_message(
+            prompt,
             admin_posts_edit_keyboard(post_id, offset),
+            None,
         )
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка входа в режим редактирования текста поста")
         await safe_call_answer(call, "Не удалось открыть редактирование", show_alert=False)
+
+
+def post_media_type_name(content_type: str) -> str:
+    normalized = (content_type or "").strip().lower()
+    return {
+        "photo": "фото",
+        "video": "видео",
+        "document": "файл",
+        "animation": "GIF",
+    }.get(normalized, "медиа")
+
+
+def post_media_replace_prompt(content_type: str) -> str:
+    normalized = (content_type or "").strip().lower()
+    if normalized == "photo":
+        return "🖼 Отправь новое фото одним сообщением.\n\nПодписи на всех языках сохранятся, заменится только изображение."
+    if normalized == "video":
+        return "🎬 Отправь новое видео одним сообщением.\n\nПодписи на всех языках сохранятся, заменится только видео."
+    if normalized == "document":
+        return "📄 Отправь новый файл одним сообщением.\n\nПодписи на всех языках сохранятся, заменится только файл."
+    if normalized == "animation":
+        return "🎞 Отправь новую GIF одним сообщением.\n\nПодписи на всех языках сохранятся, заменится только GIF."
+    return "🖼 Отправь новое медиа одним сообщением."
+
+
+def extract_media_file_id_for_post(message: Message, content_type: str) -> str | None:
+    normalized = (content_type or "").strip().lower()
+    if normalized == "photo" and message.photo:
+        return message.photo[-1].file_id
+    if normalized == "video" and message.video:
+        return message.video.file_id
+    if normalized == "document" and message.document:
+        return message.document.file_id
+    if normalized == "animation" and message.animation:
+        return message.animation.file_id
+    return None
 
 
 @dp.callback_query(F.data.startswith("admin_post_edit_photo:"))
@@ -4000,20 +4141,21 @@ async def admin_post_edit_photo(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, "Пост не найден", show_alert=False)
             await show_admin_posted_posts(offset)
             return
-        if str(item.get("content_type") or "").strip().lower() != "photo":
-            await safe_call_answer(call, "Замену фото можно делать только у фото-постов", show_alert=True)
+        content_type = str(item.get("content_type") or "").strip().lower()
+        if content_type not in MEDIA_CONTENT_TYPES:
+            await safe_call_answer(call, "У этого поста нет медиа для замены", show_alert=True)
             return
         await state.set_state(ApplicationStates.admin_edit_post_photo)
-        await state.update_data(post_id=post_id, posts_offset=offset)
-        await update_admin_menu_message(
-            "🖼 Отправь новое фото одним сообщением.\n\n"
-            "Подписи на всех языках сохранятся, заменится только изображение.",
+        await state.update_data(post_id=post_id, posts_offset=offset, post_media_type=content_type)
+        await update_admin_view_message(
+            post_media_replace_prompt(content_type),
             admin_posts_edit_keyboard(post_id, offset),
+            None,
         )
         await safe_call_answer(call)
     except Exception:
-        logger.exception("Ошибка входа в режим редактирования фото поста")
-        await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
+        logger.exception("Ошибка входа в режим редактирования медиа поста")
+        await safe_call_answer(call, "Не удалось открыть замену медиа", show_alert=False)
 
 
 @dp.callback_query(F.data.startswith("admin_post_edit_cancel:"))
@@ -4113,11 +4255,6 @@ async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
         if not await can_manage_admin_group(message):
             await message.answer("⚠️ Для редактирования нужны права администратора этой группы.")
             return
-        if not message.photo:
-            await message.answer("⚠️ Отправь именно фото одним сообщением.")
-            return
-        new_file_id = message.photo[-1].file_id
-
         data = await state.get_data()
         post_id = int(data.get("post_id", 0))
         offset = int(data.get("posts_offset", 0))
@@ -4128,7 +4265,19 @@ async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
             await show_admin_posted_posts(offset)
             return
 
-        final_texts, final_entities = await replace_post_photo_in_channels(item, new_file_id)
+        content_type = str(item.get("content_type") or "").strip().lower()
+        expected_type = str(data.get("post_media_type") or content_type).strip().lower()
+        new_file_id = extract_media_file_id_for_post(message, expected_type)
+        if not new_file_id:
+            media_name = post_media_type_name(expected_type)
+            await message.answer(f"⚠️ Отправь именно {media_name} одним сообщением.")
+            return
+
+        final_texts, final_entities = await replace_post_media_in_channels(
+            item,
+            new_file_id,
+            expected_type,
+        )
         update_posted_message(
             post_id,
             texts=final_texts,
