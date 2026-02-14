@@ -14,7 +14,8 @@ from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
     InputMediaPhoto, InputMediaVideo,
-    ChatJoinRequest, InlineKeyboardMarkup, MessageEntity
+    ChatJoinRequest, InlineKeyboardMarkup, MessageEntity,
+    BotCommand, BotCommandScopeDefault, BotCommandScopeChatAdministrators
 )
 try:
     from aiogram.client.default import DefaultBotProperties
@@ -461,6 +462,26 @@ def active_post_channels() -> dict[str, int]:
 def missing_crosspost_langs(channels: dict[str, int] | None = None) -> list[str]:
     available = channels or active_post_channels()
     return [lang for lang in REQUIRED_CROSSPOST_LANGS if lang not in available]
+
+
+async def setup_bot_commands() -> None:
+    user_commands = [
+        BotCommand(command="start", description="Открыть меню"),
+        BotCommand(command="language", description="Сменить язык"),
+    ]
+    admin_commands = [
+        BotCommand(command="admin", description="Открыть админ-меню"),
+        BotCommand(command="create_post", description="Создать пост и кросспост"),
+        BotCommand(command="crosspost", description="Алиас команды create_post"),
+        BotCommand(command="stats", description="Показать статистику"),
+        BotCommand(command="excel", description="Выгрузить Excel"),
+        BotCommand(command="reset_db", description="Сбросить базу (опасно)"),
+    ]
+    await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
+    await bot.set_my_commands(
+        admin_commands,
+        scope=BotCommandScopeChatAdministrators(chat_id=ADMIN_GROUP_ID),
+    )
 
 
 def extract_post_text(message: Message) -> str:
@@ -4250,6 +4271,10 @@ async def admin_excel(message: Message):
 
 async def main():
     logger.info("БОТ ЗАПУЩЕН")
+    try:
+        await setup_bot_commands()
+    except Exception:
+        logger.exception("Не удалось зарегистрировать команды бота")
     channels = active_post_channels()
     logger.info("Кросспост каналы: %s", ", ".join(f"{lang}:{chat_id}" for lang, chat_id in channels.items()))
     missing_langs = missing_crosspost_langs(channels)
