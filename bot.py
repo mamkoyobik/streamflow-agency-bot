@@ -22,7 +22,12 @@ try:
 except Exception:
     DefaultBotProperties = None
 from aiogram.enums import ParseMode, ChatAction
-from aiogram.exceptions import TelegramForbiddenError, TelegramBadRequest
+from aiogram.exceptions import (
+    TelegramForbiddenError,
+    TelegramBadRequest,
+    TelegramNetworkError,
+    TelegramConflictError,
+)
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.filters import StateFilter, Command
@@ -374,6 +379,28 @@ def build_menu_caption_with_status(
         parts.append(status_line)
     return "\n\n".join(parts)
 
+def _get_env_int(name: str, default: int, min_value: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = int(raw)
+    except ValueError:
+        logger.warning("Некорректное значение %s=%r, использую %s", name, raw, default)
+        return default
+    return max(min_value, value)
+
+def _get_env_float(name: str, default: float, min_value: float) -> float:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        value = float(raw)
+    except ValueError:
+        logger.warning("Некорректное значение %s=%r, использую %s", name, raw, default)
+        return default
+    return max(min_value, value)
+
 PORTFOLIO_COOLDOWN_SECONDS = 10
 PORTFOLIO_AUTO_DELETE_SECONDS = 120
 PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
@@ -394,6 +421,16 @@ FORCE_LANGUAGE_PICK_ON_START = os.getenv("FORCE_LANGUAGE_PICK_ON_START", "1").st
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
 OPENAI_TRANSLATE_MODEL = os.getenv("OPENAI_TRANSLATE_MODEL", "gpt-4o-mini").strip()
 OPENAI_API_BASE = os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1").strip().rstrip("/")
+POLLING_RETRY_BASE_SECONDS = _get_env_int("POLLING_RETRY_BASE_SECONDS", default=5, min_value=3)
+POLLING_RETRY_MAX_SECONDS = max(
+    POLLING_RETRY_BASE_SECONDS,
+    _get_env_int("POLLING_RETRY_MAX_SECONDS", default=90, min_value=POLLING_RETRY_BASE_SECONDS),
+)
+POLLING_RETRY_JITTER_SECONDS = _get_env_float("POLLING_RETRY_JITTER_SECONDS", default=2.0, min_value=0.0)
+POLLING_CONFLICT_SLEEP_SECONDS = max(
+    POLLING_RETRY_BASE_SECONDS,
+    _get_env_int("POLLING_CONFLICT_SLEEP_SECONDS", default=30, min_value=POLLING_RETRY_BASE_SECONDS),
+)
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 TELEGRAM_CAPTION_LIMIT = 1024
 TELEGRAM_TEXT_LIMIT = 4096
@@ -4434,9 +4471,61 @@ async def main():
     except Exception:
         logger.exception("Ошибка очистки старых данных")
     await ensure_admin_menu_posted()
-    asyncio.create_task(daily_stats_task())
-    asyncio.create_task(archive_admin_messages_task())
-    await dp.start_polling(bot)
+    tasks = [
+        asyncio.create_task(daily_stats_task(), name="daily_stats_task"),
+        asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"),
+    ]
+    try:
+        try:
+            await bot.delete_webhook(drop_pending_updates=False)
+        except Exception:
+            logger.exception("Не удалось удалить webhook перед polling")
+        await run_polling_forever()
+    finally:
+        for task in tasks:
+            task.cancel()
+        await asyncio.gather(*tasks, return_exceptions=True)
+        await bot.session.close()
+
+
+async def run_polling_forever():
+    retry_delay = float(POLLING_RETRY_BASE_SECONDS)
+    while True:
+        started_at = datetime.now(timezone.utc)
+        reason = "stopped"
+        try:
+            logger.info("Запуск polling...")
+            await dp.start_polling(bot)
+            logger.warning("Polling остановлен без исключения")
+        except asyncio.CancelledError:
+            logger.info("Polling отменён, завершаю процесс")
+            raise
+        except TelegramConflictError:
+            reason = "conflict"
+            logger.exception("Конфликт getUpdates: запущено больше одного экземпляра бота")
+        except TelegramNetworkError:
+            reason = "network"
+            logger.exception("Сетевая ошибка Telegram API")
+        except Exception:
+            reason = "error"
+            logger.exception("Необработанная ошибка polling")
+
+        uptime = (datetime.now(timezone.utc) - started_at).total_seconds()
+        if reason == "conflict":
+            retry_delay = float(POLLING_CONFLICT_SLEEP_SECONDS)
+        elif uptime >= 180:
+            retry_delay = float(POLLING_RETRY_BASE_SECONDS)
+        else:
+            retry_delay = min(retry_delay * 2, float(POLLING_RETRY_MAX_SECONDS))
+
+        sleep_for = retry_delay + (random.random() * POLLING_RETRY_JITTER_SECONDS)
+        logger.info(
+            "Перезапуск polling через %.1f сек (причина=%s, uptime=%.1f сек)",
+            sleep_for,
+            reason,
+            uptime,
+        )
+        await asyncio.sleep(sleep_for)
 
 if __name__ == "__main__":
     asyncio.run(main())
