@@ -119,7 +119,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Фото слишком большое. Пришли файл меньше 10 МБ.",
         "token_missing": "Не настроен BOT_TOKEN или ADMIN_GROUP_ID.",
         "db_error": "Ошибка сохранения анкеты. Попробуй ещё раз.",
-        "success": "✅ Этап 1 сохранён. Открой Telegram и заверши обязательный этап 2.",
+        "success": "✅ Заявка отправлена. Дальнейшие действия перейдут в Telegram.",
     },
     "en": {
         "bad_size": "Invalid request size.",
@@ -131,7 +131,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Photo is too large. Please upload under 10MB.",
         "token_missing": "BOT_TOKEN or ADMIN_GROUP_ID is not configured.",
         "db_error": "Failed to save application. Please try again.",
-        "success": "✅ Step 1 is saved. Open Telegram and complete required Step 2.",
+        "success": "✅ Application sent. Next steps continue in Telegram.",
     },
     "pt": {
         "bad_size": "Tamanho da requisição inválido.",
@@ -143,7 +143,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Foto muito grande. Envie arquivo menor que 10MB.",
         "token_missing": "BOT_TOKEN ou ADMIN_GROUP_ID não configurado.",
         "db_error": "Falha ao salvar candidatura. Tente novamente.",
-        "success": "✅ Etapa 1 salva. Abra o Telegram e conclua a Etapa 2 obrigatória.",
+        "success": "✅ Cadastro enviado. Próximos passos no Telegram.",
     },
     "es": {
         "bad_size": "Tamaño de solicitud inválido.",
@@ -155,7 +155,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "La foto es demasiado grande. Sube un archivo menor de 10MB.",
         "token_missing": "BOT_TOKEN o ADMIN_GROUP_ID no están configurados.",
         "db_error": "Error al guardar la solicitud. Inténtalo de nuevo.",
-        "success": "✅ Etapa 1 guardada. Abre Telegram y completa la Etapa 2 obligatoria.",
+        "success": "✅ Solicitud enviada. Los siguientes pasos van por Telegram.",
     },
 }
 
@@ -215,11 +215,12 @@ def save_site_lead_payload(token: str, payload: dict) -> None:
     }
     set_setting(site_lead_setting_key(token), json.dumps(data, ensure_ascii=False))
 
-def build_bot_stage2_link(token: str) -> str | None:
+def build_bot_stage2_link(token: str, lang: str | None = None) -> str | None:
     username = (BOT_USERNAME or "").strip().lstrip("@")
     if not username:
         return None
-    return f"https://t.me/{username}?start=s2_{token}"
+    locale = normalize_site_lang(lang)
+    return f"https://t.me/{username}?start=s2_{token}_{locale}"
 try:
     from excel_export import append_application_row
 except Exception:
@@ -780,7 +781,7 @@ class Handler(SimpleHTTPRequestHandler):
         notify_admin_new_application()
         update_admin_menu_message()
 
-        bot_link = build_bot_stage2_link(lead_token)
+        bot_link = build_bot_stage2_link(lead_token, site_lang)
         return self.send_json(
             {
                 "ok": True,

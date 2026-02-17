@@ -165,7 +165,8 @@ async def global_error_handler(event: ErrorEvent):
 async def on_join_request(req: ChatJoinRequest):
     chat_id = req.chat.id
     try:
-        await bot.approve_chat_join_request(chat_id, req.from_user.id)
+        user_id = req.from_user.id
+        await bot.approve_chat_join_request(chat_id, user_id)
 
         channel_lang = "ru"
         for lang_code, configured_chat_id in CHANNEL_ID_BY_LANG.items():
@@ -191,8 +192,18 @@ async def on_join_request(req: ChatJoinRequest):
                 channel_lang,
             )
 
-        if not has_user_language(req.from_user.id):
-            set_user_language(req.from_user.id, channel_lang)
+        had_lang_before = has_user_language(user_id)
+        already_in_bot = had_lang_before or get_application(user_id) is not None
+        if not had_lang_before:
+            set_user_language(user_id, channel_lang)
+
+        if already_in_bot:
+            logger.info(
+                "Join request approved without повторного /start prompt: user_id=%s chat_id=%s",
+                user_id,
+                chat_id,
+            )
+            return
 
         invite_by_lang = {
             "en": "🤍 Your request to join the private channel is approved.\n\nPress /start ✨",
@@ -202,7 +213,7 @@ async def on_join_request(req: ChatJoinRequest):
         }
         invite_message = invite_by_lang.get(channel_lang, invite_by_lang["ru"])
         await bot.send_message(
-            req.from_user.id,
+            user_id,
             invite_message
         )
     except Exception:
@@ -304,12 +315,16 @@ def extract_start_payload(text: str | None) -> str:
         return ""
     return parts[1].strip()
 
-def extract_site_lead_token(start_payload: str | None) -> str | None:
+def extract_site_lead_start_data(start_payload: str | None) -> tuple[str | None, str | None]:
     raw = (start_payload or "").strip()
     match = SITE_START_PAYLOAD_RE.fullmatch(raw)
     if not match:
-        return None
-    return match.group(1)
+        return None, None
+    token = match.group(1)
+    lang = (match.group(2) or "").strip().lower()
+    if lang not in {"ru", "en", "pt", "es"}:
+        lang = None
+    return token, lang
 
 def _site_lead_setting_key(token: str) -> str:
     return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
@@ -396,7 +411,7 @@ REQUIRED_PREVIEW_FIELDS = {
 APPLICATION_STAGE_QUICK = "quick"
 APPLICATION_STAGE_FULL = "full"
 SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
-SITE_START_PAYLOAD_RE = re.compile(r"^s2_([A-Za-z0-9]{10,128})$")
+SITE_START_PAYLOAD_RE = re.compile(r"^s2_([A-Za-z0-9]{10,128})(?:_([a-z]{2}))?$")
 
 STATE_TO_FIELD = {
     ApplicationStates.name: "name",
@@ -2716,14 +2731,21 @@ async def start_stage2_questions(user_id: int, state: FSMContext):
         reply_markup=form_keyboard(lang),
     )
 
-async def bootstrap_site_stage2_start(message: Message, state: FSMContext, token: str) -> bool:
+async def bootstrap_site_stage2_start(
+    message: Message,
+    state: FSMContext,
+    token: str,
+    start_lang: str | None = None,
+) -> bool:
     lead = consume_site_lead_payload(token)
     if not lead:
-        lang = lang_for(message.from_user.id)
+        lang = normalize_lang(start_lang or lang_for(message.from_user.id))
+        if start_lang:
+            set_user_language(message.from_user.id, lang)
         await send_or_edit_user_text(message.from_user.id, stage2_text(lang, "expired"), reply_markup=main_menu(lang))
         return True
 
-    lang = normalize_lang(str(lead.get("lang") or "ru"))
+    lang = normalize_lang(str(lead.get("lang") or start_lang or "ru"))
     set_user_language(message.from_user.id, lang)
     await state.clear()
     clear_form_data(message.from_user.id)
@@ -2767,9 +2789,11 @@ async def start(message: Message, state: FSMContext):
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
         start_payload = extract_start_payload(message.text)
-        site_token = extract_site_lead_token(start_payload)
+        site_token, start_lang = extract_site_lead_start_data(start_payload)
+        if start_lang:
+            set_user_language(message.from_user.id, start_lang)
         if site_token:
-            started = await bootstrap_site_stage2_start(message, state, site_token)
+            started = await bootstrap_site_stage2_start(message, state, site_token, start_lang=start_lang)
             if started:
                 return
         if not await ensure_language_selected(
