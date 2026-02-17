@@ -151,9 +151,9 @@ TRANSLATIONS = {
         "normalized_yes_no_note": "🤍 Сохранила ответ как: {value}",
         "normalized_telegram_note": "🤍 Сохранила Telegram как: {value}",
         "photo_face_required": "🤍 Здесь нужно отправить <b>ФОТО АНФАС</b>.\n\n📷 Пришли фотографию, пожалуйста",
-        "photo_full_required": "🤍 Здесь нужно отправить <b>ФОТО В ПОЛНЫЙ РОСТ</b>.\n\n📷 Пришли фотографию, пожалуйста",
+        "photo_full_required": "🤍 Здесь нужно отправить <b>ФОТО В ПРОФИЛЬ</b>.\n\n📷 Пришли фотографию, пожалуйста",
         "photo_face_label": "📷 Фото анфас",
-        "photo_full_label": "🧍 Фото в полный рост",
+        "photo_full_label": "🧍 Фото в профиль",
         "profile_about_title": "ℹ️ <b>Подробнее о работе</b>\n\n• Удалённый формат\n• Без 18+\n• Поддержка 24/7\n• Обучение с нуля",
         "profile_contact_title": "💬 <b>Связь с администратором</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Портфолио моделей</b>\n\nЗдесь ты можешь посмотреть примеры работы, отзывы и реальные кейсы.",
@@ -172,7 +172,7 @@ TRANSLATIONS = {
             "🌍 <b>Страна / город:</b> {city}\n"
             "⏱ <b>Время работы:</b> {work_time}\n"
             "💼 <b>Опыт:</b> {experience}\n"
-            "🚀 <b>Готовность к старту:</b> {living}\n\n"
+            "🏠 <b>Отдельное помещение:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Статус:</b> {status}\n\n"
             "<i>Если нужно, используй кнопки ниже ✨</i>"
@@ -306,9 +306,9 @@ TRANSLATIONS = {
         "normalized_yes_no_note": "🤍 Saved answer as: {value}",
         "normalized_telegram_note": "🤍 Saved Telegram as: {value}",
         "photo_face_required": "🤍 A <b>FRONT-FACE PHOTO</b> is required here.\n\n📷 Please send a photo",
-        "photo_full_required": "🤍 A <b>FULL-BODY PHOTO</b> is required here.\n\n📷 Please send a photo",
+        "photo_full_required": "🤍 A <b>PROFILE PHOTO</b> is required here.\n\n📷 Please send a photo",
         "photo_face_label": "📷 Front-face photo",
-        "photo_full_label": "🧍 Full-body photo",
+        "photo_full_label": "🧍 Profile photo",
         "profile_about_title": "ℹ️ <b>About the work</b>\n\n• Remote format\n• No 18+\n• 24/7 support\n• Training from scratch",
         "profile_contact_title": "💬 <b>Contact admin</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Model portfolio</b>\n\nHere you can view work samples, reviews and real cases.",
@@ -327,7 +327,7 @@ TRANSLATIONS = {
             "🌍 <b>Country / city:</b> {city}\n"
             "⏱ <b>Work time:</b> {work_time}\n"
             "💼 <b>Experience:</b> {experience}\n"
-            "🚀 <b>Ready to start:</b> {living}\n\n"
+            "🏠 <b>Private room available:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Status:</b> {status}\n\n"
             "<i>Use buttons below if you want to edit anything ✨</i>"
@@ -462,9 +462,9 @@ TRANSLATIONS = {
         "normalized_yes_no_note": "🤍 Resposta salva como: {value}",
         "normalized_telegram_note": "🤍 Telegram salvo como: {value}",
         "photo_face_required": "🤍 Aqui precisa de <b>FOTO DE FRENTE</b>.\n\n📷 Envie uma foto, por favor",
-        "photo_full_required": "🤍 Aqui precisa de <b>FOTO DE CORPO INTEIRO</b>.\n\n📷 Envie uma foto, por favor",
+        "photo_full_required": "🤍 Aqui precisa de <b>FOTO DE PERFIL</b>.\n\n📷 Envie uma foto, por favor",
         "photo_face_label": "📷 Foto de frente",
-        "photo_full_label": "🧍 Foto de corpo inteiro",
+        "photo_full_label": "🧍 Foto de perfil",
         "profile_about_title": "ℹ️ <b>Sobre o trabalho</b>\n\n• Formato remoto\n• Sem 18+\n• Suporte 24/7\n• Treinamento do zero",
         "profile_contact_title": "💬 <b>Contato do admin</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Portfólio de modelos</b>\n\nAqui você pode ver exemplos, avaliações e casos reais.",
@@ -483,7 +483,7 @@ TRANSLATIONS = {
             "🌍 <b>País / cidade:</b> {city}\n"
             "⏱ <b>Tempo de trabalho:</b> {work_time}\n"
             "💼 <b>Experiência:</b> {experience}\n"
-            "🚀 <b>Pronta para começar:</b> {living}\n\n"
+            "🏠 <b>Ambiente privado disponível:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Status:</b> {status}\n\n"
             "<i>Use os botões abaixo se quiser ajustar algo ✨</i>"
@@ -618,9 +618,9 @@ TRANSLATIONS = {
         "normalized_yes_no_note": "🤍 Respuesta guardada como: {value}",
         "normalized_telegram_note": "🤍 Telegram guardado como: {value}",
         "photo_face_required": "🤍 Aquí necesitas <b>FOTO DE FRENTE</b>.\n\n📷 Envía una foto, por favor",
-        "photo_full_required": "🤍 Aquí necesitas <b>FOTO DE CUERPO COMPLETO</b>.\n\n📷 Envía una foto, por favor",
+        "photo_full_required": "🤍 Aquí necesitas <b>FOTO DE PERFIL</b>.\n\n📷 Envía una foto, por favor",
         "photo_face_label": "📷 Foto de frente",
-        "photo_full_label": "🧍 Foto de cuerpo completo",
+        "photo_full_label": "🧍 Foto de perfil",
         "profile_about_title": "ℹ️ <b>Sobre el trabajo</b>\n\n• Formato remoto\n• Sin 18+\n• Soporte 24/7\n• Formación desde cero",
         "profile_contact_title": "💬 <b>Contacto del admin</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Portafolio de modelos</b>\n\nAquí puedes ver ejemplos, reseñas y casos reales.",
@@ -639,7 +639,7 @@ TRANSLATIONS = {
             "🌍 <b>País / ciudad:</b> {city}\n"
             "⏱ <b>Tiempo de trabajo:</b> {work_time}\n"
             "💼 <b>Experiencia:</b> {experience}\n"
-            "🚀 <b>Lista para empezar:</b> {living}\n\n"
+            "🏠 <b>Espacio privado disponible:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Estado:</b> {status}\n\n"
             "<i>Usa los botones de abajo si quieres corregir algo ✨</i>"
@@ -693,11 +693,11 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.city: "В какой стране ты сейчас?\n\nМожно в формате: Город, Страна",
         ApplicationStates.work_time: "Сколько часов в день готова уделять?",
         ApplicationStates.experience: "Есть опыт в стримах/эфирах?\n\nЕсли нет — так и напиши.",
-        ApplicationStates.living: "Готова начать в ближайшие 7 дней?\n\nОтветь «да» или «нет».",
+        ApplicationStates.living: "Есть отдельное помещение без посторонних?\n\nОтветь «да» или «нет».",
         ApplicationStates.devices: "Какие устройства у тебя есть? (необязательно)",
         ApplicationStates.headphones: "Есть ли наушники с микрофоном? (необязательно)",
-        ApplicationStates.photo_face: "Фото анфас (необязательно):",
-        ApplicationStates.photo_full: "Фото в полный рост (необязательно):",
+        ApplicationStates.photo_face: "Пришли фото анфас:",
+        ApplicationStates.photo_full: "Пришли фото в профиль:",
     },
     "en": {
         ApplicationStates.name: "What is your full name?",
@@ -708,11 +708,11 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.city: "Which country are you currently in?\n\nYou can write: City, Country",
         ApplicationStates.work_time: "How many hours per day can you commit?",
         ApplicationStates.experience: "Do you have streaming/live experience?\n\nIf not, just write none.",
-        ApplicationStates.living: "Can you start within the next 7 days?\n\nPlease answer yes or no.",
+        ApplicationStates.living: "Do you have a private room without other people?\n\nPlease answer yes or no.",
         ApplicationStates.devices: "What devices do you have? (optional)",
         ApplicationStates.headphones: "Do you have headphones with mic? (optional)",
-        ApplicationStates.photo_face: "Front-face photo (optional):",
-        ApplicationStates.photo_full: "Full-body photo (optional):",
+        ApplicationStates.photo_face: "Please send a front-face photo:",
+        ApplicationStates.photo_full: "Please send a profile photo:",
     },
     "pt": {
         ApplicationStates.name: "Qual é seu nome completo?",
@@ -723,11 +723,11 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.city: "Em qual país você está agora?\n\nPode escrever: Cidade, País",
         ApplicationStates.work_time: "Quantas horas por dia você pode dedicar?",
         ApplicationStates.experience: "Você tem experiência com lives/streams?\n\nSe não tiver, escreva sem experiência.",
-        ApplicationStates.living: "Você consegue começar nos próximos 7 dias?\n\nResponda sim ou não.",
+        ApplicationStates.living: "Você tem um ambiente privado sem outras pessoas?\n\nResponda sim ou não.",
         ApplicationStates.devices: "Quais dispositivos você tem? (opcional)",
         ApplicationStates.headphones: "Você tem fones com microfone? (opcional)",
-        ApplicationStates.photo_face: "Foto de frente (opcional):",
-        ApplicationStates.photo_full: "Foto de corpo inteiro (opcional):",
+        ApplicationStates.photo_face: "Envie uma foto de frente:",
+        ApplicationStates.photo_full: "Envie uma foto de perfil:",
     },
     "es": {
         ApplicationStates.name: "¿Cuál es tu nombre completo?",
@@ -738,11 +738,11 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.city: "¿En qué país estás ahora?\n\nPuedes escribir: Ciudad, País",
         ApplicationStates.work_time: "¿Cuántas horas por día puedes dedicar?",
         ApplicationStates.experience: "¿Tienes experiencia en streams/directos?\n\nSi no, escribe sin experiencia.",
-        ApplicationStates.living: "¿Puedes empezar dentro de los próximos 7 días?\n\nResponde sí o no.",
+        ApplicationStates.living: "¿Tienes un espacio privado sin otras personas?\n\nResponde sí o no.",
         ApplicationStates.devices: "¿Qué dispositivos tienes? (opcional)",
         ApplicationStates.headphones: "¿Tienes auriculares con micrófono? (opcional)",
-        ApplicationStates.photo_face: "Foto de frente (opcional):",
-        ApplicationStates.photo_full: "Foto de cuerpo completo (opcional):",
+        ApplicationStates.photo_face: "Envía una foto de frente:",
+        ApplicationStates.photo_full: "Envía una foto de perfil:",
     },
 }
 

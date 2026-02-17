@@ -70,6 +70,7 @@ const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').mat
 const SITE_LANG_STORAGE_KEY = 'streamflow_site_lang';
 const SITE_LANGS = ['ru', 'en', 'pt', 'es'];
 const DEFAULT_SITE_LANG = 'ru';
+const METRIKA_COUNTER_ID = 106823371;
 let CURRENT_SITE_LANG = DEFAULT_SITE_LANG;
 
 function safeStorageGet(storage, key) {
@@ -202,6 +203,7 @@ const I18N = {
     'form.openTelegram': 'Открыть Telegram',
     'form.sending': 'Отправка...',
     'form.success': '✅ Заявка отправлена. Дальнейшие действия перейдут в Telegram.',
+    'form.redirecting': '⏳ Сейчас автоматически откроем Telegram, чтобы продолжить без паузы. Если не открылось, нажми кнопку ниже.',
     'form.sendError': 'Ошибка отправки.',
     'form.invalid': 'Поле заполнено неверно.',
     'footer.channel': 'Канал Streamflow',
@@ -333,6 +335,7 @@ const I18N = {
     'form.openTelegram': 'Open Telegram',
     'form.sending': 'Sending...',
     'form.success': '✅ Application sent. Next steps continue in Telegram.',
+    'form.redirecting': '⏳ We will now open Telegram automatically so you can continue right away. If it does not open, tap the button below.',
     'form.sendError': 'Sending error.',
     'form.invalid': 'Invalid field value.',
     'footer.channel': 'Streamflow channel',
@@ -464,6 +467,7 @@ const I18N = {
     'form.openTelegram': 'Abrir Telegram',
     'form.sending': 'Enviando...',
     'form.success': '✅ Cadastro enviado. Próximos passos no Telegram.',
+    'form.redirecting': '⏳ Vamos abrir o Telegram automaticamente agora para você continuar sem pausa. Se não abrir, toque no botão abaixo.',
     'form.sendError': 'Erro ao enviar.',
     'form.invalid': 'Campo preenchido incorretamente.',
     'footer.channel': 'Canal Streamflow',
@@ -595,6 +599,7 @@ const I18N = {
     'form.openTelegram': 'Abrir Telegram',
     'form.sending': 'Enviando...',
     'form.success': '✅ Solicitud enviada. Los siguientes pasos van por Telegram.',
+    'form.redirecting': '⏳ Ahora abriremos Telegram automáticamente para que sigas sin pausa. Si no se abre, pulsa el botón de abajo.',
     'form.sendError': 'Error al enviar.',
     'form.invalid': 'Campo inválido.',
     'footer.channel': 'Canal Streamflow',
@@ -1251,6 +1256,78 @@ portfolioSliders.forEach((slider) => {
   updateDots(0);
 });
 
+function trackMetrikaGoal(goal, params = {}) {
+  try {
+    if (typeof window.ym !== 'function') return;
+    window.ym(METRIKA_COUNTER_ID, 'reachGoal', goal, params);
+  } catch (err) {
+    // ignore tracking errors
+  }
+}
+
+const COUNTRY_NAME_BY_REGION = {
+  RU: 'Russia',
+  KZ: 'Kazakhstan',
+  UA: 'Ukraine',
+  BY: 'Belarus',
+  UZ: 'Uzbekistan',
+  KG: 'Kyrgyzstan',
+  TJ: 'Tajikistan',
+  AZ: 'Azerbaijan',
+  GE: 'Georgia',
+  US: 'United States',
+  CA: 'Canada',
+  BR: 'Brazil',
+  MX: 'Mexico',
+  AR: 'Argentina',
+  CL: 'Chile',
+  CO: 'Colombia',
+  PE: 'Peru',
+  UY: 'Uruguay',
+  PY: 'Paraguay',
+  BO: 'Bolivia',
+  EC: 'Ecuador',
+  VE: 'Venezuela',
+  PH: 'Philippines',
+  ES: 'Spain',
+  PT: 'Portugal',
+  GB: 'United Kingdom',
+};
+
+function detectCountryFromClient() {
+  const localeCandidates = [];
+  if (Array.isArray(navigator.languages)) localeCandidates.push(...navigator.languages);
+  if (navigator.language) localeCandidates.push(navigator.language);
+
+  for (const locale of localeCandidates) {
+    const value = String(locale || '').trim();
+    if (!value.includes('-')) continue;
+    const region = value.split('-').pop().toUpperCase();
+    if (!/^[A-Z]{2}$/.test(region)) continue;
+    return COUNTRY_NAME_BY_REGION[region] || region;
+  }
+
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || '';
+  if (tz.startsWith('Europe/')) return 'Europe';
+  if (tz.startsWith('America/')) return 'America';
+  if (tz.startsWith('Asia/')) return 'Asia';
+  return '';
+}
+
+function ensureCountryField(form) {
+  let field = form.querySelector('input[name="country"]');
+  if (!field) {
+    field = document.createElement('input');
+    field.type = 'hidden';
+    field.name = 'country';
+    form.appendChild(field);
+  }
+  if (!field.value) {
+    field.value = detectCountryFromClient();
+  }
+  return field;
+}
+
 const forms = document.querySelectorAll('[data-application-form]');
 const telegramLinks = document.querySelectorAll('[data-telegram-link]');
 const formNextLinks = document.querySelectorAll('[data-form-next] a');
@@ -1486,6 +1563,10 @@ function initMultiStep(form) {
   if (btnNext) {
     btnNext.addEventListener('click', () => {
       if (validateStep(current)) {
+        trackMetrikaGoal('application_step_next', {
+          step_from: current + 1,
+          lang: CURRENT_SITE_LANG,
+        });
         goTo(current + 1);
       }
     });
@@ -1549,6 +1630,7 @@ async function sendApplication(formData, elements, options = {}) {
       payload = {};
     }
     if (response.ok && payload.ok) {
+      trackMetrikaGoal('application_submit_success', { lang: CURRENT_SITE_LANG });
       if (formStatus) {
         formStatus.classList.add('is-success');
         formStatus.innerHTML = payload.message || siteText('form.success');
@@ -1560,8 +1642,28 @@ async function sendApplication(formData, elements, options = {}) {
       if (payload.bot_link && formNext && formNextLink) {
         formNextLink.href = payload.bot_link;
         formNext.classList.remove('hidden');
+        if (!formNextLink.dataset.goalBound) {
+          formNextLink.dataset.goalBound = '1';
+          formNextLink.addEventListener('click', () => {
+            trackMetrikaGoal('application_open_telegram_click', { lang: CURRENT_SITE_LANG });
+          });
+        }
+        if (formStatus) {
+          formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${siteText('form.redirecting')}`;
+        }
+        if (form && form.__tgRedirectTimer) {
+          window.clearTimeout(form.__tgRedirectTimer);
+        }
+        form.__tgRedirectTimer = window.setTimeout(() => {
+          trackMetrikaGoal('application_open_telegram_auto', { lang: CURRENT_SITE_LANG });
+          window.location.assign(payload.bot_link);
+        }, 1600);
       }
     } else {
+      trackMetrikaGoal('application_submit_error', {
+        lang: CURRENT_SITE_LANG,
+        field: payload.field || '',
+      });
       const fieldName = payload.field;
       const stepper = form ? form.__stepper : null;
       let handledInline = false;
@@ -1594,6 +1696,7 @@ async function sendApplication(formData, elements, options = {}) {
       }
     }
   } catch (err) {
+    trackMetrikaGoal('application_submit_error', { lang: CURRENT_SITE_LANG });
     if (formStatus) {
       formStatus.classList.add('is-error');
       formStatus.textContent = siteText('form.sendError');
@@ -1604,6 +1707,7 @@ async function sendApplication(formData, elements, options = {}) {
 }
 
 forms.forEach((form) => {
+  ensureCountryField(form);
   const formStatus = form.querySelector('[data-form-status]');
   const formNext = form.querySelector('[data-form-next]');
   const formNextLink = formNext ? formNext.querySelector('a') : null;
@@ -1625,6 +1729,12 @@ forms.forEach((form) => {
       }
     }
     const formData = new FormData(form);
+    const countryField = ensureCountryField(form);
+    if (countryField && !countryField.value) {
+      countryField.value = detectCountryFromClient();
+    }
+    formData.set('country', countryField ? countryField.value : '');
+    formData.set('site_lang', CURRENT_SITE_LANG);
     await sendApplication(formData, elements, { resetForm: true });
   });
 });

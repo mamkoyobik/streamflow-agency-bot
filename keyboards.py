@@ -238,11 +238,13 @@ def confirm_reset_db_keyboard():
         ]
     ])
 
-def admin_menu_keyboard(counts: dict | None = None):
+def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = None):
     pending = counts.get("pending", 0) if counts else 0
     accepted = counts.get("accepted", 0) if counts else 0
     rejected = counts.get("rejected", 0) if counts else 0
     total = counts.get("total", pending + accepted + rejected) if counts else 0
+    stage_quick = stage_counts.get("quick", 0) if stage_counts else 0
+    stage_full = stage_counts.get("full", 0) if stage_counts else 0
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post")
@@ -272,6 +274,18 @@ def admin_menu_keyboard(counts: dict | None = None):
             InlineKeyboardButton(
                 text=f"📚 Все заявки ({total})",
                 callback_data="admin_menu:all"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=f"1️⃣ Прошёл первый этап ({stage_quick})",
+                callback_data="admin_menu:stage_quick"
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=f"2️⃣ Полностью заполнил ({stage_full})",
+                callback_data="admin_menu:stage_full"
             )
         ],
         [
@@ -422,7 +436,7 @@ def admin_list_view_keyboard(
 
     rows.append([
         InlineKeyboardButton(text="📷 Анфас", callback_data=f"admin_view_photo:{user_id}:face:{filter_key}:{offset}"),
-        InlineKeyboardButton(text="🧍 В полный рост", callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}")
+        InlineKeyboardButton(text="🧍 Профиль", callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}")
     ])
     rows.append([
         InlineKeyboardButton(text="💬 Написать кандидату", url=contact)

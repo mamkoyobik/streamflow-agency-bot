@@ -63,6 +63,9 @@ from database import (
     get_setting,
     set_setting,
     list_applications,
+    list_applications_by_stage,
+    get_application_stage_counts,
+    get_source_counts,
     set_menu_message_id,
     get_menu_message_id,
     set_flow_message_id,
@@ -257,6 +260,221 @@ def normalize_phone(text: str) -> str | None:
         return f"+{digits}"
     if value.isdigit():
         return value
+    return None
+
+
+PHONE_COUNTRY_BY_CODE = {
+    "1": "United States/Canada",
+    "7": "Russia/Kazakhstan",
+    "20": "Egypt",
+    "27": "South Africa",
+    "30": "Greece",
+    "31": "Netherlands",
+    "32": "Belgium",
+    "33": "France",
+    "34": "Spain",
+    "39": "Italy",
+    "40": "Romania",
+    "44": "United Kingdom",
+    "48": "Poland",
+    "49": "Germany",
+    "51": "Peru",
+    "52": "Mexico",
+    "53": "Cuba",
+    "54": "Argentina",
+    "55": "Brazil",
+    "56": "Chile",
+    "57": "Colombia",
+    "58": "Venezuela",
+    "60": "Malaysia",
+    "61": "Australia",
+    "62": "Indonesia",
+    "63": "Philippines",
+    "64": "New Zealand",
+    "65": "Singapore",
+    "66": "Thailand",
+    "81": "Japan",
+    "82": "South Korea",
+    "84": "Vietnam",
+    "86": "China",
+    "90": "Turkey",
+    "91": "India",
+    "92": "Pakistan",
+    "93": "Afghanistan",
+    "94": "Sri Lanka",
+    "95": "Myanmar",
+    "98": "Iran",
+    "211": "South Sudan",
+    "212": "Morocco",
+    "213": "Algeria",
+    "216": "Tunisia",
+    "218": "Libya",
+    "220": "Gambia",
+    "221": "Senegal",
+    "222": "Mauritania",
+    "223": "Mali",
+    "224": "Guinea",
+    "225": "Ivory Coast",
+    "226": "Burkina Faso",
+    "227": "Niger",
+    "228": "Togo",
+    "229": "Benin",
+    "230": "Mauritius",
+    "231": "Liberia",
+    "232": "Sierra Leone",
+    "233": "Ghana",
+    "234": "Nigeria",
+    "235": "Chad",
+    "236": "Central African Republic",
+    "237": "Cameroon",
+    "238": "Cape Verde",
+    "239": "Sao Tome and Principe",
+    "240": "Equatorial Guinea",
+    "241": "Gabon",
+    "242": "Congo",
+    "243": "DR Congo",
+    "244": "Angola",
+    "245": "Guinea-Bissau",
+    "248": "Seychelles",
+    "249": "Sudan",
+    "250": "Rwanda",
+    "251": "Ethiopia",
+    "252": "Somalia",
+    "253": "Djibouti",
+    "254": "Kenya",
+    "255": "Tanzania",
+    "256": "Uganda",
+    "257": "Burundi",
+    "258": "Mozambique",
+    "260": "Zambia",
+    "261": "Madagascar",
+    "262": "Reunion",
+    "263": "Zimbabwe",
+    "264": "Namibia",
+    "265": "Malawi",
+    "266": "Lesotho",
+    "267": "Botswana",
+    "268": "Eswatini",
+    "269": "Comoros",
+    "290": "Saint Helena",
+    "291": "Eritrea",
+    "297": "Aruba",
+    "298": "Faroe Islands",
+    "299": "Greenland",
+    "351": "Portugal",
+    "352": "Luxembourg",
+    "353": "Ireland",
+    "354": "Iceland",
+    "355": "Albania",
+    "356": "Malta",
+    "357": "Cyprus",
+    "358": "Finland",
+    "359": "Bulgaria",
+    "370": "Lithuania",
+    "371": "Latvia",
+    "372": "Estonia",
+    "373": "Moldova",
+    "374": "Armenia",
+    "375": "Belarus",
+    "376": "Andorra",
+    "377": "Monaco",
+    "378": "San Marino",
+    "380": "Ukraine",
+    "381": "Serbia",
+    "382": "Montenegro",
+    "383": "Kosovo",
+    "385": "Croatia",
+    "386": "Slovenia",
+    "387": "Bosnia and Herzegovina",
+    "389": "North Macedonia",
+    "420": "Czech Republic",
+    "421": "Slovakia",
+    "423": "Liechtenstein",
+    "500": "Falkland Islands",
+    "501": "Belize",
+    "502": "Guatemala",
+    "503": "El Salvador",
+    "504": "Honduras",
+    "505": "Nicaragua",
+    "506": "Costa Rica",
+    "507": "Panama",
+    "508": "Saint Pierre and Miquelon",
+    "509": "Haiti",
+    "590": "Guadeloupe",
+    "591": "Bolivia",
+    "592": "Guyana",
+    "593": "Ecuador",
+    "594": "French Guiana",
+    "595": "Paraguay",
+    "596": "Martinique",
+    "597": "Suriname",
+    "598": "Uruguay",
+    "599": "Curacao",
+    "670": "Timor-Leste",
+    "672": "Australian External Territories",
+    "673": "Brunei",
+    "674": "Nauru",
+    "675": "Papua New Guinea",
+    "676": "Tonga",
+    "677": "Solomon Islands",
+    "678": "Vanuatu",
+    "679": "Fiji",
+    "680": "Palau",
+    "681": "Wallis and Futuna",
+    "682": "Cook Islands",
+    "683": "Niue",
+    "685": "Samoa",
+    "686": "Kiribati",
+    "687": "New Caledonia",
+    "688": "Tuvalu",
+    "689": "French Polynesia",
+    "690": "Tokelau",
+    "691": "Micronesia",
+    "692": "Marshall Islands",
+    "850": "North Korea",
+    "852": "Hong Kong",
+    "853": "Macau",
+    "855": "Cambodia",
+    "856": "Laos",
+    "880": "Bangladesh",
+    "886": "Taiwan",
+    "960": "Maldives",
+    "961": "Lebanon",
+    "962": "Jordan",
+    "963": "Syria",
+    "964": "Iraq",
+    "965": "Kuwait",
+    "966": "Saudi Arabia",
+    "967": "Yemen",
+    "968": "Oman",
+    "970": "Palestine",
+    "971": "UAE",
+    "972": "Israel",
+    "973": "Bahrain",
+    "974": "Qatar",
+    "975": "Bhutan",
+    "976": "Mongolia",
+    "977": "Nepal",
+    "992": "Tajikistan",
+    "993": "Turkmenistan",
+    "994": "Azerbaijan",
+    "995": "Georgia",
+    "996": "Kyrgyzstan",
+    "998": "Uzbekistan",
+}
+PHONE_COUNTRY_CODES_SORTED = sorted(PHONE_COUNTRY_BY_CODE.keys(), key=len, reverse=True)
+
+
+def country_from_phone(phone: str | None) -> str | None:
+    normalized = normalize_phone(phone or "")
+    if not normalized:
+        return None
+    digits = re.sub(r"\D", "", normalized)
+    if not digits:
+        return None
+    for code in PHONE_COUNTRY_CODES_SORTED:
+        if digits.startswith(code):
+            return PHONE_COUNTRY_BY_CODE[code]
     return None
 
 def normalize_yes_no(text: str) -> str | None:
@@ -592,10 +810,14 @@ STAGE2_BRIDGE_TEXTS = {
     "ru": {
         "gate": (
             "📣 Перед продолжением зайди в канал Streamflow.\n\n"
-            "Дальше выбери удобный путь:\n"
-            "• можно написать менеджеру\n"
-            "• или не тратить время на переписки и созвоны, узнать всё в боте, "
-            "дозаполнить анкету и перейти к работе"
+            "Как устроена работа:\n"
+            "• удалённо, из дома\n"
+            "• без 18+ контента\n"
+            "• даём понятный старт и сопровождение\n"
+            "• отвечаем по графику, выплатам и процессу\n\n"
+            "Дальше выбери удобный формат:\n"
+            "• быстро пройти всё в боте и подать заявку без переписок\n"
+            "• или написать менеджеру и записаться через него"
         ),
         "step1": (
             "✅ Предзаявка сохранена.\n\n"
@@ -610,11 +832,15 @@ STAGE2_BRIDGE_TEXTS = {
             "Остался обязательный финальный блок (около 2 минут).\n"
             "Без него мы не сможем запустить старт."
         ),
+        "autostart": (
+            "✅ Отлично, короткая часть заполнена.\n"
+            "Сразу переходим к финальному блоку, чтобы запустить старт без задержек."
+        ),
         "next": "Что дальше",
         "start": "Продолжить этап 2 (обязательно)",
-        "manager": "Есть вопросы? Менеджер",
+        "manager": "💬 Написать менеджеру",
         "channel": "📣 Открыть канал",
-        "continue_bot": "🚀 Продолжить в боте",
+        "continue_bot": "✅ Подать заявку через бота",
         "wait_gate": "Выбери один из вариантов ниже 👇",
         "wait": "Нажми кнопку, чтобы продолжить этап 2 👇",
         "expired": "Ссылка из сайта устарела. Нажми «Стать моделью» и заполни короткий этап заново.",
@@ -622,9 +848,14 @@ STAGE2_BRIDGE_TEXTS = {
     "en": {
         "gate": (
             "📣 Before continuing, open the Streamflow channel.\n\n"
-            "Then choose what fits you:\n"
-            "• message the manager\n"
-            "• or skip long chats/calls, get details in the bot, finish the form and move to work"
+            "How this work format looks:\n"
+            "• fully remote, from home\n"
+            "• no 18+ content\n"
+            "• clear onboarding and support\n"
+            "• transparent schedule, payouts and workflow\n\n"
+            "Now choose your path:\n"
+            "• complete everything in the bot and submit without extra chats\n"
+            "• or message the manager and apply through them"
         ),
         "step1": (
             "✅ Pre-application saved.\n\n"
@@ -639,11 +870,15 @@ STAGE2_BRIDGE_TEXTS = {
             "One required final block is left (about 2 minutes).\n"
             "Without it, we can’t launch your start."
         ),
+        "autostart": (
+            "✅ Great, the short part is done.\n"
+            "Let’s move straight to the final required block to launch your start faster."
+        ),
         "next": "What’s next",
         "start": "Continue Step 2 (required)",
-        "manager": "Questions? Manager",
+        "manager": "💬 Message manager",
         "channel": "📣 Open channel",
-        "continue_bot": "🚀 Continue in bot",
+        "continue_bot": "✅ Apply through bot",
         "wait_gate": "Choose one option below 👇",
         "wait": "Tap the button to continue Step 2 👇",
         "expired": "Your website link has expired. Tap “Become a model” and submit the short step again.",
@@ -651,10 +886,14 @@ STAGE2_BRIDGE_TEXTS = {
     "pt": {
         "gate": (
             "📣 Antes de continuar, abra o canal Streamflow.\n\n"
-            "Depois escolha o caminho:\n"
-            "• falar com o gerente\n"
-            "• ou não perder tempo com chamadas/conversas, ver tudo no bot, "
-            "finalizar o cadastro e ir para o trabalho"
+            "Como funciona o trabalho:\n"
+            "• remoto, de casa\n"
+            "• sem conteúdo 18+\n"
+            "• início claro com suporte\n"
+            "• regras transparentes de rotina, pagamento e processo\n\n"
+            "Agora escolha o caminho:\n"
+            "• concluir tudo no bot e enviar sem perder tempo em chats\n"
+            "• ou falar com o gerente e se cadastrar por ele"
         ),
         "step1": (
             "✅ Pré-cadastro salvo.\n\n"
@@ -669,11 +908,15 @@ STAGE2_BRIDGE_TEXTS = {
             "Falta um bloco final obrigatório (cerca de 2 minutos).\n"
             "Sem isso, não conseguimos iniciar seu começo."
         ),
+        "autostart": (
+            "✅ Perfeito, a parte curta já está pronta.\n"
+            "Vamos direto para o bloco final obrigatório para acelerar seu início."
+        ),
         "next": "Próximo passo",
         "start": "Continuar Etapa 2 (obrigatória)",
-        "manager": "Dúvidas? Gerente",
+        "manager": "💬 Falar com gerente",
         "channel": "📣 Abrir canal",
-        "continue_bot": "🚀 Continuar no bot",
+        "continue_bot": "✅ Enviar pelo bot",
         "wait_gate": "Escolha uma opção abaixo 👇",
         "wait": "Toque no botão para continuar a Etapa 2 👇",
         "expired": "Seu link do site expirou. Toque em “Become a model” e preencha a etapa curta novamente.",
@@ -681,10 +924,14 @@ STAGE2_BRIDGE_TEXTS = {
     "es": {
         "gate": (
             "📣 Antes de continuar, abre el canal de Streamflow.\n\n"
-            "Luego elige tu camino:\n"
-            "• escribir al manager\n"
-            "• o no perder tiempo en chats/llamadas, ver todo en el bot, "
-            "completar la solicitud y pasar al trabajo"
+            "Cómo es el trabajo:\n"
+            "• remoto, desde casa\n"
+            "• sin contenido 18+\n"
+            "• inicio claro con acompañamiento\n"
+            "• reglas transparentes sobre horario, pagos y proceso\n\n"
+            "Ahora elige tu camino:\n"
+            "• completar todo en el bot y enviar sin perder tiempo en chats\n"
+            "• o escribir al manager y registrarte por su vía"
         ),
         "step1": (
             "✅ Pre-solicitud guardada.\n\n"
@@ -699,11 +946,15 @@ STAGE2_BRIDGE_TEXTS = {
             "Queda un bloque final obligatorio (unos 2 minutos).\n"
             "Sin eso no podemos activar tu inicio."
         ),
+        "autostart": (
+            "✅ Perfecto, la parte corta ya está lista.\n"
+            "Vamos directo al bloque final obligatorio para activar tu inicio más rápido."
+        ),
         "next": "Qué sigue",
         "start": "Continuar Etapa 2 (obligatoria)",
-        "manager": "¿Dudas? Manager",
+        "manager": "💬 Escribir al manager",
         "channel": "📣 Abrir canal",
-        "continue_bot": "🚀 Continuar en bot",
+        "continue_bot": "✅ Enviar por el bot",
         "wait_gate": "Elige una opción abajo 👇",
         "wait": "Pulsa el botón para continuar la Etapa 2 👇",
         "expired": "Tu enlace del sitio venció. Pulsa “Become a model” y completa de nuevo la etapa corta.",
@@ -1256,6 +1507,16 @@ async def can_manage_admin_group(message: Message) -> bool:
     return await is_admin_actor(message.chat.id, message.from_user.id)
 
 
+async def can_manage_admin_callback(call: CallbackQuery) -> bool:
+    if not call.message or not call.from_user:
+        return False
+    chat_id = call.message.chat.id
+    if chat_id == ADMIN_GROUP_ID:
+        return await is_admin_actor(ADMIN_GROUP_ID, call.from_user.id)
+    # Fallback for cases when admin chat ID was changed but admin still presses buttons in admin group.
+    return await is_admin_actor(chat_id, call.from_user.id)
+
+
 async def sync_anonymous_create_post_state(enabled: bool):
     try:
         anon_ctx = dp.fsm.get_context(
@@ -1336,120 +1597,127 @@ async def send_crosspost_to_channels(
     def text_for_lang(lang: str) -> str:
         return (translated_texts.get(lang) or "").strip()
 
-    if source_message.photo:
-        file_id = source_message.photo[-1].file_id
-        for lang in translated_channels:
-            chat_id = channels[lang]
-            text = text_for_lang(lang)
-            entities = entities_map.get(lang)
-            kwargs = {"chat_id": chat_id, "photo": file_id}
-            if text:
-                text, entities = fit_caption_with_entities(text, entities)
-                kwargs["caption"] = text
-                kwargs["parse_mode"] = None
+    async def rollback_posted() -> None:
+        for lang, message_id in list(posted_message_ids.items()):
+            chat_id = channels.get(lang)
+            if not chat_id or not message_id:
+                continue
+            try:
+                await bot.delete_message(chat_id=chat_id, message_id=message_id)
+            except Exception:
+                logger.exception("Не удалось откатить опубликованное сообщение: lang=%s id=%s", lang, message_id)
+
+    current_lang = "ru"
+    try:
+        if source_message.photo:
+            file_id = source_message.photo[-1].file_id
+            for lang in translated_channels:
+                current_lang = lang
+                chat_id = channels[lang]
+                text = text_for_lang(lang)
+                entities = entities_map.get(lang)
+                kwargs = {"chat_id": chat_id, "photo": file_id}
+                if text:
+                    text, entities = fit_caption_with_entities(text, entities)
+                    kwargs["caption"] = text
+                    kwargs["parse_mode"] = None
+                    if entities:
+                        kwargs["caption_entities"] = entities
+                sent = await bot.send_photo(**kwargs)
+                posted_message_ids[lang] = int(sent.message_id)
+                posted_texts[lang] = text or ""
+                posted_entities[lang] = entities
+        elif source_message.video:
+            file_id = source_message.video.file_id
+            for lang in translated_channels:
+                current_lang = lang
+                chat_id = channels[lang]
+                text = text_for_lang(lang)
+                entities = entities_map.get(lang)
+                kwargs = {"chat_id": chat_id, "video": file_id}
+                if text:
+                    text, entities = fit_caption_with_entities(text, entities)
+                    kwargs["caption"] = text
+                    kwargs["parse_mode"] = None
+                    if entities:
+                        kwargs["caption_entities"] = entities
+                sent = await bot.send_video(**kwargs)
+                posted_message_ids[lang] = int(sent.message_id)
+                posted_texts[lang] = text or ""
+                posted_entities[lang] = entities
+        elif source_message.document:
+            file_id = source_message.document.file_id
+            for lang in translated_channels:
+                current_lang = lang
+                chat_id = channels[lang]
+                text = text_for_lang(lang)
+                entities = entities_map.get(lang)
+                kwargs = {"chat_id": chat_id, "document": file_id}
+                if text:
+                    text, entities = fit_caption_with_entities(text, entities)
+                    kwargs["caption"] = text
+                    kwargs["parse_mode"] = None
+                    if entities:
+                        kwargs["caption_entities"] = entities
+                sent = await bot.send_document(**kwargs)
+                posted_message_ids[lang] = int(sent.message_id)
+                posted_texts[lang] = text or ""
+                posted_entities[lang] = entities
+        elif source_message.animation:
+            file_id = source_message.animation.file_id
+            for lang in translated_channels:
+                current_lang = lang
+                chat_id = channels[lang]
+                text = text_for_lang(lang)
+                entities = entities_map.get(lang)
+                kwargs = {"chat_id": chat_id, "animation": file_id}
+                if text:
+                    text, entities = fit_caption_with_entities(text, entities)
+                    kwargs["caption"] = text
+                    kwargs["parse_mode"] = None
+                    if entities:
+                        kwargs["caption_entities"] = entities
+                sent = await bot.send_animation(**kwargs)
+                posted_message_ids[lang] = int(sent.message_id)
+                posted_texts[lang] = text or ""
+                posted_entities[lang] = entities
+        elif source_message.text:
+            for lang in translated_channels:
+                current_lang = lang
+                chat_id = channels[lang]
+                text = text_for_lang(lang)
+                if not text:
+                    raise RuntimeError(f"Пустой перевод для {LANG_TITLES.get(lang, lang.upper())}.")
+                entities = entities_map.get(lang)
+                text, entities = fit_text_with_entities(text, entities)
+                kwargs = {"chat_id": chat_id, "text": text, "parse_mode": None}
                 if entities:
-                    kwargs["caption_entities"] = entities
-            sent = await bot.send_photo(**kwargs)
-            posted_message_ids[lang] = int(sent.message_id)
-            posted_texts[lang] = text or ""
-            posted_entities[lang] = entities
-        return {
-            "content_type": content_type,
-            "message_ids": posted_message_ids,
-            "texts": posted_texts,
-            "entities": posted_entities,
-        }
-    if source_message.video:
-        file_id = source_message.video.file_id
-        for lang in translated_channels:
-            chat_id = channels[lang]
-            text = text_for_lang(lang)
-            entities = entities_map.get(lang)
-            kwargs = {"chat_id": chat_id, "video": file_id}
-            if text:
-                text, entities = fit_caption_with_entities(text, entities)
-                kwargs["caption"] = text
-                kwargs["parse_mode"] = None
-                if entities:
-                    kwargs["caption_entities"] = entities
-            sent = await bot.send_video(**kwargs)
-            posted_message_ids[lang] = int(sent.message_id)
-            posted_texts[lang] = text or ""
-            posted_entities[lang] = entities
-        return {
-            "content_type": content_type,
-            "message_ids": posted_message_ids,
-            "texts": posted_texts,
-            "entities": posted_entities,
-        }
-    if source_message.document:
-        file_id = source_message.document.file_id
-        for lang in translated_channels:
-            chat_id = channels[lang]
-            text = text_for_lang(lang)
-            entities = entities_map.get(lang)
-            kwargs = {"chat_id": chat_id, "document": file_id}
-            if text:
-                text, entities = fit_caption_with_entities(text, entities)
-                kwargs["caption"] = text
-                kwargs["parse_mode"] = None
-                if entities:
-                    kwargs["caption_entities"] = entities
-            sent = await bot.send_document(**kwargs)
-            posted_message_ids[lang] = int(sent.message_id)
-            posted_texts[lang] = text or ""
-            posted_entities[lang] = entities
-        return {
-            "content_type": content_type,
-            "message_ids": posted_message_ids,
-            "texts": posted_texts,
-            "entities": posted_entities,
-        }
-    if source_message.animation:
-        file_id = source_message.animation.file_id
-        for lang in translated_channels:
-            chat_id = channels[lang]
-            text = text_for_lang(lang)
-            entities = entities_map.get(lang)
-            kwargs = {"chat_id": chat_id, "animation": file_id}
-            if text:
-                text, entities = fit_caption_with_entities(text, entities)
-                kwargs["caption"] = text
-                kwargs["parse_mode"] = None
-                if entities:
-                    kwargs["caption_entities"] = entities
-            sent = await bot.send_animation(**kwargs)
-            posted_message_ids[lang] = int(sent.message_id)
-            posted_texts[lang] = text or ""
-            posted_entities[lang] = entities
-        return {
-            "content_type": content_type,
-            "message_ids": posted_message_ids,
-            "texts": posted_texts,
-            "entities": posted_entities,
-        }
-    if source_message.text:
-        for lang in translated_channels:
-            chat_id = channels[lang]
-            text = text_for_lang(lang)
-            if not text:
-                raise RuntimeError(f"⚠️ Пустой перевод для {LANG_TITLES.get(lang, lang.upper())}.")
-            entities = entities_map.get(lang)
-            text, entities = fit_text_with_entities(text, entities)
-            kwargs = {"chat_id": chat_id, "text": text, "parse_mode": None}
-            if entities:
-                kwargs["entities"] = entities
-            sent = await bot.send_message(**kwargs)
-            posted_message_ids[lang] = int(sent.message_id)
-            posted_texts[lang] = text or ""
-            posted_entities[lang] = entities
-        return {
-            "content_type": content_type,
-            "message_ids": posted_message_ids,
-            "texts": posted_texts,
-            "entities": posted_entities,
-        }
-    raise ValueError("⚠️ Поддерживаются текст, фото, видео, gif и документ.")
+                    kwargs["entities"] = entities
+                sent = await bot.send_message(**kwargs)
+                posted_message_ids[lang] = int(sent.message_id)
+                posted_texts[lang] = text or ""
+                posted_entities[lang] = entities
+        else:
+            raise ValueError("⚠️ Поддерживаются текст, фото, видео, gif и документ.")
+    except Exception as exc:
+        await rollback_posted()
+        lang_title = LANG_TITLES.get(current_lang, current_lang.upper())
+        detail = str(exc).strip()
+        if detail:
+            detail = re.sub(r"\s+", " ", detail)
+            if len(detail) > 240:
+                detail = f"{detail[:240].rstrip()}..."
+            raise RuntimeError(
+                f"⚠️ Публикация отменена: ошибка в канале {lang_title}. {detail}"
+            ) from exc
+        raise RuntimeError(f"⚠️ Публикация отменена: ошибка в канале {lang_title}.") from exc
+
+    return {
+        "content_type": content_type,
+        "message_ids": posted_message_ids,
+        "texts": posted_texts,
+        "entities": posted_entities,
+    }
 
 
 def entities_map_to_payload(entities_map: dict[str, list[MessageEntity] | None]) -> dict[str, list[dict]]:
@@ -1561,12 +1829,16 @@ def build_admin_posted_item_text(item: dict, offset: int, total: int) -> str:
             )
     return result
 
-def build_admin_menu_text(counts: dict) -> str:
+def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str:
+    stage_quick = (stage_counts or {}).get("quick", 0)
+    stage_full = (stage_counts or {}).get("full", 0)
     return (
         "🛠 <b>Админ-меню</b>\n\n"
         f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
         f"Принятые: <b>{counts.get('accepted', 0)}</b>\n"
         f"Отклонённые: <b>{counts.get('rejected', 0)}</b>\n\n"
+        f"1️⃣ Прошёл первый этап: <b>{stage_quick}</b>\n"
+        f"2️⃣ Полностью заполнил заявку: <b>{stage_full}</b>\n\n"
         "Выбери раздел ниже ✨"
     )
 
@@ -1693,6 +1965,9 @@ def submission_country(data: dict | None) -> str:
         derived = extract_country_from_location(str(data.get("city") or ""))
         if derived:
             return derived
+        by_phone = country_from_phone(str(data.get("phone") or ""))
+        if by_phone:
+            return by_phone
     return "—"
 
 def submission_lang_for_user(user_id: int, data: dict | None = None) -> str:
@@ -1827,13 +2102,33 @@ async def update_admin_summary_message(user_id: int, status: str) -> bool:
 
 def build_admin_stats_text() -> str:
     counts = get_status_counts()
+    stage_counts = get_application_stage_counts()
+    source_counts = get_source_counts()
+    reviewed = counts["accepted"] + counts["rejected"]
+    total_stage = stage_counts.get("total", 0)
+
+    def pct(part: int, whole: int) -> str:
+        if whole <= 0:
+            return "0%"
+        return f"{(part / whole) * 100:.1f}%"
+
     return (
         "📊 <b>Статистика заявок</b>\n\n"
         f"Всего: <b>{counts['total']}</b>\n"
         f"Новые: {counts['new']}\n"
         f"На рассмотрении: {counts['pending']}\n"
         f"Одобрены: {counts['accepted']}\n"
-        f"Отклонены: {counts['rejected']}"
+        f"Отклонены: {counts['rejected']}\n\n"
+        "🧩 <b>Этапы воронки</b>\n"
+        f"1️⃣ Только первый этап: {stage_counts.get('quick', 0)}\n"
+        f"2️⃣ Полная заявка: {stage_counts.get('full', 0)}\n"
+        f"Конверсия в полную заявку: {pct(stage_counts.get('full', 0), total_stage)}\n\n"
+        "🧭 <b>Источники</b>\n"
+        f"Сайт: {source_counts.get('site', 0)}\n"
+        f"Бот: {source_counts.get('bot', 0)}\n"
+        f"Не определён: {source_counts.get('unknown', 0)}\n\n"
+        "✅ <b>Качество обработки</b>\n"
+        f"Аппрув среди обработанных: {pct(counts['accepted'], reviewed)}"
     )
 
 async def daily_stats_task():
@@ -1899,10 +2194,12 @@ async def ensure_admin_menu_posted():
     try:
         try:
             counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
         except Exception:
             logger.exception("Не удалось получить статистику для админ-меню")
             counts = {"pending": 0, "accepted": 0, "rejected": 0, "total": 0, "new": 0}
-        menu_text = build_admin_menu_text(counts)
+            stage_counts = {"quick": 0, "full": 0, "total": 0}
+        menu_text = build_admin_menu_text(counts, stage_counts)
         stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
         if stored_id:
             try:
@@ -1910,7 +2207,7 @@ async def ensure_admin_menu_posted():
                     chat_id=ADMIN_GROUP_ID,
                     message_id=int(stored_id),
                     text=menu_text,
-                    reply_markup=admin_menu_keyboard(counts)
+                    reply_markup=admin_menu_keyboard(counts, stage_counts)
                 )
                 return
             except TelegramBadRequest as exc:
@@ -1923,7 +2220,7 @@ async def ensure_admin_menu_posted():
             msg = await bot.send_message(
                 ADMIN_GROUP_ID,
                 menu_text,
-                reply_markup=admin_menu_keyboard(counts)
+                reply_markup=admin_menu_keyboard(counts, stage_counts)
             )
             set_setting(ADMIN_MENU_SETTING_KEY, str(msg.message_id))
         except Exception:
@@ -2121,12 +2418,14 @@ async def set_admin_menu_message_id(message_id: int):
 async def post_admin_menu():
     try:
         counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
     except Exception:
         logger.exception("Не удалось получить статистику для обновления админ-меню")
         counts = {"pending": 0, "accepted": 0, "rejected": 0, "total": 0, "new": 0}
+        stage_counts = {"quick": 0, "full": 0, "total": 0}
     await update_admin_menu_message(
-        build_admin_menu_text(counts),
-        admin_menu_keyboard(counts)
+        build_admin_menu_text(counts, stage_counts),
+        admin_menu_keyboard(counts, stage_counts)
     )
 
 def _admin_list_label(filter_key: str | None) -> str:
@@ -2135,6 +2434,8 @@ def _admin_list_label(filter_key: str | None) -> str:
         "accepted": "Принятые",
         "rejected": "Отклонённые",
         "all": "Все заявки",
+        "stage_quick": "Прошли только первый этап",
+        "stage_full": "Полностью заполненные заявки",
         None: "Все заявки",
     }.get(filter_key, "Все заявки")
 
@@ -2145,13 +2446,20 @@ async def send_admin_list(
 ):
     await safe_call_answer(call)
     try:
-        status = None if filter_key == "all" else filter_key
-        apps = list_applications(status)
+        status = None if filter_key in {"all", "stage_quick", "stage_full"} else filter_key
+        if filter_key == "stage_quick":
+            apps = list_applications_by_stage("quick", status=None)
+        elif filter_key == "stage_full":
+            apps = list_applications_by_stage("full", status=None)
+        else:
+            apps = list_applications(status)
         label = _admin_list_label(filter_key)
         if not apps:
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
             await update_admin_menu_message(
                 f"🤍 {label}: пока пусто ✨",
-                admin_menu_keyboard(get_status_counts())
+                admin_menu_keyboard(counts, stage_counts)
             )
             return
 
@@ -2182,9 +2490,11 @@ async def send_admin_list(
         )
     except Exception:
         logger.exception("Ошибка отображения списка заявок")
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
             "⚠️ Не удалось открыть список заявок. Попробуй ещё раз.",
-            admin_menu_keyboard(get_status_counts())
+            admin_menu_keyboard(counts, stage_counts)
         )
 
 
@@ -2245,9 +2555,11 @@ async def show_admin_posted_posts(offset: int = 0) -> tuple[dict | None, int, in
     if total <= 0:
         await clear_admin_temp_messages()
         await clear_admin_view_message()
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
             "🤍 Выложенных постов пока нет ✨",
-            admin_menu_keyboard(get_status_counts())
+            admin_menu_keyboard(counts, stage_counts)
         )
         return None, 0, 0
 
@@ -2259,9 +2571,11 @@ async def show_admin_posted_posts(offset: int = 0) -> tuple[dict | None, int, in
     if not rows:
         await clear_admin_temp_messages()
         await clear_admin_view_message()
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
             "🤍 Выложенных постов пока нет ✨",
-            admin_menu_keyboard(get_status_counts())
+            admin_menu_keyboard(counts, stage_counts)
         )
         return None, 0, 0
 
@@ -2721,13 +3035,20 @@ async def enter_stage2_intro(
         reply_markup=stage2_keyboard_step1(lang),
     )
 
-async def start_stage2_questions(user_id: int, state: FSMContext):
+async def start_stage2_questions(user_id: int, state: FSMContext, intro: str | None = None):
     lang = lang_for(user_id)
     await state.set_state(ApplicationStates.city)
     set_last_state(user_id, ApplicationStates.city.state)
+    question = format_question(
+        ApplicationStates.city,
+        form_question(ApplicationStates.city, lang),
+        user_id=user_id,
+    )
+    if intro:
+        question = f"{intro}\n\n{question}"
     await send_or_edit_user_text(
         user_id,
-        format_question(ApplicationStates.city, form_question(ApplicationStates.city, lang), user_id=user_id),
+        question,
         reply_markup=form_keyboard(lang),
     )
 
@@ -2957,13 +3278,11 @@ async def apply(call: CallbackQuery, state: FSMContext):
             if is_site_quick_application(app, form_data):
                 await enter_stage2_gate(call.from_user.id, state)
             else:
-                await send_or_edit_user_text(
+                await start_stage2_questions(
                     call.from_user.id,
-                    stage2_text(lang, "step2"),
-                    reply_markup=stage2_keyboard_step2(lang),
+                    state,
+                    intro=stage2_text(lang, "autostart"),
                 )
-                await state.set_state(ApplicationStates.stage2_intro)
-                set_last_state(call.from_user.id, ApplicationStates.stage2_intro.state)
             return
 
         if app and is_rate_limited(app.get("last_apply_at")):
@@ -3046,7 +3365,11 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
                 if is_site_quick_application(app, data):
                     await enter_stage2_gate(call.from_user.id, state)
                 else:
-                    await enter_stage2_intro(call.from_user.id, state, start_from_step2=True)
+                    await start_stage2_questions(
+                        call.from_user.id,
+                        state,
+                        intro=stage2_text(lang, "autostart"),
+                    )
                 return
             else:
                 started = await start_application(call.message, state, user_id=call.from_user.id)
@@ -3149,7 +3472,7 @@ async def stage2_gate_continue(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
-        await enter_stage2_intro(call.from_user.id, state, start_from_step2=False)
+        await start_stage2_questions(call.from_user.id, state)
     except Exception:
         logger.exception("Ошибка в stage2_gate_continue")
         await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
@@ -3247,7 +3570,12 @@ async def step_phone(m: Message, state: FSMContext):
     note = None
     if normalized != phone:
         note = t(lang, "normalized_phone_note", value=normalized)
-    await update_form_field(state, m.from_user.id, phone=normalized)
+    current_data = await state.get_data()
+    payload = {"phone": normalized}
+    country_guess = country_from_phone(normalized)
+    if country_guess and not str(current_data.get("country") or "").strip():
+        payload["country"] = country_guess
+    await update_form_field(state, m.from_user.id, **payload)
     await send_next_question(
         m,
         state,
@@ -3300,11 +3628,12 @@ async def step_living(m: Message, state: FSMContext):
     if normalized != living_raw:
         note = t(lang, "normalized_yes_no_note", value=normalized)
     await update_form_field(state, m.from_user.id, living=normalized)
-    ack = build_ack(m.from_user.id)
-    if note:
-        ack = f"{ack}\n{note}"
-    await send_or_edit_user_text(m.from_user.id, ack)
-    await show_preview(m, state)
+    await send_next_question(
+        m,
+        state,
+        ApplicationStates.photo_face,
+        note=note,
+    )
 
 @dp.message(StateFilter(ApplicationStates.devices), F.text)
 async def step_devices(m: Message, state: FSMContext):
@@ -3404,12 +3733,13 @@ async def step_tg(m: Message, state: FSMContext):
         telegram=normalized,
         application_stage=APPLICATION_STAGE_QUICK
     )
-    await enter_stage2_intro(
-        m.from_user.id,
-        state,
-        note=note,
-        start_from_step2=False
-    )
+    if is_site_source(m.from_user.id):
+        await enter_stage2_gate(m.from_user.id, state)
+        return
+    intro = stage2_text(lang, "autostart")
+    if note:
+        intro = f"{note}\n\n{intro}"
+    await start_stage2_questions(m.from_user.id, state, intro=intro)
 
 @dp.message(StateFilter(ApplicationStates.experience), F.text)
 async def step_exp(m: Message, state: FSMContext):
@@ -3478,6 +3808,8 @@ FORM_ORDER = [
     ApplicationStates.work_time,
     ApplicationStates.experience,
     ApplicationStates.living,
+    ApplicationStates.photo_face,
+    ApplicationStates.photo_full,
 ]
 
 TOTAL_STEPS = len(FORM_ORDER)
@@ -4008,7 +4340,11 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             state,
             user.id,
             lang=normalize_lang(lang),
-            country=data.get("country") or extract_country_from_location(data.get("city")),
+            country=(
+                data.get("country")
+                or extract_country_from_location(data.get("city"))
+                or country_from_phone(data.get("phone"))
+            ),
             application_stage=APPLICATION_STAGE_FULL,
         )
         data = await state.get_data()
@@ -4069,10 +4405,10 @@ async def edit_cancel(call: CallbackQuery, state: FSMContext):
 
 # ================= ADMIN =================
 
-@dp.callback_query(F.data.startswith("admin_accept:"))
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_accept:"))
 async def admin_accept(call: CallbackQuery):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await safe_call_answer(call)
@@ -4108,10 +4444,10 @@ async def admin_accept(call: CallbackQuery):
         logger.exception("Ошибка в admin_accept")
         await safe_call_answer(call, "Ошибка при принятии заявки", show_alert=True)
 
-@dp.callback_query(F.data.startswith("admin_reject:"))
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_reject:"))
 async def admin_reject(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await safe_call_answer(call)
@@ -4130,10 +4466,10 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка в admin_reject")
         await safe_call_answer(call, "Ошибка при открытии отказа", show_alert=True)
 
-@dp.callback_query(F.data.startswith("reject_tpl:"))
+@dp.callback_query(StateFilter("*"), F.data.startswith("reject_tpl:"))
 async def reject_template(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await safe_call_answer(call)
@@ -4369,10 +4705,15 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
 
         await state.clear()
         await sync_anonymous_create_post_state(enabled=False)
-        langs = ", ".join(LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in channels)
+        posted_langs = posted.get("message_ids", {})
+        langs = ", ".join(
+            LANG_TITLES[lang] for lang in POST_LANG_ORDER if lang in posted_langs
+        ) or "RU"
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
             f"✅ Пост опубликован в каналы: {langs}",
-            admin_menu_keyboard(get_status_counts())
+            admin_menu_keyboard(counts, stage_counts)
         )
     except ValueError as exc:
         await message.answer(str(exc))
@@ -4403,7 +4744,7 @@ async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка отмены режима создания поста")
         await safe_call_answer(call, "Не удалось отменить", show_alert=False)
 
-@dp.callback_query(F.data.startswith("admin_menu:"))
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
@@ -4429,30 +4770,34 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             await clear_admin_view_message()
             await show_admin_posted_posts(0)
             return
-        if action in {"pending", "accepted", "rejected", "all"}:
+        if action in {"pending", "accepted", "rejected", "all", "stage_quick", "stage_full"}:
             await clear_admin_notify()
             await send_admin_list(call, action, 0)
             return
         if action == "stats":
             await clear_admin_view_message()
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
             await update_admin_menu_message(
                 build_admin_stats_text(),
-                admin_menu_keyboard(get_status_counts())
+                admin_menu_keyboard(counts, stage_counts)
             )
             return
         if action == "excel":
             await clear_admin_view_message()
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
             if not rebuild_excel_from_db:
                 await update_admin_menu_message(
                     "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
-                    admin_menu_keyboard(get_status_counts())
+                    admin_menu_keyboard(counts, stage_counts)
                 )
                 return
             file_path = rebuild_excel_from_db()
             if not file_path:
                 await update_admin_menu_message(
                     "🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨",
-                    admin_menu_keyboard(get_status_counts())
+                    admin_menu_keyboard(counts, stage_counts)
                 )
                 return
             msg = await call.message.answer_document(FSInputFile(str(file_path)))
@@ -4462,21 +4807,25 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             await clear_admin_view_message()
             try:
                 archived = await archive_admin_messages_once()
+                counts = get_status_counts()
+                stage_counts = get_application_stage_counts()
                 if archived:
                     await update_admin_menu_message(
                         f"🧹 Архивировано: {archived}",
-                        admin_menu_keyboard(get_status_counts())
+                        admin_menu_keyboard(counts, stage_counts)
                     )
                 else:
                     await update_admin_menu_message(
                         "🤍 Пока нет заявок для архивации ✨",
-                        admin_menu_keyboard(get_status_counts())
+                        admin_menu_keyboard(counts, stage_counts)
                     )
             except Exception:
                 logger.exception("Ошибка ручной архивации")
+                counts = get_status_counts()
+                stage_counts = get_application_stage_counts()
                 await update_admin_menu_message(
                     "⚠️ Не удалось архивировать сейчас.",
-                    admin_menu_keyboard(get_status_counts())
+                    admin_menu_keyboard(counts, stage_counts)
                 )
             return
         if action == "reset":
@@ -4495,7 +4844,7 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка в admin_menu_action")
         await safe_call_answer(call, "Ошибка выполнения команды", show_alert=False)
 
-@dp.callback_query(F.data.startswith("admin_list:"))
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_list:"))
 async def admin_list_pagination(call: CallbackQuery):
     try:
         _, filter_key, offset_raw = call.data.split(":", 2)
@@ -4509,7 +4858,7 @@ async def admin_list_pagination(call: CallbackQuery):
         logger.exception("Ошибка пагинации списка")
         await safe_call_answer(call, "Не удалось открыть страницу", show_alert=False)
 
-@dp.callback_query(F.data.startswith("admin_view_photo:"))
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_view_photo:"))
 async def admin_view_photo(call: CallbackQuery):
     try:
         if not call.message:
@@ -4526,7 +4875,12 @@ async def admin_view_photo(call: CallbackQuery):
             return
         status = get_status(uid) or "pending"
         label = _admin_list_label(filter_key)
-        total = len(list_applications(None if filter_key == "all" else filter_key))
+        if filter_key == "stage_quick":
+            total = len(list_applications_by_stage("quick"))
+        elif filter_key == "stage_full":
+            total = len(list_applications_by_stage("full"))
+        else:
+            total = len(list_applications(None if filter_key == "all" else filter_key))
         if total == 0:
             await safe_call_answer(call)
             return
@@ -4849,15 +5203,19 @@ async def admin_reset_db_confirm(call: CallbackQuery):
         file_path = Path("applications.xlsx")
         if file_path.exists():
             file_path.unlink()
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
             "✅ База и статистика полностью обнулены.",
-            admin_menu_keyboard(get_status_counts())
+            admin_menu_keyboard(counts, stage_counts)
         )
     except Exception:
         logger.exception("Ошибка сброса базы")
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
             "⚠️ Ошибка при сбросе базы.",
-            admin_menu_keyboard(get_status_counts())
+            admin_menu_keyboard(counts, stage_counts)
         )
     await safe_call_answer(call)
 

@@ -266,6 +266,53 @@ def normalize_phone(text: str) -> str | None:
         return value
     return None
 
+
+PHONE_COUNTRY_BY_CODE = {
+    "1": "United States/Canada",
+    "7": "Russia/Kazakhstan",
+    "34": "Spain",
+    "44": "United Kingdom",
+    "51": "Peru",
+    "52": "Mexico",
+    "53": "Cuba",
+    "54": "Argentina",
+    "55": "Brazil",
+    "56": "Chile",
+    "57": "Colombia",
+    "58": "Venezuela",
+    "63": "Philippines",
+    "351": "Portugal",
+    "380": "Ukraine",
+    "381": "Serbia",
+    "420": "Czech Republic",
+    "421": "Slovakia",
+    "591": "Bolivia",
+    "592": "Guyana",
+    "593": "Ecuador",
+    "594": "French Guiana",
+    "595": "Paraguay",
+    "597": "Suriname",
+    "598": "Uruguay",
+    "994": "Azerbaijan",
+    "995": "Georgia",
+    "996": "Kyrgyzstan",
+    "998": "Uzbekistan",
+}
+PHONE_COUNTRY_CODES_SORTED = sorted(PHONE_COUNTRY_BY_CODE.keys(), key=len, reverse=True)
+
+
+def extract_country_from_phone(phone: str | None) -> str | None:
+    normalized = normalize_phone(phone or "")
+    if not normalized:
+        return None
+    digits = re.sub(r"\D", "", normalized)
+    if not digits:
+        return None
+    for code in PHONE_COUNTRY_CODES_SORTED:
+        if digits.startswith(code):
+            return PHONE_COUNTRY_BY_CODE[code]
+    return None
+
 def clean_text(value: str) -> str:
     text = value or ""
     text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]", "", text)
@@ -360,6 +407,9 @@ def submission_country(data: dict) -> str:
     derived = extract_country_from_location(str(data.get("city") or ""))
     if derived:
         return derived
+    by_phone = extract_country_from_phone(str(data.get("phone") or ""))
+    if by_phone:
+        return by_phone
     return "—"
 
 def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
@@ -749,7 +799,11 @@ class Handler(SimpleHTTPRequestHandler):
 
         country = clean_text(fields.get("country") or "")
         if not country:
-            country = extract_country_from_location(clean_text(fields.get("city") or "")) or ""
+            country = (
+                extract_country_from_location(clean_text(fields.get("city") or ""))
+                or extract_country_from_phone(phone)
+                or ""
+            )
 
         user_id = -int(time.time_ns())
         lead_token = uuid.uuid4().hex[:24]

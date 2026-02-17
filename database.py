@@ -684,6 +684,135 @@ def get_status_counts() -> dict:
         counts["total"] = counts["pending"] + counts["accepted"] + counts["rejected"]
         return counts
 
+
+def _has_payload_value(data: dict | None, key: str) -> bool:
+    if not isinstance(data, dict):
+        return False
+    value = data.get(key)
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    return True
+
+
+def _detect_application_stage_from_payload(data: dict | None) -> str:
+    if not isinstance(data, dict):
+        return "quick"
+    explicit = str(data.get("application_stage") or "").strip().lower()
+    if explicit in {"quick", "full"}:
+        return explicit
+    required_full = {
+        "name",
+        "phone",
+        "age",
+        "device_model",
+        "telegram",
+        "city",
+        "work_time",
+        "experience",
+        "living",
+        "photo_face",
+        "photo_full",
+    }
+    if all(_has_payload_value(data, key) for key in required_full):
+        return "full"
+    return "quick"
+
+
+def _load_payload(raw: str | None) -> dict:
+    if not raw:
+        return {}
+    try:
+        data = json.loads(raw)
+    except Exception:
+        return {}
+    if isinstance(data, dict):
+        return data
+    return {}
+
+
+def get_application_stage_counts(statuses: tuple[str, ...] | None = None) -> dict:
+    status_filter = statuses or ("pending", "accepted", "rejected")
+    if not status_filter:
+        return {"quick": 0, "full": 0, "total": 0}
+
+    placeholders = ",".join("?" for _ in status_filter)
+    query = (
+        "SELECT data_json FROM applications "
+        f"WHERE status IN ({placeholders})"
+    )
+    with DB_LOCK:
+        _execute(query, tuple(status_filter))
+        rows = cursor.fetchall()
+
+    quick = 0
+    full = 0
+    for row in rows:
+        payload = _load_payload(row[0] if row else None)
+        stage = _detect_application_stage_from_payload(payload)
+        if stage == "full":
+            full += 1
+        else:
+            quick += 1
+    return {"quick": quick, "full": full, "total": quick + full}
+
+
+def get_source_counts(statuses: tuple[str, ...] | None = None) -> dict:
+    status_filter = statuses or ("pending", "accepted", "rejected")
+    if not status_filter:
+        return {"site": 0, "bot": 0, "unknown": 0, "total": 0}
+
+    placeholders = ",".join("?" for _ in status_filter)
+    query = (
+        "SELECT source, COUNT(*) FROM applications "
+        f"WHERE status IN ({placeholders}) "
+        "GROUP BY source"
+    )
+    with DB_LOCK:
+        _execute(query, tuple(status_filter))
+        rows = cursor.fetchall()
+
+    counts = {"site": 0, "bot": 0, "unknown": 0, "total": 0}
+    for source, count in rows:
+        normalized = str(source or "").strip().lower()
+        if normalized == "site":
+            counts["site"] += int(count or 0)
+        elif normalized == "bot":
+            counts["bot"] += int(count or 0)
+        else:
+            counts["unknown"] += int(count or 0)
+    counts["total"] = counts["site"] + counts["bot"] + counts["unknown"]
+    return counts
+
+
+def list_applications_by_stage(stage: str, status: str | None = None) -> list[dict]:
+    target = "full" if str(stage).strip().lower() == "full" else "quick"
+    with DB_LOCK:
+        if status:
+            _execute(
+                "SELECT user_id, status, updated_at, data_json FROM applications "
+                "WHERE status = ? "
+                "ORDER BY updated_at DESC",
+                (status,)
+            )
+        else:
+            _execute(
+                "SELECT user_id, status, updated_at, data_json FROM applications "
+                "WHERE status IN ('pending', 'accepted', 'rejected') "
+                "ORDER BY updated_at DESC"
+            )
+        rows = cursor.fetchall()
+
+    result: list[dict] = []
+    for row in rows:
+        payload = _load_payload(row[3] if len(row) > 3 else None)
+        row_stage = _detect_application_stage_from_payload(payload)
+        if row_stage != target:
+            continue
+        result.append({"user_id": row[0], "status": row[1], "updated_at": row[2]})
+    return result
+
 def cleanup_old_form_data(days: int = 30):
     cutoff = (datetime.now(timezone.utc) - timedelta(days=days)).isoformat()
     with DB_LOCK:
