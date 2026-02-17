@@ -164,21 +164,15 @@ TRANSLATIONS = {
         "preview_title": (
             "🌸 <b>АНКЕТА КАНДИДАТА</b> 🌸\n"
             "<i>Проверь, всё ли верно 🤍</i>\n\n"
-            "🌷 <b>Личные данные</b>\n"
             "👤 <b>Имя:</b> {name}\n"
-            "🌍 <b>Город и страна:</b> {city}\n"
             "📅 <b>Дата рождения:</b> {age}\n"
             "📞 <b>Телефон:</b> {phone}\n"
-            "🏠 <b>Помещение без посторонних:</b> {living}\n\n"
-            "💻 <b>Техника</b>\n"
-            "📱 <b>Устройства:</b> {devices}\n"
-            "📲 <b>Модель:</b> {device_model}\n"
-            "🎧 <b>Наушники:</b> {headphones}\n\n"
-            "🕒 <b>График и опыт</b>\n"
-            "⏱ <b>Время работы:</b> {work_time}\n"
-            "💼 <b>Опыт:</b> {experience}\n\n"
-            "💬 <b>Контакт</b>\n"
+            "📲 <b>Модель устройства:</b> {device_model}\n"
             "💬 <b>Telegram:</b> {telegram}\n\n"
+            "🌍 <b>Страна / город:</b> {city}\n"
+            "⏱ <b>Время работы:</b> {work_time}\n"
+            "💼 <b>Опыт:</b> {experience}\n"
+            "🚀 <b>Готовность к старту:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Статус:</b> {status}\n\n"
             "<i>Если нужно, используй кнопки ниже ✨</i>"
@@ -325,21 +319,15 @@ TRANSLATIONS = {
         "preview_title": (
             "🌸 <b>CANDIDATE APPLICATION</b> 🌸\n"
             "<i>Please review your details 🤍</i>\n\n"
-            "🌷 <b>Personal details</b>\n"
             "👤 <b>Name:</b> {name}\n"
-            "🌍 <b>City and country:</b> {city}\n"
             "📅 <b>Birth date:</b> {age}\n"
             "📞 <b>Phone:</b> {phone}\n"
-            "🏠 <b>Private room:</b> {living}\n\n"
-            "💻 <b>Equipment</b>\n"
-            "📱 <b>Devices:</b> {devices}\n"
-            "📲 <b>Model:</b> {device_model}\n"
-            "🎧 <b>Headphones:</b> {headphones}\n\n"
-            "🕒 <b>Schedule and experience</b>\n"
-            "⏱ <b>Work time:</b> {work_time}\n"
-            "💼 <b>Experience:</b> {experience}\n\n"
-            "💬 <b>Contact</b>\n"
+            "📲 <b>Device model:</b> {device_model}\n"
             "💬 <b>Telegram:</b> {telegram}\n\n"
+            "🌍 <b>Country / city:</b> {city}\n"
+            "⏱ <b>Work time:</b> {work_time}\n"
+            "💼 <b>Experience:</b> {experience}\n"
+            "🚀 <b>Ready to start:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Status:</b> {status}\n\n"
             "<i>Use buttons below if you want to edit anything ✨</i>"
@@ -487,21 +475,15 @@ TRANSLATIONS = {
         "preview_title": (
             "🌸 <b>FICHA DA CANDIDATA</b> 🌸\n"
             "<i>Confira seus dados, por favor 🤍</i>\n\n"
-            "🌷 <b>Dados pessoais</b>\n"
             "👤 <b>Nome:</b> {name}\n"
-            "🌍 <b>Cidade e país:</b> {city}\n"
             "📅 <b>Data de nascimento:</b> {age}\n"
             "📞 <b>Telefone:</b> {phone}\n"
-            "🏠 <b>Espaço privado:</b> {living}\n\n"
-            "💻 <b>Equipamentos</b>\n"
-            "📱 <b>Dispositivos:</b> {devices}\n"
-            "📲 <b>Modelo:</b> {device_model}\n"
-            "🎧 <b>Fones:</b> {headphones}\n\n"
-            "🕒 <b>Agenda e experiência</b>\n"
-            "⏱ <b>Tempo de trabalho:</b> {work_time}\n"
-            "💼 <b>Experiência:</b> {experience}\n\n"
-            "💬 <b>Contato</b>\n"
+            "📲 <b>Modelo do dispositivo:</b> {device_model}\n"
             "💬 <b>Telegram:</b> {telegram}\n\n"
+            "🌍 <b>País / cidade:</b> {city}\n"
+            "⏱ <b>Tempo de trabalho:</b> {work_time}\n"
+            "💼 <b>Experiência:</b> {experience}\n"
+            "🚀 <b>Pronta para começar:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Status:</b> {status}\n\n"
             "<i>Use os botões abaixo se quiser ajustar algo ✨</i>"
@@ -649,21 +631,15 @@ TRANSLATIONS = {
         "preview_title": (
             "🌸 <b>SOLICITUD DE CANDIDATA</b> 🌸\n"
             "<i>Revisa tus datos, por favor 🤍</i>\n\n"
-            "🌷 <b>Datos personales</b>\n"
             "👤 <b>Nombre:</b> {name}\n"
-            "🌍 <b>Ciudad y país:</b> {city}\n"
             "📅 <b>Fecha de nacimiento:</b> {age}\n"
             "📞 <b>Teléfono:</b> {phone}\n"
-            "🏠 <b>Espacio privado:</b> {living}\n\n"
-            "💻 <b>Equipo</b>\n"
-            "📱 <b>Dispositivos:</b> {devices}\n"
-            "📲 <b>Modelo:</b> {device_model}\n"
-            "🎧 <b>Auriculares:</b> {headphones}\n\n"
-            "🕒 <b>Horario y experiencia</b>\n"
-            "⏱ <b>Tiempo de trabajo:</b> {work_time}\n"
-            "💼 <b>Experiencia:</b> {experience}\n\n"
-            "💬 <b>Contacto</b>\n"
+            "📲 <b>Modelo del dispositivo:</b> {device_model}\n"
             "💬 <b>Telegram:</b> {telegram}\n\n"
+            "🌍 <b>País / ciudad:</b> {city}\n"
+            "⏱ <b>Tiempo de trabajo:</b> {work_time}\n"
+            "💼 <b>Experiencia:</b> {experience}\n"
+            "🚀 <b>Lista para empezar:</b> {living}\n\n"
             "────────\n"
             "🧾 <b>Estado:</b> {status}\n\n"
             "<i>Usa los botones de abajo si quieres corregir algo ✨</i>"
@@ -709,64 +685,64 @@ STATUS_LABELS_BY_LANG = {
 
 FORM_QUESTIONS_BY_LANG = {
     "ru": {
-        ApplicationStates.name: "1️⃣ Как тебя зовут?\n\nНапиши имя полностью:",
-        ApplicationStates.city: "2️⃣ Город и страна проживания:",
-        ApplicationStates.phone: "3️⃣ Контактный телефон (+код):",
-        ApplicationStates.age: "4️⃣ Дата рождения\n\nПример: 01.01.2000",
-        ApplicationStates.living: "5️⃣ Есть ли помещение без посторонних?",
-        ApplicationStates.devices: "6️⃣ Устройства (телефон / ПК):",
-        ApplicationStates.device_model: "7️⃣ Модель устройства:",
-        ApplicationStates.work_time: "8️⃣ Время работы (часов в день):",
-        ApplicationStates.headphones: "9️⃣ Есть ли наушники с микрофоном:",
-        ApplicationStates.telegram: "🔟 Telegram (@username):",
-        ApplicationStates.experience: "1️⃣1️⃣ Опыт (если нет — напиши «нет»):",
-        ApplicationStates.photo_face: "1️⃣2️⃣ Фото анфас:",
-        ApplicationStates.photo_full: "1️⃣3️⃣ Фото в полный рост:",
+        ApplicationStates.name: "Как тебя зовут?\n\nНапиши имя полностью:",
+        ApplicationStates.phone: "Контактный телефон (+код):",
+        ApplicationStates.age: "Дата рождения\n\nПример: 01.01.2000",
+        ApplicationStates.device_model: "Модель устройства:",
+        ApplicationStates.telegram: "Telegram (@username):",
+        ApplicationStates.city: "В какой стране ты сейчас?\n\nМожно в формате: Город, Страна",
+        ApplicationStates.work_time: "Сколько часов в день готова уделять?",
+        ApplicationStates.experience: "Есть опыт в стримах/эфирах?\n\nЕсли нет — так и напиши.",
+        ApplicationStates.living: "Готова начать в ближайшие 7 дней?\n\nОтветь «да» или «нет».",
+        ApplicationStates.devices: "Какие устройства у тебя есть? (необязательно)",
+        ApplicationStates.headphones: "Есть ли наушники с микрофоном? (необязательно)",
+        ApplicationStates.photo_face: "Фото анфас (необязательно):",
+        ApplicationStates.photo_full: "Фото в полный рост (необязательно):",
     },
     "en": {
-        ApplicationStates.name: "1️⃣ What is your full name?",
-        ApplicationStates.city: "2️⃣ City and country of residence:",
-        ApplicationStates.phone: "3️⃣ Contact phone (+country code):",
-        ApplicationStates.age: "4️⃣ Birth date\n\nExample: 01.01.2000",
-        ApplicationStates.living: "5️⃣ Do you have a private room without outsiders?",
-        ApplicationStates.devices: "6️⃣ Devices (phone / PC):",
-        ApplicationStates.device_model: "7️⃣ Device model:",
-        ApplicationStates.work_time: "8️⃣ Work time (hours per day):",
-        ApplicationStates.headphones: "9️⃣ Do you have headphones with microphone?",
-        ApplicationStates.telegram: "🔟 Telegram (@username):",
-        ApplicationStates.experience: "1️⃣1️⃣ Experience (if none, write \"none\"):",
-        ApplicationStates.photo_face: "1️⃣2️⃣ Front-face photo:",
-        ApplicationStates.photo_full: "1️⃣3️⃣ Full-body photo:",
+        ApplicationStates.name: "What is your full name?",
+        ApplicationStates.phone: "Contact phone (+country code):",
+        ApplicationStates.age: "Birth date\n\nExample: 01.01.2000",
+        ApplicationStates.device_model: "Device model:",
+        ApplicationStates.telegram: "Telegram (@username):",
+        ApplicationStates.city: "Which country are you currently in?\n\nYou can write: City, Country",
+        ApplicationStates.work_time: "How many hours per day can you commit?",
+        ApplicationStates.experience: "Do you have streaming/live experience?\n\nIf not, just write none.",
+        ApplicationStates.living: "Can you start within the next 7 days?\n\nPlease answer yes or no.",
+        ApplicationStates.devices: "What devices do you have? (optional)",
+        ApplicationStates.headphones: "Do you have headphones with mic? (optional)",
+        ApplicationStates.photo_face: "Front-face photo (optional):",
+        ApplicationStates.photo_full: "Full-body photo (optional):",
     },
     "pt": {
-        ApplicationStates.name: "1️⃣ Qual é seu nome completo?",
-        ApplicationStates.city: "2️⃣ Cidade e país de residência:",
-        ApplicationStates.phone: "3️⃣ Telefone de contato (+código):",
-        ApplicationStates.age: "4️⃣ Data de nascimento\n\nExemplo: 01.01.2000",
-        ApplicationStates.living: "5️⃣ Você tem um espaço sem pessoas por perto?",
-        ApplicationStates.devices: "6️⃣ Dispositivos (telefone / PC):",
-        ApplicationStates.device_model: "7️⃣ Modelo do dispositivo:",
-        ApplicationStates.work_time: "8️⃣ Tempo de trabalho (horas por dia):",
-        ApplicationStates.headphones: "9️⃣ Você tem fones com microfone?",
-        ApplicationStates.telegram: "🔟 Telegram (@username):",
-        ApplicationStates.experience: "1️⃣1️⃣ Experiência (se não tiver, escreva \"não\"):",
-        ApplicationStates.photo_face: "1️⃣2️⃣ Foto de frente:",
-        ApplicationStates.photo_full: "1️⃣3️⃣ Foto de corpo inteiro:",
+        ApplicationStates.name: "Qual é seu nome completo?",
+        ApplicationStates.phone: "Telefone de contato (+código):",
+        ApplicationStates.age: "Data de nascimento\n\nExemplo: 01.01.2000",
+        ApplicationStates.device_model: "Modelo do dispositivo:",
+        ApplicationStates.telegram: "Telegram (@username):",
+        ApplicationStates.city: "Em qual país você está agora?\n\nPode escrever: Cidade, País",
+        ApplicationStates.work_time: "Quantas horas por dia você pode dedicar?",
+        ApplicationStates.experience: "Você tem experiência com lives/streams?\n\nSe não tiver, escreva sem experiência.",
+        ApplicationStates.living: "Você consegue começar nos próximos 7 dias?\n\nResponda sim ou não.",
+        ApplicationStates.devices: "Quais dispositivos você tem? (opcional)",
+        ApplicationStates.headphones: "Você tem fones com microfone? (opcional)",
+        ApplicationStates.photo_face: "Foto de frente (opcional):",
+        ApplicationStates.photo_full: "Foto de corpo inteiro (opcional):",
     },
     "es": {
-        ApplicationStates.name: "1️⃣ ¿Cuál es tu nombre completo?",
-        ApplicationStates.city: "2️⃣ Ciudad y país de residencia:",
-        ApplicationStates.phone: "3️⃣ Teléfono de contacto (+código):",
-        ApplicationStates.age: "4️⃣ Fecha de nacimiento\n\nEjemplo: 01.01.2000",
-        ApplicationStates.living: "5️⃣ ¿Tienes una habitación sin personas externas?",
-        ApplicationStates.devices: "6️⃣ Dispositivos (teléfono / PC):",
-        ApplicationStates.device_model: "7️⃣ Modelo del dispositivo:",
-        ApplicationStates.work_time: "8️⃣ Tiempo de trabajo (horas por día):",
-        ApplicationStates.headphones: "9️⃣ ¿Tienes auriculares con micrófono?",
-        ApplicationStates.telegram: "🔟 Telegram (@username):",
-        ApplicationStates.experience: "1️⃣1️⃣ Experiencia (si no tienes, escribe \"no\"):",
-        ApplicationStates.photo_face: "1️⃣2️⃣ Foto de frente:",
-        ApplicationStates.photo_full: "1️⃣3️⃣ Foto de cuerpo completo:",
+        ApplicationStates.name: "¿Cuál es tu nombre completo?",
+        ApplicationStates.phone: "Teléfono de contacto (+código):",
+        ApplicationStates.age: "Fecha de nacimiento\n\nEjemplo: 01.01.2000",
+        ApplicationStates.device_model: "Modelo del dispositivo:",
+        ApplicationStates.telegram: "Telegram (@username):",
+        ApplicationStates.city: "¿En qué país estás ahora?\n\nPuedes escribir: Ciudad, País",
+        ApplicationStates.work_time: "¿Cuántas horas por día puedes dedicar?",
+        ApplicationStates.experience: "¿Tienes experiencia en streams/directos?\n\nSi no, escribe sin experiencia.",
+        ApplicationStates.living: "¿Puedes empezar dentro de los próximos 7 días?\n\nResponde sí o no.",
+        ApplicationStates.devices: "¿Qué dispositivos tienes? (opcional)",
+        ApplicationStates.headphones: "¿Tienes auriculares con micrófono? (opcional)",
+        ApplicationStates.photo_face: "Foto de frente (opcional):",
+        ApplicationStates.photo_full: "Foto de cuerpo completo (opcional):",
     },
 }
 

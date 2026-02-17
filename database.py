@@ -905,3 +905,9 @@ def delete_posted_message(post_id: int) -> None:
     with DB_LOCK:
         _execute("DELETE FROM posted_messages WHERE id = ?", (post_id,))
         conn.commit()
+
+
+def delete_application(user_id: int) -> None:
+    with DB_LOCK:
+        _execute("DELETE FROM applications WHERE user_id = ?", (user_id,))
+        conn.commit()

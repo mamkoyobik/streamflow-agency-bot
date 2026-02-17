@@ -39,8 +39,7 @@ def form_keyboard(lang: str = "ru"):
 def preview_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=t(lang, "btn_edit_data"), callback_data="preview_edit"),
-            InlineKeyboardButton(text=t(lang, "btn_edit_photo"), callback_data="preview_edit_photo")
+            InlineKeyboardButton(text=t(lang, "btn_edit_data"), callback_data="preview_edit")
         ],
         [
             InlineKeyboardButton(text=t(lang, "btn_send"), callback_data="preview_confirm")
@@ -55,16 +54,14 @@ def preview_keyboard(lang: str = "ru"):
 def preview_edit_menu(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=field_title("name", lang), callback_data="edit:name")],
-        [InlineKeyboardButton(text=field_title("city", lang), callback_data="edit:city")],
         [InlineKeyboardButton(text=field_title("phone", lang), callback_data="edit:phone")],
         [InlineKeyboardButton(text=field_title("age", lang), callback_data="edit:age")],
-        [InlineKeyboardButton(text=field_title("living", lang), callback_data="edit:living")],
-        [InlineKeyboardButton(text=field_title("devices", lang), callback_data="edit:devices")],
         [InlineKeyboardButton(text=field_title("device_model", lang), callback_data="edit:device_model")],
-        [InlineKeyboardButton(text=field_title("work_time", lang), callback_data="edit:work_time")],
-        [InlineKeyboardButton(text=field_title("headphones", lang), callback_data="edit:headphones")],
         [InlineKeyboardButton(text=field_title("telegram", lang), callback_data="edit:telegram")],
+        [InlineKeyboardButton(text=field_title("city", lang), callback_data="edit:city")],
+        [InlineKeyboardButton(text=field_title("work_time", lang), callback_data="edit:work_time")],
         [InlineKeyboardButton(text=field_title("experience", lang), callback_data="edit:experience")],
+        [InlineKeyboardButton(text=field_title("living", lang), callback_data="edit:living")],
         [InlineKeyboardButton(text=t(lang, "btn_back"), callback_data="preview_back")]
     ])
 

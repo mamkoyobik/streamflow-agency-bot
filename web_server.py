@@ -9,7 +9,7 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import time
-from datetime import datetime, timezone
+from datetime import datetime, timezone, timedelta
 from email.parser import BytesParser
 from email.policy import default
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
@@ -36,6 +36,18 @@ NO_RE = re.compile(
 )
 
 SUPPORTED_SITE_LANGS = {"ru", "en", "pt", "es"}
+SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
+
+def _env_int(name: str, default: int) -> int:
+    raw = os.getenv(name, "").strip()
+    if not raw:
+        return default
+    try:
+        return int(raw)
+    except ValueError:
+        return default
+
+SITE_LEAD_TOKEN_TTL_HOURS = max(24, _env_int("SITE_LEAD_TOKEN_TTL_HOURS", 72))
 
 FIELD_ERRORS = {
     "ru": {
@@ -107,7 +119,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Фото слишком большое. Пришли файл меньше 10 МБ.",
         "token_missing": "Не настроен BOT_TOKEN или ADMIN_GROUP_ID.",
         "db_error": "Ошибка сохранения анкеты. Попробуй ещё раз.",
-        "success": "🤍 Спасибо! Анкета отправлена администратору ✨",
+        "success": "✅ Этап 1 сохранён. Открой Telegram и заверши обязательный этап 2.",
     },
     "en": {
         "bad_size": "Invalid request size.",
@@ -119,7 +131,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Photo is too large. Please upload under 10MB.",
         "token_missing": "BOT_TOKEN or ADMIN_GROUP_ID is not configured.",
         "db_error": "Failed to save application. Please try again.",
-        "success": "Thank you. Your application was sent.",
+        "success": "✅ Step 1 is saved. Open Telegram and complete required Step 2.",
     },
     "pt": {
         "bad_size": "Tamanho da requisição inválido.",
@@ -131,7 +143,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Foto muito grande. Envie arquivo menor que 10MB.",
         "token_missing": "BOT_TOKEN ou ADMIN_GROUP_ID não configurado.",
         "db_error": "Falha ao salvar candidatura. Tente novamente.",
-        "success": "Obrigado. Sua candidatura foi enviada.",
+        "success": "✅ Etapa 1 salva. Abra o Telegram e conclua a Etapa 2 obrigatória.",
     },
     "es": {
         "bad_size": "Tamaño de solicitud inválido.",
@@ -143,7 +155,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "La foto es demasiado grande. Sube un archivo menor de 10MB.",
         "token_missing": "BOT_TOKEN o ADMIN_GROUP_ID no están configurados.",
         "db_error": "Error al guardar la solicitud. Inténtalo de nuevo.",
-        "success": "Gracias. Tu solicitud fue enviada.",
+        "success": "✅ Etapa 1 guardada. Abre Telegram y completa la Etapa 2 obligatoria.",
     },
 }
 
@@ -182,7 +194,7 @@ def load_settings():
     bot_token = os.getenv("BOT_TOKEN", "").strip()
     admin_group_id = os.getenv("ADMIN_GROUP_ID", "").strip()
     admin_username = os.getenv("ADMIN_USERNAME", "").strip()
-    bot_username = os.getenv("BOT_USERNAME", "").strip()
+    bot_username = os.getenv("BOT_USERNAME", "StreamFlowAgencybot").strip()
     channel_link = os.getenv("CHANNEL_LINK", "https://t.me/streamflowagency").strip()
     site_url = (os.getenv("SITE_URL", "https://streamflowagency.com") or "https://streamflowagency.com").strip()
     return bot_token, admin_group_id, admin_username, bot_username, channel_link, site_url
@@ -191,6 +203,23 @@ def load_settings():
 BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK, SITE_URL = load_settings()
 SITE_URL = SITE_URL.rstrip("/")
 CANONICAL_HOST = (urllib.parse.urlparse(SITE_URL).netloc or "").split(":", 1)[0].lower()
+
+def site_lead_setting_key(token: str) -> str:
+    return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
+
+def save_site_lead_payload(token: str, payload: dict) -> None:
+    expires_at = (datetime.now(timezone.utc) + timedelta(hours=SITE_LEAD_TOKEN_TTL_HOURS)).isoformat()
+    data = {
+        "expires_at": expires_at,
+        "data": payload,
+    }
+    set_setting(site_lead_setting_key(token), json.dumps(data, ensure_ascii=False))
+
+def build_bot_stage2_link(token: str) -> str | None:
+    username = (BOT_USERNAME or "").strip().lstrip("@")
+    if not username:
+        return None
+    return f"https://t.me/{username}?start=s2_{token}"
 try:
     from excel_export import append_application_row
 except Exception:
@@ -679,11 +708,10 @@ class Handler(SimpleHTTPRequestHandler):
         content_type = self.headers.get("Content-Type", "")
 
         if content_type.startswith("multipart/form-data"):
-            fields, files = parse_multipart(body, content_type)
+            fields, _files = parse_multipart(body, content_type)
         elif content_type.startswith("application/x-www-form-urlencoded"):
             data = urllib.parse.parse_qs(body.decode("utf-8"))
             fields = {k: v[0] for k, v in data.items()}
-            files = {}
         else:
             return self.send_json({"ok": False, "message": msg("ru", "bad_type")}, status=400)
 
@@ -699,10 +727,6 @@ class Handler(SimpleHTTPRequestHandler):
         if len(name) < 2:
             return error(field_error(site_lang, "name"), field="name")
 
-        city = clean_text(fields.get("city") or "")
-        if len(city) < 2:
-            return error(field_error(site_lang, "city"), field="city")
-
         phone_raw = clean_text(fields.get("phone") or "")
         if not is_valid_phone(phone_raw):
             return error(field_error(site_lang, "phone"), field="phone")
@@ -713,148 +737,36 @@ class Handler(SimpleHTTPRequestHandler):
             return error(field_error(site_lang, "age"), field="age")
         age = normalize_birthdate(age_raw) or age_raw
 
-        living_raw = clean_text(fields.get("living") or "")
-        living = normalize_yes_no(living_raw)
-        if not living:
-            return error(field_error(site_lang, "yes_no"), field="living")
-
-        devices = clean_text(fields.get("devices") or "")
-        if len(devices) < 2:
-            return error(field_error(site_lang, "devices"), field="devices")
-
         device_model = clean_text(fields.get("device_model") or "")
         if len(device_model) < 2:
             return error(field_error(site_lang, "device_model"), field="device_model")
-
-        work_time = clean_text(fields.get("work_time") or "")
-        if not has_any_digit(work_time):
-            return error(field_error(site_lang, "work_time"), field="work_time")
-
-        headphones_raw = clean_text(fields.get("headphones") or "")
-        headphones = normalize_yes_no(headphones_raw)
-        if not headphones:
-            return error(field_error(site_lang, "yes_no"), field="headphones")
 
         telegram_raw = clean_text(fields.get("telegram") or "")
         telegram = normalize_telegram(telegram_raw)
         if not telegram:
             return error(field_error(site_lang, "telegram"), field="telegram")
 
-        experience = clean_text(fields.get("experience") or "")
-        if len(experience) < 1:
-            return error(field_error(site_lang, "experience"), field="experience")
+        country = clean_text(fields.get("country") or "")
+        if not country:
+            country = extract_country_from_location(clean_text(fields.get("city") or "")) or ""
 
-        photo_face = files.get("photo_face")
-        if not photo_face or not photo_face.get("data"):
-            return error(field_error(site_lang, "photo_face"), field="photo_face")
-
-        photo_full = files.get("photo_full")
-        if not photo_full or not photo_full.get("data"):
-            return error(field_error(site_lang, "photo_full"), field="photo_full")
-
+        user_id = -int(time.time_ns())
+        lead_token = uuid.uuid4().hex[:24]
         payload = {
             "name": name,
-            "city": city,
-            "country": extract_country_from_location(city),
             "lang": site_lang,
             "phone": phone,
             "age": age,
-            "living": living,
-            "devices": devices,
             "device_model": device_model,
-            "work_time": work_time,
-            "headphones": headphones,
             "telegram": telegram,
-            "experience": experience,
+            "country": country,
+            "application_stage": "quick",
+            "site_lead_token": lead_token,
+            "site_pending_user_id": user_id,
         }
 
-        user_id = -int(time.time_ns())
-        web_id = str(user_id)
-        submitted_at = format_submit_time(datetime.now(timezone.utc).isoformat())
-
         try:
-            send_full = os.getenv("WEB_SEND_FULL_TO_ADMIN", "").strip().lower() in {"1", "true", "yes"}
-            if send_full:
-                telegram_request(
-                    "sendMessage",
-                    {
-                        "chat_id": str(ADMIN_GROUP_ID),
-                        "text": build_admin_full_text(payload, web_id, submitted_at),
-                        "parse_mode": "HTML",
-                    },
-                )
-
-            face_result = telegram_request(
-                "sendPhoto",
-                {
-                    "chat_id": str(ADMIN_GROUP_ID),
-                    "caption": "Фото анфас:",
-                    "parse_mode": "HTML",
-                },
-                {
-                    "photo": photo_face,
-                },
-            )
-
-            full_result = telegram_request(
-                "sendPhoto",
-                {
-                    "chat_id": str(ADMIN_GROUP_ID),
-                    "caption": "Фото в полный рост:",
-                    "parse_mode": "HTML",
-                },
-                {
-                    "photo": photo_full,
-                },
-            )
-
-            try:
-                payload["photo_face"] = face_result["result"]["photo"][-1]["file_id"]
-            except Exception:
-                payload["photo_face"] = None
-            try:
-                payload["photo_full"] = full_result["result"]["photo"][-1]["file_id"]
-            except Exception:
-                payload["photo_full"] = None
-            try:
-                face_msg_id = face_result.get("result", {}).get("message_id")
-                if face_msg_id:
-                    telegram_request(
-                        "deleteMessage",
-                        {"chat_id": str(ADMIN_GROUP_ID), "message_id": int(face_msg_id)},
-                    )
-            except Exception:
-                pass
-            try:
-                full_msg_id = full_result.get("result", {}).get("message_id")
-                if full_msg_id:
-                    telegram_request(
-                        "deleteMessage",
-                        {"chat_id": str(ADMIN_GROUP_ID), "message_id": int(full_msg_id)},
-                    )
-            except Exception:
-                pass
-        except Exception as err:
-            print("Telegram error:", err)
-            description = ""
-            if isinstance(err, RuntimeError) and err.args:
-                payload_err = err.args[0]
-                if isinstance(payload_err, dict):
-                    description = str(payload_err.get("description", ""))
-                else:
-                    description = str(payload_err)
-            message = msg(site_lang, "send_error")
-            if "not found" in description or "chat not found" in description:
-                message = msg(site_lang, "group_not_found")
-            elif "not enough rights" in description or "not a member" in description:
-                message = msg(site_lang, "group_no_rights")
-            elif "file is too big" in description:
-                message = msg(site_lang, "photo_too_big")
-            elif "TOKEN" in description or "not set" in description:
-                message = msg(site_lang, "token_missing")
-            return error(message, status=500)
-
-        try:
+            save_site_lead_payload(lead_token, payload)
             save_web_application(user_id, payload, source="site", status="pending")
             if append_application_row:
                 try:
@@ -865,16 +777,17 @@ class Handler(SimpleHTTPRequestHandler):
             print("DB error:", err)
             return error(msg(site_lang, "db_error"), status=500)
 
-        # синхронизируем админ-меню и уведомление так же, как в боте
         notify_admin_new_application()
         update_admin_menu_message()
 
-        bot_link = f"https://t.me/{BOT_USERNAME.strip().lstrip('@')}" if BOT_USERNAME.strip() else None
-        return self.send_json({
-            "ok": True,
-            "message": msg(site_lang, "success"),
-            "bot_link": bot_link,
-        })
+        bot_link = build_bot_stage2_link(lead_token)
+        return self.send_json(
+            {
+                "ok": True,
+                "message": msg(site_lang, "success"),
+                "bot_link": bot_link or CHANNEL_LINK,
+            }
+        )
 
     def send_json(self, payload: dict, status: int = 200):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")

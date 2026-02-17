@@ -471,31 +471,23 @@
             <aside class="form-side-progress" data-form-side-progress>
               <div class="form-side-header">
                 <h3 data-i18n="form.progressTitle">Прогресс анкеты</h3>
-                <span><span data-step-current-side>1</span> / <span data-step-total-side>13</span></span>
+                <span><span data-step-current-side>1</span> / <span data-step-total-side>5</span></span>
               </div>
               <div class="form-side-bar">
                 <span data-step-bar-side></span>
               </div>
               <ol class="form-side-list">
                 <li data-step-point="1" data-i18n="form.side1">Имя</li>
-                <li data-step-point="2" data-i18n="form.side2">Город и страна</li>
-                <li data-step-point="3" data-i18n="form.side3">Телефон</li>
-                <li data-step-point="4" data-i18n="form.side4">Дата рождения</li>
-                <li data-step-point="5" data-i18n="form.side5">Помещение</li>
-                <li data-step-point="6" data-i18n="form.side6">Устройства</li>
-                <li data-step-point="7" data-i18n="form.side7">Модель устройства</li>
-                <li data-step-point="8" data-i18n="form.side8">Время работы</li>
-                <li data-step-point="9" data-i18n="form.side9">Наушники</li>
-                <li data-step-point="10" data-i18n="form.side10">Telegram</li>
-                <li data-step-point="11" data-i18n="form.side11">Опыт</li>
-                <li data-step-point="12" data-i18n="form.side12">Фото анфас</li>
-                <li data-step-point="13" data-i18n="form.side13">Фото в полный рост</li>
+                <li data-step-point="2" data-i18n="form.side2">Телефон</li>
+                <li data-step-point="3" data-i18n="form.side3">Дата рождения</li>
+                <li data-step-point="4" data-i18n="form.side4">Модель устройства</li>
+                <li data-step-point="5" data-i18n="form.side5">Telegram</li>
               </ol>
             </aside>
 
             <div class="form-main">
               <div class="form-progress">
-                <div class="form-progress-count"><span data-step-current>1</span> / <span data-step-total>13</span></div>
+                <div class="form-progress-count"><span data-step-current>1</span> / <span data-step-total>5</span></div>
                 <div class="form-progress-bar"><span data-step-bar></span></div>
               </div>
 
@@ -509,74 +501,26 @@
                 </div>
                 <div class="form-step" data-step="2">
                   <div class="field">
-                    <label for="city" data-i18n="form.q2">2️⃣ Город и страна проживания:</label>
-                    <input id="city" name="city" type="text" required>
+                    <label for="phone" data-i18n="form.q2">2️⃣ Контактный телефон (+код):</label>
+                    <input id="phone" name="phone" type="tel" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="3">
                   <div class="field">
-                    <label for="phone" data-i18n="form.q3">3️⃣ Контактный телефон (+код):</label>
-                    <input id="phone" name="phone" type="tel" required>
+                    <label for="age" data-i18n="form.q3">3️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
+                    <input id="age" name="age" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="4">
                   <div class="field">
-                    <label for="age" data-i18n="form.q4">4️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
-                    <input id="age" name="age" type="text" required>
+                    <label for="device_model" data-i18n="form.q4">4️⃣ Модель устройства:</label>
+                    <input id="device_model" name="device_model" type="text" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="5">
                   <div class="field">
-                    <label for="living" data-i18n="form.q5">5️⃣ Есть ли помещение без посторонних?</label>
-                    <input id="living" name="living" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="6">
-                  <div class="field">
-                    <label for="devices" data-i18n="form.q6">6️⃣ Устройства:</label>
-                    <input id="devices" name="devices" type="text" required placeholder="Например: смартфон, ноутбук" data-i18n-placeholder="form.q6Placeholder">
-                  </div>
-                </div>
-                <div class="form-step" data-step="7">
-                  <div class="field">
-                    <label for="device_model" data-i18n="form.q7">7️⃣ Модель устройства:</label>
-                    <input id="device_model" name="device_model" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="8">
-                  <div class="field">
-                    <label for="work_time" data-i18n="form.q8">8️⃣ Время работы (часов в день):</label>
-                    <input id="work_time" name="work_time" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="9">
-                  <div class="field">
-                    <label for="headphones" data-i18n="form.q9">9️⃣ Есть ли наушники с микрофоном:</label>
-                    <input id="headphones" name="headphones" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="10">
-                  <div class="field">
-                    <label for="telegram" data-i18n="form.q10">🔟 Telegram (@username):</label>
+                    <label for="telegram" data-i18n="form.q5">5️⃣ Telegram (@username):</label>
                     <input id="telegram" name="telegram" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="11">
-                  <div class="field">
-                    <label for="experience" data-i18n="form.q11">1️⃣1️⃣ Опыт (если нет — напиши «нет»):</label>
-                    <textarea id="experience" name="experience" rows="3" required></textarea>
-                  </div>
-                </div>
-                <div class="form-step" data-step="12">
-                  <div class="field">
-                    <label for="photo_face" data-i18n="form.q12">1️⃣2️⃣ Фото анфас:</label>
-                    <input id="photo_face" name="photo_face" type="file" accept="image/*" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="13">
-                  <div class="field">
-                    <label for="photo_full" data-i18n="form.q13">1️⃣3️⃣ Фото в полный рост:</label>
-                    <input id="photo_full" name="photo_full" type="file" accept="image/*" required>
                   </div>
                 </div>
               </div>
@@ -584,7 +528,7 @@
               <div class="form-nav">
                 <button class="btn btn-ghost" type="button" data-step-prev data-i18n="form.prev">Назад</button>
                 <button class="btn btn-primary" type="button" data-step-next data-i18n="form.next">Далее</button>
-                <button class="btn btn-primary hidden" type="submit" data-step-submit data-i18n="form.submit">Отправить</button>
+                <button class="btn btn-primary hidden" type="submit" data-step-submit data-i18n="form.submit">Сохранить этап 1</button>
               </div>
             </div>
           </div>

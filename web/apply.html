@@ -123,31 +123,32 @@
       <div class="container form-section">
         <div class="form-intro reveal">
           <span class="eyebrow">Заявка</span>
-          <h2 class="section-title-global">Анкета Streamflow</h2>
-          <p>После каждого ответа ты переходишь к следующему шагу.</p>
+          <h2 class="section-title-global">Этап 1 из 2</h2>
+          <p>Оставь короткую заявку за 1 минуту, дальше продолжишь в Telegram.</p>
           <div class="mini-steps">
             <div class="mini-step">
               <span>1</span>
-              <p>Заполни анкету и прикрепи фото.</p>
+              <p>Оставляешь базовые данные.</p>
             </div>
             <div class="mini-step">
               <span>2</span>
-              <p>Мы вернёмся с ответом в Telegram.</p>
+              <p>Переходишь в Telegram на этап 2.</p>
             </div>
             <div class="mini-step">
               <span>3</span>
-              <p>Стартуем подготовку вместе с командой.</p>
+              <p>После этапа 2 заявка уходит в работу.</p>
             </div>
           </div>
         </div>
 
         <form class="form-card" data-application-form enctype="multipart/form-data">
           <div class="form-progress">
-            <div class="form-progress-count"><span data-step-current>1</span> / <span data-step-total>13</span></div>
+            <div class="form-progress-count"><span data-step-current>1</span> / <span data-step-total>5</span></div>
             <div class="form-progress-bar"><span data-step-bar></span></div>
           </div>
 
           <div class="form-steps">
+            <input name="site_lang" type="hidden" value="ru">
             <div class="form-step is-active" data-step="1">
               <div class="field">
                 <label for="name">1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:</label>
@@ -156,74 +157,26 @@
             </div>
             <div class="form-step" data-step="2">
               <div class="field">
-                <label for="city">2️⃣ Город и страна проживания:</label>
-                <input id="city" name="city" type="text" required>
+                <label for="phone">2️⃣ Контактный телефон (+код):</label>
+                <input id="phone" name="phone" type="tel" required>
               </div>
             </div>
             <div class="form-step" data-step="3">
               <div class="field">
-                <label for="phone">3️⃣ Контактный телефон (+код):</label>
-                <input id="phone" name="phone" type="tel" required>
+                <label for="age">3️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
+                <input id="age" name="age" type="text" required>
               </div>
             </div>
             <div class="form-step" data-step="4">
               <div class="field">
-                <label for="age">4️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
-                <input id="age" name="age" type="text" required>
+                <label for="device_model">4️⃣ Модель устройства:</label>
+                <input id="device_model" name="device_model" type="text" required>
               </div>
             </div>
             <div class="form-step" data-step="5">
               <div class="field">
-                <label for="living">5️⃣ Есть ли помещение без посторонних?</label>
-                <input id="living" name="living" type="text" required>
-              </div>
-            </div>
-            <div class="form-step" data-step="6">
-              <div class="field">
-                <label for="devices">6️⃣ Устройства:</label>
-                <input id="devices" name="devices" type="text" required placeholder="Например: смартфон, ноутбук">
-              </div>
-            </div>
-            <div class="form-step" data-step="7">
-              <div class="field">
-                <label for="device_model">7️⃣ Модель устройства:</label>
-                <input id="device_model" name="device_model" type="text" required>
-              </div>
-            </div>
-            <div class="form-step" data-step="8">
-              <div class="field">
-                <label for="work_time">8️⃣ Время работы (часов в день):</label>
-                <input id="work_time" name="work_time" type="text" required>
-              </div>
-            </div>
-            <div class="form-step" data-step="9">
-              <div class="field">
-                <label for="headphones">9️⃣ Есть ли наушники с микрофоном:</label>
-                <input id="headphones" name="headphones" type="text" required>
-              </div>
-            </div>
-            <div class="form-step" data-step="10">
-              <div class="field">
-                <label for="telegram">🔟 Telegram (@username):</label>
+                <label for="telegram">5️⃣ Telegram (@username):</label>
                 <input id="telegram" name="telegram" type="text" required>
-              </div>
-            </div>
-            <div class="form-step" data-step="11">
-              <div class="field">
-                <label for="experience">1️⃣1️⃣ Опыт (если нет — напиши «нет»):</label>
-                <textarea id="experience" name="experience" rows="3" required></textarea>
-              </div>
-            </div>
-            <div class="form-step" data-step="12">
-              <div class="field">
-                <label for="photo_face">1️⃣2️⃣ Фото анфас:</label>
-                <input id="photo_face" name="photo_face" type="file" accept="image/*" required>
-              </div>
-            </div>
-            <div class="form-step" data-step="13">
-              <div class="field">
-                <label for="photo_full">1️⃣3️⃣ Фото в полный рост:</label>
-                <input id="photo_full" name="photo_full" type="file" accept="image/*" required>
               </div>
             </div>
           </div>
@@ -231,7 +184,7 @@
           <div class="form-nav">
             <button class="btn btn-ghost" type="button" data-step-prev>Назад</button>
             <button class="btn btn-primary" type="button" data-step-next>Далее</button>
-            <button class="btn btn-primary hidden" type="submit" data-step-submit>Отправить</button>
+            <button class="btn btn-primary hidden" type="submit" data-step-submit>Сохранить этап 1</button>
           </div>
           <div class="form-status" data-form-status role="status" aria-live="polite"></div>
           <div class="form-next hidden" data-form-next>

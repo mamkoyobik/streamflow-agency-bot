@@ -78,6 +78,7 @@ from database import (
     count_posted_messages,
     update_posted_message,
     delete_posted_message,
+    delete_application,
 )
 try:
     from excel_export import append_application_row, update_application_status, rebuild_excel_from_db
@@ -290,6 +291,53 @@ def normalize_telegram(text: str) -> str | None:
         return f"@{value}"
     return None
 
+def extract_start_payload(text: str | None) -> str:
+    raw = (text or "").strip()
+    if not raw:
+        return ""
+    parts = raw.split(maxsplit=1)
+    if not parts:
+        return ""
+    if not parts[0].startswith("/start"):
+        return ""
+    if len(parts) < 2:
+        return ""
+    return parts[1].strip()
+
+def extract_site_lead_token(start_payload: str | None) -> str | None:
+    raw = (start_payload or "").strip()
+    match = SITE_START_PAYLOAD_RE.fullmatch(raw)
+    if not match:
+        return None
+    return match.group(1)
+
+def _site_lead_setting_key(token: str) -> str:
+    return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
+
+def consume_site_lead_payload(token: str) -> dict | None:
+    key = _site_lead_setting_key(token)
+    raw = get_setting(key)
+    if not raw:
+        return None
+    try:
+        payload = json.loads(raw)
+    except Exception:
+        set_setting(key, None)
+        return None
+    if not isinstance(payload, dict):
+        set_setting(key, None)
+        return None
+    expires_at = _parse_ts(str(payload.get("expires_at") or "")) if payload.get("expires_at") else None
+    if expires_at and expires_at < datetime.now(timezone.utc):
+        set_setting(key, None)
+        return None
+    data = payload.get("data")
+    if not isinstance(data, dict):
+        set_setting(key, None)
+        return None
+    set_setting(key, None)
+    return data
+
 def _parse_ts(value: str | None) -> datetime | None:
     if not value:
         return None
@@ -321,9 +369,34 @@ FORM_DATA_FIELDS = {
     "photo_face",
     "photo_full",
     "lang",
+    "application_stage",
+    "site_lead_token",
 }
-OPTIONAL_FORM_DATA_FIELDS = {"country", "lang"}
-REQUIRED_PREVIEW_FIELDS = FORM_DATA_FIELDS - OPTIONAL_FORM_DATA_FIELDS
+OPTIONAL_FORM_DATA_FIELDS = {
+    "country",
+    "lang",
+    "devices",
+    "headphones",
+    "photo_face",
+    "photo_full",
+    "site_lead_token",
+}
+REQUIRED_PREVIEW_FIELDS = {
+    "name",
+    "phone",
+    "age",
+    "device_model",
+    "telegram",
+    "city",
+    "work_time",
+    "experience",
+    "living",
+}
+
+APPLICATION_STAGE_QUICK = "quick"
+APPLICATION_STAGE_FULL = "full"
+SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
+SITE_START_PAYLOAD_RE = re.compile(r"^s2_([A-Za-z0-9]{10,128})$")
 
 STATE_TO_FIELD = {
     ApplicationStates.name: "name",
@@ -340,6 +413,34 @@ STATE_TO_FIELD = {
     ApplicationStates.photo_face: "photo_face",
     ApplicationStates.photo_full: "photo_full",
 }
+
+def _has_value(data: dict | None, key: str) -> bool:
+    if not isinstance(data, dict):
+        return False
+    value = data.get(key)
+    if value is None:
+        return False
+    if isinstance(value, str):
+        return bool(value.strip())
+    return True
+
+def detect_application_stage(data: dict | None) -> str:
+    if not isinstance(data, dict):
+        return APPLICATION_STAGE_FULL
+    stage = str(data.get("application_stage") or "").strip().lower()
+    if stage in {APPLICATION_STAGE_QUICK, APPLICATION_STAGE_FULL}:
+        return stage
+    if all(_has_value(data, field) for field in REQUIRED_PREVIEW_FIELDS):
+        return APPLICATION_STAGE_FULL
+    return APPLICATION_STAGE_QUICK
+
+def is_quick_application(data: dict | None) -> bool:
+    return detect_application_stage(data) == APPLICATION_STAGE_QUICK
+
+def is_site_quick_application(app: dict | None, data: dict | None) -> bool:
+    if not isinstance(app, dict):
+        return False
+    return app.get("source") == "site" and is_quick_application(data)
 
 def build_ack(user_id: int | None = None) -> str:
     lang = lang_for(user_id) if user_id is not None else "ru"
@@ -472,6 +573,170 @@ LOCKED_ENTITY_TYPES = {
     "email",
     "phone_number",
 }
+STAGE2_BRIDGE_TEXTS = {
+    "ru": {
+        "gate": (
+            "📣 Перед продолжением зайди в канал Streamflow.\n\n"
+            "Дальше выбери удобный путь:\n"
+            "• можно написать менеджеру\n"
+            "• или не тратить время на переписки и созвоны, узнать всё в боте, "
+            "дозаполнить анкету и перейти к работе"
+        ),
+        "step1": (
+            "✅ Предзаявка сохранена.\n\n"
+            "Ты уже в системе, и мы видим твой контакт.\n"
+            "Сейчас коротко покажу, как всё происходит дальше."
+        ),
+        "step2": (
+            "Как всё проходит:\n"
+            "• получаешь понятный старт\n"
+            "• двигаемся по шагам с поддержкой\n"
+            "• выходим на стабильный результат\n\n"
+            "Остался обязательный финальный блок (около 2 минут).\n"
+            "Без него мы не сможем запустить старт."
+        ),
+        "next": "Что дальше",
+        "start": "Продолжить этап 2 (обязательно)",
+        "manager": "Есть вопросы? Менеджер",
+        "channel": "📣 Открыть канал",
+        "continue_bot": "🚀 Продолжить в боте",
+        "wait_gate": "Выбери один из вариантов ниже 👇",
+        "wait": "Нажми кнопку, чтобы продолжить этап 2 👇",
+        "expired": "Ссылка из сайта устарела. Нажми «Стать моделью» и заполни короткий этап заново.",
+    },
+    "en": {
+        "gate": (
+            "📣 Before continuing, open the Streamflow channel.\n\n"
+            "Then choose what fits you:\n"
+            "• message the manager\n"
+            "• or skip long chats/calls, get details in the bot, finish the form and move to work"
+        ),
+        "step1": (
+            "✅ Pre-application saved.\n\n"
+            "You are already in the system, and we have your contact.\n"
+            "Now I’ll quickly explain what happens next."
+        ),
+        "step2": (
+            "How it works:\n"
+            "• clear onboarding\n"
+            "• step-by-step support\n"
+            "• focus on stable results\n\n"
+            "One required final block is left (about 2 minutes).\n"
+            "Without it, we can’t launch your start."
+        ),
+        "next": "What’s next",
+        "start": "Continue Step 2 (required)",
+        "manager": "Questions? Manager",
+        "channel": "📣 Open channel",
+        "continue_bot": "🚀 Continue in bot",
+        "wait_gate": "Choose one option below 👇",
+        "wait": "Tap the button to continue Step 2 👇",
+        "expired": "Your website link has expired. Tap “Become a model” and submit the short step again.",
+    },
+    "pt": {
+        "gate": (
+            "📣 Antes de continuar, abra o canal Streamflow.\n\n"
+            "Depois escolha o caminho:\n"
+            "• falar com o gerente\n"
+            "• ou não perder tempo com chamadas/conversas, ver tudo no bot, "
+            "finalizar o cadastro e ir para o trabalho"
+        ),
+        "step1": (
+            "✅ Pré-cadastro salvo.\n\n"
+            "Você já está no sistema e já temos seu contato.\n"
+            "Agora eu te explico rapidamente o próximo passo."
+        ),
+        "step2": (
+            "Como funciona:\n"
+            "• início claro\n"
+            "• suporte passo a passo\n"
+            "• foco em resultado estável\n\n"
+            "Falta um bloco final obrigatório (cerca de 2 minutos).\n"
+            "Sem isso, não conseguimos iniciar seu começo."
+        ),
+        "next": "Próximo passo",
+        "start": "Continuar Etapa 2 (obrigatória)",
+        "manager": "Dúvidas? Gerente",
+        "channel": "📣 Abrir canal",
+        "continue_bot": "🚀 Continuar no bot",
+        "wait_gate": "Escolha uma opção abaixo 👇",
+        "wait": "Toque no botão para continuar a Etapa 2 👇",
+        "expired": "Seu link do site expirou. Toque em “Become a model” e preencha a etapa curta novamente.",
+    },
+    "es": {
+        "gate": (
+            "📣 Antes de continuar, abre el canal de Streamflow.\n\n"
+            "Luego elige tu camino:\n"
+            "• escribir al manager\n"
+            "• o no perder tiempo en chats/llamadas, ver todo en el bot, "
+            "completar la solicitud y pasar al trabajo"
+        ),
+        "step1": (
+            "✅ Pre-solicitud guardada.\n\n"
+            "Ya estás en el sistema y ya tenemos tu contacto.\n"
+            "Ahora te explico rápido el siguiente paso."
+        ),
+        "step2": (
+            "Cómo funciona:\n"
+            "• inicio claro\n"
+            "• acompañamiento paso a paso\n"
+            "• enfoque en resultados estables\n\n"
+            "Queda un bloque final obligatorio (unos 2 minutos).\n"
+            "Sin eso no podemos activar tu inicio."
+        ),
+        "next": "Qué sigue",
+        "start": "Continuar Etapa 2 (obligatoria)",
+        "manager": "¿Dudas? Manager",
+        "channel": "📣 Abrir canal",
+        "continue_bot": "🚀 Continuar en bot",
+        "wait_gate": "Elige una opción abajo 👇",
+        "wait": "Pulsa el botón para continuar la Etapa 2 👇",
+        "expired": "Tu enlace del sitio venció. Pulsa “Become a model” y completa de nuevo la etapa corta.",
+    },
+}
+
+def stage2_text(lang: str, key: str) -> str:
+    locale = normalize_lang(lang)
+    return STAGE2_BRIDGE_TEXTS.get(locale, STAGE2_BRIDGE_TEXTS["ru"]).get(
+        key, STAGE2_BRIDGE_TEXTS["ru"][key]
+    )
+
+def manager_contact_url() -> str | None:
+    manager_username = ADMIN_USERNAME.lstrip("@").strip()
+    if not manager_username:
+        return None
+    return f"https://t.me/{manager_username}"
+
+def stage2_keyboard_step1(lang: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=stage2_text(lang, "next"), callback_data="stage2_intro_next")],
+            [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")],
+        ]
+    )
+
+def stage2_keyboard_step2(lang: str) -> InlineKeyboardMarkup:
+    manager_url = manager_contact_url()
+    rows = [
+        [InlineKeyboardButton(text=stage2_text(lang, "start"), callback_data="stage2_start")],
+    ]
+    if manager_url:
+        rows.append([InlineKeyboardButton(text=stage2_text(lang, "manager"), url=manager_url)])
+    rows.append([InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+CHANNEL_PUBLIC_LINK = (os.getenv("CHANNEL_LINK") or "https://t.me/streamflowagency").strip()
+
+def stage2_gate_keyboard(lang: str) -> InlineKeyboardMarkup:
+    rows = [
+        [InlineKeyboardButton(text=stage2_text(lang, "channel"), url=CHANNEL_PUBLIC_LINK)],
+    ]
+    manager_url = manager_contact_url()
+    if manager_url:
+        rows.append([InlineKeyboardButton(text=stage2_text(lang, "manager"), url=manager_url)])
+    rows.append([InlineKeyboardButton(text=stage2_text(lang, "continue_bot"), callback_data="stage2_gate_continue")])
+    rows.append([InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def _env_int(name: str, default: int) -> int:
@@ -1422,6 +1687,12 @@ def submission_lang_for_user(user_id: int, data: dict | None = None) -> str:
         return payload_lang
     return lang_for(user_id)
 
+def application_stage_label(data: dict | None) -> str:
+    stage = detect_application_stage(data)
+    if stage == APPLICATION_STAGE_QUICK:
+        return "1/2 Предзаявка (этап 2 не завершён)"
+    return "2/2 Полная заявка"
+
 AUTO_REJECT_REASONS = {
     "ru": {
         "1": "Сейчас, к сожалению, мы не можем принять заявку.",
@@ -1478,6 +1749,7 @@ def build_admin_summary(
         f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
         f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
         f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
+        f"🧩 Этап анкеты: {_safe_text(application_stage_label(data))}\n"
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
@@ -1498,6 +1770,7 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
         f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
         f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
+        f"🧩 Этап анкеты: {_safe_text(application_stage_label(data))}\n"
         f"📞 Телефон: {_safe_text(data.get('phone', '—'))}\n"
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
         f"📱 Устройства: {_safe_text(data.get('devices', '—'))}\n"
@@ -2369,6 +2642,7 @@ async def start_application(message: Message, state: FSMContext, user_id: int | 
             set_last_state(target_user_id, None)
             return False
     set_status(target_user_id, "new")
+    set_source(target_user_id, "bot")
     set_last_state(target_user_id, ApplicationStates.name.state)
     return True
 
@@ -2392,9 +2666,99 @@ async def send_next_question(
         reply_markup=form_keyboard(lang)
     )
 
+async def enter_stage2_gate(
+    user_id: int,
+    state: FSMContext,
+):
+    lang = lang_for(user_id)
+    await state.set_state(ApplicationStates.stage2_gate)
+    set_last_state(user_id, ApplicationStates.stage2_gate.state)
+    await send_or_edit_user_text(
+        user_id,
+        stage2_text(lang, "gate"),
+        reply_markup=stage2_gate_keyboard(lang),
+    )
+
+async def enter_stage2_intro(
+    user_id: int,
+    state: FSMContext,
+    note: str | None = None,
+    start_from_step2: bool = False,
+):
+    lang = lang_for(user_id)
+    await state.set_state(ApplicationStates.stage2_intro)
+    set_last_state(user_id, ApplicationStates.stage2_intro.state)
+    if start_from_step2:
+        text = stage2_text(lang, "step2")
+        await send_or_edit_user_text(
+            user_id,
+            text,
+            reply_markup=stage2_keyboard_step2(lang),
+        )
+        return
+
+    first = stage2_text(lang, "step1")
+    if note:
+        first = f"{note}\n\n{first}"
+    await send_or_edit_user_text(
+        user_id,
+        first,
+        reply_markup=stage2_keyboard_step1(lang),
+    )
+
+async def start_stage2_questions(user_id: int, state: FSMContext):
+    lang = lang_for(user_id)
+    await state.set_state(ApplicationStates.city)
+    set_last_state(user_id, ApplicationStates.city.state)
+    await send_or_edit_user_text(
+        user_id,
+        format_question(ApplicationStates.city, form_question(ApplicationStates.city, lang), user_id=user_id),
+        reply_markup=form_keyboard(lang),
+    )
+
+async def bootstrap_site_stage2_start(message: Message, state: FSMContext, token: str) -> bool:
+    lead = consume_site_lead_payload(token)
+    if not lead:
+        lang = lang_for(message.from_user.id)
+        await send_or_edit_user_text(message.from_user.id, stage2_text(lang, "expired"), reply_markup=main_menu(lang))
+        return True
+
+    lang = normalize_lang(str(lead.get("lang") or "ru"))
+    set_user_language(message.from_user.id, lang)
+    await state.clear()
+    clear_form_data(message.from_user.id)
+    legacy_user_id = lead.get("site_pending_user_id")
+    if legacy_user_id is not None:
+        try:
+            delete_application(int(legacy_user_id))
+            try:
+                await ensure_admin_menu_posted()
+            except Exception:
+                logger.exception("Не удалось обновить админ-меню после удаления веб-предзаявки")
+        except Exception:
+            logger.exception("Не удалось удалить временную веб-заявку")
+    payload = {
+        "name": str(lead.get("name") or "").strip(),
+        "phone": str(lead.get("phone") or "").strip(),
+        "age": str(lead.get("age") or "").strip(),
+        "device_model": str(lead.get("device_model") or "").strip(),
+        "telegram": str(lead.get("telegram") or "").strip(),
+        "country": str(lead.get("country") or "").strip() or None,
+        "lang": lang,
+        "application_stage": APPLICATION_STAGE_QUICK,
+        "site_lead_token": token,
+    }
+    payload = {k: v for k, v in payload.items() if v not in {None, ""}}
+    await state.update_data(**payload)
+    set_form_data(message.from_user.id, payload)
+    set_status(message.from_user.id, "new")
+    set_source(message.from_user.id, "site")
+    await enter_stage2_gate(message.from_user.id, state)
+    return True
+
 # ================= START =================
 
-@dp.message(F.text == "/start")
+@dp.message(Command("start"))
 async def start(message: Message, state: FSMContext):
     try:
         if message.chat.type != "private":
@@ -2402,6 +2766,12 @@ async def start(message: Message, state: FSMContext):
             return
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
+        start_payload = extract_start_payload(message.text)
+        site_token = extract_site_lead_token(start_payload)
+        if site_token:
+            started = await bootstrap_site_stage2_start(message, state, site_token)
+            if started:
+                return
         if not await ensure_language_selected(
             message.from_user.id,
             allow_home_button=False,
@@ -2409,15 +2779,34 @@ async def start(message: Message, state: FSMContext):
         ):
             return
         app = get_application(message.from_user.id)
+        data = get_form_data(message.from_user.id) or {}
         status = app.get("status") if app else None
         lang = lang_for(message.from_user.id)
         await send_menu(message, caption=t(lang, "menu_caption"), status=status)
         if app and app.get("last_state") in FORM_PROGRESS_STATES and not get_form_data(message.from_user.id):
             set_last_state(message.from_user.id, None)
-        if app and app.get("status") in {None, "new"} and app.get("last_state") in FORM_PROGRESS_STATES:
+        can_resume = (
+            app
+            and app.get("last_state") in FORM_PROGRESS_STATES
+            and (
+                app.get("status") in {None, "new"}
+                or (app.get("status") == "pending" and is_quick_application(data))
+            )
+        )
+        if can_resume:
+            pending_site_quick = app.get("status") == "pending" and is_site_quick_application(app, data)
+            resume_text = (
+                stage2_text(lang, "gate")
+                if pending_site_quick
+                else (
+                    stage2_text(lang, "step2")
+                    if app.get("status") == "pending" and is_quick_application(data)
+                    else t(lang, "resume_prompt")
+                )
+            )
             await send_or_edit_user_text(
                 message.from_user.id,
-                t(lang, "resume_prompt"),
+                resume_text,
                 reply_markup=continue_form_keyboard(lang)
             )
     except Exception:
@@ -2522,9 +2911,11 @@ async def apply(call: CallbackQuery, state: FSMContext):
         await clear_portfolio_media(call.from_user.id)
         app = get_application(call.from_user.id)
         status = app["status"] if app else None
+        form_data = get_form_data(call.from_user.id) or {}
+        pending_quick = status == "pending" and is_quick_application(form_data)
         logger.info("APPLY_STATUS user_id=%s status=%s", call.from_user.id, status)
 
-        if status in {"pending", "accepted", "rejected"}:
+        if status in {"accepted", "rejected"} or (status == "pending" and not pending_quick):
             status_text = {
                 "pending": t(lang, "pending_status_text"),
                 "accepted": t(lang, "accepted_status_text"),
@@ -2535,6 +2926,20 @@ async def apply(call: CallbackQuery, state: FSMContext):
                 f"{status_text}\n\n{t(lang, 'reapply_confirm')}",
                 reply_markup=reapply_keyboard(lang)
             )
+            return
+
+        if pending_quick:
+            await state.update_data(**form_data)
+            if is_site_quick_application(app, form_data):
+                await enter_stage2_gate(call.from_user.id, state)
+            else:
+                await send_or_edit_user_text(
+                    call.from_user.id,
+                    stage2_text(lang, "step2"),
+                    reply_markup=stage2_keyboard_step2(lang),
+                )
+                await state.set_state(ApplicationStates.stage2_intro)
+                set_last_state(call.from_user.id, ApplicationStates.stage2_intro.state)
             return
 
         if app and is_rate_limited(app.get("last_apply_at")):
@@ -2603,6 +3008,7 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
         current = await state.get_state()
         if not current:
             app = get_application(call.from_user.id)
+            data = get_form_data(call.from_user.id) or {}
             last_state = app.get("last_state") if app else None
             if last_state and last_state in FORM_PROGRESS_STATES and not get_form_data(call.from_user.id):
                 set_last_state(call.from_user.id, None)
@@ -2611,6 +3017,13 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
                 await state.set_state(last_state)
                 await restore_form_data(state, call.from_user.id)
                 current = last_state
+            elif app and app.get("status") == "pending" and is_quick_application(data):
+                await state.update_data(**data)
+                if is_site_quick_application(app, data):
+                    await enter_stage2_gate(call.from_user.id, state)
+                else:
+                    await enter_stage2_intro(call.from_user.id, state, start_from_step2=True)
+                return
             else:
                 started = await start_application(call.message, state, user_id=call.from_user.id)
                 if not started:
@@ -2627,6 +3040,12 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
                     return
                 return
             await show_preview(call.message, state, user_id=call.from_user.id)
+            return
+        if current == ApplicationStates.stage2_intro.state:
+            await enter_stage2_intro(call.from_user.id, state, start_from_step2=True)
+            return
+        if current == ApplicationStates.stage2_gate.state:
+            await enter_stage2_gate(call.from_user.id, state)
             return
         if current == ApplicationStates.edit_value.state:
             data = await state.get_data()
@@ -2687,7 +3106,63 @@ async def form_restart(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка в form_restart")
         await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
 
+@dp.callback_query(F.data == "stage2_intro_next")
+async def stage2_intro_next(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            return
+        await safe_call_answer(call)
+        await enter_stage2_intro(call.from_user.id, state, start_from_step2=True)
+    except Exception:
+        logger.exception("Ошибка в stage2_intro_next")
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
+
+@dp.callback_query(F.data == "stage2_gate_continue")
+async def stage2_gate_continue(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            return
+        await safe_call_answer(call)
+        await enter_stage2_intro(call.from_user.id, state, start_from_step2=False)
+    except Exception:
+        logger.exception("Ошибка в stage2_gate_continue")
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
+
+@dp.callback_query(F.data == "stage2_start")
+async def stage2_start(call: CallbackQuery, state: FSMContext):
+    try:
+        if not call.message or call.message.chat.type != "private":
+            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            return
+        await safe_call_answer(call)
+        await start_stage2_questions(call.from_user.id, state)
+    except Exception:
+        logger.exception("Ошибка в stage2_start")
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "temp_error_retry"), show_alert=True)
+
 # ================= FORM STEPS =================
+
+@dp.message(StateFilter(ApplicationStates.stage2_gate))
+async def stage2_gate_block_input(message: Message):
+    lang = lang_for(message.from_user.id)
+    await delete_user_message(message)
+    await send_or_edit_user_text(
+        message.from_user.id,
+        stage2_text(lang, "wait_gate"),
+        reply_markup=stage2_gate_keyboard(lang),
+    )
+
+@dp.message(StateFilter(ApplicationStates.stage2_intro))
+async def stage2_intro_block_input(message: Message):
+    lang = lang_for(message.from_user.id)
+    await delete_user_message(message)
+    await send_or_edit_user_text(
+        message.from_user.id,
+        stage2_text(lang, "wait"),
+        reply_markup=stage2_keyboard_step2(lang),
+    )
 
 @dp.message(StateFilter(ApplicationStates.name), F.text)
 async def step_name(m: Message, state: FSMContext):
@@ -2705,7 +3180,7 @@ async def step_name(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.city
+        ApplicationStates.phone
     )
 
 @dp.message(StateFilter(ApplicationStates.city), F.text)
@@ -2729,7 +3204,7 @@ async def step_city(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.phone
+        ApplicationStates.work_time
     )
 
 @dp.message(StateFilter(ApplicationStates.phone), F.text)
@@ -2780,7 +3255,7 @@ async def step_age(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.living,
+        ApplicationStates.device_model,
         note=note
     )
 
@@ -2801,12 +3276,11 @@ async def step_living(m: Message, state: FSMContext):
     if normalized != living_raw:
         note = t(lang, "normalized_yes_no_note", value=normalized)
     await update_form_field(state, m.from_user.id, living=normalized)
-    await send_next_question(
-        m,
-        state,
-        ApplicationStates.devices,
-        note=note
-    )
+    ack = build_ack(m.from_user.id)
+    if note:
+        ack = f"{ack}\n{note}"
+    await send_or_edit_user_text(m.from_user.id, ack)
+    await show_preview(m, state)
 
 @dp.message(StateFilter(ApplicationStates.devices), F.text)
 async def step_devices(m: Message, state: FSMContext):
@@ -2843,7 +3317,7 @@ async def step_device_model(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.work_time
+        ApplicationStates.telegram
     )
 
 @dp.message(StateFilter(ApplicationStates.work_time), F.text)
@@ -2862,7 +3336,7 @@ async def step_work_time(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.headphones
+        ApplicationStates.experience
     )
 
 @dp.message(StateFilter(ApplicationStates.headphones), F.text)
@@ -2900,12 +3374,17 @@ async def step_tg(m: Message, state: FSMContext):
     note = None
     if normalized != raw:
         note = t(lang, "normalized_telegram_note", value=normalized)
-    await update_form_field(state, m.from_user.id, telegram=normalized)
-    await send_next_question(
-        m,
+    await update_form_field(
         state,
-        ApplicationStates.experience,
-        note=note
+        m.from_user.id,
+        telegram=normalized,
+        application_stage=APPLICATION_STAGE_QUICK
+    )
+    await enter_stage2_intro(
+        m.from_user.id,
+        state,
+        note=note,
+        start_from_step2=False
     )
 
 @dp.message(StateFilter(ApplicationStates.experience), F.text)
@@ -2924,7 +3403,7 @@ async def step_exp(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.photo_face
+        ApplicationStates.living
     )
 
 @dp.message(StateFilter(ApplicationStates.photo_face), F.photo)
@@ -2967,24 +3446,22 @@ async def reject_non_photo_full(m: Message):
 
 FORM_ORDER = [
     ApplicationStates.name,
-    ApplicationStates.city,
     ApplicationStates.phone,
     ApplicationStates.age,
-    ApplicationStates.living,
-    ApplicationStates.devices,
     ApplicationStates.device_model,
-    ApplicationStates.work_time,
-    ApplicationStates.headphones,
     ApplicationStates.telegram,
+    ApplicationStates.city,
+    ApplicationStates.work_time,
     ApplicationStates.experience,
-    ApplicationStates.photo_face,
-    ApplicationStates.photo_full,
+    ApplicationStates.living,
 ]
 
 TOTAL_STEPS = len(FORM_ORDER)
 FORM_STEP_INDEX = {state: idx + 1 for idx, state in enumerate(FORM_ORDER)}
 
 FORM_PROGRESS_STATES = {s.state for s in FORM_ORDER} | {
+    ApplicationStates.stage2_gate.state,
+    ApplicationStates.stage2_intro.state,
     ApplicationStates.preview.state,
     ApplicationStates.edit_value.state,
 }
@@ -3456,17 +3933,17 @@ async def show_preview(m: Message, state: FSMContext, user_id: int | None = None
     text = t(
         lang,
         "preview_title",
-        name=data["name"],
-        city=data["city"],
-        age=data["age"],
-        phone=data["phone"],
-        living=data["living"],
-        devices=data["devices"],
-        device_model=data["device_model"],
-        headphones=data["headphones"],
-        work_time=data["work_time"],
-        experience=data["experience"],
-        telegram=data["telegram"],
+        name=_safe_text(data.get("name", "—")),
+        city=_safe_text(data.get("city", "—")),
+        age=_safe_text(data.get("age", "—")),
+        phone=_safe_text(data.get("phone", "—")),
+        living=_safe_text(data.get("living", "—")),
+        devices=_safe_text(data.get("devices", "—")),
+        device_model=_safe_text(data.get("device_model", "—")),
+        headphones=_safe_text(data.get("headphones", "—")),
+        work_time=_safe_text(data.get("work_time", "—")),
+        experience=_safe_text(data.get("experience", "—")),
+        telegram=_safe_text(data.get("telegram", "—")),
         status=status_caption,
     )
     await state.set_state(ApplicationStates.preview)
@@ -3508,12 +3985,14 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
             user.id,
             lang=normalize_lang(lang),
             country=data.get("country") or extract_country_from_location(data.get("city")),
+            application_stage=APPLICATION_STAGE_FULL,
         )
         data = await state.get_data()
 
         await gentle_typing(call.message.chat.id)
 
-        set_source(user.id, "bot")
+        current_source = get_source(user.id)
+        set_source(user.id, "site" if current_source == "site" else "bot")
         set_status(user.id, "pending")
         set_last_apply_at(user.id)
         if append_application_row:

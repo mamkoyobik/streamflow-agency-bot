@@ -16,6 +16,8 @@ class ApplicationStates(StatesGroup):
     experience = State()
     photo_face = State()
     photo_full = State()
+    stage2_gate = State()
+    stage2_intro = State()
 
     # ===== Предпросмотр =====
     preview = State()
