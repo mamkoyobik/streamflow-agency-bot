@@ -91,6 +91,17 @@ INFOBIP_BASE_URL = (os.getenv("INFOBIP_BASE_URL", "") or "").strip().rstrip("/")
 INFOBIP_WHATSAPP_SENDER = (os.getenv("INFOBIP_WHATSAPP_SENDER", "") or "").strip()
 WHATSAPP_FLOW_PREFIX = "wa_flow:"
 
+print(
+    "Infobip config:",
+    {
+        "bot_enabled": INFOBIP_BOT_ENABLED,
+        "interactive_enabled": INFOBIP_INTERACTIVE_ENABLED,
+        "has_api_key": bool(INFOBIP_API_KEY),
+        "base_url": INFOBIP_BASE_URL or "",
+        "sender": INFOBIP_WHATSAPP_SENDER or "",
+    },
+)
+
 FIELD_ERRORS = {
     "ru": {
         "name": "🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:",
@@ -2198,7 +2209,7 @@ class Handler(SimpleHTTPRequestHandler):
     def copyfile(self, source, outputfile):
         try:
             super().copyfile(source, outputfile)
-        except BrokenPipeError:
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
             # Client closed connection early (browser navigation/refresh).
             pass
 
