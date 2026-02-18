@@ -240,6 +240,36 @@ def confirm_reset_db_keyboard():
 
 def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = None):
     pending = counts.get("pending", 0) if counts else 0
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🗂 Контент", callback_data="admin_menu:cat_content"),
+            InlineKeyboardButton(text=f"📥 Заявки ({pending})", callback_data="admin_menu:cat_apps"),
+        ],
+        [
+            InlineKeyboardButton(text="📊 Аналитика", callback_data="admin_menu:cat_analytics"),
+            InlineKeyboardButton(text="⚙️ Сервис", callback_data="admin_menu:cat_service"),
+        ],
+        [
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh")
+        ]
+    ])
+
+
+def admin_menu_content_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post"),
+            InlineKeyboardButton(text="📣 Выложенные посты", callback_data="admin_menu:posts"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+        ],
+    ])
+
+
+def admin_menu_applications_keyboard(counts: dict | None = None, stage_counts: dict | None = None):
+    pending = counts.get("pending", 0) if counts else 0
     accepted = counts.get("accepted", 0) if counts else 0
     rejected = counts.get("rejected", 0) if counts else 0
     total = counts.get("total", pending + accepted + rejected) if counts else 0
@@ -247,50 +277,47 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
     stage_full = stage_counts.get("full", 0) if stage_counts else 0
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post"),
-            InlineKeyboardButton(text="📣 Посты", callback_data="admin_menu:posts"),
+            InlineKeyboardButton(text=f"⏳ Ожидают ({pending})", callback_data="admin_menu:pending"),
+            InlineKeyboardButton(text=f"📚 Все ({total})", callback_data="admin_menu:all"),
         ],
         [
-            InlineKeyboardButton(
-                text=f"⏳ Ожидают ({pending})",
-                callback_data="admin_menu:pending"
-            ),
-            InlineKeyboardButton(
-                text=f"📚 Все ({total})",
-                callback_data="admin_menu:all"
-            ),
+            InlineKeyboardButton(text=f"✅ Принятые ({accepted})", callback_data="admin_menu:accepted"),
+            InlineKeyboardButton(text=f"❌ Отклонённые ({rejected})", callback_data="admin_menu:rejected"),
         ],
         [
-            InlineKeyboardButton(
-                text=f"✅ Принятые ({accepted})",
-                callback_data="admin_menu:accepted"
-            ),
-            InlineKeyboardButton(
-                text=f"❌ Отклонённые ({rejected})",
-                callback_data="admin_menu:rejected"
-            ),
+            InlineKeyboardButton(text=f"1️⃣ Этап 1 ({stage_quick})", callback_data="admin_menu:stage_quick"),
+            InlineKeyboardButton(text=f"2️⃣ Полные ({stage_full})", callback_data="admin_menu:stage_full"),
         ],
         [
-            InlineKeyboardButton(
-                text=f"1️⃣ Этап 1 ({stage_quick})",
-                callback_data="admin_menu:stage_quick"
-            ),
-            InlineKeyboardButton(
-                text=f"2️⃣ Полные ({stage_full})",
-                callback_data="admin_menu:stage_full"
-            ),
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
         ],
+    ])
+
+
+def admin_menu_analytics_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="📊 Статистика", callback_data="admin_menu:stats"),
-            InlineKeyboardButton(text="📁 Excel", callback_data="admin_menu:excel")
+            InlineKeyboardButton(text="📁 Excel", callback_data="admin_menu:excel"),
         ],
+        [
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+        ],
+    ])
+
+
+def admin_menu_service_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="🧹 Архив", callback_data="admin_menu:archive"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh")
+            InlineKeyboardButton(text="⚠️ Сбросить базу", callback_data="admin_menu:reset"),
         ],
         [
-            InlineKeyboardButton(text="⚠️ Сбросить базу", callback_data="admin_menu:reset"),
-        ]
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+        ],
     ])
 
 def admin_create_post_keyboard():

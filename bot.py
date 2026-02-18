@@ -1511,6 +1511,8 @@ async def can_manage_admin_callback(call: CallbackQuery) -> bool:
     if not call.message or not call.from_user:
         return False
     chat_id = call.message.chat.id
+    if chat_id == ADMIN_GROUP_ID and call.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
+        return True
     if chat_id == ADMIN_GROUP_ID:
         return await is_admin_actor(ADMIN_GROUP_ID, call.from_user.id)
     # Fallback for cases when admin chat ID was changed but admin still presses buttons in admin group.
@@ -4755,6 +4757,9 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
         if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
         await safe_call_answer(call)
         await clear_admin_temp_messages()
         action = call.data.split(":", 1)[1]
@@ -4768,6 +4773,40 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
                 await state.clear()
                 if current_state == ApplicationStates.admin_create_post.state:
                     await sync_anonymous_create_post_state(enabled=False)
+        if action in {"home", "refresh"}:
+            await clear_admin_view_message()
+            await post_admin_menu()
+            return
+        if action == "cat_content":
+            await clear_admin_view_message()
+            await update_admin_menu_message(
+                "🗂 <b>Контент</b>\n\nПубликация и управление постами.",
+                admin_menu_content_keyboard()
+            )
+            return
+        if action == "cat_apps":
+            await clear_admin_view_message()
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
+            await update_admin_menu_message(
+                "📥 <b>Заявки</b>\n\nФильтры по статусам и этапам воронки.",
+                admin_menu_applications_keyboard(counts, stage_counts)
+            )
+            return
+        if action == "cat_analytics":
+            await clear_admin_view_message()
+            await update_admin_menu_message(
+                "📊 <b>Аналитика</b>\n\nСтатистика и выгрузка Excel.",
+                admin_menu_analytics_keyboard()
+            )
+            return
+        if action == "cat_service":
+            await clear_admin_view_message()
+            await update_admin_menu_message(
+                "⚙️ <b>Сервис</b>\n\nОбслуживание меню и базы.",
+                admin_menu_service_keyboard()
+            )
+            return
         if action == "create_post":
             await open_create_post_mode(state)
             return
@@ -4839,10 +4878,6 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
                 "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
                 confirm_reset_db_keyboard()
             )
-            return
-        if action == "refresh":
-            await clear_admin_view_message()
-            await post_admin_menu()
             return
         await safe_call_answer(call, "Неизвестная команда", show_alert=False)
     except Exception:

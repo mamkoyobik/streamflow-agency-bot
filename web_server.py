@@ -635,45 +635,18 @@ def build_admin_menu_text(counts: dict) -> str:
 
 def build_admin_menu_keyboard(counts: dict) -> dict:
     pending = counts.get("pending", 0)
-    accepted = counts.get("accepted", 0)
-    rejected = counts.get("rejected", 0)
-    total = counts.get("total", pending + accepted + rejected)
     return {
         "inline_keyboard": [
             [
-                {"text": "📝 Создать пост", "callback_data": "admin_menu:create_post"},
-                {"text": "📣 Посты", "callback_data": "admin_menu:posts"},
+                {"text": "🗂 Контент", "callback_data": "admin_menu:cat_content"},
+                {"text": f"📥 Заявки ({pending})", "callback_data": "admin_menu:cat_apps"},
             ],
             [
-                {
-                    "text": f"⏳ Ожидают ({pending})",
-                    "callback_data": "admin_menu:pending",
-                },
-                {
-                    "text": f"📚 Все ({total})",
-                    "callback_data": "admin_menu:all",
-                }
+                {"text": "📊 Аналитика", "callback_data": "admin_menu:cat_analytics"},
+                {"text": "⚙️ Сервис", "callback_data": "admin_menu:cat_service"},
             ],
             [
-                {
-                    "text": f"✅ Принятые ({accepted})",
-                    "callback_data": "admin_menu:accepted",
-                },
-                {
-                    "text": f"❌ Отклонённые ({rejected})",
-                    "callback_data": "admin_menu:rejected",
-                }
-            ],
-            [
-                {"text": "📊 Статистика", "callback_data": "admin_menu:stats"},
-                {"text": "📁 Excel", "callback_data": "admin_menu:excel"},
-            ],
-            [
-                {"text": "🧹 Архив", "callback_data": "admin_menu:archive"},
                 {"text": "🔄 Обновить", "callback_data": "admin_menu:refresh"},
-            ],
-            [
-                {"text": "⚠️ Сбросить базу", "callback_data": "admin_menu:reset"},
             ],
         ]
     }
