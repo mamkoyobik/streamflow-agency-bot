@@ -825,6 +825,9 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
             row.get("timestamp"),
             row.get("time"),
         )
+        has_user_payload = bool((text or "").strip() or (media_url or "").strip())
+        if not has_user_payload:
+            continue
         if not any((from_phone, to_phone, text, media_url, message_id)):
             continue
         normalized.append(

@@ -19,9 +19,11 @@
 - `HOST=0.0.0.0`
 - `WEB_SEND_FULL_TO_ADMIN=false`
 - `INFOBIP_BOT_ENABLED=true`
-- `INFOBIP_FORWARD_TO_ADMIN=true`
+- `INFOBIP_INTERACTIVE_ENABLED=true` (если кнопки WhatsApp не отображаются, временно поставь `false`, останутся обычные текстовые ответы)
+- `INFOBIP_FORWARD_TO_ADMIN=false`
+- `INFOBIP_RELAY_MODE=false` (оставляй `false`, иначе входящие WA могут дублироваться в админ-группу как тех-лог)
 - `INFOBIP_API_KEY=...`
-- `INFOBIP_BASE_URL=https://<your-base-url>.api.infobip.com`
+- `INFOBIP_BASE_URL=https://<your-base-url>.api.infobip.com` (если вставишь без `https://`, сервер добавит его автоматически)
 - `INFOBIP_WHATSAPP_SENDER=<sender>`
 
 ### Bot service (`bot.py`)
