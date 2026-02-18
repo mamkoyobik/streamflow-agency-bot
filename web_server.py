@@ -1032,38 +1032,70 @@ def _is_wa_reset_command(text: str | None) -> bool:
 
 
 def _build_admin_whatsapp_application_text(data: dict, user_id: int, submitted_at: str) -> str:
-    def _link_or_dash(url: str | None, title: str) -> str:
-        raw = (url or "").strip()
-        if not raw:
-            return "—"
-        escaped = html.escape(raw, quote=True)
-        return f"<a href=\"{escaped}\">{html.escape(title)}</a>"
+    prepared = dict(data or {})
+    wa_contact = prepared.get("whatsapp") or prepared.get("wa_phone")
+    if not prepared.get("telegram"):
+        prepared["telegram"] = f"wa:{_wa_digits(wa_contact or '')}" if wa_contact else "—"
+    return build_admin_full_text(prepared, str(user_id), submitted_at, source_label="WhatsApp")
 
-    wa_contact = data.get("whatsapp") or data.get("wa_phone")
-    tg_contact = data.get("telegram")
-    if not tg_contact:
-        tg_contact = f"wa:{_wa_digits(wa_contact or '')}" if wa_contact else "—"
-    return (
-        "📋 <b>Новая заявка WhatsApp</b>\n\n"
-        f"👤 Имя: {_safe(data.get('name'))}\n"
-        f"📅 Дата рождения: {_safe(data.get('age'))}\n"
-        f"🌍 Город и страна: {_safe(data.get('city'))}\n"
-        f"🏳️ Страна подачи: {_safe(submission_country(data))}\n"
-        f"📞 Телефон: {_safe(data.get('phone'))}\n"
-        f"💬 WhatsApp: {_safe(wa_contact)}\n"
-        f"🏠 Помещение без посторонних: {_safe(data.get('living'))}\n"
-        f"⏱ Время работы: {_safe(data.get('work_time'))}\n"
-        f"💼 Опыт: {_safe(data.get('experience'))}\n"
-        f"📲 Модель устройства: {_safe(data.get('device_model'))}\n"
-        f"💬 Telegram: {_safe(tg_contact)}\n"
-        f"🖼 Фото анфас: {_link_or_dash(data.get('photo_face'), 'Открыть')}\n"
-        f"🖼 Фото профиль/рост: {_link_or_dash(data.get('photo_full'), 'Открыть')}\n"
-        f"🌐 Язык: {_safe(data.get('lang'))}\n"
-        f"🆔 ID: <code>{_safe(user_id)}</code>\n"
-        "🧭 Источник: WhatsApp\n"
-        f"🕒 Время подачи: {submitted_at}\n\n"
-        "Статус: <b>🟡 На рассмотрении</b>"
-    )
+
+def _wa_media_url(value: str | None) -> str | None:
+    raw = (value or "").strip()
+    if raw.startswith("http://") or raw.startswith("https://"):
+        return raw
+    return None
+
+
+def _download_wa_photo(url: str) -> tuple[bytes, str] | None:
+    headers = {"Accept": "*/*"}
+    if INFOBIP_API_KEY and "infobip" in url.lower():
+        headers["Authorization"] = f"App {INFOBIP_API_KEY}"
+    req = urllib.request.Request(url, headers=headers, method="GET")
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=get_ssl_context()) as resp:
+            data = resp.read()
+            content_type = (resp.headers.get("Content-Type", "") or "").split(";", 1)[0].strip().lower()
+            if not content_type.startswith("image/"):
+                content_type = "image/jpeg"
+            if not data:
+                return None
+            return data, content_type
+    except Exception as err:
+        print("Failed to download WhatsApp photo:", err)
+        return None
+
+
+def _send_whatsapp_photo_to_admin(url: str, filename: str) -> int | None:
+    try:
+        result = telegram_request("sendPhoto", {"chat_id": str(ADMIN_GROUP_ID), "photo": url})
+        message_id = result.get("result", {}).get("message_id") if isinstance(result, dict) else None
+        if isinstance(message_id, int):
+            return message_id
+    except Exception as err:
+        print("sendPhoto by URL failed:", err)
+
+    downloaded = _download_wa_photo(url)
+    if not downloaded:
+        return None
+    payload, content_type = downloaded
+    try:
+        result = telegram_request(
+            "sendPhoto",
+            {"chat_id": str(ADMIN_GROUP_ID)},
+            files={
+                "photo": {
+                    "filename": filename,
+                    "content_type": content_type,
+                    "data": payload,
+                }
+            },
+        )
+        message_id = result.get("result", {}).get("message_id") if isinstance(result, dict) else None
+        if isinstance(message_id, int):
+            return message_id
+    except Exception as err:
+        print("sendPhoto by upload failed:", err)
+    return None
 
 
 def _build_admin_whatsapp_keyboard(user_id: int, wa_phone: str | None) -> dict:
@@ -1084,6 +1116,17 @@ def _send_application_to_admin_from_whatsapp(data: dict, user_id: int, wa_phone:
         return
     submitted_at = format_submit_time(datetime.now(timezone.utc).isoformat())
     text = _build_admin_whatsapp_application_text(data, user_id, submitted_at)
+    for raw_url, filename in (
+        (data.get("photo_face"), f"wa_face_{abs(user_id)}.jpg"),
+        (data.get("photo_full"), f"wa_full_{abs(user_id)}.jpg"),
+    ):
+        media_url = _wa_media_url(raw_url)
+        if not media_url:
+            continue
+        try:
+            _send_whatsapp_photo_to_admin(media_url, filename)
+        except Exception as err:
+            print("Failed to send WhatsApp photo to admin:", err)
     payload = {
         "chat_id": str(ADMIN_GROUP_ID),
         "text": text,
@@ -1638,7 +1681,7 @@ def submission_country(data: dict) -> str:
         return by_phone
     return "—"
 
-def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
+def build_admin_full_text(data: dict, web_id: str, submitted_at: str, source_label: str = "Сайт") -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
     return (
         "📋 <b>Полная анкета</b>\n\n"
@@ -1655,7 +1698,7 @@ def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
         f"💼 Опыт: {_safe(data.get('experience'))}\n"
         f"💬 Telegram: {_safe(data.get('telegram'))}\n"
         f"🆔 ID: {_safe(web_id)}\n"
-        "🧭 Источник: Сайт\n"
+        f"🧭 Источник: {_safe(source_label)}\n"
         f"🕒 Время подачи: {submitted_at}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
