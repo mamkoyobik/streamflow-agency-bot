@@ -22,6 +22,7 @@ from database import (
     get_setting,
     set_setting,
     set_admin_message_id,
+    find_recent_site_lead_by_phone,
 )
 from texts import STATUS_LABELS
 from time_utils import format_submit_time
@@ -525,9 +526,8 @@ def build_whatsapp_stage2_link(token: str, lang: str | None = None) -> str | Non
     base = build_whatsapp_base_link()
     if not base:
         return None
-    locale = normalize_site_lang(lang)
-    text = urllib.parse.quote(f"s2_{token}_{locale}", safe="")
-    return f"{base}?text={text}"
+    # Keep entry UX clean: do not force technical prefilled text in chat input.
+    return base
 try:
     from excel_export import append_application_row
 except Exception:
@@ -742,6 +742,26 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
         candidates.append(payload)
 
     normalized: list[dict] = []
+    sender_digits = re.sub(r"\D", "", INFOBIP_WHATSAPP_SENDER or "")
+
+    def _pick_phone(candidates: list[str | None]) -> str | None:
+        cleaned: list[str] = []
+        for raw in candidates:
+            value = _pick_first_string(raw)
+            if not value:
+                continue
+            digits = re.sub(r"\D", "", value)
+            if len(digits) < 8:
+                continue
+            cleaned.append(value)
+        if not cleaned:
+            return None
+        if sender_digits:
+            for value in cleaned:
+                if re.sub(r"\D", "", value) != sender_digits:
+                    return value
+        return cleaned[0]
+
     for row in candidates:
         message = row.get("message") if isinstance(row.get("message"), dict) else {}
         content = row.get("content") if isinstance(row.get("content"), dict) else {}
@@ -756,13 +776,15 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
         message_media = message.get("media") if isinstance(message.get("media"), dict) else {}
         content_media = content.get("media") if isinstance(content.get("media"), dict) else {}
 
-        from_phone = _pick_first_string(
-            row.get("from"),
-            sender.get("phoneNumber"),
-            sender.get("from"),
-            contact.get("phoneNumber"),
-            contact.get("waId"),
-            row.get("senderAddress"),
+        from_phone = _pick_phone(
+            [
+                contact.get("phoneNumber"),
+                contact.get("waId"),
+                row.get("from"),
+                sender.get("phoneNumber"),
+                sender.get("from"),
+                row.get("senderAddress"),
+            ]
         )
         to_phone = _pick_first_string(
             row.get("to"),
@@ -844,6 +866,31 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
             }
         )
     return normalized
+
+
+def _extract_infobip_statuses(payload: dict | None) -> list[dict]:
+    if not isinstance(payload, dict):
+        return []
+    items = payload.get("results")
+    if not isinstance(items, list):
+        return []
+    statuses: list[dict] = []
+    for row in items:
+        if not isinstance(row, dict):
+            continue
+        status = row.get("status") if isinstance(row.get("status"), dict) else {}
+        if not status:
+            continue
+        statuses.append(
+            {
+                "to": _pick_first_string(row.get("to"), row.get("destination")),
+                "messageId": _pick_first_string(row.get("messageId"), row.get("id")),
+                "groupName": _pick_first_string(status.get("groupName")),
+                "name": _pick_first_string(status.get("name")),
+                "description": _pick_first_string(status.get("description")),
+            }
+        )
+    return statuses
 
 
 def _infobip_dedupe_key(message: dict) -> str:
@@ -1376,6 +1423,83 @@ def _parse_site_stage2_command(text: str | None) -> tuple[str, str | None] | Non
     return token, lang
 
 
+def _build_site_stage2_flow(
+    from_phone: str,
+    profile_name: str | None,
+    lead: dict,
+    fallback_user_id: int | None = None,
+    preferred_lang: str | None = None,
+) -> str | None:
+    chosen_lang = normalize_site_lang(preferred_lang or lead.get("lang") or "ru")
+    user_id = lead.get("site_pending_user_id")
+    try:
+        user_id = int(user_id)
+    except Exception:
+        user_id = fallback_user_id
+    if user_id is None:
+        user_id = _wa_user_id(from_phone)
+    if user_id is None:
+        return None
+
+    stage_data = {
+        "name": clean_text(str(lead.get("name") or "")),
+        "phone": normalize_phone(str(lead.get("phone") or "")) or from_phone,
+        "age": normalize_birthdate(str(lead.get("age") or "")) or clean_text(str(lead.get("age") or "")),
+        "device_model": clean_text(str(lead.get("device_model") or "")),
+        "telegram": clean_text(str(lead.get("telegram") or "")),
+        "whatsapp": normalize_phone(str(lead.get("whatsapp") or "")) or from_phone,
+        "preferred_contact": clean_text(str(lead.get("preferred_contact") or "")) or "telegram",
+        "country": clean_text(str(lead.get("country") or "")),
+        "lang": chosen_lang,
+        "application_stage": "full",
+        "site_lead_token": clean_text(str(lead.get("site_lead_token") or "")),
+        "site_pending_user_id": user_id,
+        "wa_phone": from_phone,
+        "wa_profile_name": clean_text(profile_name or ""),
+    }
+    _save_wa_flow(
+        from_phone,
+        {
+            "mode": "site_stage2",
+            "step": "living",
+            "lang": chosen_lang,
+            "user_id": user_id,
+            "source": "site",
+            "data": stage_data,
+        },
+    )
+    return f"{_wa_stage2_text(chosen_lang, 'intro')}\n\n{_wa_stage2_text(chosen_lang, 'living')}"
+
+
+def _resume_site_stage2_from_phone(from_phone: str, profile_name: str | None) -> str | None:
+    try:
+        recent = find_recent_site_lead_by_phone(from_phone)
+    except Exception as err:
+        print("Failed to lookup site lead by WhatsApp phone:", err)
+        return None
+    if not recent:
+        return None
+
+    lead = dict(recent.get("data") if isinstance(recent.get("data"), dict) else {})
+    if not lead:
+        return None
+
+    token = clean_text(str(lead.get("site_lead_token") or ""))
+    if token:
+        consumed = consume_site_lead_payload(token)
+        if isinstance(consumed, dict) and consumed:
+            lead = consumed
+            lead.setdefault("site_lead_token", token)
+
+    return _build_site_stage2_flow(
+        from_phone,
+        profile_name,
+        lead,
+        fallback_user_id=recent.get("user_id"),
+        preferred_lang=lead.get("lang"),
+    )
+
+
 def _wa_stage2_text(lang: str, key: str) -> str:
     locale = normalize_site_lang(lang)
     texts = {
@@ -1476,53 +1600,36 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
     if site_stage2:
         token, start_lang = site_stage2
         lead = consume_site_lead_payload(token)
-        chosen_lang = normalize_site_lang(start_lang or (lead or {}).get("lang") or lang or "ru")
         if not lead:
+            chosen_lang = normalize_site_lang(start_lang or lang or "ru")
             _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": chosen_lang, "data": {}})
             return True, _wa_stage2_text(chosen_lang, "expired")
-        user_id = _wa_user_id(from_phone)
-        legacy_uid = lead.get("site_pending_user_id")
-        if legacy_uid is not None:
-            try:
-                user_id = int(legacy_uid)
-            except Exception:
-                pass
-        if user_id is None:
-            return True, _wa_stage2_text(chosen_lang, "expired")
-        stage_data = {
-            "name": clean_text(str(lead.get("name") or "")),
-            "phone": normalize_phone(str(lead.get("phone") or "")) or from_phone,
-            "age": normalize_birthdate(str(lead.get("age") or "")) or clean_text(str(lead.get("age") or "")),
-            "device_model": clean_text(str(lead.get("device_model") or "")),
-            "telegram": clean_text(str(lead.get("telegram") or "")),
-            "whatsapp": normalize_phone(str(lead.get("whatsapp") or "")) or from_phone,
-            "preferred_contact": clean_text(str(lead.get("preferred_contact") or "")) or "telegram",
-            "country": clean_text(str(lead.get("country") or "")),
-            "lang": chosen_lang,
-            "application_stage": "full",
-            "site_lead_token": token,
-            "site_pending_user_id": user_id,
-            "wa_phone": from_phone,
-            "wa_profile_name": clean_text(message.get("profile_name") or ""),
-        }
-        _save_wa_flow(
+        lead = dict(lead)
+        lead.setdefault("site_lead_token", token)
+        start_reply = _build_site_stage2_flow(
             from_phone,
-            {
-                "mode": "site_stage2",
-                "step": "living",
-                "lang": chosen_lang,
-                "user_id": user_id,
-                "source": "site",
-                "data": stage_data,
-            },
+            message.get("profile_name"),
+            lead,
+            fallback_user_id=_wa_user_id(from_phone),
+            preferred_lang=start_lang or lead.get("lang") or lang,
         )
-        return True, f"{_wa_stage2_text(chosen_lang, 'intro')}\n\n{_wa_stage2_text(chosen_lang, 'living')}"
+        if not start_reply:
+            chosen_lang = normalize_site_lang(start_lang or lead.get("lang") or lang or "ru")
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": chosen_lang, "data": {}})
+            return True, _wa_stage2_text(chosen_lang, "expired")
+        return True, start_reply
 
     if not step:
+        resumed_reply = _resume_site_stage2_from_phone(from_phone, message.get("profile_name"))
+        if resumed_reply:
+            return True, resumed_reply
         _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
         return True, wa_t("ru", "choose_lang")
 
     if mode != "site_stage2" and _is_wa_reset_command(text):
+        resumed_reply = _resume_site_stage2_from_phone(from_phone, message.get("profile_name"))
+        if resumed_reply:
+            return True, resumed_reply
         _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
         return True, wa_t("ru", "choose_lang")
 
@@ -2266,7 +2373,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         tg_link = build_bot_stage2_link(lead_token, site_lang)
         wa_link = build_whatsapp_stage2_link(lead_token, site_lang)
-        if preferred_contact == "whatsapp":
+        if preferred_contact == "whatsapp" and wa_link:
             preferred_link = wa_link
         else:
             preferred_link = tg_link
@@ -2335,8 +2442,17 @@ class Handler(SimpleHTTPRequestHandler):
                             errors += 1
                             print("Failed to send whatsapp interactive controls:", err)
                         if reply:
-                            if infobip_send_whatsapp_text(message.get("from"), reply):
+                            target_phone = message.get("from")
+                            if infobip_send_whatsapp_text(target_phone, reply):
                                 bot_replies += 1
+                                print(
+                                    "Infobip reply sent:",
+                                    {
+                                        "to": target_phone,
+                                        "type": message.get("type"),
+                                        "preview": (reply[:80] + "…") if len(reply) > 80 else reply,
+                                    },
+                                )
                             else:
                                 errors += 1
                 except Exception as err:
@@ -2353,6 +2469,10 @@ class Handler(SimpleHTTPRequestHandler):
                         print("Failed to forward infobip message to admin:", err)
         except Exception as err:
             print("Failed to parse infobip webhook payload:", err)
+
+        status_events = _extract_infobip_statuses(payload)
+        if status_events:
+            print("Infobip status events:", status_events[:5])
 
         print(
             "Infobip webhook summary:",

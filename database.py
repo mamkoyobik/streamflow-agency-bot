@@ -638,6 +638,52 @@ def get_form_data(user_id: int) -> dict | None:
             return None
 
 
+def _digits_only(value: str | None) -> str:
+    if not value:
+        return ""
+    return "".join(ch for ch in str(value) if ch.isdigit())
+
+
+def find_recent_site_lead_by_phone(phone: str | None, max_scan: int = 300) -> dict | None:
+    target_digits = _digits_only(phone)
+    if len(target_digits) < 8:
+        return None
+
+    with DB_LOCK:
+        _execute(
+            "SELECT user_id, data_json, updated_at FROM applications "
+            "WHERE status = 'pending' AND source = 'site' AND data_json IS NOT NULL "
+            "ORDER BY updated_at DESC "
+            "LIMIT ?",
+            (int(max_scan),)
+        )
+        rows = cursor.fetchall()
+
+    for row in rows:
+        user_id = row[0]
+        payload = _load_payload(row[1] if len(row) > 1 else None)
+        if not payload:
+            continue
+        stage = _detect_application_stage_from_payload(payload)
+        if stage == "full":
+            continue
+
+        phone_candidates = {
+            _digits_only(payload.get("phone")),
+            _digits_only(payload.get("whatsapp")),
+        }
+        phone_candidates = {item for item in phone_candidates if item}
+        if target_digits not in phone_candidates:
+            continue
+
+        return {
+            "user_id": user_id,
+            "updated_at": row[2] if len(row) > 2 else None,
+            "data": payload,
+        }
+    return None
+
+
 def get_application(user_id: int) -> dict | None:
     with DB_LOCK:
         _execute(
