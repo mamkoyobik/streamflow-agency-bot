@@ -1834,6 +1834,11 @@ def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str
     stage_full = (stage_counts or {}).get("full", 0)
     return (
         "🛠 <b>Админ-меню</b>\n\n"
+        "Зоны:\n"
+        "• Контент: посты\n"
+        "• Заявки: статусы и этапы\n"
+        "• Аналитика: статистика и Excel\n"
+        "• Сервис: архив, обновление, сброс\n\n"
         f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
         f"Принятые: <b>{counts.get('accepted', 0)}</b>\n"
         f"Отклонённые: <b>{counts.get('rejected', 0)}</b>\n\n"

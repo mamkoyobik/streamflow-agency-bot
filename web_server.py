@@ -622,6 +622,11 @@ def build_admin_full_text(data: dict, web_id: str, submitted_at: str) -> str:
 def build_admin_menu_text(counts: dict) -> str:
     return (
         "🛠 <b>Админ-меню</b>\n\n"
+        "Зоны:\n"
+        "• Контент\n"
+        "• Заявки\n"
+        "• Аналитика\n"
+        "• Сервис\n\n"
         f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
         f"Принятые: <b>{counts.get('accepted', 0)}</b>\n"
         f"Отклонённые: <b>{counts.get('rejected', 0)}</b>\n\n"
@@ -636,33 +641,27 @@ def build_admin_menu_keyboard(counts: dict) -> dict:
     return {
         "inline_keyboard": [
             [
-                {"text": "📝 Создать пост", "callback_data": "admin_menu:create_post"}
-            ],
-            [
-                {"text": "📣 Выложенные посты", "callback_data": "admin_menu:posts"}
+                {"text": "📝 Создать пост", "callback_data": "admin_menu:create_post"},
+                {"text": "📣 Посты", "callback_data": "admin_menu:posts"},
             ],
             [
                 {
-                    "text": f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
+                    "text": f"⏳ Ожидают ({pending})",
                     "callback_data": "admin_menu:pending",
+                },
+                {
+                    "text": f"📚 Все ({total})",
+                    "callback_data": "admin_menu:all",
                 }
             ],
             [
                 {
                     "text": f"✅ Принятые ({accepted})",
                     "callback_data": "admin_menu:accepted",
-                }
-            ],
-            [
+                },
                 {
                     "text": f"❌ Отклонённые ({rejected})",
                     "callback_data": "admin_menu:rejected",
-                }
-            ],
-            [
-                {
-                    "text": f"📚 Все заявки ({total})",
-                    "callback_data": "admin_menu:all",
                 }
             ],
             [
@@ -670,11 +669,11 @@ def build_admin_menu_keyboard(counts: dict) -> dict:
                 {"text": "📁 Excel", "callback_data": "admin_menu:excel"},
             ],
             [
-                {"text": "🧹 Архивировать старые", "callback_data": "admin_menu:archive"}
+                {"text": "🧹 Архив", "callback_data": "admin_menu:archive"},
+                {"text": "🔄 Обновить", "callback_data": "admin_menu:refresh"},
             ],
             [
                 {"text": "⚠️ Сбросить базу", "callback_data": "admin_menu:reset"},
-                {"text": "🔄 Обновить меню", "callback_data": "admin_menu:refresh"},
             ],
         ]
     }

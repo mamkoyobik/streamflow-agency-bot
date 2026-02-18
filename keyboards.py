@@ -247,57 +247,49 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
     stage_full = stage_counts.get("full", 0) if stage_counts else 0
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post")
-        ],
-        [
-            InlineKeyboardButton(text="📣 Выложенные посты", callback_data="admin_menu:posts")
+            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post"),
+            InlineKeyboardButton(text="📣 Посты", callback_data="admin_menu:posts"),
         ],
         [
             InlineKeyboardButton(
-                text=f"⏳ Ожидают подтверждения!! Просмотреть ({pending})",
+                text=f"⏳ Ожидают ({pending})",
                 callback_data="admin_menu:pending"
-            )
+            ),
+            InlineKeyboardButton(
+                text=f"📚 Все ({total})",
+                callback_data="admin_menu:all"
+            ),
         ],
         [
             InlineKeyboardButton(
                 text=f"✅ Принятые ({accepted})",
                 callback_data="admin_menu:accepted"
-            )
-        ],
-        [
+            ),
             InlineKeyboardButton(
                 text=f"❌ Отклонённые ({rejected})",
                 callback_data="admin_menu:rejected"
-            )
+            ),
         ],
         [
             InlineKeyboardButton(
-                text=f"📚 Все заявки ({total})",
-                callback_data="admin_menu:all"
-            )
-        ],
-        [
-            InlineKeyboardButton(
-                text=f"1️⃣ Прошёл первый этап ({stage_quick})",
+                text=f"1️⃣ Этап 1 ({stage_quick})",
                 callback_data="admin_menu:stage_quick"
-            )
-        ],
-        [
+            ),
             InlineKeyboardButton(
-                text=f"2️⃣ Полностью заполнил ({stage_full})",
+                text=f"2️⃣ Полные ({stage_full})",
                 callback_data="admin_menu:stage_full"
-            )
+            ),
         ],
         [
             InlineKeyboardButton(text="📊 Статистика", callback_data="admin_menu:stats"),
             InlineKeyboardButton(text="📁 Excel", callback_data="admin_menu:excel")
         ],
         [
-            InlineKeyboardButton(text="🧹 Архивировать старые", callback_data="admin_menu:archive")
+            InlineKeyboardButton(text="🧹 Архив", callback_data="admin_menu:archive"),
+            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh")
         ],
         [
             InlineKeyboardButton(text="⚠️ Сбросить базу", callback_data="admin_menu:reset"),
-            InlineKeyboardButton(text="🔄 Обновить меню", callback_data="admin_menu:refresh")
         ]
     ])
 
