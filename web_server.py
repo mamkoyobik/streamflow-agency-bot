@@ -45,6 +45,23 @@ NO_RE = re.compile(
 SUPPORTED_SITE_LANGS = {"ru", "en", "pt", "es"}
 SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
 
+
+def load_env_file(path: Path) -> None:
+    if not path.exists():
+        return
+    for line in path.read_text(encoding="utf-8").splitlines():
+        line = line.strip()
+        if not line or line.startswith("#") or "=" not in line:
+            continue
+        key, value = line.split("=", 1)
+        key = key.strip()
+        value = value.strip().strip('"').strip("'")
+        if key and key not in os.environ:
+            os.environ[key] = value
+
+
+load_env_file(ENV_PATH)
+
 def _env_int(name: str, default: int) -> int:
     raw = os.getenv(name, "").strip()
     if not raw:
@@ -64,7 +81,8 @@ def _env_flag(name: str, default: bool = False) -> bool:
     return raw in {"1", "true", "yes", "y", "on"}
 
 
-INFOBIP_FORWARD_TO_ADMIN = _env_flag("INFOBIP_FORWARD_TO_ADMIN", True)
+INFOBIP_FORWARD_TO_ADMIN = _env_flag("INFOBIP_FORWARD_TO_ADMIN", False)
+INFOBIP_RELAY_MODE = _env_flag("INFOBIP_RELAY_MODE", False)
 INFOBIP_BOT_ENABLED = _env_flag("INFOBIP_BOT_ENABLED", True)
 INFOBIP_API_KEY = (os.getenv("INFOBIP_API_KEY", "") or "").strip()
 INFOBIP_BASE_URL = (os.getenv("INFOBIP_BASE_URL", "") or "").strip().rstrip("/")
@@ -192,6 +210,22 @@ WA_TEXTS = {
             "Выбери язык: RU / EN / PT / ES"
         ),
         "invalid_lang": "Выбери язык: RU / EN / PT / ES",
+        "menu": (
+            "📌 Главное меню:\n"
+            "1 — Подать заявку\n"
+            "2 — Сайт\n"
+            "3 — Портфолио\n"
+            "4 — О работе\n"
+            "5 — Менеджер\n"
+            "6 — Канал\n"
+            "7 — Сменить язык\n\n"
+            "Напиши номер пункта."
+        ),
+        "menu_invalid": "Не понял пункт меню. Напиши 1, 2, 3, 4, 5, 6 или 7.",
+        "about": (
+            "Streamflow — модельное стрим-агентство.\n"
+            "Удалённый формат, поддержка, обучение и понятные правила старта."
+        ),
         "ask_name": "Как тебя зовут? Напиши имя:",
         "invalid_name": "Имя слишком короткое. Напиши, пожалуйста, имя ещё раз:",
         "ask_phone": "Укажи номер телефона (или напиши SAME, чтобы использовать этот WhatsApp номер):",
@@ -202,6 +236,18 @@ WA_TEXTS = {
         "invalid_device": "Модель слишком короткая. Напиши устройство ещё раз:",
         "ask_telegram": "Укажи Telegram для связи в формате @username:",
         "invalid_telegram": "Telegram некорректный. Пример: @username",
+        "ask_city": "Город и страна проживания:",
+        "invalid_city": "Напиши город и страну полностью.",
+        "ask_work_time": "Сколько часов в день готова работать?",
+        "invalid_work_time": "Укажи часы цифрами, например: 6",
+        "ask_experience": "Есть ли опыт? Если нет — так и напиши.",
+        "invalid_experience": "Напиши пару слов про опыт (или что опыта нет).",
+        "ask_living": "Есть ли помещение без посторонних? Ответь: да или нет.",
+        "invalid_living": "Ответь, пожалуйста, да или нет.",
+        "ask_photo_face": "Пришли фото анфас.",
+        "invalid_photo_face": "Нужна именно фотография анфас (изображение).",
+        "ask_photo_full": "Пришли фото в профиль/полный рост.",
+        "invalid_photo_full": "Нужна именно фотография в профиль/полный рост (изображение).",
         "saved": (
             "✅ Заявка принята!\n\n"
             "Мы передали её менеджеру. Ожидай ответ в ближайшее время."
@@ -214,6 +260,22 @@ WA_TEXTS = {
             "Choose language: RU / EN / PT / ES"
         ),
         "invalid_lang": "Choose language: RU / EN / PT / ES",
+        "menu": (
+            "📌 Main menu:\n"
+            "1 — Apply\n"
+            "2 — Website\n"
+            "3 — Portfolio\n"
+            "4 — About work\n"
+            "5 — Manager\n"
+            "6 — Channel\n"
+            "7 — Change language\n\n"
+            "Send a menu number."
+        ),
+        "menu_invalid": "Unknown menu item. Send 1, 2, 3, 4, 5, 6 or 7.",
+        "about": (
+            "Streamflow is a model streaming agency.\n"
+            "Remote format, support, training and clear onboarding rules."
+        ),
         "ask_name": "What is your name?",
         "invalid_name": "Name is too short. Please enter it again:",
         "ask_phone": "Send your phone number (or type SAME to use this WhatsApp number):",
@@ -224,6 +286,18 @@ WA_TEXTS = {
         "invalid_device": "Device model is too short. Please enter again:",
         "ask_telegram": "Send your Telegram username in format @username:",
         "invalid_telegram": "Invalid Telegram username. Example: @username",
+        "ask_city": "Your city and country:",
+        "invalid_city": "Please enter city and country.",
+        "ask_work_time": "How many hours per day can you work?",
+        "invalid_work_time": "Please enter hours as a number, example: 6",
+        "ask_experience": "Do you have experience? If no, write it.",
+        "invalid_experience": "Please add a short experience note.",
+        "ask_living": "Do you have a private room without interruptions? Reply yes or no.",
+        "invalid_living": "Please reply yes or no.",
+        "ask_photo_face": "Send a front-face photo.",
+        "invalid_photo_face": "Please send a front-face image.",
+        "ask_photo_full": "Send a profile/full-body photo.",
+        "invalid_photo_full": "Please send a profile/full-body image.",
         "saved": (
             "✅ Application received!\n\n"
             "We sent it to the manager. You will get a reply soon."
@@ -236,6 +310,22 @@ WA_TEXTS = {
             "Escolha o idioma: RU / EN / PT / ES"
         ),
         "invalid_lang": "Escolha o idioma: RU / EN / PT / ES",
+        "menu": (
+            "📌 Menu principal:\n"
+            "1 — Enviar candidatura\n"
+            "2 — Site\n"
+            "3 — Portfólio\n"
+            "4 — Sobre o trabalho\n"
+            "5 — Gerente\n"
+            "6 — Canal\n"
+            "7 — Trocar idioma\n\n"
+            "Envie o número da opção."
+        ),
+        "menu_invalid": "Opção inválida. Envie 1, 2, 3, 4, 5, 6 ou 7.",
+        "about": (
+            "A Streamflow é uma agência de modelos para streaming.\n"
+            "Formato remoto, suporte, treinamento e regras claras de início."
+        ),
         "ask_name": "Qual é o seu nome?",
         "invalid_name": "Nome muito curto. Envie novamente:",
         "ask_phone": "Informe seu telefone (ou digite SAME para usar este número do WhatsApp):",
@@ -246,6 +336,18 @@ WA_TEXTS = {
         "invalid_device": "Modelo muito curto. Envie novamente:",
         "ask_telegram": "Informe seu Telegram no formato @username:",
         "invalid_telegram": "Telegram inválido. Exemplo: @username",
+        "ask_city": "Cidade e país onde você mora:",
+        "invalid_city": "Informe cidade e país completos.",
+        "ask_work_time": "Quantas horas por dia você pode trabalhar?",
+        "invalid_work_time": "Informe as horas em número, ex.: 6",
+        "ask_experience": "Você tem experiência? Se não, escreva isso.",
+        "invalid_experience": "Escreva um breve texto sobre experiência.",
+        "ask_living": "Você tem um ambiente privado sem interrupções? Responda: sim ou não.",
+        "invalid_living": "Responda, por favor, sim ou não.",
+        "ask_photo_face": "Envie uma foto de frente (rosto).",
+        "invalid_photo_face": "Envie uma imagem de frente, por favor.",
+        "ask_photo_full": "Envie uma foto de perfil/corpo inteiro.",
+        "invalid_photo_full": "Envie uma imagem de perfil/corpo inteiro, por favor.",
         "saved": (
             "✅ Candidatura recebida!\n\n"
             "Enviamos para o gerente. Você receberá retorno em breve."
@@ -258,6 +360,22 @@ WA_TEXTS = {
             "Elige idioma: RU / EN / PT / ES"
         ),
         "invalid_lang": "Elige idioma: RU / EN / PT / ES",
+        "menu": (
+            "📌 Menú principal:\n"
+            "1 — Enviar solicitud\n"
+            "2 — Sitio web\n"
+            "3 — Portafolio\n"
+            "4 — Sobre el trabajo\n"
+            "5 — Manager\n"
+            "6 — Canal\n"
+            "7 — Cambiar idioma\n\n"
+            "Envía el número de opción."
+        ),
+        "menu_invalid": "No entendí la opción. Envía 1, 2, 3, 4, 5, 6 o 7.",
+        "about": (
+            "Streamflow es una agencia de modelos para streaming.\n"
+            "Formato remoto, soporte, formación y reglas claras de inicio."
+        ),
         "ask_name": "¿Cómo te llamas?",
         "invalid_name": "Nombre demasiado corto. Escríbelo otra vez:",
         "ask_phone": "Indica tu teléfono (o escribe SAME para usar este número de WhatsApp):",
@@ -268,6 +386,18 @@ WA_TEXTS = {
         "invalid_device": "Modelo demasiado corto. Escríbelo otra vez:",
         "ask_telegram": "Indica tu Telegram en formato @username:",
         "invalid_telegram": "Telegram inválido. Ejemplo: @username",
+        "ask_city": "Ciudad y país de residencia:",
+        "invalid_city": "Indica ciudad y país completos.",
+        "ask_work_time": "¿Cuántas horas al día puedes trabajar?",
+        "invalid_work_time": "Indica horas con número, por ejemplo: 6",
+        "ask_experience": "¿Tienes experiencia? Si no, escríbelo.",
+        "invalid_experience": "Escribe una nota breve sobre tu experiencia.",
+        "ask_living": "¿Tienes espacio privado sin interrupciones? Responde: sí o no.",
+        "invalid_living": "Responde, por favor, sí o no.",
+        "ask_photo_face": "Envía una foto de frente.",
+        "invalid_photo_face": "Necesito una imagen de frente, por favor.",
+        "ask_photo_full": "Envía una foto de perfil/cuerpo completo.",
+        "invalid_photo_full": "Necesito una imagen de perfil/cuerpo completo, por favor.",
         "saved": (
             "✅ Solicitud recibida.\n\n"
             "La enviamos al manager. Te responderemos pronto."
@@ -294,6 +424,16 @@ WA_RESET_COMMANDS = {
     "заново",
 }
 
+WA_MENU_ALIASES = {
+    "apply": {"1", "apply", "заявка", "подать", "candidatura", "solicitud"},
+    "site": {"2", "site", "website", "сайт"},
+    "portfolio": {"3", "portfolio", "портфолио", "portafolio", "portfólio"},
+    "about": {"4", "about", "о работе", "sobre", "sobre o trabalho"},
+    "manager": {"5", "manager", "админ", "менеджер", "gerente"},
+    "channel": {"6", "channel", "канал", "canal"},
+    "language": {"7", "lang", "language", "язык", "idioma"},
+}
+
 
 def normalize_site_lang(value: str | None) -> str:
     raw = (value or "").strip().lower()
@@ -308,20 +448,6 @@ def msg(lang: str, key: str) -> str:
 def field_error(lang: str, key: str) -> str:
     locale = normalize_site_lang(lang)
     return FIELD_ERRORS.get(locale, FIELD_ERRORS["ru"]).get(key, FIELD_ERRORS["ru"].get(key, ""))
-
-
-def load_env_file(path: Path) -> None:
-    if not path.exists():
-        return
-    for line in path.read_text(encoding="utf-8").splitlines():
-        line = line.strip()
-        if not line or line.startswith("#") or "=" not in line:
-            continue
-        key, value = line.split("=", 1)
-        key = key.strip()
-        value = value.strip().strip('"').strip("'")
-        if key and key not in os.environ:
-            os.environ[key] = value
 
 
 def load_settings():
@@ -621,6 +747,11 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
         contact = row.get("contact") if isinstance(row.get("contact"), dict) else {}
         sender = row.get("sender") if isinstance(row.get("sender"), dict) else {}
         contact_profile = contact.get("profile") if isinstance(contact.get("profile"), dict) else {}
+        interactive = row.get("interactive") if isinstance(row.get("interactive"), dict) else {}
+        message_text_obj = message.get("text") if isinstance(message.get("text"), dict) else {}
+        content_text_obj = content.get("text") if isinstance(content.get("text"), dict) else {}
+        message_media = message.get("media") if isinstance(message.get("media"), dict) else {}
+        content_media = content.get("media") if isinstance(content.get("media"), dict) else {}
 
         from_phone = _pick_first_string(
             row.get("from"),
@@ -646,11 +777,30 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
             content.get("text"),
             row.get("text"),
             row.get("body"),
+            row.get("payload"),
+            message.get("payload"),
+            content.get("payload"),
+            message.get("title"),
+            content.get("title"),
+            message.get("buttonText"),
+            content.get("buttonText"),
+            interactive.get("title"),
+            interactive.get("id"),
+            message_text_obj.get("body"),
+            message_text_obj.get("text"),
+            message_text_obj.get("title"),
+            content_text_obj.get("body"),
+            content_text_obj.get("text"),
+            content_text_obj.get("title"),
         )
         media_url = _pick_first_string(
             message.get("url"),
             content.get("url"),
             row.get("url"),
+            message_media.get("url"),
+            content_media.get("url"),
+            message.get("imageUrl"),
+            content.get("imageUrl"),
         )
         profile_name = _pick_first_string(
             contact.get("name"),
@@ -829,20 +979,85 @@ def _parse_wa_lang_choice(text: str | None) -> str | None:
     return None
 
 
+def _parse_wa_menu_choice(text: str | None) -> str | None:
+    raw = (text or "").strip().lower()
+    if not raw:
+        return None
+    compact = re.sub(r"\s+", " ", raw)
+    for key, aliases in WA_MENU_ALIASES.items():
+        if raw in aliases or compact in aliases:
+            return key
+    return None
+
+
+def _wa_manager_link() -> str | None:
+    username = (ADMIN_USERNAME or "").strip().lstrip("@")
+    if not username:
+        return None
+    return f"https://t.me/{username}"
+
+
+def _wa_menu_text(lang: str) -> str:
+    base = wa_t(lang, "menu")
+    lines = [base]
+    site_link = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
+    if site_link:
+        lines.append(f"\n🌐 {site_link}")
+    return "\n".join(lines)
+
+
+def _wa_menu_response(lang: str, menu_key: str) -> str:
+    site_link = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
+    channel_link = (CHANNEL_LINK or "https://t.me/streamflowagency").strip()
+    manager_link = _wa_manager_link()
+    if menu_key == "site":
+        return f"🌐 {site_link}\n\n{_wa_menu_text(lang)}"
+    if menu_key == "portfolio":
+        portfolio_link = f"{site_link}/#portfolio" if site_link else "https://streamflowagency.com/#portfolio"
+        return f"📁 {portfolio_link}\n\n{_wa_menu_text(lang)}"
+    if menu_key == "about":
+        return f"{wa_t(lang, 'about')}\n\n{_wa_menu_text(lang)}"
+    if menu_key == "manager":
+        if manager_link:
+            return f"💬 {manager_link}\n\n{_wa_menu_text(lang)}"
+        return _wa_menu_text(lang)
+    if menu_key == "channel":
+        return f"📣 {channel_link}\n\n{_wa_menu_text(lang)}"
+    return _wa_menu_text(lang)
+
+
 def _is_wa_reset_command(text: str | None) -> bool:
     raw = (text or "").strip().lower()
     return raw in WA_RESET_COMMANDS
 
 
 def _build_admin_whatsapp_application_text(data: dict, user_id: int, submitted_at: str) -> str:
+    def _link_or_dash(url: str | None, title: str) -> str:
+        raw = (url or "").strip()
+        if not raw:
+            return "—"
+        escaped = html.escape(raw, quote=True)
+        return f"<a href=\"{escaped}\">{html.escape(title)}</a>"
+
+    wa_contact = data.get("whatsapp") or data.get("wa_phone")
+    tg_contact = data.get("telegram")
+    if not tg_contact:
+        tg_contact = f"wa:{_wa_digits(wa_contact or '')}" if wa_contact else "—"
     return (
         "📋 <b>Новая заявка WhatsApp</b>\n\n"
         f"👤 Имя: {_safe(data.get('name'))}\n"
         f"📅 Дата рождения: {_safe(data.get('age'))}\n"
+        f"🌍 Город и страна: {_safe(data.get('city'))}\n"
         f"🏳️ Страна подачи: {_safe(submission_country(data))}\n"
         f"📞 Телефон: {_safe(data.get('phone'))}\n"
+        f"💬 WhatsApp: {_safe(wa_contact)}\n"
+        f"🏠 Помещение без посторонних: {_safe(data.get('living'))}\n"
+        f"⏱ Время работы: {_safe(data.get('work_time'))}\n"
+        f"💼 Опыт: {_safe(data.get('experience'))}\n"
         f"📲 Модель устройства: {_safe(data.get('device_model'))}\n"
-        f"💬 Telegram: {_safe(data.get('telegram'))}\n"
+        f"💬 Telegram: {_safe(tg_contact)}\n"
+        f"🖼 Фото анфас: {_link_or_dash(data.get('photo_face'), 'Открыть')}\n"
+        f"🖼 Фото профиль/рост: {_link_or_dash(data.get('photo_full'), 'Открыть')}\n"
         f"🌐 Язык: {_safe(data.get('lang'))}\n"
         f"🆔 ID: <code>{_safe(user_id)}</code>\n"
         "🧭 Источник: WhatsApp\n"
@@ -876,14 +1091,17 @@ def _send_application_to_admin_from_whatsapp(data: dict, user_id: int, wa_phone:
         "disable_web_page_preview": "true",
         "reply_markup": json.dumps(_build_admin_whatsapp_keyboard(user_id, wa_phone), ensure_ascii=False),
     }
-    result = telegram_request("sendMessage", payload)
-    message_id = (
-        result.get("result", {}).get("message_id")
-        if isinstance(result, dict)
-        else None
-    )
-    if message_id:
-        set_admin_message_id(user_id, int(message_id))
+    try:
+        result = telegram_request("sendMessage", payload)
+        message_id = (
+            result.get("result", {}).get("message_id")
+            if isinstance(result, dict)
+            else None
+        )
+        if message_id:
+            set_admin_message_id(user_id, int(message_id))
+    except Exception as err:
+        print("Failed to send whatsapp application card to admin:", err)
 
 
 def infobip_send_whatsapp_text(to_phone: str | None, text: str) -> bool:
@@ -1037,7 +1255,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
     text = (message.get("text") or "").strip()
     media_url = (message.get("media_url") or "").strip()
     message_type = (message.get("type") or "").upper()
-    if message_type not in {"TEXT", "INTERACTIVE", "BUTTON", "UNKNOWN", ""} and not text:
+    if message_type not in {"TEXT", "INTERACTIVE", "BUTTON", "UNKNOWN", ""} and not text and not media_url:
         return True, None
     if not INFOBIP_BOT_ENABLED:
         return False, None
@@ -1094,17 +1312,28 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         )
         return True, f"{_wa_stage2_text(chosen_lang, 'intro')}\n\n{_wa_stage2_text(chosen_lang, 'living')}"
 
-    if _is_wa_reset_command(text) or not step:
+    if not step:
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
+        return True, wa_t("ru", "choose_lang")
+
+    if mode != "site_stage2" and _is_wa_reset_command(text):
         _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
         return True, wa_t("ru", "choose_lang")
 
     if step == "done":
-        if _is_wa_reset_command(text):
-            _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
-            return True, wa_t("ru", "choose_lang")
         if mode == "site_stage2":
             return True, _wa_stage2_text(lang, "done")
-        return True, wa_t(lang, "already")
+        menu_key = _parse_wa_menu_choice(text)
+        if menu_key == "language":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
+            return True, wa_t(lang, "choose_lang")
+        if menu_key == "apply":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": lang, "data": {}})
+            return True, wa_t(lang, "ask_name")
+        if menu_key:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, _wa_menu_response(lang, menu_key)
+        return True, f"{wa_t(lang, 'already')}\n\n{_wa_menu_text(lang)}"
 
     if mode == "site_stage2":
         if step == "living":
@@ -1184,17 +1413,24 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
 
             try:
                 save_web_application(user_id, data, source="site", status="pending")
-                if append_application_row:
-                    try:
-                        append_application_row(data, user_id, "pending")
-                    except Exception as err:
-                        print("Excel error (site->whatsapp):", err)
-                _send_application_to_admin_from_whatsapp(data, user_id, from_phone)
-                notify_admin_new_application()
-                update_admin_menu_message()
             except Exception as err:
                 print("Failed to save site->whatsapp application:", err)
                 return True, msg(lang, "db_error")
+
+            if append_application_row:
+                try:
+                    append_application_row(data, user_id, "pending")
+                except Exception as err:
+                    print("Excel error (site->whatsapp):", err)
+            try:
+                _send_application_to_admin_from_whatsapp(data, user_id, from_phone)
+            except Exception as err:
+                print("Failed to send site->whatsapp application to admin:", err)
+            try:
+                notify_admin_new_application()
+                update_admin_menu_message()
+            except Exception as err:
+                print("Failed to refresh admin menu after site->whatsapp application:", err)
 
             _save_wa_flow(
                 from_phone,
@@ -1216,8 +1452,21 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         chosen = _parse_wa_lang_choice(text)
         if not chosen:
             return True, wa_t("ru", "invalid_lang")
-        _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": chosen, "data": {}})
-        return True, wa_t(chosen, "ask_name")
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": chosen, "data": {}})
+        return True, _wa_menu_text(chosen)
+
+    if step == "menu":
+        menu_key = _parse_wa_menu_choice(text)
+        if not menu_key:
+            return True, wa_t(lang, "menu_invalid")
+        if menu_key == "language":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
+            return True, wa_t(lang, "choose_lang")
+        if menu_key == "apply":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": lang, "data": {}})
+            return True, wa_t(lang, "ask_name")
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+        return True, _wa_menu_response(lang, menu_key)
 
     if step == "name":
         value = clean_text(text)
@@ -1260,9 +1509,62 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         if not username:
             return True, wa_t(lang, "invalid_telegram")
         data["telegram"] = username
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "city", "lang": lang, "data": data})
+        return True, wa_t(lang, "ask_city")
+
+    if step == "city":
+        city = clean_text(text)
+        if len(city) < 2:
+            return True, wa_t(lang, "invalid_city")
+        data["city"] = city
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "work_time", "lang": lang, "data": data})
+        return True, wa_t(lang, "ask_work_time")
+
+    if step == "work_time":
+        work_time = clean_text(text)
+        if not re.search(r"\d", work_time):
+            return True, wa_t(lang, "invalid_work_time")
+        data["work_time"] = work_time
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "experience", "lang": lang, "data": data})
+        return True, wa_t(lang, "ask_experience")
+
+    if step == "experience":
+        experience = clean_text(text)
+        if len(experience) < 2:
+            return True, wa_t(lang, "invalid_experience")
+        data["experience"] = experience
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "living", "lang": lang, "data": data})
+        return True, wa_t(lang, "ask_living")
+
+    if step == "living":
+        living = normalize_yes_no(text)
+        if not living:
+            return True, wa_t(lang, "invalid_living")
+        data["living"] = living
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "photo_face", "lang": lang, "data": data})
+        return True, wa_t(lang, "ask_photo_face")
+
+    if step == "photo_face":
+        photo_face = media_url or (clean_text(text) if clean_text(text).startswith("http") else "")
+        if not photo_face:
+            return True, wa_t(lang, "invalid_photo_face")
+        data["photo_face"] = photo_face
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "photo_full", "lang": lang, "data": data})
+        return True, wa_t(lang, "ask_photo_full")
+
+    if step == "photo_full":
+        photo_full = media_url or (clean_text(text) if clean_text(text).startswith("http") else "")
+        if not photo_full:
+            return True, wa_t(lang, "invalid_photo_full")
+        data["photo_full"] = photo_full
         data["lang"] = lang
-        data["country"] = extract_country_from_phone(data.get("phone")) or ""
-        data["application_stage"] = "quick"
+        data["country"] = (
+            data.get("country")
+            or extract_country_from_location(data.get("city"))
+            or extract_country_from_phone(data.get("phone"))
+            or ""
+        )
+        data["application_stage"] = "full"
         data["wa_phone"] = from_phone
         data["wa_profile_name"] = clean_text(message.get("profile_name") or "")
 
@@ -1272,17 +1574,24 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
 
         try:
             save_web_application(user_id, data, source="whatsapp", status="pending")
-            if append_application_row:
-                try:
-                    append_application_row(data, user_id, "pending")
-                except Exception as err:
-                    print("Excel error (whatsapp):", err)
-            _send_application_to_admin_from_whatsapp(data, user_id, from_phone)
-            notify_admin_new_application()
-            update_admin_menu_message()
         except Exception as err:
             print("Failed to save whatsapp application:", err)
             return True, msg(lang, "db_error")
+
+        if append_application_row:
+            try:
+                append_application_row(data, user_id, "pending")
+            except Exception as err:
+                print("Excel error (whatsapp):", err)
+        try:
+            _send_application_to_admin_from_whatsapp(data, user_id, from_phone)
+        except Exception as err:
+            print("Failed to send whatsapp application card to admin:", err)
+        try:
+            notify_admin_new_application()
+            update_admin_menu_message()
+        except Exception as err:
+            print("Failed to refresh admin menu after whatsapp application:", err)
 
         _save_wa_flow(
             from_phone,
@@ -1293,10 +1602,10 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                 "data": {"last_user_id": user_id, "submitted_at": datetime.now(timezone.utc).isoformat()},
             },
         )
-        return True, wa_t(lang, "saved")
+        return True, f"{wa_t(lang, 'saved')}\n\n{_wa_menu_text(lang)}"
 
-    _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
-    return True, wa_t("ru", "choose_lang")
+    _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang or "ru", "data": {}})
+    return True, _wa_menu_text(lang or "ru")
 
 def extract_country_from_location(location: str | None) -> str | None:
     raw = (location or "").strip()
@@ -1804,13 +2113,8 @@ class Handler(SimpleHTTPRequestHandler):
                 if _mark_infobip_seen(message):
                     duplicates += 1
                     continue
-                if INFOBIP_FORWARD_TO_ADMIN:
-                    try:
-                        _forward_infobip_message_to_admin(message)
-                        forwarded += 1
-                    except Exception as err:
-                        errors += 1
-                        print("Failed to forward infobip message to admin:", err)
+                handled = False
+                reply = None
                 try:
                     handled, reply = handle_whatsapp_application_message(message)
                     if handled and reply:
@@ -1821,6 +2125,15 @@ class Handler(SimpleHTTPRequestHandler):
                 except Exception as err:
                     errors += 1
                     print("Failed to handle whatsapp bot flow:", err)
+                # Keep WhatsApp bot autonomous: do not relay user messages to Telegram admin chat.
+                # This avoids accidental "forward-only" behavior when old env values remain in deploy.
+                if False and INFOBIP_FORWARD_TO_ADMIN and INFOBIP_RELAY_MODE and not handled:
+                    try:
+                        _forward_infobip_message_to_admin(message)
+                        forwarded += 1
+                    except Exception as err:
+                        errors += 1
+                        print("Failed to forward infobip message to admin:", err)
         except Exception as err:
             print("Failed to parse infobip webhook payload:", err)
 
