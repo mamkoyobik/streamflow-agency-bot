@@ -42,6 +42,9 @@ def preview_keyboard(lang: str = "ru"):
             InlineKeyboardButton(text=t(lang, "btn_edit_data"), callback_data="preview_edit")
         ],
         [
+            InlineKeyboardButton(text=t(lang, "btn_edit_photo"), callback_data="preview_edit_photo")
+        ],
+        [
             InlineKeyboardButton(text=t(lang, "btn_send"), callback_data="preview_confirm")
         ],
         [

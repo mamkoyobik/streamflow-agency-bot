@@ -210,6 +210,7 @@ const I18N = {
     'form.sending': 'Отправка...',
     'form.success': '✅ Заявка отправлена. Выбери удобный мессенджер для продолжения.',
     'form.redirecting': 'Выбери удобный мессенджер для продолжения.',
+    'form.nextUnavailable': '⚠️ Для выбранного мессенджера ссылка пока не настроена.',
     'form.sendError': 'Ошибка отправки.',
     'form.invalid': 'Поле заполнено неверно.',
     'footer.channel': 'Канал Streamflow',
@@ -349,6 +350,7 @@ const I18N = {
     'form.sending': 'Sending...',
     'form.success': '✅ Application sent. Choose your preferred messenger to continue.',
     'form.redirecting': 'Choose your preferred messenger to continue.',
+    'form.nextUnavailable': '⚠️ Link for the selected messenger is not configured yet.',
     'form.sendError': 'Sending error.',
     'form.invalid': 'Invalid field value.',
     'footer.channel': 'Streamflow channel',
@@ -488,6 +490,7 @@ const I18N = {
     'form.sending': 'Enviando...',
     'form.success': '✅ Cadastro enviado. Escolha o mensageiro para continuar.',
     'form.redirecting': 'Escolha o mensageiro para continuar.',
+    'form.nextUnavailable': '⚠️ O link para o mensageiro selecionado ainda não está configurado.',
     'form.sendError': 'Erro ao enviar.',
     'form.invalid': 'Campo preenchido incorretamente.',
     'footer.channel': 'Canal Streamflow',
@@ -627,6 +630,7 @@ const I18N = {
     'form.sending': 'Enviando...',
     'form.success': '✅ Solicitud enviada. Elige el mensajero para continuar.',
     'form.redirecting': 'Elige el mensajero para continuar.',
+    'form.nextUnavailable': '⚠️ El enlace del mensajero seleccionado aún no está configurado.',
     'form.sendError': 'Error al enviar.',
     'form.invalid': 'Campo inválido.',
     'footer.channel': 'Canal Streamflow',
@@ -1704,6 +1708,17 @@ async function sendApplication(formData, elements, options = {}) {
     formNextWhatsappLink,
     submitButton,
   } = elements;
+  const normalizeNextHref = (value) => {
+    const href = String(value || '').trim();
+    if (!href || href === '#') return '';
+    return href;
+  };
+  const defaultTelegramHref = normalizeNextHref(
+    formNextTelegramLink ? formNextTelegramLink.getAttribute('href') || '' : ''
+  );
+  const defaultWhatsappHref = normalizeNextHref(
+    formNextWhatsappLink ? formNextWhatsappLink.getAttribute('href') || '' : ''
+  );
   if (formStatus) {
     formStatus.textContent = pendingMessage;
     formStatus.classList.remove('is-error');
@@ -1744,19 +1759,28 @@ async function sendApplication(formData, elements, options = {}) {
           .trim()
           .toLowerCase();
         const preferredContact = preferredRaw === 'whatsapp' ? 'whatsapp' : 'telegram';
+        const botLink = String(payload.bot_link || '').trim();
+        const botLinkIsTelegram = /^https?:\/\/t\.me\//i.test(botLink);
+        const botLinkIsWhatsapp = /^https?:\/\/wa\.me\//i.test(botLink);
         const telegramLink =
           payload.telegram_bot_link ||
           nextLinks.telegram ||
-          (preferredContact === 'telegram' ? payload.bot_link || '' : '');
+          (preferredContact === 'telegram' && botLinkIsTelegram ? botLink : '') ||
+          defaultTelegramHref;
         const whatsappLink =
           payload.whatsapp_bot_link ||
           nextLinks.whatsapp ||
-          '';
+          (preferredContact === 'whatsapp' && botLinkIsWhatsapp ? botLink : '') ||
+          defaultWhatsappHref;
         let hasAnyNextLink = false;
+        let selectedButtonShown = false;
 
         if (formNextTelegramLink) {
           if (preferredContact === 'telegram' && telegramLink) {
+            selectedButtonShown = true;
             formNextTelegramLink.href = telegramLink;
+            formNextTelegramLink.removeAttribute('aria-disabled');
+            formNextTelegramLink.classList.remove('is-disabled');
             formNextTelegramLink.classList.remove('hidden');
             hasAnyNextLink = true;
             if (!formNextTelegramLink.dataset.goalBound) {
@@ -1765,6 +1789,12 @@ async function sendApplication(formData, elements, options = {}) {
                 trackMetrikaGoal('application_open_telegram_click', { lang: CURRENT_SITE_LANG });
               });
             }
+          } else if (preferredContact === 'telegram') {
+            selectedButtonShown = true;
+            formNextTelegramLink.removeAttribute('href');
+            formNextTelegramLink.setAttribute('aria-disabled', 'true');
+            formNextTelegramLink.classList.add('is-disabled');
+            formNextTelegramLink.classList.remove('hidden');
           } else {
             formNextTelegramLink.classList.add('hidden');
           }
@@ -1772,7 +1802,10 @@ async function sendApplication(formData, elements, options = {}) {
 
         if (formNextWhatsappLink) {
           if (preferredContact === 'whatsapp' && whatsappLink) {
+            selectedButtonShown = true;
             formNextWhatsappLink.href = whatsappLink;
+            formNextWhatsappLink.removeAttribute('aria-disabled');
+            formNextWhatsappLink.classList.remove('is-disabled');
             formNextWhatsappLink.classList.remove('hidden');
             hasAnyNextLink = true;
             if (!formNextWhatsappLink.dataset.goalBound) {
@@ -1781,15 +1814,22 @@ async function sendApplication(formData, elements, options = {}) {
                 trackMetrikaGoal('application_open_whatsapp_click', { lang: CURRENT_SITE_LANG });
               });
             }
+          } else if (preferredContact === 'whatsapp') {
+            selectedButtonShown = true;
+            formNextWhatsappLink.removeAttribute('href');
+            formNextWhatsappLink.setAttribute('aria-disabled', 'true');
+            formNextWhatsappLink.classList.add('is-disabled');
+            formNextWhatsappLink.classList.remove('hidden');
           } else {
             formNextWhatsappLink.classList.add('hidden');
           }
         }
 
-        if (hasAnyNextLink) {
+        if (selectedButtonShown) {
           formNext.classList.remove('hidden');
           if (formStatus) {
-            formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${siteText('form.redirecting')}`;
+            const postText = hasAnyNextLink ? siteText('form.redirecting') : siteText('form.nextUnavailable');
+            formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${postText}`;
           }
         } else {
           formNext.classList.add('hidden');
@@ -1883,7 +1923,7 @@ forms.forEach((form) => {
     }
     formData.set('country', countryField ? countryField.value : '');
     formData.set('site_lang', CURRENT_SITE_LANG);
-    await sendApplication(formData, elements, { resetForm: true });
+    await sendApplication(formData, elements, { resetForm: false });
   });
 });
 
@@ -1899,15 +1939,22 @@ function normalizeTelegram(value) {
 }
 
 function normalizePhone(value) {
-  const v = (value || '').replace(/[()\s-]+/g, '');
-  if (!v) return null;
-  if (v.startsWith('+')) {
-    const digits = v.slice(1);
-    if (!/^\d+$/.test(digits)) return null;
-    return `+${digits}`;
+  const raw = (value || '').replace(/[()\s-]+/g, '');
+  if (!raw) return null;
+  let digits = '';
+  if (raw.startsWith('+')) {
+    digits = raw.slice(1);
+  } else if (raw.startsWith('00')) {
+    digits = raw.slice(2);
+  } else {
+    digits = raw;
   }
-  if (/^\d+$/.test(v)) return v;
-  return null;
+  if (!/^\d+$/.test(digits)) return null;
+  if (digits.length === 11 && digits.startsWith('8')) {
+    digits = `7${digits.slice(1)}`;
+  }
+  if (!digits) return null;
+  return `+${digits}`;
 }
 
 function isValidPhone(value) {

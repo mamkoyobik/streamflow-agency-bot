@@ -257,9 +257,21 @@ def normalize_phone(text: str) -> str | None:
         digits = value[1:]
         if not digits.isdigit():
             return None
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return f"+{digits}"
+    if value.startswith("00"):
+        digits = value[2:]
+        if not digits.isdigit():
+            return None
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
         return f"+{digits}"
     if value.isdigit():
-        return value
+        digits = value
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return f"+{digits}"
     return None
 
 

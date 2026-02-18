@@ -441,9 +441,21 @@ def normalize_phone(text: str) -> str | None:
         digits = value[1:]
         if not digits.isdigit():
             return None
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return f"+{digits}"
+    if value.startswith("00"):
+        digits = value[2:]
+        if not digits.isdigit():
+            return None
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
         return f"+{digits}"
     if value.isdigit():
-        return value
+        digits = value
+        if len(digits) == 11 and digits.startswith("8"):
+            digits = "7" + digits[1:]
+        return f"+{digits}"
     return None
 
 
@@ -1739,16 +1751,15 @@ class Handler(SimpleHTTPRequestHandler):
 
         tg_link = build_bot_stage2_link(lead_token, site_lang)
         wa_link = build_whatsapp_stage2_link(lead_token, site_lang)
-        preferred_link = tg_link
-        if preferred_contact == "whatsapp" and wa_link:
+        if preferred_contact == "whatsapp":
             preferred_link = wa_link
-        if not preferred_link:
-            preferred_link = tg_link or wa_link or CHANNEL_LINK
+        else:
+            preferred_link = tg_link
         return self.send_json(
             {
                 "ok": True,
                 "message": msg(site_lang, "success"),
-                "bot_link": preferred_link or CHANNEL_LINK,
+                "bot_link": preferred_link,
                 "telegram_bot_link": tg_link,
                 "whatsapp_bot_link": wa_link,
                 "preferred_contact": preferred_contact,

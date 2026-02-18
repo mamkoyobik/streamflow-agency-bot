@@ -23,9 +23,9 @@ class ApplicationStates(StatesGroup):
     preview = State()
 
     # ===== Редактирование =====
-    edit_field = State()      # редактирование текстовых полей
-    edit_photo = State()  
-    edit_value = State()    # редактирование фото
+    edit_field = State()      # выбор поля для редактирования
+    edit_photo = State()      # выбор фото для редактирования
+    edit_value = State()      # ввод нового значения поля
 
     # ===== Админ =====
     admin_reject_reason = State()
