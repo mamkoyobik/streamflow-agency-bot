@@ -18,6 +18,11 @@
 - `DB_CONNECT_TIMEOUT=15`
 - `HOST=0.0.0.0`
 - `WEB_SEND_FULL_TO_ADMIN=false`
+- `INFOBIP_BOT_ENABLED=true`
+- `INFOBIP_FORWARD_TO_ADMIN=true`
+- `INFOBIP_API_KEY=...`
+- `INFOBIP_BASE_URL=https://<your-base-url>.api.infobip.com`
+- `INFOBIP_WHATSAPP_SENDER=<sender>`
 
 ### Bot service (`bot.py`)
 - `BOT_TOKEN`

@@ -449,19 +449,19 @@
         <div class="form-intro reveal">
           <span class="eyebrow" data-i18n="form.eyebrow">Заявка</span>
           <h2 class="section-title-global" data-i18n="form.title">Анкета Streamflow</h2>
-          <p data-i18n="form.subtitle">После каждого ответа ты переходишь к следующему шагу.</p>
+          <p data-i18n="form.subtitle">Оставь короткую заявку за 1 минуту, а дальше продолжишь в Telegram или WhatsApp.</p>
           <div class="mini-steps">
             <div class="mini-step">
               <span>1</span>
-              <p data-i18n="form.mini1">Заполни анкету и прикрепи фото.</p>
+              <p data-i18n="form.mini1">Оставляешь базовые данные.</p>
             </div>
             <div class="mini-step">
               <span>2</span>
-              <p data-i18n="form.mini2">Мы вернёмся с ответом в Telegram.</p>
+              <p data-i18n="form.mini2">После подачи заявки выберешь удобный мессенджер.</p>
             </div>
             <div class="mini-step">
               <span>3</span>
-              <p data-i18n="form.mini3">Стартуем подготовку вместе с командой.</p>
+              <p data-i18n="form.mini3">В боте ты дозаполнишь анкету и перейдёшь к старту.</p>
             </div>
           </div>
         </div>
@@ -481,7 +481,7 @@
                 <li data-step-point="2" data-i18n="form.side2">Телефон</li>
                 <li data-step-point="3" data-i18n="form.side3">Дата рождения</li>
                 <li data-step-point="4" data-i18n="form.side4">Модель устройства</li>
-                <li data-step-point="5" data-i18n="form.side5">Telegram</li>
+                <li data-step-point="5" data-i18n="form.side5">Контакт</li>
               </ol>
             </aside>
 
@@ -519,8 +519,20 @@
                 </div>
                 <div class="form-step" data-step="5">
                   <div class="field">
-                    <label for="telegram" data-i18n="form.q5">5️⃣ Telegram (@username):</label>
-                    <input id="telegram" name="telegram" type="text" required>
+                    <label for="contact_value" data-i18n="form.q5">5️⃣ Выбери Telegram или WhatsApp и укажи контакт:</label>
+                    <div class="contact-choice">
+                      <label class="contact-option">
+                        <input type="radio" name="preferred_contact" value="telegram" checked>
+                        <span data-i18n="form.contactTelegram">Telegram</span>
+                      </label>
+                      <label class="contact-option">
+                        <input type="radio" name="preferred_contact" value="whatsapp">
+                        <span data-i18n="form.contactWhatsapp">WhatsApp</span>
+                      </label>
+                    </div>
+                    <input id="contact_value" name="contact_value" type="text" required data-contact-value data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
+                    <input name="telegram" type="hidden" value="">
+                    <input name="whatsapp" type="hidden" value="">
                   </div>
                 </div>
               </div>
@@ -535,7 +547,11 @@
 
           <div class="form-status" data-form-status role="status" aria-live="polite"></div>
           <div class="form-next hidden" data-form-next>
-            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-i18n="form.openTelegram">Открыть Telegram</a>
+            <p class="form-next-title" data-i18n="form.nextChoiceTitle">Выбери, где продолжить анкету:</p>
+            <div class="form-next-actions">
+              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="telegram" data-i18n="form.openTelegram">Продолжить в Telegram</a>
+              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="whatsapp" data-i18n="form.openWhatsapp">Продолжить в WhatsApp</a>
+            </div>
           </div>
         </form>
       </div>
@@ -574,6 +590,6 @@
 
   
 
-  <script src="app.js?v=20260217-01"></script>
+  <script src="app.js?v=20260218-01"></script>
 </body>
 </html>

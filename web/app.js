@@ -165,16 +165,16 @@ const I18N = {
     'portfolio.hint': 'Листай фото влево/вправо или нажимай стрелки.',
     'form.eyebrow': 'Заявка',
     'form.title': 'Анкета Streamflow',
-    'form.subtitle': 'Оставь короткую заявку за 1 минуту, дальше всё продолжится в Telegram.',
+    'form.subtitle': 'Оставь короткую заявку за 1 минуту, а дальше продолжишь в Telegram или WhatsApp.',
     'form.mini1': 'Оставляешь базовые данные.',
-    'form.mini2': 'После подачи заявки все дальнейшие действия переходят в Telegram.',
-    'form.mini3': 'Там ты получишь подробности и сможешь продолжить оформление.',
+    'form.mini2': 'После подачи заявки выберешь удобный мессенджер.',
+    'form.mini3': 'В боте ты дозаполнишь анкету и перейдёшь к старту.',
     'form.progressTitle': 'Короткая заявка',
     'form.side1': 'Имя',
     'form.side2': 'Телефон',
     'form.side3': 'Дата рождения',
     'form.side4': 'Модель устройства',
-    'form.side5': 'Telegram',
+    'form.side5': 'Контакт',
     'form.side6': '—',
     'form.side7': '—',
     'form.side8': '—',
@@ -187,7 +187,11 @@ const I18N = {
     'form.q2': '2️⃣ Контактный телефон (+код):',
     'form.q3': '3️⃣ Дата рождения<br><br>Пример: 01.01.2000',
     'form.q4': '4️⃣ Модель устройства:',
-    'form.q5': '5️⃣ Telegram (@username):',
+    'form.q5': '5️⃣ Выбери Telegram или WhatsApp и укажи контакт:',
+    'form.contactTelegram': 'Telegram',
+    'form.contactWhatsapp': 'WhatsApp',
+    'form.contactPlaceholderTelegram': '@username',
+    'form.contactPlaceholderWhatsapp': '+7 900 000 00 00',
     'form.q6': '6️⃣ Устройства:',
     'form.q6Placeholder': 'Например: смартфон, ноутбук',
     'form.q7': '7️⃣ Модель устройства:',
@@ -200,10 +204,12 @@ const I18N = {
     'form.prev': 'Назад',
     'form.next': 'Далее',
     'form.submit': 'Отправить заявку',
-    'form.openTelegram': 'Открыть Telegram',
+    'form.nextChoiceTitle': 'Выбери, где продолжить анкету:',
+    'form.openTelegram': 'Продолжить в Telegram',
+    'form.openWhatsapp': 'Продолжить в WhatsApp',
     'form.sending': 'Отправка...',
-    'form.success': '✅ Заявка отправлена. Дальнейшие действия перейдут в Telegram.',
-    'form.redirecting': '⏳ Сейчас автоматически откроем Telegram, чтобы продолжить без паузы. Если не открылось, нажми кнопку ниже.',
+    'form.success': '✅ Заявка отправлена. Выбери удобный мессенджер для продолжения.',
+    'form.redirecting': 'Выбери удобный мессенджер для продолжения.',
     'form.sendError': 'Ошибка отправки.',
     'form.invalid': 'Поле заполнено неверно.',
     'footer.channel': 'Канал Streamflow',
@@ -217,6 +223,7 @@ const I18N = {
     'validation.deviceModel': 'Напиши модель устройства.',
     'validation.workTime': 'Укажи количество часов цифрами.',
     'validation.telegram': 'Укажи Telegram в формате @username.',
+    'validation.whatsapp': 'Укажи WhatsApp в формате +7 900 000 00 00.',
     'validation.experience': 'Напиши, есть ли опыт.',
     'validation.photoFace': 'Загрузи фото анфас.',
     'validation.photoFull': 'Загрузи фото в полный рост.',
@@ -297,16 +304,16 @@ const I18N = {
     'portfolio.hint': 'Swipe left or right, or use the arrows.',
     'form.eyebrow': 'Application',
     'form.title': 'Streamflow form',
-    'form.subtitle': 'Send a quick 1-minute application, then continue in Telegram.',
+    'form.subtitle': 'Send a quick 1-minute application, then continue in Telegram or WhatsApp.',
     'form.mini1': 'Leave your basic contact details.',
-    'form.mini2': 'After sending the application, all next steps continue in Telegram.',
-    'form.mini3': 'There you get full details and continue the process.',
+    'form.mini2': 'After sending, choose the messenger that is easier for you.',
+    'form.mini3': 'In the bot you complete the form and move to onboarding.',
     'form.progressTitle': 'Quick application',
     'form.side1': 'Name',
     'form.side2': 'Phone',
     'form.side3': 'Birth date',
     'form.side4': 'Device model',
-    'form.side5': 'Telegram',
+    'form.side5': 'Contact',
     'form.side6': '—',
     'form.side7': '—',
     'form.side8': '—',
@@ -319,7 +326,11 @@ const I18N = {
     'form.q2': '2️⃣ Contact phone (+code):',
     'form.q3': '3️⃣ Birth date<br><br>Example: 01.01.2000',
     'form.q4': '4️⃣ Device model:',
-    'form.q5': '5️⃣ Telegram (@username):',
+    'form.q5': '5️⃣ Choose Telegram or WhatsApp and provide contact:',
+    'form.contactTelegram': 'Telegram',
+    'form.contactWhatsapp': 'WhatsApp',
+    'form.contactPlaceholderTelegram': '@username',
+    'form.contactPlaceholderWhatsapp': '+1 555 123 4567',
     'form.q6': '6️⃣ Devices:',
     'form.q6Placeholder': 'Example: smartphone, laptop',
     'form.q7': '7️⃣ Device model:',
@@ -332,10 +343,12 @@ const I18N = {
     'form.prev': 'Back',
     'form.next': 'Next',
     'form.submit': 'Send application',
-    'form.openTelegram': 'Open Telegram',
+    'form.nextChoiceTitle': 'Choose where to continue your application:',
+    'form.openTelegram': 'Continue in Telegram',
+    'form.openWhatsapp': 'Continue in WhatsApp',
     'form.sending': 'Sending...',
-    'form.success': '✅ Application sent. Next steps continue in Telegram.',
-    'form.redirecting': '⏳ We will now open Telegram automatically so you can continue right away. If it does not open, tap the button below.',
+    'form.success': '✅ Application sent. Choose your preferred messenger to continue.',
+    'form.redirecting': 'Choose your preferred messenger to continue.',
     'form.sendError': 'Sending error.',
     'form.invalid': 'Invalid field value.',
     'footer.channel': 'Streamflow channel',
@@ -349,6 +362,7 @@ const I18N = {
     'validation.deviceModel': 'Enter your device model.',
     'validation.workTime': 'Enter work hours using digits.',
     'validation.telegram': 'Enter Telegram as @username.',
+    'validation.whatsapp': 'Enter WhatsApp in international format, example: +1 555 123 4567.',
     'validation.experience': 'Tell us if you have experience.',
     'validation.photoFace': 'Upload front-face photo.',
     'validation.photoFull': 'Upload full-body photo.',
@@ -429,16 +443,16 @@ const I18N = {
     'portfolio.hint': 'Deslize para a esquerda/direita ou use as setas.',
     'form.eyebrow': 'Candidatura',
     'form.title': 'Formulário Streamflow',
-    'form.subtitle': 'Envie um cadastro rápido de 1 minuto e continue no Telegram.',
+    'form.subtitle': 'Envie um cadastro rápido de 1 minuto e continue no Telegram ou WhatsApp.',
     'form.mini1': 'Você envia seus dados básicos.',
-    'form.mini2': 'Após enviar o cadastro, os próximos passos seguem no Telegram.',
-    'form.mini3': 'Lá você recebe os detalhes e continua o processo.',
+    'form.mini2': 'Depois do envio, você escolhe o mensageiro mais prático.',
+    'form.mini3': 'No bot você completa o cadastro e segue para o início.',
     'form.progressTitle': 'Cadastro rápido',
     'form.side1': 'Nome',
     'form.side2': 'Telefone',
     'form.side3': 'Data de nascimento',
     'form.side4': 'Modelo do dispositivo',
-    'form.side5': 'Telegram',
+    'form.side5': 'Contato',
     'form.side6': '—',
     'form.side7': '—',
     'form.side8': '—',
@@ -451,7 +465,11 @@ const I18N = {
     'form.q2': '2️⃣ Telefone de contato (+código):',
     'form.q3': '3️⃣ Data de nascimento<br><br>Exemplo: 01.01.2000',
     'form.q4': '4️⃣ Modelo do dispositivo:',
-    'form.q5': '5️⃣ Telegram (@username):',
+    'form.q5': '5️⃣ Escolha Telegram ou WhatsApp e informe o contato:',
+    'form.contactTelegram': 'Telegram',
+    'form.contactWhatsapp': 'WhatsApp',
+    'form.contactPlaceholderTelegram': '@username',
+    'form.contactPlaceholderWhatsapp': '+55 11 99999 9999',
     'form.q6': '6️⃣ Dispositivos:',
     'form.q6Placeholder': 'Exemplo: smartphone, notebook',
     'form.q7': '7️⃣ Modelo do dispositivo:',
@@ -464,10 +482,12 @@ const I18N = {
     'form.prev': 'Voltar',
     'form.next': 'Avançar',
     'form.submit': 'Enviar cadastro',
-    'form.openTelegram': 'Abrir Telegram',
+    'form.nextChoiceTitle': 'Escolha onde continuar o cadastro:',
+    'form.openTelegram': 'Continuar no Telegram',
+    'form.openWhatsapp': 'Continuar no WhatsApp',
     'form.sending': 'Enviando...',
-    'form.success': '✅ Cadastro enviado. Próximos passos no Telegram.',
-    'form.redirecting': '⏳ Vamos abrir o Telegram automaticamente agora para você continuar sem pausa. Se não abrir, toque no botão abaixo.',
+    'form.success': '✅ Cadastro enviado. Escolha o mensageiro para continuar.',
+    'form.redirecting': 'Escolha o mensageiro para continuar.',
     'form.sendError': 'Erro ao enviar.',
     'form.invalid': 'Campo preenchido incorretamente.',
     'footer.channel': 'Canal Streamflow',
@@ -481,6 +501,7 @@ const I18N = {
     'validation.deviceModel': 'Informe o modelo do dispositivo.',
     'validation.workTime': 'Informe as horas com números.',
     'validation.telegram': 'Informe o Telegram no formato @username.',
+    'validation.whatsapp': 'Informe o WhatsApp no formato internacional, ex.: +55 11 99999 9999.',
     'validation.experience': 'Escreva se você tem experiência.',
     'validation.photoFace': 'Envie a foto frontal.',
     'validation.photoFull': 'Envie a foto de corpo inteiro.',
@@ -561,16 +582,16 @@ const I18N = {
     'portfolio.hint': 'Desliza a izquierda/derecha o usa las flechas.',
     'form.eyebrow': 'Solicitud',
     'form.title': 'Formulario Streamflow',
-    'form.subtitle': 'Envía una solicitud rápida de 1 minuto y continúa en Telegram.',
+    'form.subtitle': 'Envía una solicitud rápida de 1 minuto y continúa en Telegram o WhatsApp.',
     'form.mini1': 'Dejas tus datos básicos.',
-    'form.mini2': 'Después de enviar la solicitud, los siguientes pasos pasan a Telegram.',
-    'form.mini3': 'Ahí recibes los detalles y continúas el proceso.',
+    'form.mini2': 'Después del envío, eliges el mensajero más cómodo.',
+    'form.mini3': 'En el bot completas la solicitud y sigues al inicio.',
     'form.progressTitle': 'Solicitud rápida',
     'form.side1': 'Nombre',
     'form.side2': 'Teléfono',
     'form.side3': 'Fecha de nacimiento',
     'form.side4': 'Modelo del dispositivo',
-    'form.side5': 'Telegram',
+    'form.side5': 'Contacto',
     'form.side6': '—',
     'form.side7': '—',
     'form.side8': '—',
@@ -583,7 +604,11 @@ const I18N = {
     'form.q2': '2️⃣ Teléfono de contacto (+código):',
     'form.q3': '3️⃣ Fecha de nacimiento<br><br>Ejemplo: 01.01.2000',
     'form.q4': '4️⃣ Modelo del dispositivo:',
-    'form.q5': '5️⃣ Telegram (@username):',
+    'form.q5': '5️⃣ Elige Telegram o WhatsApp y deja tu contacto:',
+    'form.contactTelegram': 'Telegram',
+    'form.contactWhatsapp': 'WhatsApp',
+    'form.contactPlaceholderTelegram': '@username',
+    'form.contactPlaceholderWhatsapp': '+34 600 000 000',
     'form.q6': '6️⃣ Dispositivos:',
     'form.q6Placeholder': 'Ejemplo: smartphone, portátil',
     'form.q7': '7️⃣ Modelo del dispositivo:',
@@ -596,10 +621,12 @@ const I18N = {
     'form.prev': 'Atrás',
     'form.next': 'Siguiente',
     'form.submit': 'Enviar solicitud',
-    'form.openTelegram': 'Abrir Telegram',
+    'form.nextChoiceTitle': 'Elige dónde continuar la solicitud:',
+    'form.openTelegram': 'Continuar en Telegram',
+    'form.openWhatsapp': 'Continuar en WhatsApp',
     'form.sending': 'Enviando...',
-    'form.success': '✅ Solicitud enviada. Los siguientes pasos van por Telegram.',
-    'form.redirecting': '⏳ Ahora abriremos Telegram automáticamente para que sigas sin pausa. Si no se abre, pulsa el botón de abajo.',
+    'form.success': '✅ Solicitud enviada. Elige el mensajero para continuar.',
+    'form.redirecting': 'Elige el mensajero para continuar.',
     'form.sendError': 'Error al enviar.',
     'form.invalid': 'Campo inválido.',
     'footer.channel': 'Canal Streamflow',
@@ -613,6 +640,7 @@ const I18N = {
     'validation.deviceModel': 'Escribe el modelo del dispositivo.',
     'validation.workTime': 'Indica las horas con números.',
     'validation.telegram': 'Indica Telegram en formato @username.',
+    'validation.whatsapp': 'Indica WhatsApp en formato internacional, ejemplo: +34 600 000 000.',
     'validation.experience': 'Escribe si tienes experiencia.',
     'validation.photoFace': 'Sube una foto frontal.',
     'validation.photoFull': 'Sube una foto de cuerpo completo.',
@@ -1330,7 +1358,8 @@ function ensureCountryField(form) {
 
 const forms = document.querySelectorAll('[data-application-form]');
 const telegramLinks = document.querySelectorAll('[data-telegram-link]');
-const formNextLinks = document.querySelectorAll('[data-form-next] a');
+const formNextTelegramLinks = document.querySelectorAll('[data-form-next] [data-next-link="telegram"]');
+const formNextWhatsappLinks = document.querySelectorAll('[data-form-next] [data-next-link="whatsapp"]');
 
 async function loadConfig() {
   try {
@@ -1342,9 +1371,14 @@ async function loadConfig() {
         link.href = data.telegram_link;
       });
     }
-    if (data.bot_link && formNextLinks.length) {
-      formNextLinks.forEach((link) => {
+    if (data.bot_link && formNextTelegramLinks.length) {
+      formNextTelegramLinks.forEach((link) => {
         link.href = data.bot_link;
+      });
+    }
+    if (data.whatsapp_link && formNextWhatsappLinks.length) {
+      formNextWhatsappLinks.forEach((link) => {
+        link.href = data.whatsapp_link;
       });
     }
   } catch (err) {
@@ -1448,7 +1482,20 @@ function initMultiStep(form) {
     device_model: (value) => (value.trim().length >= 2 ? '' : siteText('validation.deviceModel')),
     work_time: (value) => (/\d/.test(value) ? '' : siteText('validation.workTime')),
     headphones: (value) => (normalizeYesNo(value) ? '' : siteText('validation.yesNo')),
-    telegram: (value) => (normalizeTelegram(value) ? '' : siteText('validation.telegram')),
+    preferred_contact: (value) => (value ? '' : siteText('validation.required')),
+    contact_value: (value) => {
+      const preferred = form.querySelector('input[name="preferred_contact"]:checked');
+      const mode = preferred ? preferred.value : 'telegram';
+      if (mode === 'whatsapp') {
+        return isValidPhone(value) ? '' : siteText('validation.whatsapp');
+      }
+      return normalizeTelegram(value) ? '' : siteText('validation.telegram');
+    },
+    telegram: (value) => {
+      const raw = (value || '').trim();
+      if (!raw) return '';
+      return normalizeTelegram(raw) ? '' : siteText('validation.telegram');
+    },
     experience: (value) => (value.trim().length >= 1 ? '' : siteText('validation.experience')),
     photo_face: (_value, field) => (field.files && field.files.length ? '' : siteText('validation.photoFace')),
     photo_full: (_value, field) => (field.files && field.files.length ? '' : siteText('validation.photoFull')),
@@ -1607,14 +1654,66 @@ function initMultiStep(form) {
   update();
 }
 
+function setupContactChoice(form) {
+  const contactInput = form.querySelector('[name="contact_value"]');
+  const contactChoices = Array.from(form.querySelectorAll('input[name="preferred_contact"]'));
+  const telegramHidden = form.querySelector('input[name="telegram"]');
+  const whatsappHidden = form.querySelector('input[name="whatsapp"]');
+  if (!contactInput || !contactChoices.length) return;
+
+  function syncContactFields() {
+    const selected = form.querySelector('input[name="preferred_contact"]:checked');
+    const mode = selected ? selected.value : 'telegram';
+    const raw = (contactInput.value || '').trim();
+    const placeholderKey =
+      mode === 'whatsapp' ? 'form.contactPlaceholderWhatsapp' : 'form.contactPlaceholderTelegram';
+    contactInput.setAttribute('placeholder', siteText(placeholderKey));
+
+    if (mode === 'whatsapp') {
+      if (telegramHidden) telegramHidden.value = '';
+      if (whatsappHidden) whatsappHidden.value = normalizePhone(raw) || raw;
+    } else {
+      if (whatsappHidden) whatsappHidden.value = '';
+      if (telegramHidden) telegramHidden.value = normalizeTelegram(raw) || raw;
+    }
+  }
+
+  contactChoices.forEach((radio) => {
+    radio.addEventListener('change', () => {
+      syncContactFields();
+      const stepper = form.__stepper;
+      if (stepper) {
+        stepper.validateField(contactInput);
+      }
+    });
+  });
+  contactInput.addEventListener('input', syncContactFields);
+  document.addEventListener('site-language-changed', syncContactFields);
+  form.addEventListener('form:reset-steps', syncContactFields);
+  form.__syncContactFields = syncContactFields;
+  syncContactFields();
+}
+
 async function sendApplication(formData, elements, options = {}) {
   const { pendingMessage = siteText('form.sending'), resetForm = false } = options;
-  const { form, formStatus, formNext, formNextLink, submitButton } = elements;
+  const {
+    form,
+    formStatus,
+    formNext,
+    formNextTelegramLink,
+    formNextWhatsappLink,
+    submitButton,
+  } = elements;
   if (formStatus) {
     formStatus.textContent = pendingMessage;
     formStatus.classList.remove('is-error');
     formStatus.classList.remove('is-success');
   }
+  if (formNext) {
+    formNext.classList.add('hidden');
+  }
+  if (formNextTelegramLink) formNextTelegramLink.classList.remove('hidden');
+  if (formNextWhatsappLink) formNextWhatsappLink.classList.remove('hidden');
 
   if (submitButton) submitButton.disabled = true;
 
@@ -1639,25 +1738,52 @@ async function sendApplication(formData, elements, options = {}) {
         form.reset();
         form.dispatchEvent(new Event('form:reset-steps'));
       }
-      if (payload.bot_link && formNext && formNextLink) {
-        formNextLink.href = payload.bot_link;
-        formNext.classList.remove('hidden');
-        if (!formNextLink.dataset.goalBound) {
-          formNextLink.dataset.goalBound = '1';
-          formNextLink.addEventListener('click', () => {
-            trackMetrikaGoal('application_open_telegram_click', { lang: CURRENT_SITE_LANG });
-          });
+      if (formNext) {
+        const nextLinks = payload.next_links || {};
+        const telegramLink = payload.telegram_bot_link || nextLinks.telegram || payload.bot_link || '';
+        const whatsappLink = payload.whatsapp_bot_link || nextLinks.whatsapp || '';
+        let hasAnyNextLink = false;
+
+        if (formNextTelegramLink) {
+          if (telegramLink) {
+            formNextTelegramLink.href = telegramLink;
+            formNextTelegramLink.classList.remove('hidden');
+            hasAnyNextLink = true;
+            if (!formNextTelegramLink.dataset.goalBound) {
+              formNextTelegramLink.dataset.goalBound = '1';
+              formNextTelegramLink.addEventListener('click', () => {
+                trackMetrikaGoal('application_open_telegram_click', { lang: CURRENT_SITE_LANG });
+              });
+            }
+          } else {
+            formNextTelegramLink.classList.add('hidden');
+          }
         }
-        if (formStatus) {
-          formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${siteText('form.redirecting')}`;
+
+        if (formNextWhatsappLink) {
+          if (whatsappLink) {
+            formNextWhatsappLink.href = whatsappLink;
+            formNextWhatsappLink.classList.remove('hidden');
+            hasAnyNextLink = true;
+            if (!formNextWhatsappLink.dataset.goalBound) {
+              formNextWhatsappLink.dataset.goalBound = '1';
+              formNextWhatsappLink.addEventListener('click', () => {
+                trackMetrikaGoal('application_open_whatsapp_click', { lang: CURRENT_SITE_LANG });
+              });
+            }
+          } else {
+            formNextWhatsappLink.classList.add('hidden');
+          }
         }
-        if (form && form.__tgRedirectTimer) {
-          window.clearTimeout(form.__tgRedirectTimer);
+
+        if (hasAnyNextLink) {
+          formNext.classList.remove('hidden');
+          if (formStatus) {
+            formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${siteText('form.redirecting')}`;
+          }
+        } else {
+          formNext.classList.add('hidden');
         }
-        form.__tgRedirectTimer = window.setTimeout(() => {
-          trackMetrikaGoal('application_open_telegram_auto', { lang: CURRENT_SITE_LANG });
-          window.location.assign(payload.bot_link);
-        }, 1600);
       }
     } else {
       trackMetrikaGoal('application_submit_error', {
@@ -1710,14 +1836,26 @@ forms.forEach((form) => {
   ensureCountryField(form);
   const formStatus = form.querySelector('[data-form-status]');
   const formNext = form.querySelector('[data-form-next]');
-  const formNextLink = formNext ? formNext.querySelector('a') : null;
+  const formNextTelegramLink = formNext ? formNext.querySelector('[data-next-link="telegram"]') : null;
+  const formNextWhatsappLink = formNext ? formNext.querySelector('[data-next-link="whatsapp"]') : null;
   const submitButton = form.querySelector('button[type="submit"]');
-  const elements = { form, formStatus, formNext, formNextLink, submitButton };
+  const elements = {
+    form,
+    formStatus,
+    formNext,
+    formNextTelegramLink,
+    formNextWhatsappLink,
+    submitButton,
+  };
 
   initMultiStep(form);
+  setupContactChoice(form);
 
   form.addEventListener('submit', async (event) => {
     event.preventDefault();
+    if (typeof form.__syncContactFields === 'function') {
+      form.__syncContactFields();
+    }
     const stepper = form.__stepper;
     if (stepper) {
       for (let i = 0; i < stepper.steps.length; i += 1) {

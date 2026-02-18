@@ -16,7 +16,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Streamflow — заявка</title>
-  <meta name="description" content="Анкета Streamflow для подачи заявки модели: пошаговая форма и быстрая обратная связь в Telegram.">
+  <meta name="description" content="Анкета Streamflow для подачи заявки модели: первый этап на сайте, продолжение в Telegram или WhatsApp.">
   <meta name="robots" content="index,follow">
   <meta name="googlebot" content="index,follow,max-image-preview:large,max-snippet:-1,max-video-preview:-1">
   <meta name="keywords" content="анкета модели, заявка streamflow, подача заявки онлайн">
@@ -29,7 +29,7 @@
   <link rel="manifest" href="assets/site.webmanifest">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Streamflow — заявка">
-  <meta property="og:description" content="Анкета Streamflow для подачи заявки модели: пошаговая форма и быстрая обратная связь в Telegram.">
+  <meta property="og:description" content="Анкета Streamflow для подачи заявки модели: первый этап на сайте, продолжение в Telegram или WhatsApp.">
   <meta property="og:url" content="https://streamflowagency.com/apply.html">
   <meta property="og:site_name" content="Streamflow Agency">
   <meta property="og:image" content="https://streamflowagency.com/assets/logo.jpg">
@@ -37,7 +37,7 @@
   <meta property="og:locale" content="ru_RU">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Streamflow — заявка">
-  <meta name="twitter:description" content="Анкета Streamflow для подачи заявки модели: пошаговая форма и быстрая обратная связь в Telegram.">
+  <meta name="twitter:description" content="Анкета Streamflow для подачи заявки модели: первый этап на сайте, продолжение в Telegram или WhatsApp.">
   <meta name="twitter:image" content="https://streamflowagency.com/assets/logo.jpg">
   <meta name="twitter:image:alt" content="Логотип Streamflow Agency">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -50,7 +50,7 @@
       "@type": "WebPage",
       "name": "Streamflow — заявка",
       "url": "https://streamflowagency.com/apply.html",
-      "description": "Анкета Streamflow для подачи заявки модели: пошаговая форма и быстрая обратная связь в Telegram.",
+      "description": "Анкета Streamflow для подачи заявки модели: первый этап на сайте, продолжение в Telegram или WhatsApp.",
       "inLanguage": "ru-RU",
       "isPartOf": {
         "@type": "WebSite",
@@ -124,7 +124,7 @@
         <div class="form-intro reveal">
           <span class="eyebrow">Заявка</span>
           <h2 class="section-title-global">Анкета Streamflow</h2>
-          <p>Оставь короткую заявку за 1 минуту, дальше продолжишь в Telegram.</p>
+          <p>Оставь короткую заявку за 1 минуту, дальше продолжишь в Telegram или WhatsApp.</p>
           <div class="mini-steps">
             <div class="mini-step">
               <span>1</span>
@@ -132,11 +132,11 @@
             </div>
             <div class="mini-step">
               <span>2</span>
-              <p>После подачи заявки все дальнейшие действия переходят в Telegram.</p>
+              <p>После подачи заявки выберешь удобный мессенджер.</p>
             </div>
             <div class="mini-step">
               <span>3</span>
-              <p>Там ты получишь подробности и сможешь продолжить оформление.</p>
+              <p>В боте дозаполнишь анкету и перейдёшь к старту.</p>
             </div>
           </div>
         </div>
@@ -175,8 +175,20 @@
             </div>
             <div class="form-step" data-step="5">
               <div class="field">
-                <label for="telegram">5️⃣ Telegram (@username):</label>
-                <input id="telegram" name="telegram" type="text" required>
+                <label for="contact_value">5️⃣ Выбери Telegram или WhatsApp и укажи контакт:</label>
+                <div class="contact-choice">
+                  <label class="contact-option">
+                    <input type="radio" name="preferred_contact" value="telegram" checked>
+                    <span>Telegram</span>
+                  </label>
+                  <label class="contact-option">
+                    <input type="radio" name="preferred_contact" value="whatsapp">
+                    <span>WhatsApp</span>
+                  </label>
+                </div>
+                <input id="contact_value" name="contact_value" type="text" required data-contact-value placeholder="@username">
+                <input name="telegram" type="hidden" value="">
+                <input name="whatsapp" type="hidden" value="">
               </div>
             </div>
           </div>
@@ -188,7 +200,11 @@
           </div>
           <div class="form-status" data-form-status role="status" aria-live="polite"></div>
           <div class="form-next hidden" data-form-next>
-            <a class="btn btn-ghost" href="#" target="_blank" rel="noopener">Открыть Telegram</a>
+            <p class="form-next-title">Выбери, где продолжить анкету:</p>
+            <div class="form-next-actions">
+              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="telegram">Продолжить в Telegram</a>
+              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="whatsapp">Продолжить в WhatsApp</a>
+            </div>
           </div>
         </form>
       </div>
@@ -213,6 +229,6 @@
     <span data-menu-text>Меню</span>
   </button>
 
-  <script src="app.js?v=20260217-01"></script>
+  <script src="app.js?v=20260218-01"></script>
 </body>
 </html>
