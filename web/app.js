@@ -1712,8 +1712,8 @@ async function sendApplication(formData, elements, options = {}) {
   if (formNext) {
     formNext.classList.add('hidden');
   }
-  if (formNextTelegramLink) formNextTelegramLink.classList.remove('hidden');
-  if (formNextWhatsappLink) formNextWhatsappLink.classList.remove('hidden');
+  if (formNextTelegramLink) formNextTelegramLink.classList.add('hidden');
+  if (formNextWhatsappLink) formNextWhatsappLink.classList.add('hidden');
 
   if (submitButton) submitButton.disabled = true;
 
@@ -1740,12 +1740,22 @@ async function sendApplication(formData, elements, options = {}) {
       }
       if (formNext) {
         const nextLinks = payload.next_links || {};
-        const telegramLink = payload.telegram_bot_link || nextLinks.telegram || payload.bot_link || '';
-        const whatsappLink = payload.whatsapp_bot_link || nextLinks.whatsapp || '';
+        const preferredRaw = String(payload.preferred_contact || formData.get('preferred_contact') || '')
+          .trim()
+          .toLowerCase();
+        const preferredContact = preferredRaw === 'whatsapp' ? 'whatsapp' : 'telegram';
+        const telegramLink =
+          payload.telegram_bot_link ||
+          nextLinks.telegram ||
+          (preferredContact === 'telegram' ? payload.bot_link || '' : '');
+        const whatsappLink =
+          payload.whatsapp_bot_link ||
+          nextLinks.whatsapp ||
+          '';
         let hasAnyNextLink = false;
 
         if (formNextTelegramLink) {
-          if (telegramLink) {
+          if (preferredContact === 'telegram' && telegramLink) {
             formNextTelegramLink.href = telegramLink;
             formNextTelegramLink.classList.remove('hidden');
             hasAnyNextLink = true;
@@ -1761,7 +1771,7 @@ async function sendApplication(formData, elements, options = {}) {
         }
 
         if (formNextWhatsappLink) {
-          if (whatsappLink) {
+          if (preferredContact === 'whatsapp' && whatsappLink) {
             formNextWhatsappLink.href = whatsappLink;
             formNextWhatsappLink.classList.remove('hidden');
             hasAnyNextLink = true;
