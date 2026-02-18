@@ -84,6 +84,7 @@ def _env_flag(name: str, default: bool = False) -> bool:
 INFOBIP_FORWARD_TO_ADMIN = _env_flag("INFOBIP_FORWARD_TO_ADMIN", False)
 INFOBIP_RELAY_MODE = _env_flag("INFOBIP_RELAY_MODE", False)
 INFOBIP_BOT_ENABLED = _env_flag("INFOBIP_BOT_ENABLED", True)
+INFOBIP_INTERACTIVE_ENABLED = _env_flag("INFOBIP_INTERACTIVE_ENABLED", True)
 INFOBIP_API_KEY = (os.getenv("INFOBIP_API_KEY", "") or "").strip()
 INFOBIP_BASE_URL = (os.getenv("INFOBIP_BASE_URL", "") or "").strip().rstrip("/")
 INFOBIP_WHATSAPP_SENDER = (os.getenv("INFOBIP_WHATSAPP_SENDER", "") or "").strip()
@@ -1317,6 +1318,8 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
 
 
 def send_wa_interactive_controls(to_phone: str | None) -> bool:
+    if not INFOBIP_INTERACTIVE_ENABLED:
+        return False
     flow = _load_wa_flow(to_phone)
     if not flow:
         return False
@@ -2307,8 +2310,10 @@ class Handler(SimpleHTTPRequestHandler):
         bot_replies = 0
         duplicates = 0
         errors = 0
+        messages_count = 0
         try:
             messages = _extract_infobip_messages(payload)
+            messages_count = len(messages)
             for message in messages:
                 if _mark_infobip_seen(message):
                     duplicates += 1
@@ -2326,15 +2331,7 @@ class Handler(SimpleHTTPRequestHandler):
                         except Exception as err:
                             errors += 1
                             print("Failed to send whatsapp interactive controls:", err)
-
-                        send_text_reply = bool(reply)
-                        if interactive_sent:
-                            flow = _load_wa_flow(message.get("from"))
-                            step = str((flow or {}).get("step") or "").strip().lower()
-                            if step in {"lang", "menu"}:
-                                send_text_reply = False
-
-                        if send_text_reply:
+                        if reply:
                             if infobip_send_whatsapp_text(message.get("from"), reply):
                                 bot_replies += 1
                             else:
@@ -2353,6 +2350,17 @@ class Handler(SimpleHTTPRequestHandler):
                         print("Failed to forward infobip message to admin:", err)
         except Exception as err:
             print("Failed to parse infobip webhook payload:", err)
+
+        print(
+            "Infobip webhook summary:",
+            {
+                "messages": messages_count,
+                "forwarded": forwarded,
+                "bot_replies": bot_replies,
+                "duplicates": duplicates,
+                "errors": errors,
+            },
+        )
 
         try:
             set_setting(
