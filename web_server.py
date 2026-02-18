@@ -407,10 +407,10 @@ WA_TEXTS = {
 }
 
 WA_LANG_ALIASES = {
-    "ru": {"ru", "рус", "русский", "russian"},
-    "en": {"en", "eng", "english"},
-    "pt": {"pt", "por", "pt-br", "br", "brazil", "portuguese", "portugues", "português"},
-    "es": {"es", "esp", "spanish", "español", "espanol"},
+    "ru": {"ru", "рус", "русский", "russian", "lang_ru"},
+    "en": {"en", "eng", "english", "lang_en"},
+    "pt": {"pt", "por", "pt-br", "br", "brazil", "portuguese", "portugues", "português", "lang_pt"},
+    "es": {"es", "esp", "spanish", "español", "espanol", "lang_es"},
 }
 
 WA_RESET_COMMANDS = {
@@ -425,13 +425,13 @@ WA_RESET_COMMANDS = {
 }
 
 WA_MENU_ALIASES = {
-    "apply": {"1", "apply", "заявка", "подать", "candidatura", "solicitud"},
-    "site": {"2", "site", "website", "сайт"},
-    "portfolio": {"3", "portfolio", "портфолио", "portafolio", "portfólio"},
-    "about": {"4", "about", "о работе", "sobre", "sobre o trabalho"},
-    "manager": {"5", "manager", "админ", "менеджер", "gerente"},
-    "channel": {"6", "channel", "канал", "canal"},
-    "language": {"7", "lang", "language", "язык", "idioma"},
+    "apply": {"1", "apply", "заявка", "подать", "candidatura", "solicitud", "menu_apply"},
+    "site": {"2", "site", "website", "сайт", "menu_site"},
+    "portfolio": {"3", "portfolio", "портфолио", "portafolio", "portfólio", "menu_portfolio"},
+    "about": {"4", "about", "о работе", "sobre", "sobre o trabalho", "menu_about"},
+    "manager": {"5", "manager", "админ", "менеджер", "gerente", "menu_manager"},
+    "channel": {"6", "channel", "канал", "canal", "menu_channel"},
+    "language": {"7", "lang", "language", "язык", "idioma", "menu_language"},
 }
 
 
@@ -748,6 +748,8 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
         sender = row.get("sender") if isinstance(row.get("sender"), dict) else {}
         contact_profile = contact.get("profile") if isinstance(contact.get("profile"), dict) else {}
         interactive = row.get("interactive") if isinstance(row.get("interactive"), dict) else {}
+        message_interactive = message.get("interactive") if isinstance(message.get("interactive"), dict) else {}
+        content_interactive = content.get("interactive") if isinstance(content.get("interactive"), dict) else {}
         message_text_obj = message.get("text") if isinstance(message.get("text"), dict) else {}
         content_text_obj = content.get("text") if isinstance(content.get("text"), dict) else {}
         message_media = message.get("media") if isinstance(message.get("media"), dict) else {}
@@ -786,6 +788,10 @@ def _extract_infobip_messages(payload: dict | None) -> list[dict]:
             content.get("buttonText"),
             interactive.get("title"),
             interactive.get("id"),
+            message_interactive.get("title"),
+            message_interactive.get("id"),
+            content_interactive.get("title"),
+            content_interactive.get("id"),
             message_text_obj.get("body"),
             message_text_obj.get("text"),
             message_text_obj.get("title"),
@@ -1184,6 +1190,157 @@ def infobip_send_whatsapp_text(to_phone: str | None, text: str) -> bool:
     except Exception as err:
         print("Infobip send failed:", err)
         return False
+
+
+def infobip_send_whatsapp_interactive_list(
+    to_phone: str | None,
+    body_text: str,
+    action_title: str,
+    sections: list[dict],
+) -> bool:
+    to_e164 = _wa_phone_e164(to_phone)
+    if not to_e164:
+        return False
+    if not INFOBIP_API_KEY or not INFOBIP_BASE_URL or not INFOBIP_WHATSAPP_SENDER:
+        return False
+    if not body_text.strip() or not action_title.strip() or not sections:
+        return False
+
+    payload = {
+        "from": INFOBIP_WHATSAPP_SENDER,
+        "to": to_e164,
+        "content": {
+            "body": {"text": body_text.strip()},
+            "action": {
+                "title": action_title.strip(),
+                "sections": sections,
+            },
+        },
+    }
+
+    req = urllib.request.Request(
+        f"{INFOBIP_BASE_URL}/whatsapp/1/message/interactive/list",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Authorization": f"App {INFOBIP_API_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=get_ssl_context()) as resp:
+            resp.read()
+        return True
+    except urllib.error.HTTPError as err:
+        try:
+            details = err.read().decode("utf-8", errors="replace")
+        except Exception:
+            details = ""
+        print(f"Infobip interactive list failed HTTP {err.code}: {details}")
+        return False
+    except Exception as err:
+        print("Infobip interactive list failed:", err)
+        return False
+
+
+def _wa_language_list_sections() -> list[dict]:
+    return [
+        {
+            "title": "Language / Язык",
+            "rows": [
+                {"id": "lang_ru", "title": "Русский", "description": "RU"},
+                {"id": "lang_en", "title": "English", "description": "EN"},
+                {"id": "lang_pt", "title": "Português", "description": "PT"},
+                {"id": "lang_es", "title": "Español", "description": "ES"},
+            ],
+        }
+    ]
+
+
+def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
+    locale = normalize_site_lang(lang)
+    if locale == "en":
+        body = "Choose an action from the menu below."
+        action = "Open menu"
+        section = "Main menu"
+        rows = [
+            {"id": "menu_apply", "title": "Apply", "description": "Start application"},
+            {"id": "menu_site", "title": "Website", "description": "Open website"},
+            {"id": "menu_portfolio", "title": "Portfolio", "description": "View portfolio"},
+            {"id": "menu_about", "title": "About work", "description": "How it works"},
+            {"id": "menu_manager", "title": "Manager", "description": "Contact manager"},
+            {"id": "menu_channel", "title": "Channel", "description": "Telegram channel"},
+            {"id": "menu_language", "title": "Change language", "description": "Switch language"},
+        ]
+    elif locale == "pt":
+        body = "Escolha uma opção no menu abaixo."
+        action = "Abrir menu"
+        section = "Menu principal"
+        rows = [
+            {"id": "menu_apply", "title": "Enviar candidatura", "description": "Iniciar candidatura"},
+            {"id": "menu_site", "title": "Site", "description": "Abrir site"},
+            {"id": "menu_portfolio", "title": "Portfólio", "description": "Ver portfólio"},
+            {"id": "menu_about", "title": "Sobre o trabalho", "description": "Como funciona"},
+            {"id": "menu_manager", "title": "Gerente", "description": "Falar com gerente"},
+            {"id": "menu_channel", "title": "Canal", "description": "Canal do Telegram"},
+            {"id": "menu_language", "title": "Trocar idioma", "description": "Mudar idioma"},
+        ]
+    elif locale == "es":
+        body = "Elige una opción del menú."
+        action = "Abrir menú"
+        section = "Menú principal"
+        rows = [
+            {"id": "menu_apply", "title": "Enviar solicitud", "description": "Empezar solicitud"},
+            {"id": "menu_site", "title": "Sitio web", "description": "Abrir sitio"},
+            {"id": "menu_portfolio", "title": "Portafolio", "description": "Ver portafolio"},
+            {"id": "menu_about", "title": "Sobre el trabajo", "description": "Cómo funciona"},
+            {"id": "menu_manager", "title": "Manager", "description": "Contactar manager"},
+            {"id": "menu_channel", "title": "Canal", "description": "Canal de Telegram"},
+            {"id": "menu_language", "title": "Cambiar idioma", "description": "Cambiar idioma"},
+        ]
+    else:
+        body = "Выбери пункт ниже."
+        action = "Открыть меню"
+        section = "Главное меню"
+        rows = [
+            {"id": "menu_apply", "title": "Подать заявку", "description": "Начать анкету"},
+            {"id": "menu_site", "title": "Сайт", "description": "Открыть сайт"},
+            {"id": "menu_portfolio", "title": "Портфолио", "description": "Посмотреть портфолио"},
+            {"id": "menu_about", "title": "О работе", "description": "Как всё устроено"},
+            {"id": "menu_manager", "title": "Менеджер", "description": "Связаться с менеджером"},
+            {"id": "menu_channel", "title": "Канал", "description": "Telegram канал"},
+            {"id": "menu_language", "title": "Сменить язык", "description": "Выбрать язык"},
+        ]
+
+    return body, action, section, rows
+
+
+def send_wa_interactive_controls(to_phone: str | None) -> bool:
+    flow = _load_wa_flow(to_phone)
+    if not flow:
+        return False
+    step = str(flow.get("step") or "").strip().lower()
+    lang = normalize_site_lang(flow.get("lang"))
+
+    if step == "lang":
+        return infobip_send_whatsapp_interactive_list(
+            to_phone,
+            "Выбери язык / Choose language",
+            "Language",
+            _wa_language_list_sections(),
+        )
+
+    if step == "menu":
+        body, action, section, rows = _wa_menu_list_config(lang)
+        return infobip_send_whatsapp_interactive_list(
+            to_phone,
+            body,
+            action,
+            [{"title": section, "rows": rows}],
+        )
+
+    return False
 
 
 def _next_wa_step_message(lang: str, step: str) -> str:
@@ -2160,11 +2317,28 @@ class Handler(SimpleHTTPRequestHandler):
                 reply = None
                 try:
                     handled, reply = handle_whatsapp_application_message(message)
-                    if handled and reply:
-                        if infobip_send_whatsapp_text(message.get("from"), reply):
-                            bot_replies += 1
-                        else:
+                    if handled:
+                        interactive_sent = False
+                        try:
+                            interactive_sent = send_wa_interactive_controls(message.get("from"))
+                            if interactive_sent:
+                                bot_replies += 1
+                        except Exception as err:
                             errors += 1
+                            print("Failed to send whatsapp interactive controls:", err)
+
+                        send_text_reply = bool(reply)
+                        if interactive_sent:
+                            flow = _load_wa_flow(message.get("from"))
+                            step = str((flow or {}).get("step") or "").strip().lower()
+                            if step in {"lang", "menu"}:
+                                send_text_reply = False
+
+                        if send_text_reply:
+                            if infobip_send_whatsapp_text(message.get("from"), reply):
+                                bot_replies += 1
+                            else:
+                                errors += 1
                 except Exception as err:
                     errors += 1
                     print("Failed to handle whatsapp bot flow:", err)
