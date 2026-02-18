@@ -731,10 +731,13 @@ class Handler(SimpleHTTPRequestHandler):
 
     def do_POST(self):
         parsed = urllib.parse.urlparse(self.path)
-        if parsed.path != "/api/apply":
-            self.send_error(404)
+        if parsed.path == "/api/apply":
+            self.handle_apply()
             return
-        self.handle_apply()
+        if parsed.path == "/api/infobip/webhook":
+            self.handle_infobip_webhook()
+            return
+        self.send_error(404)
 
     def handle_config(self):
         admin_username = ADMIN_USERNAME.lstrip("@")
@@ -843,6 +846,50 @@ class Handler(SimpleHTTPRequestHandler):
                 "bot_link": bot_link or CHANNEL_LINK,
             }
         )
+
+    def handle_infobip_webhook(self):
+        try:
+            content_length = int(self.headers.get("Content-Length", "0"))
+        except ValueError:
+            content_length = 0
+        if content_length > MAX_BODY_SIZE:
+            return self.send_json({"ok": False, "message": "payload too large"}, status=413)
+
+        body = self.rfile.read(content_length) if content_length > 0 else b""
+        content_type = (self.headers.get("Content-Type", "") or "").lower()
+
+        payload: dict | None = None
+        try:
+            if "application/json" in content_type:
+                payload = json.loads(body.decode("utf-8") or "{}")
+            elif "application/x-www-form-urlencoded" in content_type:
+                parsed = urllib.parse.parse_qs(body.decode("utf-8"), keep_blank_values=True)
+                payload = {k: (v[0] if isinstance(v, list) and len(v) == 1 else v) for k, v in parsed.items()}
+            else:
+                decoded = body.decode("utf-8", errors="replace")
+                payload = {"raw": decoded}
+        except Exception:
+            payload = {"raw": body.decode("utf-8", errors="replace")}
+
+        try:
+            set_setting(
+                "infobip_last_webhook",
+                json.dumps(
+                    {
+                        "received_at": datetime.now(timezone.utc).isoformat(),
+                        "payload": payload,
+                        "headers": {
+                            "Content-Type": self.headers.get("Content-Type", ""),
+                            "User-Agent": self.headers.get("User-Agent", ""),
+                        },
+                    },
+                    ensure_ascii=False,
+                ),
+            )
+        except Exception as err:
+            print("Failed to store infobip webhook payload:", err)
+
+        return self.send_json({"ok": True})
 
     def send_json(self, payload: dict, status: int = 200):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
