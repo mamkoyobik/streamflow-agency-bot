@@ -4,6 +4,7 @@ import os
 import re
 import ssl
 import uuid
+import hashlib
 from functools import lru_cache
 import urllib.parse
 import urllib.request
@@ -48,6 +49,16 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 SITE_LEAD_TOKEN_TTL_HOURS = max(24, _env_int("SITE_LEAD_TOKEN_TTL_HOURS", 72))
+
+
+def _env_flag(name: str, default: bool = False) -> bool:
+    raw = (os.getenv(name, "") or "").strip().lower()
+    if not raw:
+        return default
+    return raw in {"1", "true", "yes", "y", "on"}
+
+
+INFOBIP_FORWARD_TO_ADMIN = _env_flag("INFOBIP_FORWARD_TO_ADMIN", True)
 
 FIELD_ERRORS = {
     "ru": {
@@ -380,6 +391,180 @@ def normalize_telegram(text: str) -> str | None:
 
 def _safe(value: str | None) -> str:
     return html.escape(str(value)) if value is not None else "—"
+
+
+def _shorten(text: str, max_len: int = 3200) -> str:
+    if len(text) <= max_len:
+        return text
+    return text[: max_len - 1] + "…"
+
+
+def _pick_first_string(*values) -> str | None:
+    for value in values:
+        if value is None:
+            continue
+        if isinstance(value, str):
+            cleaned = value.strip()
+            if cleaned:
+                return cleaned
+            continue
+        if isinstance(value, (int, float)):
+            return str(value)
+    return None
+
+
+def _wa_open_link(phone: str | None) -> str | None:
+    digits = re.sub(r"\D", "", phone or "")
+    if not digits:
+        return None
+    return f"https://wa.me/{digits}"
+
+
+def _extract_infobip_messages(payload: dict | None) -> list[dict]:
+    if not isinstance(payload, dict):
+        return []
+
+    candidates: list[dict] = []
+    for key in ("results", "messages", "items", "data"):
+        items = payload.get(key)
+        if isinstance(items, list):
+            candidates.extend([row for row in items if isinstance(row, dict)])
+
+    if not candidates and any(k in payload for k in ("from", "message", "text", "content", "messageId")):
+        candidates.append(payload)
+
+    normalized: list[dict] = []
+    for row in candidates:
+        message = row.get("message") if isinstance(row.get("message"), dict) else {}
+        content = row.get("content") if isinstance(row.get("content"), dict) else {}
+        contact = row.get("contact") if isinstance(row.get("contact"), dict) else {}
+        sender = row.get("sender") if isinstance(row.get("sender"), dict) else {}
+        contact_profile = contact.get("profile") if isinstance(contact.get("profile"), dict) else {}
+
+        from_phone = _pick_first_string(
+            row.get("from"),
+            sender.get("phoneNumber"),
+            sender.get("from"),
+            contact.get("phoneNumber"),
+            contact.get("waId"),
+            row.get("senderAddress"),
+        )
+        to_phone = _pick_first_string(
+            row.get("to"),
+            row.get("destination"),
+            row.get("toNumber"),
+            row.get("recipient"),
+        )
+        msg_type = _pick_first_string(
+            message.get("type"),
+            content.get("type"),
+            row.get("type"),
+        )
+        text = _pick_first_string(
+            message.get("text"),
+            content.get("text"),
+            row.get("text"),
+            row.get("body"),
+        )
+        media_url = _pick_first_string(
+            message.get("url"),
+            content.get("url"),
+            row.get("url"),
+        )
+        profile_name = _pick_first_string(
+            contact.get("name"),
+            contact.get("firstName"),
+            contact.get("profileName"),
+            contact_profile.get("name"),
+        )
+        message_id = _pick_first_string(
+            row.get("messageId"),
+            message.get("id"),
+            row.get("id"),
+        )
+        received_at = _pick_first_string(
+            row.get("receivedAt"),
+            row.get("timestamp"),
+            row.get("time"),
+        )
+        if not any((from_phone, to_phone, text, media_url, message_id)):
+            continue
+        normalized.append(
+            {
+                "from": from_phone,
+                "to": to_phone,
+                "type": (msg_type or "TEXT").upper(),
+                "text": text,
+                "media_url": media_url,
+                "profile_name": profile_name,
+                "message_id": message_id,
+                "received_at": received_at,
+                "raw": row,
+            }
+        )
+    return normalized
+
+
+def _infobip_dedupe_key(message: dict) -> str:
+    signature = (
+        message.get("message_id")
+        or f"{message.get('from')}|{message.get('to')}|{message.get('type')}|{message.get('text')}|{message.get('received_at')}"
+    )
+    digest = hashlib.sha1(str(signature).encode("utf-8")).hexdigest()[:20]
+    return f"infobip_seen:{digest}"
+
+
+def _mark_infobip_seen(message: dict) -> bool:
+    key = _infobip_dedupe_key(message)
+    exists = get_setting(key)
+    if exists:
+        return True
+    set_setting(key, datetime.now(timezone.utc).isoformat())
+    return False
+
+
+def _format_infobip_forward_text(message: dict) -> str:
+    message_type = (message.get("type") or "TEXT").upper()
+    text = (message.get("text") or "").strip()
+    media_url = (message.get("media_url") or "").strip()
+    if text:
+        body = _shorten(text, 2500)
+    elif media_url:
+        body = f"[{message_type}] {media_url}"
+    else:
+        body = f"[{message_type}]"
+    return (
+        "🟢 <b>WhatsApp: новое входящее сообщение</b>\n\n"
+        f"👤 Имя: <b>{_safe(message.get('profile_name'))}</b>\n"
+        f"📱 От: <code>{_safe(message.get('from'))}</code>\n"
+        f"📨 На: <code>{_safe(message.get('to'))}</code>\n"
+        f"🆔 ID: <code>{_safe(message.get('message_id'))}</code>\n"
+        f"🕒 Время: {_safe(message.get('received_at'))}\n\n"
+        f"💬 {_safe(body)}"
+    )
+
+
+def _forward_infobip_message_to_admin(message: dict) -> None:
+    if not BOT_TOKEN or not ADMIN_GROUP_ID:
+        return
+    text = _format_infobip_forward_text(message)
+    wa_link = _wa_open_link(message.get("from"))
+    payload = {
+        "chat_id": str(ADMIN_GROUP_ID),
+        "text": text,
+        "parse_mode": "HTML",
+        "disable_web_page_preview": "true",
+    }
+    if wa_link:
+        payload["reply_markup"] = json.dumps(
+            {
+                "inline_keyboard": [
+                    [{"text": "💬 Открыть чат WhatsApp", "url": wa_link}],
+                ]
+            },
+            ensure_ascii=False,
+        )
+    telegram_request("sendMessage", payload)
 
 def extract_country_from_location(location: str | None) -> str | None:
     raw = (location or "").strip()
@@ -871,6 +1056,25 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception:
             payload = {"raw": body.decode("utf-8", errors="replace")}
 
+        forwarded = 0
+        duplicates = 0
+        errors = 0
+        try:
+            messages = _extract_infobip_messages(payload)
+            if INFOBIP_FORWARD_TO_ADMIN:
+                for message in messages:
+                    if _mark_infobip_seen(message):
+                        duplicates += 1
+                        continue
+                    try:
+                        _forward_infobip_message_to_admin(message)
+                        forwarded += 1
+                    except Exception as err:
+                        errors += 1
+                        print("Failed to forward infobip message to admin:", err)
+        except Exception as err:
+            print("Failed to parse infobip webhook payload:", err)
+
         try:
             set_setting(
                 "infobip_last_webhook",
@@ -878,6 +1082,9 @@ class Handler(SimpleHTTPRequestHandler):
                     {
                         "received_at": datetime.now(timezone.utc).isoformat(),
                         "payload": payload,
+                        "forwarded": forwarded,
+                        "duplicates": duplicates,
+                        "errors": errors,
                         "headers": {
                             "Content-Type": self.headers.get("Content-Type", ""),
                             "User-Agent": self.headers.get("User-Agent", ""),
@@ -889,7 +1096,14 @@ class Handler(SimpleHTTPRequestHandler):
         except Exception as err:
             print("Failed to store infobip webhook payload:", err)
 
-        return self.send_json({"ok": True})
+        return self.send_json(
+            {
+                "ok": True,
+                "forwarded": forwarded,
+                "duplicates": duplicates,
+                "errors": errors,
+            }
+        )
 
     def send_json(self, payload: dict, status: int = 200):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
