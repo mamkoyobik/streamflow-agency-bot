@@ -46,7 +46,7 @@ TRANSLATIONS = {
         "menu_website": "🌐 Наш сайт",
         "menu_portfolio": "📁 Портфолио моделей",
         "menu_about": "ℹ️ Подробнее о работе",
-        "menu_contact": "💬 Связь с администратором",
+        "menu_contact": "💬 @streamflowmanager",
         "menu_channel": "📣 Наш канал",
         "menu_lang": "🌐 Язык",
         "btn_back": "⬅ Назад",
@@ -108,7 +108,7 @@ TRANSLATIONS = {
             "• твоя активность\n"
             "• умение общаться\n"
             "• регулярность выходов\n"
-            "• следование рекомендациям менеджера\n\n"
+            "• следование рекомендациям @streamflowmanager\n\n"
             "<b>Выплаты:</b>\n"
             "• происходят еженедельно\n"
             "• без задержек\n"
@@ -133,12 +133,15 @@ TRANSLATIONS = {
         "rate_limited": "🤍 Спасибо! Сейчас уже есть недавняя заявка.\n\nНовую можно отправить немного позже ✨",
         "cannot_send_message": "🤍 Не могу отправить сообщение. Проверь, что бот не заблокирован.",
         "temp_error_retry": "Временная ошибка. Попробуй ещё раз.",
+        "stale_button": "⚠️ Эта кнопка устарела. Я обновила меню.",
+        "unknown_input_hint": "🤍 Я не поняла сообщение. Выбери нужный раздел кнопками ниже ✨",
         "first_step_notice": "🤍 Это первый пункт анкеты",
         "reject_non_text": "🤍 Пожалуйста, отправь ответ текстом.",
+        "field_too_long": "🤍 Ответ слишком длинный (максимум {max} символов). Отправь короче, пожалуйста.",
         "field_name_short": "🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:",
         "field_city_short": "🤍 Подскажи город и страну проживания ещё раз:",
         "field_phone_invalid": "🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00",
-        "field_age_invalid": "🤍 Напиши дату рождения в формате 01.01.2000:",
+        "field_age_invalid": "🤍 Напиши дату рождения в формате 01.01.2000 (только 18+):",
         "field_yes_no": "🤍 Ответь, пожалуйста, «да» или «нет»:",
         "field_devices_short": "🤍 Уточни, пожалуйста, какие устройства есть:",
         "field_device_model_short": "🤍 Напиши модель устройства, пожалуйста:",
@@ -155,7 +158,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Фото анфас",
         "photo_full_label": "🧍 Фото в профиль",
         "profile_about_title": "ℹ️ <b>Подробнее о работе</b>\n\n• Удалённый формат\n• Без 18+\n• Поддержка 24/7\n• Обучение с нуля",
-        "profile_contact_title": "💬 <b>Связь с администратором</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Портфолио моделей</b>\n\nЗдесь ты можешь посмотреть примеры работы, отзывы и реальные кейсы.",
         "portfolio_send_error": "Не удалось отправить материалы",
         "video_cooldown": "🤍 Видео уже отправлены, посмотри, пожалуйста ✨",
@@ -204,7 +207,7 @@ TRANSLATIONS = {
         "menu_website": "🌐 Our website",
         "menu_portfolio": "📁 Model portfolio",
         "menu_about": "ℹ️ About the work",
-        "menu_contact": "💬 Contact admin",
+        "menu_contact": "💬 @streamflowmanager",
         "menu_channel": "📣 Our channel",
         "menu_lang": "🌐 Language",
         "btn_back": "⬅ Back",
@@ -264,7 +267,7 @@ TRANSLATIONS = {
             "• your activity level\n"
             "• communication skills\n"
             "• regular streaming schedule\n"
-            "• following manager recommendations\n\n"
+            "• following @streamflowmanager recommendations\n\n"
             "<b>Payouts:</b>\n"
             "• weekly\n"
             "• without delays\n"
@@ -288,12 +291,15 @@ TRANSLATIONS = {
         "rate_limited": "🤍 Thanks! A recent application already exists.\n\nYou can submit a new one a bit later ✨",
         "cannot_send_message": "🤍 I can't send a message. Please check if the bot is not blocked.",
         "temp_error_retry": "Temporary error. Please try again.",
+        "stale_button": "⚠️ This button is outdated. I refreshed the menu.",
+        "unknown_input_hint": "🤍 I didn't understand that message. Please use the buttons below ✨",
         "first_step_notice": "🤍 This is the first step of the form",
         "reject_non_text": "🤍 Please send your answer as text.",
+        "field_too_long": "🤍 Your message is too long (maximum {max} characters). Please send a shorter one.",
         "field_name_short": "🤍 Name is too short. Please enter full name:",
         "field_city_short": "🤍 Please enter city and country again:",
         "field_phone_invalid": "🤍 Phone number looks invalid. Example: +1 555 123 4567",
-        "field_age_invalid": "🤍 Please enter birth date as 01.01.2000:",
+        "field_age_invalid": "🤍 Please enter birth date as 01.01.2000 (18+ only):",
         "field_yes_no": "🤍 Please answer \"yes\" or \"no\":",
         "field_devices_short": "🤍 Please specify your devices:",
         "field_device_model_short": "🤍 Please enter device model:",
@@ -310,7 +316,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Front-face photo",
         "photo_full_label": "🧍 Profile photo",
         "profile_about_title": "ℹ️ <b>About the work</b>\n\n• Remote format\n• No 18+\n• 24/7 support\n• Training from scratch",
-        "profile_contact_title": "💬 <b>Contact admin</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Model portfolio</b>\n\nHere you can view work samples, reviews and real cases.",
         "portfolio_send_error": "Failed to send materials",
         "video_cooldown": "🤍 Videos were already sent, please check them ✨",
@@ -359,7 +365,7 @@ TRANSLATIONS = {
         "menu_website": "🌐 Nosso site",
         "menu_portfolio": "📁 Portfólio de modelos",
         "menu_about": "ℹ️ Sobre o trabalho",
-        "menu_contact": "💬 Contatar admin",
+        "menu_contact": "💬 @streamflowmanager",
         "menu_channel": "📣 Nosso canal",
         "menu_lang": "🌐 Idioma",
         "btn_back": "⬅ Voltar",
@@ -419,7 +425,7 @@ TRANSLATIONS = {
             "• sua atividade\n"
             "• sua comunicação\n"
             "• regularidade nas transmissões\n"
-            "• seguir recomendações da gestão\n\n"
+            "• seguir recomendações de @streamflowmanager\n\n"
             "<b>Pagamentos:</b>\n"
             "• semanais\n"
             "• sem atrasos\n"
@@ -444,12 +450,15 @@ TRANSLATIONS = {
         "rate_limited": "🤍 Obrigada! Já existe uma candidatura recente.\n\nVocê poderá enviar uma nova mais tarde ✨",
         "cannot_send_message": "🤍 Não consegui enviar a mensagem. Verifique se o bot não está bloqueado.",
         "temp_error_retry": "Erro temporário. Tente novamente.",
+        "stale_button": "⚠️ Este botão está desatualizado. Atualizei o menu.",
+        "unknown_input_hint": "🤍 Não entendi essa mensagem. Use os botões abaixo ✨",
         "first_step_notice": "🤍 Este é o primeiro passo do formulário",
         "reject_non_text": "🤍 Envie sua resposta em texto, por favor.",
+        "field_too_long": "🤍 A resposta está muito longa (máximo de {max} caracteres). Envie uma versão menor.",
         "field_name_short": "🤍 O nome está muito curto. Digite o nome completo:",
         "field_city_short": "🤍 Informe cidade e país novamente:",
         "field_phone_invalid": "🤍 O telefone parece inválido. Exemplo: +55 11 99999 9999",
-        "field_age_invalid": "🤍 Informe a data de nascimento no formato 01.01.2000:",
+        "field_age_invalid": "🤍 Informe a data de nascimento no formato 01.01.2000 (somente 18+):",
         "field_yes_no": "🤍 Responda \"sim\" ou \"não\":",
         "field_devices_short": "🤍 Informe quais dispositivos você tem:",
         "field_device_model_short": "🤍 Informe o modelo do dispositivo:",
@@ -466,7 +475,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Foto de frente",
         "photo_full_label": "🧍 Foto de perfil",
         "profile_about_title": "ℹ️ <b>Sobre o trabalho</b>\n\n• Formato remoto\n• Sem 18+\n• Suporte 24/7\n• Treinamento do zero",
-        "profile_contact_title": "💬 <b>Contato do admin</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Portfólio de modelos</b>\n\nAqui você pode ver exemplos, avaliações e casos reais.",
         "portfolio_send_error": "Não foi possível enviar os materiais",
         "video_cooldown": "🤍 Os vídeos já foram enviados, confira por favor ✨",
@@ -515,7 +524,7 @@ TRANSLATIONS = {
         "menu_website": "🌐 Nuestro sitio",
         "menu_portfolio": "📁 Portafolio de modelos",
         "menu_about": "ℹ️ Sobre el trabajo",
-        "menu_contact": "💬 Contactar admin",
+        "menu_contact": "💬 @streamflowmanager",
         "menu_channel": "📣 Nuestro canal",
         "menu_lang": "🌐 Idioma",
         "btn_back": "⬅ Atrás",
@@ -575,7 +584,7 @@ TRANSLATIONS = {
             "• tu actividad\n"
             "• tu comunicación\n"
             "• regularidad de salidas\n"
-            "• seguir recomendaciones del manager\n\n"
+            "• seguir recomendaciones de @streamflowmanager\n\n"
             "<b>Pagos:</b>\n"
             "• semanales\n"
             "• sin retrasos\n"
@@ -600,12 +609,15 @@ TRANSLATIONS = {
         "rate_limited": "🤍 ¡Gracias! Ya existe una solicitud reciente.\n\nPodrás enviar una nueva más tarde ✨",
         "cannot_send_message": "🤍 No puedo enviar el mensaje. Revisa que el bot no esté bloqueado.",
         "temp_error_retry": "Error temporal. Inténtalo de nuevo.",
+        "stale_button": "⚠️ Este botón está desactualizado. Actualicé el menú.",
+        "unknown_input_hint": "🤍 No entendí ese mensaje. Usa los botones de abajo ✨",
         "first_step_notice": "🤍 Este es el primer paso del formulario",
         "reject_non_text": "🤍 Por favor envía la respuesta en texto.",
+        "field_too_long": "🤍 El mensaje es demasiado largo (máximo {max} caracteres). Envíalo más corto, por favor.",
         "field_name_short": "🤍 El nombre es muy corto. Escribe el nombre completo:",
         "field_city_short": "🤍 Indica ciudad y país nuevamente:",
         "field_phone_invalid": "🤍 El teléfono parece incorrecto. Ejemplo: +34 600 000 000",
-        "field_age_invalid": "🤍 Escribe la fecha de nacimiento como 01.01.2000:",
+        "field_age_invalid": "🤍 Escribe la fecha de nacimiento como 01.01.2000 (solo 18+):",
         "field_yes_no": "🤍 Responde \"sí\" o \"no\":",
         "field_devices_short": "🤍 Indica qué dispositivos tienes:",
         "field_device_model_short": "🤍 Escribe el modelo del dispositivo:",
@@ -622,7 +634,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Foto de frente",
         "photo_full_label": "🧍 Foto de perfil",
         "profile_about_title": "ℹ️ <b>Sobre el trabajo</b>\n\n• Formato remoto\n• Sin 18+\n• Soporte 24/7\n• Formación desde cero",
-        "profile_contact_title": "💬 <b>Contacto del admin</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Portafolio de modelos</b>\n\nAquí puedes ver ejemplos, reseñas y casos reales.",
         "portfolio_send_error": "No se pudieron enviar los materiales",
         "video_cooldown": "🤍 Los videos ya fueron enviados, revísalos por favor ✨",

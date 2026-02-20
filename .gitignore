@@ -10,7 +10,3 @@ bot_database.db
 applications.db
 applications.xlsx
 bot_errors.log
-.env
-__pycache__/
-bot_database.db
-applications.xlsx
