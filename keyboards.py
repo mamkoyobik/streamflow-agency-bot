@@ -8,14 +8,15 @@ CHANNEL_LINK = (os.getenv("CHANNEL_LINK") or "https://t.me/streamflowagency").st
 
 # ================= MAIN MENU =================
 
-def main_menu(lang: str = "ru"):
+def main_menu(lang: str = "ru", channel_url: str | None = None):
+    target_channel = (channel_url or CHANNEL_LINK).strip() or CHANNEL_LINK
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text=t(lang, "menu_be_model"), callback_data="apply")],
         [InlineKeyboardButton(text=t(lang, "menu_website"), url=SITE_URL)],
         [InlineKeyboardButton(text=t(lang, "menu_portfolio"), callback_data="portfolio")],
         [InlineKeyboardButton(text=t(lang, "menu_about"), callback_data="about")],
         [InlineKeyboardButton(text=t(lang, "menu_contact"), callback_data="contact")],
-        [InlineKeyboardButton(text=t(lang, "menu_channel"), url=CHANNEL_LINK)],
+        [InlineKeyboardButton(text=t(lang, "menu_channel"), url=target_channel)],
         [InlineKeyboardButton(text=t(lang, "menu_lang"), callback_data="language_menu")],
     ])
 

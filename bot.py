@@ -196,7 +196,12 @@ async def on_join_request(req: ChatJoinRequest):
             )
 
         had_lang_before = has_user_language(user_id)
-        already_in_bot = had_lang_before or get_application(user_id) is not None
+        already_in_bot = (
+            had_lang_before
+            or get_application(user_id) is not None
+            or bool(get_menu_message_id(user_id))
+            or bool(get_flow_message_id(user_id))
+        )
         if not had_lang_before:
             set_user_language(user_id, channel_lang)
 
@@ -244,7 +249,18 @@ def normalize_birthdate(text: str) -> str | None:
     return None
 
 def is_valid_birthdate(text: str) -> bool:
-    return normalize_birthdate(text) is not None
+    normalized = normalize_birthdate(text)
+    if not normalized:
+        return False
+    try:
+        birth_date = datetime.strptime(normalized, "%d.%m.%Y").date()
+    except ValueError:
+        return False
+    today = datetime.now().date()
+    age = today.year - birth_date.year - (
+        (today.month, today.day) < (birth_date.month, birth_date.day)
+    )
+    return age >= 18
 
 def has_any_digit(text: str) -> bool:
     return any(ch.isdigit() for ch in text)
@@ -797,6 +813,8 @@ MEDIA_CONTENT_TYPES = {"photo", "video", "document", "animation"}
 GENERIC_MARKER_RE = re.compile(r"\[\[(?:CE\d+|E\d+[SE]|LK\d+)\]\]")
 CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
+PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
+PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
 TRANSLATABLE_ENTITY_TYPES = {
     "bold",
     "italic",
@@ -829,7 +847,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• отвечаем по графику, выплатам и процессу\n\n"
             "Дальше выбери удобный формат:\n"
             "• быстро пройти всё в боте и подать заявку без переписок\n"
-            "• или написать менеджеру и записаться через него"
+            f"• или написать {PUBLIC_MANAGER_HANDLE} и записаться через него"
         ),
         "step1": (
             "✅ Предзаявка сохранена.\n\n"
@@ -850,7 +868,16 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "Что дальше",
         "start": "Продолжить этап 2 (обязательно)",
-        "manager": "💬 Написать менеджеру",
+        "manager": f"💬 Написать {PUBLIC_MANAGER_HANDLE}",
+        "menu_recommendation": (
+            "✅ Первая часть анкеты принята мгновенно и автоматически.\n\n"
+            "Чтобы быстрее понять формат, открой пункты:\n"
+            "• 📁 Портфолио моделей\n"
+            "• ℹ️ Подробнее о работе\n"
+            "• 📣 Наш канал\n\n"
+            "После этого нажми «🌸 Стать моделью» и продолжим.\n"
+            f"Если останутся вопросы — пиши {PUBLIC_MANAGER_HANDLE}."
+        ),
         "channel": "📣 Открыть канал",
         "continue_bot": "✅ Подать заявку через бота",
         "wait_gate": "Выбери один из вариантов ниже 👇",
@@ -867,7 +894,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• transparent schedule, payouts and workflow\n\n"
             "Now choose your path:\n"
             "• complete everything in the bot and submit without extra chats\n"
-            "• or message the manager and apply through them"
+            f"• or message {PUBLIC_MANAGER_HANDLE} and apply through them"
         ),
         "step1": (
             "✅ Pre-application saved.\n\n"
@@ -888,7 +915,16 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "What’s next",
         "start": "Continue Step 2 (required)",
-        "manager": "💬 Message manager",
+        "manager": f"💬 Message {PUBLIC_MANAGER_HANDLE}",
+        "menu_recommendation": (
+            "✅ The first part of your application was accepted instantly and automatically.\n\n"
+            "To understand the format better, open these sections:\n"
+            "• 📁 Model portfolio\n"
+            "• ℹ️ About the work\n"
+            "• 📣 Our channel\n\n"
+            "Then tap “🌸 Become a model” to continue.\n"
+            f"If you have questions, message {PUBLIC_MANAGER_HANDLE}."
+        ),
         "channel": "📣 Open channel",
         "continue_bot": "✅ Apply through bot",
         "wait_gate": "Choose one option below 👇",
@@ -905,7 +941,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• regras transparentes de rotina, pagamento e processo\n\n"
             "Agora escolha o caminho:\n"
             "• concluir tudo no bot e enviar sem perder tempo em chats\n"
-            "• ou falar com o gerente e se cadastrar por ele"
+            f"• ou falar com {PUBLIC_MANAGER_HANDLE} e se cadastrar por ele"
         ),
         "step1": (
             "✅ Pré-cadastro salvo.\n\n"
@@ -926,7 +962,16 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "Próximo passo",
         "start": "Continuar Etapa 2 (obrigatória)",
-        "manager": "💬 Falar com gerente",
+        "manager": f"💬 Falar com {PUBLIC_MANAGER_HANDLE}",
+        "menu_recommendation": (
+            "✅ A primeira parte do cadastro foi aceita de forma instantânea e automática.\n\n"
+            "Para entender melhor o formato, abra as seções:\n"
+            "• 📁 Portfólio de modelos\n"
+            "• ℹ️ Sobre o trabalho\n"
+            "• 📣 Nosso canal\n\n"
+            "Depois toque em “🌸 Tornar-se modelo” para continuar.\n"
+            f"Se tiver dúvidas, fale com {PUBLIC_MANAGER_HANDLE}."
+        ),
         "channel": "📣 Abrir canal",
         "continue_bot": "✅ Enviar pelo bot",
         "wait_gate": "Escolha uma opção abaixo 👇",
@@ -943,7 +988,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• reglas transparentes sobre horario, pagos y proceso\n\n"
             "Ahora elige tu camino:\n"
             "• completar todo en el bot y enviar sin perder tiempo en chats\n"
-            "• o escribir al manager y registrarte por su vía"
+            f"• o escribir a {PUBLIC_MANAGER_HANDLE} y registrarte por su vía"
         ),
         "step1": (
             "✅ Pre-solicitud guardada.\n\n"
@@ -964,7 +1009,16 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "Qué sigue",
         "start": "Continuar Etapa 2 (obligatoria)",
-        "manager": "💬 Escribir al manager",
+        "manager": f"💬 Escribir a {PUBLIC_MANAGER_HANDLE}",
+        "menu_recommendation": (
+            "✅ La primera parte de tu solicitud fue aceptada al instante y de forma automática.\n\n"
+            "Para conocer mejor el formato, abre estas secciones:\n"
+            "• 📁 Portafolio de modelos\n"
+            "• ℹ️ Sobre el trabajo\n"
+            "• 📣 Nuestro canal\n\n"
+            "Después pulsa “🌸 Ser modelo” para continuar.\n"
+            f"Si tienes preguntas, escribe a {PUBLIC_MANAGER_HANDLE}."
+        ),
         "channel": "📣 Abrir canal",
         "continue_bot": "✅ Enviar por el bot",
         "wait_gate": "Elige una opción abajo 👇",
@@ -980,7 +1034,7 @@ def stage2_text(lang: str, key: str) -> str:
     )
 
 def manager_contact_url() -> str | None:
-    manager_username = ADMIN_USERNAME.lstrip("@").strip()
+    manager_username = PUBLIC_MANAGER_USERNAME or ADMIN_USERNAME.lstrip("@").strip()
     if not manager_username:
         return None
     return f"https://t.me/{manager_username}"
@@ -1003,11 +1057,74 @@ def stage2_keyboard_step2(lang: str) -> InlineKeyboardMarkup:
     rows.append([InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
-CHANNEL_PUBLIC_LINK = (os.getenv("CHANNEL_LINK") or "https://t.me/streamflowagency").strip()
+def _normalize_telegram_url(value: str | None) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return ""
+    if raw.startswith("@"):
+        return f"https://t.me/{raw.lstrip('@')}"
+    if raw.startswith("t.me/") or raw.startswith("telegram.me/"):
+        return f"https://{raw}"
+    return raw
+
+def _first_nonempty_env(*names: str) -> str:
+    for name in names:
+        raw = os.getenv(name, "").strip()
+        if raw:
+            return raw
+    return ""
+
+CHANNEL_PUBLIC_LINK = _normalize_telegram_url(
+    _first_nonempty_env("CHANNEL_LINK", "CHANNEL_PUBLIC_LINK")
+    or "https://t.me/streamflowagency"
+)
+CHANNEL_LINK_BY_LANG = {
+    "ru": _normalize_telegram_url(
+        _first_nonempty_env(
+            "CHANNEL_LINK_RU",
+            "RU_CHANNEL_LINK",
+            "CHANNEL_RU_LINK",
+        )
+    )
+    or CHANNEL_PUBLIC_LINK,
+    "en": _normalize_telegram_url(
+        _first_nonempty_env(
+            "CHANNEL_LINK_EN",
+            "EN_CHANNEL_LINK",
+            "CHANNEL_EN_LINK",
+            "CHANNEL_ENGLISH_LINK",
+        )
+    )
+    or CHANNEL_PUBLIC_LINK,
+    "pt": _normalize_telegram_url(
+        _first_nonempty_env(
+            "CHANNEL_LINK_PT",
+            "PT_CHANNEL_LINK",
+            "CHANNEL_PT_LINK",
+            "CHANNEL_BR_LINK",
+            "CHANNEL_PORTUGUESE_LINK",
+        )
+    )
+    or CHANNEL_PUBLIC_LINK,
+    "es": _normalize_telegram_url(
+        _first_nonempty_env(
+            "CHANNEL_LINK_ES",
+            "ES_CHANNEL_LINK",
+            "CHANNEL_ES_LINK",
+            "CHANNEL_SPANISH_LINK",
+            "CHANNEL_LATAM_LINK",
+        )
+    )
+    or CHANNEL_PUBLIC_LINK,
+}
+
+def stage2_channel_link(lang: str) -> str:
+    locale = normalize_lang(lang)
+    return CHANNEL_LINK_BY_LANG.get(locale) or CHANNEL_PUBLIC_LINK
 
 def stage2_gate_keyboard(lang: str) -> InlineKeyboardMarkup:
     rows = [
-        [InlineKeyboardButton(text=stage2_text(lang, "channel"), url=CHANNEL_PUBLIC_LINK)],
+        [InlineKeyboardButton(text=stage2_text(lang, "channel"), url=stage2_channel_link(lang))],
     ]
     manager_url = manager_contact_url()
     if manager_url:
@@ -2757,8 +2874,8 @@ async def send_menu(
     caption: str | None = None,
     status: str | None = None,
     intro: str | None = None,
-
-    tail: str | None = None
+    tail: str | None = None,
+    channel_url: str | None = None,
 )-> bool:
     lang = lang_for(message.chat.id)
     base_caption = caption or t(lang, "menu_caption")
@@ -2772,6 +2889,7 @@ async def send_menu(
         message.chat.id,
         final_caption,
         lang=lang,
+        channel_url=channel_url,
     )
 
 
@@ -2790,8 +2908,10 @@ async def send_or_edit_user_menu(
     user_id: int,
     caption: str,
     lang: str | None = None,
+    channel_url: str | None = None,
 ) -> bool:
     locale = normalize_lang(lang or lang_for(user_id))
+    resolved_channel_url = _normalize_telegram_url(channel_url) or CHANNEL_PUBLIC_LINK
     message_id = get_menu_message_id(user_id)
     if message_id:
         try:
@@ -2799,7 +2919,7 @@ async def send_or_edit_user_menu(
                 chat_id=user_id,
                 message_id=message_id,
                 caption=caption,
-                reply_markup=main_menu(locale)
+                reply_markup=main_menu(locale, channel_url=resolved_channel_url)
             )
             return True
         except TelegramBadRequest as e:
@@ -2822,7 +2942,7 @@ async def send_or_edit_user_menu(
             user_id,
             FSInputFile("media/menu.jpg"),
             caption=caption,
-            reply_markup=main_menu(locale)
+            reply_markup=main_menu(locale, channel_url=resolved_channel_url)
         )
         set_menu_message_id(user_id, msg.message_id)
         return True
@@ -3115,7 +3235,22 @@ async def bootstrap_site_stage2_start(
     set_form_data(message.from_user.id, payload)
     set_status(message.from_user.id, "new")
     set_source(message.from_user.id, "site")
-    await enter_stage2_gate(message.from_user.id, state)
+    await state.set_state(ApplicationStates.stage2_gate)
+    set_last_state(message.from_user.id, ApplicationStates.stage2_gate.state)
+    menu_caption = f"{t(lang, 'menu_caption')}\n\n{stage2_text(lang, 'menu_recommendation')}"
+    menu_sent = await send_or_edit_user_menu(
+        message.from_user.id,
+        menu_caption,
+        lang=lang,
+        channel_url=stage2_channel_link(lang),
+    )
+    if not menu_sent:
+        await send_or_edit_user_text(
+            message.from_user.id,
+            stage2_text(lang, "menu_recommendation"),
+            reply_markup=main_menu(lang, channel_url=stage2_channel_link(lang)),
+        )
+    await clear_user_flow_message(message.from_user.id)
     return True
 
 # ================= START =================
@@ -3146,7 +3281,13 @@ async def start(message: Message, state: FSMContext):
         data = get_form_data(message.from_user.id) or {}
         status = app.get("status") if app else None
         lang = lang_for(message.from_user.id)
-        await send_menu(message, caption=t(lang, "menu_caption"), status=status)
+        site_stage2 = is_site_quick_application(app, data)
+        await send_menu(
+            message,
+            caption=t(lang, "menu_caption"),
+            status=status,
+            channel_url=stage2_channel_link(lang) if site_stage2 else None,
+        )
         if app and app.get("last_state") in FORM_PROGRESS_STATES and not get_form_data(message.from_user.id):
             set_last_state(message.from_user.id, None)
         can_resume = (
@@ -3185,9 +3326,16 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     await state.clear()
     await clear_portfolio_media(call.from_user.id)
     app = get_application(call.from_user.id)
+    data = get_form_data(call.from_user.id) or {}
     status = app.get("status") if app else None
     lang = lang_for(call.from_user.id)
-    await send_menu(call.message, caption=t(lang, "menu_caption"), status=status)
+    site_stage2 = is_site_quick_application(app, data)
+    await send_menu(
+        call.message,
+        caption=t(lang, "menu_caption"),
+        status=status,
+        channel_url=stage2_channel_link(lang) if site_stage2 else None,
+    )
     await clear_user_flow_message(call.from_user.id)
 
 
@@ -3231,10 +3379,12 @@ async def set_language_handler(call: CallbackQuery, state: FSMContext):
         set_user_language(call.from_user.id, lang_code)
         lang = lang_for(call.from_user.id)
         app = get_application(call.from_user.id)
+        data = get_form_data(call.from_user.id) or {}
         status = app.get("status") if app else None
         await state.clear()
         await clear_portfolio_media(call.from_user.id)
         intro_text = t(lang, "language_changed", language=LANGUAGE_NAMES.get(lang, lang))
+        site_stage2 = is_site_quick_application(app, data)
         menu_ok = False
         try:
             menu_ok = await send_menu(
@@ -3242,6 +3392,7 @@ async def set_language_handler(call: CallbackQuery, state: FSMContext):
                 caption=t(lang, "menu_caption"),
                 status=status,
                 intro=intro_text,
+                channel_url=stage2_channel_link(lang) if site_stage2 else None,
             )
         except Exception:
             logger.exception("Не удалось обновить меню после смены языка")
@@ -3249,7 +3400,10 @@ async def set_language_handler(call: CallbackQuery, state: FSMContext):
             await send_or_edit_user_text(
                 call.from_user.id,
                 f"{intro_text}\n\n{t(lang, 'menu_caption')}",
-                reply_markup=main_menu(lang),
+                reply_markup=main_menu(
+                    lang,
+                    channel_url=stage2_channel_link(lang) if site_stage2 else None,
+                ),
             )
         await clear_user_flow_message(call.from_user.id)
     except Exception:
@@ -4024,10 +4178,14 @@ async def contact(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
         await clear_portfolio_media(call.from_user.id)
-        username = ADMIN_USERNAME.lstrip("@")
+        username = PUBLIC_MANAGER_USERNAME
         await edit_or_send(
             call,
-            t(lang, "profile_contact_title", link=f"https://t.me/{username}"),
+            t(
+                lang,
+                "profile_contact_title",
+                link=f"https://t.me/{username}",
+            ),
             reply_markup=main_menu(lang)
         )
     except Exception:
