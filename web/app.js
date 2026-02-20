@@ -125,7 +125,7 @@ const I18N = {
     'hero.card4Title': 'Уверенность',
     'hero.card4Text': 'Спокойный рост без давления и стресса.',
     'trust.supportTitle': 'Персональная поддержка старта',
-    'trust.supportText': 'Каждую анкету ведёт менеджер и даёт обратную связь по шагам.',
+    'trust.supportText': 'Каждую анкету ведёт @streamflowmanager и даёт обратную связь по шагам.',
     'trust.communicationTitle': 'Прозрачная коммуникация',
     'trust.communicationText': 'Ответ и обратная связь приходят в Telegram.',
     'trust.channelTitle': 'Канал Streamflow',
@@ -168,7 +168,7 @@ const I18N = {
     'form.subtitle': 'Оставь короткую заявку за 1 минуту, а дальше продолжишь в Telegram или WhatsApp.',
     'form.mini1': 'Оставляешь базовые данные.',
     'form.mini2': 'После подачи заявки выберешь удобный мессенджер.',
-    'form.mini3': 'В боте ты дозаполнишь анкету и перейдёшь к старту.',
+    'form.mini3': 'Дальше свяжемся в выбранном мессенджере.',
     'form.progressTitle': 'Короткая заявка',
     'form.side1': 'Имя',
     'form.side2': 'Телефон',
@@ -218,7 +218,7 @@ const I18N = {
     'validation.name': 'Введите имя полностью.',
     'validation.city': 'Укажи страну.',
     'validation.phone': 'Введите телефон в формате +7 900 000 00 00.',
-    'validation.age': 'Дата рождения в формате 01.01.2000.',
+    'validation.age': 'Укажи дату рождения в формате 01.01.2000 (только 18+).',
     'validation.yesNo': 'Ответь «да» или «нет».',
     'validation.devices': 'Уточни, какие устройства есть.',
     'validation.deviceModel': 'Напиши модель устройства.',
@@ -265,7 +265,7 @@ const I18N = {
     'hero.card4Title': 'Confidence',
     'hero.card4Text': 'Steady growth without stress.',
     'trust.supportTitle': 'Personal launch support',
-    'trust.supportText': 'Every profile is handled by a manager with clear feedback.',
+    'trust.supportText': 'Every profile is handled by @streamflowmanager with clear feedback.',
     'trust.communicationTitle': 'Transparent communication',
     'trust.communicationText': 'Response and updates are sent via Telegram.',
     'trust.channelTitle': 'Streamflow channel',
@@ -308,7 +308,7 @@ const I18N = {
     'form.subtitle': 'Send a quick 1-minute application, then continue in Telegram or WhatsApp.',
     'form.mini1': 'Leave your basic contact details.',
     'form.mini2': 'After sending, choose the messenger that is easier for you.',
-    'form.mini3': 'In the bot you complete the form and move to onboarding.',
+    'form.mini3': 'Next updates will come in your selected messenger.',
     'form.progressTitle': 'Quick application',
     'form.side1': 'Name',
     'form.side2': 'Phone',
@@ -358,7 +358,7 @@ const I18N = {
     'validation.name': 'Enter full name.',
     'validation.city': 'Enter your country.',
     'validation.phone': 'Enter phone like +1 555 123 4567.',
-    'validation.age': 'Birth date format: 01.01.2000.',
+    'validation.age': 'Birth date format: 01.01.2000 (18+ only).',
     'validation.yesNo': 'Answer "yes" or "no".',
     'validation.devices': 'Specify available devices.',
     'validation.deviceModel': 'Enter your device model.',
@@ -405,7 +405,7 @@ const I18N = {
     'hero.card4Title': 'Confiança',
     'hero.card4Text': 'Crescimento estável sem estresse.',
     'trust.supportTitle': 'Suporte pessoal no início',
-    'trust.supportText': 'Cada candidatura é acompanhada por um gerente.',
+    'trust.supportText': 'Cada candidatura é acompanhada por @streamflowmanager.',
     'trust.communicationTitle': 'Comunicação transparente',
     'trust.communicationText': 'Resposta e acompanhamento via Telegram.',
     'trust.channelTitle': 'Canal Streamflow',
@@ -448,7 +448,7 @@ const I18N = {
     'form.subtitle': 'Envie um cadastro rápido de 1 minuto e continue no Telegram ou WhatsApp.',
     'form.mini1': 'Você envia seus dados básicos.',
     'form.mini2': 'Depois do envio, você escolhe o mensageiro mais prático.',
-    'form.mini3': 'No bot você completa o cadastro e segue para o início.',
+    'form.mini3': 'As próximas atualizações chegam no mensageiro escolhido.',
     'form.progressTitle': 'Cadastro rápido',
     'form.side1': 'Nome',
     'form.side2': 'Telefone',
@@ -498,7 +498,7 @@ const I18N = {
     'validation.name': 'Digite o nome completo.',
     'validation.city': 'Informe o país.',
     'validation.phone': 'Digite telefone no formato +55 11 99999 9999.',
-    'validation.age': 'Data no formato 01.01.2000.',
+    'validation.age': 'Data no formato 01.01.2000 (somente 18+).',
     'validation.yesNo': 'Responda "sim" ou "não".',
     'validation.devices': 'Informe quais dispositivos você tem.',
     'validation.deviceModel': 'Informe o modelo do dispositivo.',
@@ -545,7 +545,7 @@ const I18N = {
     'hero.card4Title': 'Confianza',
     'hero.card4Text': 'Crecimiento estable sin estrés.',
     'trust.supportTitle': 'Soporte personal de inicio',
-    'trust.supportText': 'Cada solicitud la revisa un manager con feedback claro.',
+    'trust.supportText': 'Cada solicitud la revisa @streamflowmanager con feedback claro.',
     'trust.communicationTitle': 'Comunicación transparente',
     'trust.communicationText': 'Respuesta y seguimiento por Telegram.',
     'trust.channelTitle': 'Canal Streamflow',
@@ -588,7 +588,7 @@ const I18N = {
     'form.subtitle': 'Envía una solicitud rápida de 1 minuto y continúa en Telegram o WhatsApp.',
     'form.mini1': 'Dejas tus datos básicos.',
     'form.mini2': 'Después del envío, eliges el mensajero más cómodo.',
-    'form.mini3': 'En el bot completas la solicitud y sigues al inicio.',
+    'form.mini3': 'Las siguientes actualizaciones llegarán al mensajero que elijas.',
     'form.progressTitle': 'Solicitud rápida',
     'form.side1': 'Nombre',
     'form.side2': 'Teléfono',
@@ -638,7 +638,7 @@ const I18N = {
     'validation.name': 'Escribe el nombre completo.',
     'validation.city': 'Indica el país.',
     'validation.phone': 'Escribe teléfono en formato internacional.',
-    'validation.age': 'Fecha en formato 01.01.2000.',
+    'validation.age': 'Fecha en formato 01.01.2000 (solo 18+).',
     'validation.yesNo': 'Responde "sí" o "no".',
     'validation.devices': 'Indica qué dispositivos tienes.',
     'validation.deviceModel': 'Escribe el modelo del dispositivo.',
@@ -1665,6 +1665,14 @@ function setupContactChoice(form) {
   const whatsappHidden = form.querySelector('input[name="whatsapp"]');
   if (!contactInput || !contactChoices.length) return;
 
+  function syncChoiceClasses() {
+    contactChoices.forEach((radio) => {
+      const option = radio.closest('.contact-option');
+      if (!option) return;
+      option.classList.toggle('is-selected', Boolean(radio.checked));
+    });
+  }
+
   function syncContactFields() {
     const selected = form.querySelector('input[name="preferred_contact"]:checked');
     const mode = selected ? selected.value : 'telegram';
@@ -1683,7 +1691,15 @@ function setupContactChoice(form) {
   }
 
   contactChoices.forEach((radio) => {
+    const option = radio.closest('.contact-option');
+    radio.addEventListener('focus', () => {
+      if (option) option.classList.add('is-focused');
+    });
+    radio.addEventListener('blur', () => {
+      if (option) option.classList.remove('is-focused');
+    });
     radio.addEventListener('change', () => {
+      syncChoiceClasses();
       syncContactFields();
       const stepper = form.__stepper;
       if (stepper) {
@@ -1693,9 +1709,13 @@ function setupContactChoice(form) {
   });
   contactInput.addEventListener('input', syncContactFields);
   document.addEventListener('site-language-changed', syncContactFields);
-  form.addEventListener('form:reset-steps', syncContactFields);
+  form.addEventListener('form:reset-steps', () => {
+    syncContactFields();
+    syncChoiceClasses();
+  });
   form.__syncContactFields = syncContactFields;
   syncContactFields();
+  syncChoiceClasses();
 }
 
 async function sendApplication(formData, elements, options = {}) {
@@ -2001,5 +2021,13 @@ function isValidBirthdate(value) {
   if (date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) return false;
   const today = new Date();
   today.setHours(0, 0, 0, 0);
-  return date <= today;
+  if (date > today) return false;
+  const age =
+    today.getFullYear() -
+    date.getFullYear() -
+    (today.getMonth() < date.getMonth() ||
+    (today.getMonth() === date.getMonth() && today.getDate() < date.getDate())
+      ? 1
+      : 0);
+  return age >= 18;
 }

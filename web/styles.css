@@ -1950,11 +1950,11 @@ body[data-page="home"] .page {
   font-weight: 500;
 }
 
-.contact-option:has(input[type="radio"]:focus-visible) {
+.contact-option.is-focused {
   box-shadow: 0 0 0 2px rgba(255, 59, 157, 0.28);
 }
 
-.contact-option:has(input[type="radio"]:checked) {
+.contact-option.is-selected {
   border-color: rgba(255, 59, 157, 0.62);
   background: rgba(255, 59, 157, 0.12);
 }

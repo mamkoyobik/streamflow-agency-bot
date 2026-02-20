@@ -26,23 +26,44 @@ from database import (
 )
 from texts import STATUS_LABELS
 from time_utils import format_submit_time
+from application_rules import (
+    FORM_NAME_MAX_LEN as SHARED_FORM_NAME_MAX_LEN,
+    FORM_CITY_MAX_LEN as SHARED_FORM_CITY_MAX_LEN,
+    FORM_PHONE_MAX_LEN as SHARED_FORM_PHONE_MAX_LEN,
+    FORM_AGE_MAX_LEN as SHARED_FORM_AGE_MAX_LEN,
+    FORM_DEVICE_MODEL_MAX_LEN as SHARED_FORM_DEVICE_MODEL_MAX_LEN,
+    FORM_WORK_TIME_MAX_LEN as SHARED_FORM_WORK_TIME_MAX_LEN,
+    FORM_TELEGRAM_MAX_LEN as SHARED_FORM_TELEGRAM_MAX_LEN,
+    FORM_EXPERIENCE_MAX_LEN as SHARED_FORM_EXPERIENCE_MAX_LEN,
+    FORM_WA_TEXT_MAX_LEN as SHARED_FORM_WA_TEXT_MAX_LEN,
+    clean_user_text as shared_clean_user_text,
+    normalize_phone as shared_normalize_phone,
+    is_valid_phone as shared_is_valid_phone,
+    normalize_birthdate as shared_normalize_birthdate,
+    is_valid_birthdate as shared_is_valid_birthdate,
+    has_any_digit as shared_has_any_digit,
+    normalize_yes_no as shared_normalize_yes_no,
+    normalize_telegram as shared_normalize_telegram,
+)
 
 ROOT_DIR = Path(__file__).parent
 WEB_DIR = ROOT_DIR / "web"
 ENV_PATH = ROOT_DIR / ".env"
 
 MAX_BODY_SIZE = 30 * 1024 * 1024
+MAX_NAME_LEN = SHARED_FORM_NAME_MAX_LEN
+MAX_CITY_LEN = SHARED_FORM_CITY_MAX_LEN
+MAX_PHONE_LEN = SHARED_FORM_PHONE_MAX_LEN
+MAX_BIRTHDATE_LEN = SHARED_FORM_AGE_MAX_LEN
+MAX_DEVICE_LEN = SHARED_FORM_DEVICE_MODEL_MAX_LEN
+MAX_CONTACT_VALUE_LEN = max(SHARED_FORM_TELEGRAM_MAX_LEN, SHARED_FORM_PHONE_MAX_LEN)
+MAX_COUNTRY_LEN = 80
+MAX_WORK_TIME_LEN = SHARED_FORM_WORK_TIME_MAX_LEN
+MAX_EXPERIENCE_LEN = SHARED_FORM_EXPERIENCE_MAX_LEN
+MAX_WA_TEXT_LEN = SHARED_FORM_WA_TEXT_MAX_LEN
+MAX_URL_VALUE_LEN = 2048
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
-YES_RE = re.compile(
-    r"\b(да|ага|есть|имеется|конечно|yes|y|da|ok|okay|si|sí|sim)\b",
-    re.IGNORECASE,
-)
-NO_RE = re.compile(
-    r"\b(нет|нету|неа|no|n|nao|não|nao)\b",
-    re.IGNORECASE,
-)
-
 SUPPORTED_SITE_LANGS = {"ru", "en", "pt", "es"}
 SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
 
@@ -86,6 +107,7 @@ INFOBIP_FORWARD_TO_ADMIN = _env_flag("INFOBIP_FORWARD_TO_ADMIN", False)
 INFOBIP_RELAY_MODE = _env_flag("INFOBIP_RELAY_MODE", False)
 INFOBIP_BOT_ENABLED = _env_flag("INFOBIP_BOT_ENABLED", True)
 INFOBIP_INTERACTIVE_ENABLED = _env_flag("INFOBIP_INTERACTIVE_ENABLED", True)
+WHATSAPP_STAGE2_PREFILL = _env_flag("WHATSAPP_STAGE2_PREFILL", True)
 INFOBIP_API_KEY = (os.getenv("INFOBIP_API_KEY", "") or "").strip()
 INFOBIP_BASE_URL = (os.getenv("INFOBIP_BASE_URL", "") or "").strip().rstrip("/")
 INFOBIP_WHATSAPP_SENDER = (os.getenv("INFOBIP_WHATSAPP_SENDER", "") or "").strip()
@@ -107,7 +129,7 @@ FIELD_ERRORS = {
         "name": "🤍 Имя должно быть чуть длиннее. Напиши, пожалуйста, полностью:",
         "city": "🤍 Подскажи город и страну проживания ещё раз:",
         "phone": "🤍 Кажется, номер введён некорректно. Пример: +7 900 000 00 00",
-        "age": "🤍 Напиши дату рождения в формате 01.01.2000:",
+        "age": "🤍 Напиши дату рождения в формате 01.01.2000 (только 18+):",
         "yes_no": "🤍 Ответь, пожалуйста, «да» или «нет»:",
         "devices": "🤍 Уточни, пожалуйста, какие устройства есть:",
         "device_model": "🤍 Напиши модель устройства, пожалуйста:",
@@ -122,7 +144,7 @@ FIELD_ERRORS = {
         "name": "Please enter your full name.",
         "city": "Please enter your city and country.",
         "phone": "Phone number looks incorrect. Example: +1 555 123 4567",
-        "age": "Please enter birth date as 01.01.2000",
+        "age": "Please enter birth date as 01.01.2000 (18+ only).",
         "yes_no": "Please answer yes or no.",
         "devices": "Please specify available devices.",
         "device_model": "Please enter your device model.",
@@ -137,7 +159,7 @@ FIELD_ERRORS = {
         "name": "Digite seu nome completo.",
         "city": "Informe sua cidade e país.",
         "phone": "Telefone inválido. Exemplo: +55 11 99999 9999",
-        "age": "Informe a data no formato 01.01.2000",
+        "age": "Informe a data no formato 01.01.2000 (somente 18+).",
         "yes_no": "Responda sim ou não.",
         "devices": "Informe os dispositivos disponíveis.",
         "device_model": "Informe o modelo do dispositivo.",
@@ -152,7 +174,7 @@ FIELD_ERRORS = {
         "name": "Escribe tu nombre completo.",
         "city": "Indica ciudad y país.",
         "phone": "Número de teléfono inválido. Ejemplo: +34 600 000 000",
-        "age": "Indica la fecha en formato 01.01.2000",
+        "age": "Indica la fecha en formato 01.01.2000 (solo 18+).",
         "yes_no": "Responde sí o no.",
         "devices": "Indica qué dispositivos tienes.",
         "device_model": "Indica el modelo del dispositivo.",
@@ -176,7 +198,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Фото слишком большое. Пришли файл меньше 10 МБ.",
         "token_missing": "Не настроен BOT_TOKEN или ADMIN_GROUP_ID.",
         "db_error": "Ошибка сохранения анкеты. Попробуй ещё раз.",
-        "success": "✅ Заявка отправлена. Дальше выбери удобный мессенджер для продолжения.",
+        "success": "✅ Заявка принята мгновенно и автоматически. Дальше выбери удобный мессенджер для продолжения.",
     },
     "en": {
         "bad_size": "Invalid request size.",
@@ -188,7 +210,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Photo is too large. Please upload under 10MB.",
         "token_missing": "BOT_TOKEN or ADMIN_GROUP_ID is not configured.",
         "db_error": "Failed to save application. Please try again.",
-        "success": "✅ Application sent. Choose your preferred messenger to continue.",
+        "success": "✅ Application received instantly and automatically. Choose your preferred messenger to continue.",
     },
     "pt": {
         "bad_size": "Tamanho da requisição inválido.",
@@ -200,7 +222,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Foto muito grande. Envie arquivo menor que 10MB.",
         "token_missing": "BOT_TOKEN ou ADMIN_GROUP_ID não configurado.",
         "db_error": "Falha ao salvar candidatura. Tente novamente.",
-        "success": "✅ Cadastro enviado. Escolha o mensageiro para continuar.",
+        "success": "✅ Cadastro recebido instantaneamente e automaticamente. Escolha o mensageiro para continuar.",
     },
     "es": {
         "bad_size": "Tamaño de solicitud inválido.",
@@ -212,7 +234,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "La foto es demasiado grande. Sube un archivo menor de 10MB.",
         "token_missing": "BOT_TOKEN o ADMIN_GROUP_ID no están configurados.",
         "db_error": "Error al guardar la solicitud. Inténtalo de nuevo.",
-        "success": "✅ Solicitud enviada. Elige el mensajero para continuar.",
+        "success": "✅ Solicitud recibida al instante y automáticamente. Elige el mensajero para continuar.",
     },
 }
 
@@ -229,7 +251,7 @@ WA_TEXTS = {
             "2 — Сайт\n"
             "3 — Портфолио\n"
             "4 — О работе\n"
-            "5 — Менеджер\n"
+            "5 — @streamflowmanager\n"
             "6 — Канал\n"
             "7 — Сменить язык\n\n"
             "Напиши номер пункта."
@@ -243,8 +265,8 @@ WA_TEXTS = {
         "invalid_name": "Имя слишком короткое. Напиши, пожалуйста, имя ещё раз:",
         "ask_phone": "Укажи номер телефона (или напиши SAME, чтобы использовать этот WhatsApp номер):",
         "invalid_phone": "Номер некорректный. Пример: +7 900 000 00 00",
-        "ask_age": "Укажи дату рождения в формате 01.01.2000:",
-        "invalid_age": "Дата некорректна. Используй формат 01.01.2000",
+        "ask_age": "Укажи дату рождения в формате 01.01.2000 (только 18+):",
+        "invalid_age": "Дата некорректна. Нужен формат 01.01.2000 и возраст 18+.",
         "ask_device": "Напиши модель устройства (например: iPhone 13):",
         "invalid_device": "Модель слишком короткая. Напиши устройство ещё раз:",
         "ask_telegram": "Укажи Telegram для связи в формате @username:",
@@ -263,7 +285,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Нужна именно фотография в профиль/полный рост (изображение).",
         "saved": (
             "✅ Заявка принята!\n\n"
-            "Мы передали её менеджеру. Ожидай ответ в ближайшее время."
+            "Мы передали её @streamflowmanager. Ожидай ответ в ближайшее время."
         ),
         "already": "Заявка уже отправлена. Если хочешь отправить новую, напиши START.",
     },
@@ -279,7 +301,7 @@ WA_TEXTS = {
             "2 — Website\n"
             "3 — Portfolio\n"
             "4 — About work\n"
-            "5 — Manager\n"
+            "5 — @streamflowmanager\n"
             "6 — Channel\n"
             "7 — Change language\n\n"
             "Send a menu number."
@@ -293,8 +315,8 @@ WA_TEXTS = {
         "invalid_name": "Name is too short. Please enter it again:",
         "ask_phone": "Send your phone number (or type SAME to use this WhatsApp number):",
         "invalid_phone": "Invalid phone number. Example: +1 555 123 4567",
-        "ask_age": "Enter birth date in format 01.01.2000:",
-        "invalid_age": "Invalid date. Use format 01.01.2000",
+        "ask_age": "Enter birth date in format 01.01.2000 (18+ only):",
+        "invalid_age": "Invalid date. Use 01.01.2000 format and 18+ age.",
         "ask_device": "Send your device model (example: iPhone 13):",
         "invalid_device": "Device model is too short. Please enter again:",
         "ask_telegram": "Send your Telegram username in format @username:",
@@ -313,7 +335,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Please send a profile/full-body image.",
         "saved": (
             "✅ Application received!\n\n"
-            "We sent it to the manager. You will get a reply soon."
+            "We sent it to @streamflowmanager. You will get a reply soon."
         ),
         "already": "Application already sent. If you want to start again, type START.",
     },
@@ -329,7 +351,7 @@ WA_TEXTS = {
             "2 — Site\n"
             "3 — Portfólio\n"
             "4 — Sobre o trabalho\n"
-            "5 — Gerente\n"
+            "5 — @streamflowmanager\n"
             "6 — Canal\n"
             "7 — Trocar idioma\n\n"
             "Envie o número da opção."
@@ -343,8 +365,8 @@ WA_TEXTS = {
         "invalid_name": "Nome muito curto. Envie novamente:",
         "ask_phone": "Informe seu telefone (ou digite SAME para usar este número do WhatsApp):",
         "invalid_phone": "Telefone inválido. Exemplo: +55 11 99999 9999",
-        "ask_age": "Informe sua data de nascimento no formato 01.01.2000:",
-        "invalid_age": "Data inválida. Use o formato 01.01.2000",
+        "ask_age": "Informe sua data de nascimento no formato 01.01.2000 (somente 18+):",
+        "invalid_age": "Data inválida. Use o formato 01.01.2000 e idade 18+.",
         "ask_device": "Informe o modelo do seu dispositivo (ex.: iPhone 13):",
         "invalid_device": "Modelo muito curto. Envie novamente:",
         "ask_telegram": "Informe seu Telegram no formato @username:",
@@ -363,7 +385,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Envie uma imagem de perfil/corpo inteiro, por favor.",
         "saved": (
             "✅ Candidatura recebida!\n\n"
-            "Enviamos para o gerente. Você receberá retorno em breve."
+            "Enviamos para @streamflowmanager. Você receberá retorno em breve."
         ),
         "already": "Candidatura já enviada. Se quiser começar de novo, digite START.",
     },
@@ -379,7 +401,7 @@ WA_TEXTS = {
             "2 — Sitio web\n"
             "3 — Portafolio\n"
             "4 — Sobre el trabajo\n"
-            "5 — Manager\n"
+            "5 — @streamflowmanager\n"
             "6 — Canal\n"
             "7 — Cambiar idioma\n\n"
             "Envía el número de opción."
@@ -393,8 +415,8 @@ WA_TEXTS = {
         "invalid_name": "Nombre demasiado corto. Escríbelo otra vez:",
         "ask_phone": "Indica tu teléfono (o escribe SAME para usar este número de WhatsApp):",
         "invalid_phone": "Número inválido. Ejemplo: +34 600 000 000",
-        "ask_age": "Indica fecha de nacimiento en formato 01.01.2000:",
-        "invalid_age": "Fecha inválida. Usa el formato 01.01.2000",
+        "ask_age": "Indica fecha de nacimiento en formato 01.01.2000 (solo 18+):",
+        "invalid_age": "Fecha inválida. Usa formato 01.01.2000 y edad 18+.",
         "ask_device": "Indica el modelo de tu dispositivo (ej.: iPhone 13):",
         "invalid_device": "Modelo demasiado corto. Escríbelo otra vez:",
         "ask_telegram": "Indica tu Telegram en formato @username:",
@@ -413,7 +435,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Necesito una imagen de perfil/cuerpo completo, por favor.",
         "saved": (
             "✅ Solicitud recibida.\n\n"
-            "La enviamos al manager. Te responderemos pronto."
+            "La enviamos a @streamflowmanager. Te responderemos pronto."
         ),
         "already": "La solicitud ya fue enviada. Si quieres reiniciar, escribe START.",
     },
@@ -463,11 +485,23 @@ def field_error(lang: str, key: str) -> str:
     return FIELD_ERRORS.get(locale, FIELD_ERRORS["ru"]).get(key, FIELD_ERRORS["ru"].get(key, ""))
 
 
+def field_too_long_error(lang: str, max_len: int) -> str:
+    locale = normalize_site_lang(lang)
+    templates = {
+        "ru": "🤍 Ответ слишком длинный (максимум {max} символов). Отправь короче, пожалуйста.",
+        "en": "Your message is too long (maximum {max} characters). Please send a shorter one.",
+        "pt": "Sua resposta está muito longa (máximo de {max} caracteres). Envie uma versão menor.",
+        "es": "Tu mensaje es demasiado largo (máximo {max} caracteres). Envíalo más corto, por favor.",
+    }
+    template = templates.get(locale, templates["ru"])
+    return template.format(max=max_len)
+
+
 def load_settings():
     load_env_file(ENV_PATH)
     bot_token = os.getenv("BOT_TOKEN", "").strip()
     admin_group_id = os.getenv("ADMIN_GROUP_ID", "").strip()
-    admin_username = os.getenv("ADMIN_USERNAME", "").strip()
+    admin_username = os.getenv("ADMIN_USERNAME", "streamflowmanager").strip()
     bot_username = os.getenv("BOT_USERNAME", "StreamFlowAgencybot").strip()
     channel_link = os.getenv("CHANNEL_LINK", "https://t.me/streamflowagency").strip()
     site_url = (os.getenv("SITE_URL", "https://streamflowagency.com") or "https://streamflowagency.com").strip()
@@ -477,6 +511,8 @@ def load_settings():
 BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK, SITE_URL = load_settings()
 SITE_URL = SITE_URL.rstrip("/")
 CANONICAL_HOST = (urllib.parse.urlparse(SITE_URL).netloc or "").split(":", 1)[0].lower()
+PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
+PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
 
 def site_lead_setting_key(token: str) -> str:
     return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
@@ -537,8 +573,13 @@ def build_whatsapp_stage2_link(token: str, lang: str | None = None) -> str | Non
     base = build_whatsapp_base_link()
     if not base:
         return None
-    # Keep entry UX clean: do not force technical prefilled text in chat input.
-    return base
+    if not token:
+        return base
+    if not WHATSAPP_STAGE2_PREFILL:
+        return base
+    locale = normalize_site_lang(lang)
+    command = f"s2_{token}_{locale}"
+    return f"{base}?text={urllib.parse.quote(command, safe='')}"
 try:
     from excel_export import append_application_row
 except Exception:
@@ -572,29 +613,7 @@ def get_ssl_context():
 
 
 def normalize_phone(text: str) -> str | None:
-    value = re.sub(r"[()\s\-]+", "", text.strip())
-    if not value:
-        return None
-    if value.startswith("+"):
-        digits = value[1:]
-        if not digits.isdigit():
-            return None
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
-        return f"+{digits}"
-    if value.startswith("00"):
-        digits = value[2:]
-        if not digits.isdigit():
-            return None
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
-        return f"+{digits}"
-    if value.isdigit():
-        digits = value
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
-        return f"+{digits}"
-    return None
+    return shared_normalize_phone(text)
 
 
 PHONE_COUNTRY_BY_CODE = {
@@ -643,69 +662,36 @@ def extract_country_from_phone(phone: str | None) -> str | None:
             return PHONE_COUNTRY_BY_CODE[code]
     return None
 
-def clean_text(value: str) -> str:
-    text = value or ""
-    text = re.sub(r"[\u200b-\u200f\u202a-\u202e\u2060\ufeff\ufffd]", "", text)
-    text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
+def clean_text(value: str, max_len: int | None = None) -> str:
+    return shared_clean_user_text(value, max_len=max_len)
 
 
 def is_valid_phone(text: str) -> bool:
-    normalized = normalize_phone(text)
-    if not normalized:
-        return False
-    digits = re.sub(r"\D", "", normalized)
-    return 10 <= len(digits) <= 15
+    return shared_is_valid_phone(text)
 
 
 def normalize_birthdate(text: str) -> str | None:
-    value = text.strip()
-    for fmt in ("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d"):
-        try:
-            dt = datetime.strptime(value, fmt)
-            if dt.year < 1900 or dt.date() > datetime.now().date():
-                return None
-            return dt.strftime("%d.%m.%Y")
-        except ValueError:
-            continue
-    return None
+    return shared_normalize_birthdate(text)
+
+
+def is_adult_birthdate(text: str, min_age: int = 18) -> bool:
+    return shared_is_valid_birthdate(text, min_age=min_age)
 
 
 def is_valid_birthdate(text: str) -> bool:
-    return normalize_birthdate(text) is not None
+    return shared_is_valid_birthdate(text, min_age=18)
 
 
 def has_any_digit(text: str) -> bool:
-    return any(ch.isdigit() for ch in text)
+    return shared_has_any_digit(text)
 
 
 def normalize_yes_no(text: str) -> str | None:
-    value = text.strip().lower()
-    if not value:
-        return None
-    if YES_RE.search(value):
-        return "Да"
-    if NO_RE.search(value):
-        return "Нет"
-    return None
+    return shared_normalize_yes_no(text)
 
 
 def normalize_telegram(text: str) -> str | None:
-    value = text.strip()
-    if value.startswith("https://t.me/"):
-        value = value.split("/")[-1]
-    elif value.startswith("http://t.me/"):
-        value = value.split("/")[-1]
-    elif value.startswith("t.me/"):
-        value = value.split("/", 1)[1]
-
-    if value.startswith("@"):
-        value = value[1:]
-
-    if re.fullmatch(r"[A-Za-z0-9_]{5,32}", value):
-        return f"@{value}"
-    return None
+    return shared_normalize_telegram(text)
 
 
 def _safe(value: str | None) -> str:
@@ -913,13 +899,14 @@ def _infobip_dedupe_key(message: dict) -> str:
     return f"infobip_seen:{digest}"
 
 
-def _mark_infobip_seen(message: dict) -> bool:
+def _is_infobip_seen(message: dict) -> bool:
     key = _infobip_dedupe_key(message)
-    exists = get_setting(key)
-    if exists:
-        return True
+    return bool(get_setting(key))
+
+
+def _mark_infobip_seen(message: dict) -> None:
+    key = _infobip_dedupe_key(message)
     set_setting(key, datetime.now(timezone.utc).isoformat())
-    return False
 
 
 def _format_infobip_forward_text(message: dict) -> str:
@@ -1059,7 +1046,7 @@ def _parse_wa_menu_choice(text: str | None) -> str | None:
 
 
 def _wa_manager_link() -> str | None:
-    username = (ADMIN_USERNAME or "").strip().lstrip("@")
+    username = (PUBLIC_MANAGER_USERNAME or "").strip().lstrip("@")
     if not username:
         return None
     return f"https://t.me/{username}"
@@ -1331,7 +1318,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Website", "description": "Open website"},
             {"id": "menu_portfolio", "title": "Portfolio", "description": "View portfolio"},
             {"id": "menu_about", "title": "About work", "description": "How it works"},
-            {"id": "menu_manager", "title": "Manager", "description": "Contact manager"},
+            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Contact @streamflowmanager"},
             {"id": "menu_channel", "title": "Channel", "description": "Telegram channel"},
             {"id": "menu_language", "title": "Change language", "description": "Switch language"},
         ]
@@ -1344,7 +1331,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Site", "description": "Abrir site"},
             {"id": "menu_portfolio", "title": "Portfólio", "description": "Ver portfólio"},
             {"id": "menu_about", "title": "Sobre o trabalho", "description": "Como funciona"},
-            {"id": "menu_manager", "title": "Gerente", "description": "Falar com gerente"},
+            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Falar com @streamflowmanager"},
             {"id": "menu_channel", "title": "Canal", "description": "Canal do Telegram"},
             {"id": "menu_language", "title": "Trocar idioma", "description": "Mudar idioma"},
         ]
@@ -1357,7 +1344,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Sitio web", "description": "Abrir sitio"},
             {"id": "menu_portfolio", "title": "Portafolio", "description": "Ver portafolio"},
             {"id": "menu_about", "title": "Sobre el trabajo", "description": "Cómo funciona"},
-            {"id": "menu_manager", "title": "Manager", "description": "Contactar manager"},
+            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Contactar @streamflowmanager"},
             {"id": "menu_channel", "title": "Canal", "description": "Canal de Telegram"},
             {"id": "menu_language", "title": "Cambiar idioma", "description": "Cambiar idioma"},
         ]
@@ -1370,7 +1357,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Сайт", "description": "Открыть сайт"},
             {"id": "menu_portfolio", "title": "Портфолио", "description": "Посмотреть портфолио"},
             {"id": "menu_about", "title": "О работе", "description": "Как всё устроено"},
-            {"id": "menu_manager", "title": "Менеджер", "description": "Связаться с менеджером"},
+            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Связаться с @streamflowmanager"},
             {"id": "menu_channel", "title": "Канал", "description": "Telegram канал"},
             {"id": "menu_language", "title": "Сменить язык", "description": "Выбрать язык"},
         ]
@@ -1404,6 +1391,32 @@ def send_wa_interactive_controls(to_phone: str | None) -> bool:
             [{"title": section, "rows": rows}],
         )
 
+    return False
+
+
+def _is_wa_menu_only_reply(flow: dict | None, reply: str | None) -> bool:
+    if not isinstance(flow, dict):
+        return False
+    body = (reply or "").strip()
+    if not body:
+        return False
+    lang = normalize_site_lang(flow.get("lang"))
+    step = str(flow.get("step") or "").strip().lower()
+    if step == "lang":
+        candidates = {
+            wa_t(lang, "choose_lang").strip(),
+            wa_t(lang, "invalid_lang").strip(),
+            wa_t("ru", "choose_lang").strip(),
+            wa_t("ru", "invalid_lang").strip(),
+        }
+        return body in candidates
+    if step == "menu":
+        candidates = {
+            _wa_menu_text(lang).strip(),
+            wa_t(lang, "menu").strip(),
+            wa_t(lang, "menu_invalid").strip(),
+        }
+        return body in candidates
     return False
 
 
@@ -1517,7 +1530,7 @@ def _wa_stage2_text(lang: str, key: str) -> str:
         "ru": {
             "intro": (
                 "✨ Первый этап с сайта уже сохранён.\n"
-                "Сейчас быстро дозаполним анкету здесь."
+                "Сейчас быстро дозаполним анкету здесь (2-3 минуты)."
             ),
             "living": "1/6 Есть ли помещение без посторонних? Ответь: да или нет.",
             "living_invalid": "Ответь, пожалуйста, да или нет.",
@@ -1527,15 +1540,15 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "work_time_invalid": "Укажи часы цифрами, например: 6",
             "experience": "4/6 Есть ли опыт? Если нет — так и напиши.",
             "experience_invalid": "Напиши пару слов про опыт (или что опыта нет).",
-            "photo_face": "5/6 Пришли фото анфас.",
+            "photo_face": "5/6 Пришли фото анфас (нужно для быстрой проверки, конфиденциально).",
             "photo_face_invalid": "Нужна именно фотография анфас (изображение).",
-            "photo_full": "6/6 Пришли фото в полный рост.",
+            "photo_full": "6/6 Пришли фото в полный рост (конфиденциально, только для проверки анкеты).",
             "photo_full_invalid": "Нужна именно фотография в полный рост (изображение).",
-            "done": "✅ Готово. Полная анкета отправлена менеджеру.",
+            "done": "✅ Готово. Полная анкета отправлена @streamflowmanager.",
             "expired": "⚠️ Ссылка устарела. Оставь новую заявку на сайте.",
         },
         "en": {
-            "intro": "✨ Your first stage from the website is saved.\nNow let’s finish the form here.",
+            "intro": "✨ Your first stage from the website is saved.\nNow let’s finish the form here (about 2-3 minutes).",
             "living": "1/6 Do you have a private room without interruptions? Reply: yes or no.",
             "living_invalid": "Please reply yes or no.",
             "city": "2/6 Your city and country:",
@@ -1544,15 +1557,15 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "work_time_invalid": "Please enter hours as a number, example: 6",
             "experience": "4/6 Do you have experience? If not, write “no experience”.",
             "experience_invalid": "Please add a short experience note.",
-            "photo_face": "5/6 Send a front-face photo.",
+            "photo_face": "5/6 Send a front-face photo (used for fast review, kept confidential).",
             "photo_face_invalid": "Please send an image (front-face photo).",
-            "photo_full": "6/6 Send a full-body photo.",
+            "photo_full": "6/6 Send a full-body photo (confidential, only for profile review).",
             "photo_full_invalid": "Please send an image (full-body photo).",
-            "done": "✅ Done. Your full application was sent to the manager.",
+            "done": "✅ Done. Your full application was sent to @streamflowmanager.",
             "expired": "⚠️ This link has expired. Please submit a new form on the website.",
         },
         "pt": {
-            "intro": "✨ A primeira etapa do site já foi salva.\nAgora vamos concluir aqui.",
+            "intro": "✨ A primeira etapa do site já foi salva.\nAgora vamos concluir aqui (2-3 minutos).",
             "living": "1/6 Você tem um ambiente privado sem interrupções? Responda: sim ou não.",
             "living_invalid": "Responda, por favor, sim ou não.",
             "city": "2/6 Cidade e país onde você mora:",
@@ -1561,15 +1574,15 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "work_time_invalid": "Informe as horas em número, ex.: 6",
             "experience": "4/6 Você tem experiência? Se não, escreva isso.",
             "experience_invalid": "Escreva um breve texto sobre experiência.",
-            "photo_face": "5/6 Envie uma foto de frente (rosto).",
+            "photo_face": "5/6 Envie uma foto de frente (rosto) (uso interno, confidencial).",
             "photo_face_invalid": "Envie uma imagem de frente, por favor.",
-            "photo_full": "6/6 Envie uma foto de corpo inteiro.",
+            "photo_full": "6/6 Envie uma foto de corpo inteiro (confidencial, só para análise).",
             "photo_full_invalid": "Envie uma imagem de corpo inteiro, por favor.",
-            "done": "✅ Pronto. Seu cadastro completo foi enviado ao gerente.",
+            "done": "✅ Pronto. Seu cadastro completo foi enviado para @streamflowmanager.",
             "expired": "⚠️ Este link expirou. Envie um novo formulário no site.",
         },
         "es": {
-            "intro": "✨ La primera etapa del sitio ya está guardada.\nAhora terminamos el formulario aquí.",
+            "intro": "✨ La primera etapa del sitio ya está guardada.\nAhora terminamos el formulario aquí (2-3 minutos).",
             "living": "1/6 ¿Tienes espacio privado sin interrupciones? Responde: sí o no.",
             "living_invalid": "Responde, por favor, sí o no.",
             "city": "2/6 Ciudad y país de residencia:",
@@ -1578,11 +1591,11 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "work_time_invalid": "Indica horas con número, por ejemplo: 6",
             "experience": "4/6 ¿Tienes experiencia? Si no, escríbelo.",
             "experience_invalid": "Escribe una nota breve sobre tu experiencia.",
-            "photo_face": "5/6 Envía una foto de frente.",
+            "photo_face": "5/6 Envía una foto de frente (solo para revisión rápida, confidencial).",
             "photo_face_invalid": "Necesito una imagen de frente, por favor.",
-            "photo_full": "6/6 Envía una foto de cuerpo completo.",
+            "photo_full": "6/6 Envía una foto de cuerpo completo (confidencial, solo para revisión del perfil).",
             "photo_full_invalid": "Necesito una imagen de cuerpo completo, por favor.",
-            "done": "✅ Listo. Tu solicitud completa fue enviada al manager.",
+            "done": "✅ Listo. Tu solicitud completa fue enviada a @streamflowmanager.",
             "expired": "⚠️ Este enlace venció. Envía una nueva solicitud desde el sitio.",
         },
     }
@@ -1593,8 +1606,10 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
     from_phone = _wa_phone_e164(message.get("from"))
     if not from_phone or _is_wa_sender_number(from_phone):
         return False, None
-    text = (message.get("text") or "").strip()
-    media_url = (message.get("media_url") or "").strip()
+    raw_text = clean_text(message.get("text") or "")
+    text_too_long = len(raw_text) > MAX_WA_TEXT_LEN
+    text = raw_text[:MAX_WA_TEXT_LEN].rstrip() if text_too_long else raw_text
+    media_url = clean_text(message.get("media_url") or "", max_len=MAX_URL_VALUE_LEN)
     message_type = (message.get("type") or "").upper()
     if message_type not in {"TEXT", "INTERACTIVE", "BUTTON", "UNKNOWN", ""} and not text and not media_url:
         return True, None
@@ -1606,6 +1621,8 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
     mode = str((flow or {}).get("mode") or "quick").strip().lower() or "quick"
     step = str((flow or {}).get("step") or "")
     data = dict(flow.get("data") if isinstance(flow.get("data"), dict) else {})
+    if text_too_long:
+        return True, field_too_long_error(lang, MAX_WA_TEXT_LEN)
 
     site_stage2 = _parse_site_stage2_command(text)
     if site_stage2:
@@ -1672,7 +1689,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, _wa_stage2_text(lang, "city")
 
         if step == "city":
-            city = clean_text(text)
+            city = clean_text(text, max_len=MAX_CITY_LEN)
             if len(city) < 2:
                 return True, _wa_stage2_text(lang, "city_invalid")
             data["city"] = city
@@ -1683,7 +1700,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, _wa_stage2_text(lang, "work_time")
 
         if step == "work_time":
-            work_time = clean_text(text)
+            work_time = clean_text(text, max_len=MAX_WORK_TIME_LEN)
             if not re.search(r"\d", work_time):
                 return True, _wa_stage2_text(lang, "work_time_invalid")
             data["work_time"] = work_time
@@ -1694,7 +1711,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, _wa_stage2_text(lang, "experience")
 
         if step == "experience":
-            experience = clean_text(text)
+            experience = clean_text(text, max_len=MAX_EXPERIENCE_LEN)
             if len(experience) < 2:
                 return True, _wa_stage2_text(lang, "experience_invalid")
             data["experience"] = experience
@@ -1705,7 +1722,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, _wa_stage2_text(lang, "photo_face")
 
         if step == "photo_face":
-            photo_face = media_url or (clean_text(text) if clean_text(text).startswith("http") else "")
+            photo_face = media_url or (text if text.startswith("http") else "")
             if not photo_face:
                 return True, _wa_stage2_text(lang, "photo_face_invalid")
             data["photo_face"] = photo_face
@@ -1716,7 +1733,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, _wa_stage2_text(lang, "photo_full")
 
         if step == "photo_full":
-            photo_full = media_url or (clean_text(text) if clean_text(text).startswith("http") else "")
+            photo_full = media_url or (text if text.startswith("http") else "")
             if not photo_full:
                 return True, _wa_stage2_text(lang, "photo_full_invalid")
             data["photo_full"] = photo_full
@@ -1793,7 +1810,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, _wa_menu_response(lang, menu_key)
 
     if step == "name":
-        value = clean_text(text)
+        value = clean_text(text, max_len=MAX_NAME_LEN)
         if len(value) < 2 or has_any_digit(value):
             return True, wa_t(lang, "invalid_name")
         data["name"] = value
@@ -1801,7 +1818,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_phone")
 
     if step == "phone":
-        raw = clean_text(text)
+        raw = clean_text(text, max_len=MAX_PHONE_LEN)
         if raw.strip().lower() == "same":
             value = from_phone
         else:
@@ -1813,15 +1830,16 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_age")
 
     if step == "age":
-        normalized = normalize_birthdate(clean_text(text))
-        if not normalized:
+        age_input = clean_text(text, max_len=MAX_BIRTHDATE_LEN)
+        normalized = normalize_birthdate(age_input)
+        if not normalized or not is_valid_birthdate(normalized):
             return True, wa_t(lang, "invalid_age")
         data["age"] = normalized
         _save_wa_flow(from_phone, {"mode": "quick", "step": "device_model", "lang": lang, "data": data})
         return True, wa_t(lang, "ask_device")
 
     if step == "device_model":
-        value = clean_text(text)
+        value = clean_text(text, max_len=MAX_DEVICE_LEN)
         if len(value) < 2:
             return True, wa_t(lang, "invalid_device")
         data["device_model"] = value
@@ -1829,7 +1847,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_telegram")
 
     if step == "telegram":
-        username = normalize_telegram(clean_text(text))
+        username = normalize_telegram(clean_text(text, max_len=MAX_CONTACT_VALUE_LEN))
         if not username:
             return True, wa_t(lang, "invalid_telegram")
         data["telegram"] = username
@@ -1837,7 +1855,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_city")
 
     if step == "city":
-        city = clean_text(text)
+        city = clean_text(text, max_len=MAX_CITY_LEN)
         if len(city) < 2:
             return True, wa_t(lang, "invalid_city")
         data["city"] = city
@@ -1845,7 +1863,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_work_time")
 
     if step == "work_time":
-        work_time = clean_text(text)
+        work_time = clean_text(text, max_len=MAX_WORK_TIME_LEN)
         if not re.search(r"\d", work_time):
             return True, wa_t(lang, "invalid_work_time")
         data["work_time"] = work_time
@@ -1853,7 +1871,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_experience")
 
     if step == "experience":
-        experience = clean_text(text)
+        experience = clean_text(text, max_len=MAX_EXPERIENCE_LEN)
         if len(experience) < 2:
             return True, wa_t(lang, "invalid_experience")
         data["experience"] = experience
@@ -1869,7 +1887,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_photo_face")
 
     if step == "photo_face":
-        photo_face = media_url or (clean_text(text) if clean_text(text).startswith("http") else "")
+        photo_face = media_url or (text if text.startswith("http") else "")
         if not photo_face:
             return True, wa_t(lang, "invalid_photo_face")
         data["photo_face"] = photo_face
@@ -1877,7 +1895,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_photo_full")
 
     if step == "photo_full":
-        photo_full = media_url or (clean_text(text) if clean_text(text).startswith("http") else "")
+        photo_full = media_url or (text if text.startswith("http") else "")
         if not photo_full:
             return True, wa_t(lang, "invalid_photo_full")
         data["photo_full"] = photo_full
@@ -1890,7 +1908,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         )
         data["application_stage"] = "full"
         data["wa_phone"] = from_phone
-        data["wa_profile_name"] = clean_text(message.get("profile_name") or "")
+        data["wa_profile_name"] = clean_text(message.get("profile_name") or "", max_len=MAX_NAME_LEN)
 
         user_id = _wa_user_id(from_phone)
         if user_id is None:
@@ -2190,6 +2208,13 @@ class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_DIR), **kwargs)
 
+    def handle(self):
+        try:
+            super().handle()
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            # Client dropped socket while response was in flight.
+            pass
+
     def end_headers(self):
         self.send_header("X-Content-Type-Options", "nosniff")
         self.send_header("X-Frame-Options", "SAMEORIGIN")
@@ -2279,6 +2304,8 @@ class Handler(SimpleHTTPRequestHandler):
             content_length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             return self.send_json({"ok": False, "message": msg("ru", "bad_size")}, status=400)
+        if content_length <= 0:
+            return self.send_json({"ok": False, "message": msg("ru", "bad_size")}, status=400)
         if content_length > MAX_BODY_SIZE:
             return self.send_json({"ok": False, "message": msg("ru", "too_big")}, status=413)
 
@@ -2288,7 +2315,7 @@ class Handler(SimpleHTTPRequestHandler):
         if content_type.startswith("multipart/form-data"):
             fields, _files = parse_multipart(body, content_type)
         elif content_type.startswith("application/x-www-form-urlencoded"):
-            data = urllib.parse.parse_qs(body.decode("utf-8"))
+            data = urllib.parse.parse_qs(body.decode("utf-8", errors="replace"))
             fields = {k: v[0] for k, v in data.items()}
         else:
             return self.send_json({"ok": False, "message": msg("ru", "bad_type")}, status=400)
@@ -2301,29 +2328,53 @@ class Handler(SimpleHTTPRequestHandler):
                 payload["field"] = field
             return self.send_json(payload, status=status)
 
-        name = clean_text(fields.get("name") or "")
+        def get_limited(field_name: str, max_len: int, error_field: str | None = None) -> tuple[str | None, bool]:
+            raw = clean_text(fields.get(field_name) or "")
+            if len(raw) > max_len:
+                error(
+                    field_too_long_error(site_lang, max_len),
+                    field=error_field or field_name,
+                )
+                return None, False
+            return raw, True
+
+        name, ok = get_limited("name", MAX_NAME_LEN, "name")
+        if not ok or name is None:
+            return
         if len(name) < 2:
             return error(field_error(site_lang, "name"), field="name")
 
-        phone_raw = clean_text(fields.get("phone") or "")
+        phone_raw, ok = get_limited("phone", MAX_PHONE_LEN, "phone")
+        if not ok or phone_raw is None:
+            return
         if not is_valid_phone(phone_raw):
             return error(field_error(site_lang, "phone"), field="phone")
         phone = normalize_phone(phone_raw) or phone_raw
 
-        age_raw = clean_text(fields.get("age") or "")
+        age_raw, ok = get_limited("age", MAX_BIRTHDATE_LEN, "age")
+        if not ok or age_raw is None:
+            return
         if not is_valid_birthdate(age_raw):
             return error(field_error(site_lang, "age"), field="age")
         age = normalize_birthdate(age_raw) or age_raw
 
-        device_model = clean_text(fields.get("device_model") or "")
+        device_model, ok = get_limited("device_model", MAX_DEVICE_LEN, "device_model")
+        if not ok or device_model is None:
+            return
         if len(device_model) < 2:
             return error(field_error(site_lang, "device_model"), field="device_model")
 
-        preferred_contact_raw = clean_text(fields.get("preferred_contact") or "").lower()
+        preferred_contact_raw = clean_text(fields.get("preferred_contact") or "", max_len=16).lower()
         preferred_contact = "whatsapp" if preferred_contact_raw in {"whatsapp", "wa"} else "telegram"
-        contact_value = clean_text(fields.get("contact_value") or "")
-        telegram_raw = clean_text(fields.get("telegram") or "")
-        whatsapp_raw = clean_text(fields.get("whatsapp") or "")
+        contact_value, ok = get_limited("contact_value", MAX_CONTACT_VALUE_LEN, "contact_value")
+        if not ok or contact_value is None:
+            return
+        telegram_raw, ok = get_limited("telegram", MAX_CONTACT_VALUE_LEN, "telegram")
+        if not ok or telegram_raw is None:
+            return
+        whatsapp_raw, ok = get_limited("whatsapp", MAX_CONTACT_VALUE_LEN, "whatsapp")
+        if not ok or whatsapp_raw is None:
+            return
 
         telegram: str | None = normalize_telegram(telegram_raw) if telegram_raw else None
         whatsapp: str | None = None
@@ -2342,10 +2393,12 @@ class Handler(SimpleHTTPRequestHandler):
                 return error(field_error(site_lang, "whatsapp"), field="contact_value")
             whatsapp = normalized_wa
 
-        country = clean_text(fields.get("country") or "")
+        country, ok = get_limited("country", MAX_COUNTRY_LEN, "country")
+        if not ok or country is None:
+            return
         if not country:
             country = (
-                extract_country_from_location(clean_text(fields.get("city") or ""))
+                extract_country_from_location(clean_text(fields.get("city") or "", max_len=MAX_CITY_LEN))
                 or extract_country_from_phone(phone)
                 or ""
             )
@@ -2436,26 +2489,35 @@ class Handler(SimpleHTTPRequestHandler):
             messages = _extract_infobip_messages(payload)
             messages_count = len(messages)
             for message in messages:
-                if _mark_infobip_seen(message):
+                if _is_infobip_seen(message):
                     duplicates += 1
                     continue
+                mark_seen = False
                 handled = False
                 reply = None
                 try:
                     handled, reply = handle_whatsapp_application_message(message)
                     if handled:
-                        interactive_sent = False
-                        try:
-                            interactive_sent = send_wa_interactive_controls(message.get("from"))
-                            if interactive_sent:
-                                bot_replies += 1
-                        except Exception as err:
-                            errors += 1
-                            print("Failed to send whatsapp interactive controls:", err)
-                        if reply:
-                            target_phone = message.get("from")
+                        target_phone = message.get("from")
+                        post_flow = _load_wa_flow(target_phone)
+                        post_step = str((post_flow or {}).get("step") or "").strip().lower()
+                        expect_interactive = post_step in {"lang", "menu"}
+                        reply_sent = False
+
+                        # One inbound -> one outbound: avoid duplicate text+interactive messages.
+                        if _is_wa_menu_only_reply(post_flow, reply):
+                            try:
+                                if send_wa_interactive_controls(target_phone):
+                                    bot_replies += 1
+                                    reply_sent = True
+                            except Exception as err:
+                                errors += 1
+                                print("Failed to send whatsapp interactive controls:", err)
+
+                        if not reply_sent and reply:
                             if infobip_send_whatsapp_text(target_phone, reply):
                                 bot_replies += 1
+                                reply_sent = True
                                 print(
                                     "Infobip reply sent:",
                                     {
@@ -2466,6 +2528,22 @@ class Handler(SimpleHTTPRequestHandler):
                                 )
                             else:
                                 errors += 1
+
+                        if not reply_sent and not reply:
+                            interactive_sent = False
+                            try:
+                                if send_wa_interactive_controls(target_phone):
+                                    interactive_sent = True
+                                    bot_replies += 1
+                            except Exception as err:
+                                errors += 1
+                                print("Failed to send whatsapp interactive controls:", err)
+                            # For silent steps we mark as processed. For lang/menu we require outbound delivery.
+                            mark_seen = interactive_sent or not expect_interactive
+                        elif reply_sent:
+                            mark_seen = True
+                    else:
+                        mark_seen = True
                 except Exception as err:
                     errors += 1
                     print("Failed to handle whatsapp bot flow:", err)
@@ -2478,6 +2556,8 @@ class Handler(SimpleHTTPRequestHandler):
                     except Exception as err:
                         errors += 1
                         print("Failed to forward infobip message to admin:", err)
+                if mark_seen:
+                    _mark_infobip_seen(message)
         except Exception as err:
             print("Failed to parse infobip webhook payload:", err)
 
@@ -2534,7 +2614,10 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
         self.end_headers()
-        self.wfile.write(data)
+        try:
+            self.wfile.write(data)
+        except (BrokenPipeError, ConnectionResetError, ConnectionAbortedError):
+            pass
 
 
 if __name__ == "__main__":

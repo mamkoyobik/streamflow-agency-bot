@@ -104,6 +104,27 @@ from texts import (
 )
 from time_utils import format_submit_time
 from pathlib import Path
+from application_rules import (
+    FORM_NAME_MAX_LEN as SHARED_FORM_NAME_MAX_LEN,
+    FORM_CITY_MAX_LEN as SHARED_FORM_CITY_MAX_LEN,
+    FORM_PHONE_MAX_LEN as SHARED_FORM_PHONE_MAX_LEN,
+    FORM_AGE_MAX_LEN as SHARED_FORM_AGE_MAX_LEN,
+    FORM_DEVICE_MODEL_MAX_LEN as SHARED_FORM_DEVICE_MODEL_MAX_LEN,
+    FORM_WORK_TIME_MAX_LEN as SHARED_FORM_WORK_TIME_MAX_LEN,
+    FORM_TELEGRAM_MAX_LEN as SHARED_FORM_TELEGRAM_MAX_LEN,
+    FORM_EXPERIENCE_MAX_LEN as SHARED_FORM_EXPERIENCE_MAX_LEN,
+    FORM_YES_NO_MAX_LEN as SHARED_FORM_YES_NO_MAX_LEN,
+    FORM_DEVICES_MAX_LEN as SHARED_FORM_DEVICES_MAX_LEN,
+    FORM_HEADPHONES_MAX_LEN as SHARED_FORM_HEADPHONES_MAX_LEN,
+    normalize_user_text_input as normalize_user_text_input_shared,
+    normalize_phone as normalize_phone_shared,
+    is_valid_phone as is_valid_phone_shared,
+    normalize_birthdate as normalize_birthdate_shared,
+    is_valid_birthdate as is_valid_birthdate_shared,
+    has_any_digit as has_any_digit_shared,
+    normalize_yes_no as normalize_yes_no_shared,
+    normalize_telegram as normalize_telegram_shared,
+)
 
 # ================= LOGGING =================
 
@@ -196,7 +217,7 @@ async def on_join_request(req: ChatJoinRequest):
                 channel_lang,
             )
 
-        had_lang_before = has_user_language(user_id)
+        had_lang_before = has_lang_for(user_id)
         already_in_bot = (
             had_lang_before
             or get_application(user_id) is not None
@@ -204,7 +225,7 @@ async def on_join_request(req: ChatJoinRequest):
             or bool(get_flow_message_id(user_id))
         )
         if not had_lang_before:
-            set_user_language(user_id, channel_lang)
+            set_lang_for(user_id, channel_lang)
 
         if already_in_bot:
             logger.info(
@@ -231,65 +252,19 @@ async def on_join_request(req: ChatJoinRequest):
 # ================= HELPERS =================
 
 def is_valid_phone(text: str) -> bool:
-    normalized = normalize_phone(text)
-    if not normalized:
-        return False
-    digits = re.sub(r"\D", "", normalized)
-    return 10 <= len(digits) <= 15
+    return is_valid_phone_shared(text)
 
 def normalize_birthdate(text: str) -> str | None:
-    value = text.strip()
-    for fmt in ("%d.%m.%Y", "%d/%m/%Y", "%Y-%m-%d"):
-        try:
-            dt = datetime.strptime(value, fmt)
-            if dt.year < 1900 or dt.date() > datetime.now().date():
-                return None
-            return dt.strftime("%d.%m.%Y")
-        except ValueError:
-            continue
-    return None
+    return normalize_birthdate_shared(text)
 
 def is_valid_birthdate(text: str) -> bool:
-    normalized = normalize_birthdate(text)
-    if not normalized:
-        return False
-    try:
-        birth_date = datetime.strptime(normalized, "%d.%m.%Y").date()
-    except ValueError:
-        return False
-    today = datetime.now().date()
-    age = today.year - birth_date.year - (
-        (today.month, today.day) < (birth_date.month, birth_date.day)
-    )
-    return age >= 18
+    return is_valid_birthdate_shared(text)
 
 def has_any_digit(text: str) -> bool:
-    return any(ch.isdigit() for ch in text)
+    return has_any_digit_shared(text)
 
 def normalize_phone(text: str) -> str | None:
-    value = re.sub(r"[()\s\-]+", "", text.strip())
-    if not value:
-        return None
-    if value.startswith("+"):
-        digits = value[1:]
-        if not digits.isdigit():
-            return None
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
-        return f"+{digits}"
-    if value.startswith("00"):
-        digits = value[2:]
-        if not digits.isdigit():
-            return None
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
-        return f"+{digits}"
-    if value.isdigit():
-        digits = value
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
-        return f"+{digits}"
-    return None
+    return normalize_phone_shared(text)
 
 
 PHONE_COUNTRY_BY_CODE = {
@@ -507,21 +482,7 @@ def country_from_phone(phone: str | None) -> str | None:
     return None
 
 def normalize_yes_no(text: str) -> str | None:
-    value = text.strip().lower()
-    if not value:
-        return None
-    tokens = re.findall(r"[a-zA-Zа-яА-ЯёЁ]+", value)
-    if not tokens:
-        tokens = [value]
-    yes = {"да", "есть", "имеется", "конечно", "ага", "y", "yes", "ok", "ок", "da", "sim", "si", "sí"}
-    no = {"нет", "нету", "неа", "no", "n", "nao", "não"}
-    for token in tokens:
-        t = token.lower()
-        if t in yes:
-            return "Да"
-        if t in no:
-            return "Нет"
-    return None
+    return normalize_yes_no_shared(text)
 
 
 async def safe_call_answer(call: CallbackQuery, text: str | None = None, show_alert: bool = False):
@@ -534,20 +495,7 @@ async def safe_call_answer(call: CallbackQuery, text: str | None = None, show_al
         pass
 
 def normalize_telegram(text: str) -> str | None:
-    value = text.strip()
-    if value.startswith("https://t.me/"):
-        value = value.split("/")[-1]
-    elif value.startswith("http://t.me/"):
-        value = value.split("/")[-1]
-    elif value.startswith("t.me/"):
-        value = value.split("/", 1)[1]
-
-    if value.startswith("@"):
-        value = value[1:]
-
-    if re.fullmatch(r"[A-Za-z0-9_]{5,32}", value):
-        return f"@{value}"
-    return None
+    return normalize_telegram_shared(text)
 
 def extract_start_payload(text: str | None) -> str:
     raw = (text or "").strip()
@@ -764,13 +712,48 @@ def _get_env_float(name: str, default: float, min_value: float) -> float:
         return default
     return max(min_value, value)
 
-PORTFOLIO_COOLDOWN_SECONDS = 10
 PORTFOLIO_AUTO_DELETE_SECONDS = 120
-PORTFOLIO_VIDEO_LAST: dict[int, datetime] = {}
+PORTFOLIO_VIDEO_AUTONEXT_SECONDS = _get_env_int("PORTFOLIO_VIDEO_AUTONEXT_SECONDS", default=18, min_value=5)
 PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
 PORTFOLIO_CLEANUP_TASKS: dict[int, asyncio.Task] = {}
+PORTFOLIO_AUTONEXT_TASKS: dict[int, asyncio.Task] = {}
+PORTFOLIO_PLAYER_SPECS = (
+    {
+        "kind": "photo",
+        "file": "media/review1.jpg",
+        "title": {"ru": "Отзывы моделей", "en": "Model reviews", "pt": "Avaliações de modelos", "es": "Reseñas de modelos"},
+    },
+    {
+        "kind": "photo",
+        "file": "media/review2.jpg",
+        "title": {"ru": "Отзывы моделей", "en": "Model reviews", "pt": "Avaliações de modelos", "es": "Reseñas de modelos"},
+    },
+    {
+        "kind": "video",
+        "file": "media/stream1.MP4",
+        "title": {"ru": "Примеры стримов", "en": "Stream examples", "pt": "Exemplos de streams", "es": "Ejemplos de streams"},
+        "autonext_seconds": PORTFOLIO_VIDEO_AUTONEXT_SECONDS,
+    },
+    {
+        "kind": "video",
+        "file": "media/stream2.MP4",
+        "title": {"ru": "Примеры стримов", "en": "Stream examples", "pt": "Exemplos de streams", "es": "Ejemplos de streams"},
+        "autonext_seconds": PORTFOLIO_VIDEO_AUTONEXT_SECONDS,
+    },
+)
 ADMIN_TEMP_MESSAGE_IDS: list[int] = []
 CAPTION_LIMIT = 1024
+FORM_NAME_MAX_LEN = SHARED_FORM_NAME_MAX_LEN
+FORM_CITY_MAX_LEN = SHARED_FORM_CITY_MAX_LEN
+FORM_PHONE_MAX_LEN = SHARED_FORM_PHONE_MAX_LEN
+FORM_AGE_MAX_LEN = SHARED_FORM_AGE_MAX_LEN
+FORM_DEVICE_MODEL_MAX_LEN = SHARED_FORM_DEVICE_MODEL_MAX_LEN
+FORM_WORK_TIME_MAX_LEN = SHARED_FORM_WORK_TIME_MAX_LEN
+FORM_TELEGRAM_MAX_LEN = SHARED_FORM_TELEGRAM_MAX_LEN
+FORM_EXPERIENCE_MAX_LEN = SHARED_FORM_EXPERIENCE_MAX_LEN
+FORM_YES_NO_MAX_LEN = SHARED_FORM_YES_NO_MAX_LEN
+FORM_DEVICES_MAX_LEN = SHARED_FORM_DEVICES_MAX_LEN
+FORM_HEADPHONES_MAX_LEN = SHARED_FORM_HEADPHONES_MAX_LEN
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
@@ -2068,7 +2051,30 @@ def is_site_source(user_id: int) -> bool:
 
 
 def lang_for(user_id: int) -> str:
-    return get_user_language(user_id)
+    try:
+        return get_user_language(user_id)
+    except Exception:
+        logger.exception("Не удалось получить язык пользователя user_id=%s, fallback=ru", user_id)
+        return "ru"
+
+
+def has_lang_for(user_id: int) -> bool:
+    try:
+        return has_user_language(user_id)
+    except Exception:
+        logger.exception("Не удалось проверить язык пользователя user_id=%s", user_id)
+        return False
+
+
+def set_lang_for(user_id: int, language: str) -> None:
+    try:
+        set_user_language(user_id, language)
+    except Exception:
+        logger.exception(
+            "Не удалось сохранить язык пользователя user_id=%s language=%s",
+            user_id,
+            language,
+        )
 
 
 def tr_user(user_id: int, key: str, **kwargs) -> str:
@@ -2089,6 +2095,10 @@ def _safe_text(value) -> str:
     text = re.sub(r"[\x00-\x1F\x7F]", " ", text)
     text = re.sub(r"\s+", " ", text).strip()
     return html.escape(text)
+
+
+def normalize_user_text_input(value: str | None, max_len: int) -> tuple[str, bool]:
+    return normalize_user_text_input_shared(value, max_len)
 
 def extract_country_from_location(location: str | None) -> str | None:
     raw = (location or "").strip()
@@ -2910,9 +2920,9 @@ async def send_menu(
 
 
 async def ensure_language_selected(user_id: int, allow_home_button: bool = False, force_prompt: bool = False) -> bool:
-    if has_user_language(user_id) and not force_prompt:
+    if has_lang_for(user_id) and not force_prompt:
         return True
-    current_lang = lang_for(user_id) if has_user_language(user_id) else "ru"
+    current_lang = lang_for(user_id) if has_lang_for(user_id) else "ru"
     await send_or_edit_user_text(
         user_id,
         t(current_lang, "language_menu_title"),
@@ -3048,6 +3058,9 @@ async def clear_user_flow_message(user_id: int):
     set_flow_message_id(user_id, None)
 
 async def clear_portfolio_media(user_id: int):
+    auto_task = PORTFOLIO_AUTONEXT_TASKS.pop(user_id, None)
+    if auto_task and not auto_task.done() and auto_task is not asyncio.current_task():
+        auto_task.cancel()
     cleanup_task = PORTFOLIO_CLEANUP_TASKS.pop(user_id, None)
     if cleanup_task and not cleanup_task.done():
         cleanup_task.cancel()
@@ -3097,6 +3110,268 @@ async def clear_admin_temp_messages():
             await bot.delete_message(ADMIN_GROUP_ID, message_id)
         except Exception:
             pass
+
+
+async def delete_message_silent(message: Message | None):
+    if not message:
+        return
+    try:
+        await message.delete()
+    except Exception:
+        pass
+
+
+def cancel_portfolio_autonext(user_id: int):
+    task = PORTFOLIO_AUTONEXT_TASKS.pop(user_id, None)
+    if task and not task.done() and task is not asyncio.current_task():
+        task.cancel()
+
+
+def portfolio_slide_dots(index: int, total: int) -> str:
+    if total <= 1:
+        return ""
+    return " ".join("●" if i == index else "○" for i in range(total))
+
+
+def _portfolio_player_text(lang: str, key: str) -> str:
+    locale = normalize_lang(lang)
+    values = {
+        "ru": {
+            "hint": "Листай карточки кнопками ниже ⬇️",
+            "prev": "⬅️ Назад",
+            "next": "Вперёд ➡️",
+            "photos": "🖼 Фото",
+            "videos": "🎬 Видео",
+            "empty": "⚠️ Портфолио пока недоступно.",
+        },
+        "en": {
+            "hint": "Use the buttons below to browse ⬇️",
+            "prev": "⬅️ Back",
+            "next": "Next ➡️",
+            "photos": "🖼 Photos",
+            "videos": "🎬 Videos",
+            "empty": "⚠️ Portfolio is not available right now.",
+        },
+        "pt": {
+            "hint": "Use os botões abaixo para navegar ⬇️",
+            "prev": "⬅️ Voltar",
+            "next": "Avançar ➡️",
+            "photos": "🖼 Fotos",
+            "videos": "🎬 Vídeos",
+            "empty": "⚠️ Portfólio indisponível no momento.",
+        },
+        "es": {
+            "hint": "Usa los botones de abajo para navegar ⬇️",
+            "prev": "⬅️ Atrás",
+            "next": "Siguiente ➡️",
+            "photos": "🖼 Fotos",
+            "videos": "🎬 Videos",
+            "empty": "⚠️ El portafolio no está disponible ahora.",
+        },
+    }
+    return values.get(locale, values["ru"]).get(key, values["ru"][key])
+
+
+def load_portfolio_player_items() -> list[dict]:
+    base_dir = Path(__file__).resolve().parent
+    items: list[dict] = []
+    for spec in PORTFOLIO_PLAYER_SPECS:
+        file_path = base_dir / str(spec.get("file") or "")
+        if not file_path.exists():
+            continue
+        raw_autonext = spec.get("autonext_seconds")
+        try:
+            autonext_seconds = max(0, int(raw_autonext or 0))
+        except Exception:
+            autonext_seconds = 0
+        items.append(
+            {
+                "kind": str(spec.get("kind") or "photo"),
+                "path": file_path,
+                "title": dict(spec.get("title") or {}),
+                "autonext_seconds": autonext_seconds,
+            }
+        )
+    return items
+
+
+def portfolio_start_index(items: list[dict], kind: str | None = None) -> int:
+    if not items:
+        return 0
+    normalized = (kind or "").strip().lower()
+    if normalized not in {"photo", "video"}:
+        return 0
+    for idx, item in enumerate(items):
+        if str(item.get("kind") or "").strip().lower() == normalized:
+            return idx
+    return 0
+
+
+def portfolio_player_caption(lang: str, item: dict, index: int, total: int) -> str:
+    locale = normalize_lang(lang)
+    titles = item.get("title") or {}
+    title = str(titles.get(locale) or titles.get("ru") or "Portfolio")
+    dots = portfolio_slide_dots(index, total)
+    dots_line = f"\n{dots}" if dots else ""
+    return f"📁 <b>{html.escape(title)}</b>\n{index + 1}/{total}{dots_line}\n\n{_portfolio_player_text(locale, 'hint')}"
+
+
+def _next_portfolio_index(index: int, total: int) -> int | None:
+    candidate = index + 1
+    if candidate >= total:
+        return None
+    return candidate
+
+
+async def _portfolio_video_autonext_worker(user_id: int, next_index: int, delay_seconds: int):
+    try:
+        await asyncio.sleep(delay_seconds)
+        ids = PORTFOLIO_MEDIA_IDS.get(user_id) or []
+        if not ids:
+            return
+        await show_portfolio_player(
+            user_id,
+            lang_for(user_id),
+            next_index,
+            source_message_id=int(ids[0]),
+            skip_autonext_cancel=True,
+        )
+    except asyncio.CancelledError:
+        pass
+    except Exception:
+        logger.exception("Ошибка автоперехода портфолио")
+    finally:
+        current = PORTFOLIO_AUTONEXT_TASKS.get(user_id)
+        if current is asyncio.current_task():
+            PORTFOLIO_AUTONEXT_TASKS.pop(user_id, None)
+
+
+def schedule_portfolio_autonext(user_id: int, next_index: int | None, delay_seconds: int):
+    cancel_portfolio_autonext(user_id)
+    if next_index is None or delay_seconds <= 0:
+        return
+    PORTFOLIO_AUTONEXT_TASKS[user_id] = asyncio.create_task(
+        _portfolio_video_autonext_worker(user_id, next_index, delay_seconds)
+    )
+
+
+def portfolio_player_keyboard(lang: str, index: int, total: int, has_photos: bool, has_videos: bool):
+    locale = normalize_lang(lang)
+    rows: list[list[InlineKeyboardButton]] = []
+    if total > 1:
+        rows.append(
+            [
+                InlineKeyboardButton(
+                    text=_portfolio_player_text(locale, "prev"),
+                    callback_data=f"portfolio_nav:{max(index - 1, 0)}",
+                ),
+                InlineKeyboardButton(
+                    text=_portfolio_player_text(locale, "next"),
+                    callback_data=f"portfolio_nav:{min(index + 1, total - 1)}",
+                ),
+            ]
+        )
+    jump_row: list[InlineKeyboardButton] = []
+    if has_photos:
+        jump_row.append(InlineKeyboardButton(text=_portfolio_player_text(locale, "photos"), callback_data="portfolio_jump:photo"))
+    if has_videos:
+        jump_row.append(InlineKeyboardButton(text=_portfolio_player_text(locale, "videos"), callback_data="portfolio_jump:video"))
+    if jump_row:
+        rows.append(jump_row)
+    rows.append([InlineKeyboardButton(text=t(locale, "btn_back"), callback_data="portfolio")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+async def show_portfolio_player(
+    user_id: int,
+    lang: str,
+    index: int,
+    source_message: Message | None = None,
+    source_message_id: int | None = None,
+    skip_autonext_cancel: bool = False,
+):
+    if not skip_autonext_cancel:
+        cancel_portfolio_autonext(user_id)
+    items = load_portfolio_player_items()
+    if not items:
+        await send_or_edit_user_text(
+            user_id,
+            _portfolio_player_text(lang, "empty"),
+            reply_markup=portfolio_menu(lang),
+        )
+        return
+    if index < 0:
+        index = 0
+    if index >= len(items):
+        index = len(items) - 1
+    item = items[index]
+    total = len(items)
+    has_photos = any(str(x.get("kind") or "").lower() == "photo" for x in items)
+    has_videos = any(str(x.get("kind") or "").lower() == "video" for x in items)
+    caption = portfolio_player_caption(lang, item, index, total)
+    reply_markup = portfolio_player_keyboard(lang, index, total, has_photos, has_videos)
+
+    kind = str(item.get("kind") or "").strip().lower()
+    media_path = str(item.get("path"))
+    media_obj = (
+        InputMediaVideo(media=FSInputFile(media_path), caption=caption)
+        if kind == "video"
+        else InputMediaPhoto(media=FSInputFile(media_path), caption=caption)
+    )
+    next_index = _next_portfolio_index(index, total)
+    auto_delay = int(item.get("autonext_seconds") or 0)
+
+    target_message_id = source_message.message_id if source_message else source_message_id
+    if target_message_id:
+        try:
+            await bot.edit_message_media(
+                chat_id=user_id,
+                message_id=target_message_id,
+                media=media_obj,
+                reply_markup=reply_markup,
+            )
+            PORTFOLIO_MEDIA_IDS[user_id] = [target_message_id]
+            schedule_portfolio_cleanup(user_id)
+            if kind == "video":
+                schedule_portfolio_autonext(user_id, next_index, auto_delay)
+            return
+        except TelegramBadRequest as exc:
+            if _is_not_modified_error(exc):
+                try:
+                    await bot.edit_message_reply_markup(
+                        chat_id=user_id,
+                        message_id=target_message_id,
+                        reply_markup=reply_markup,
+                    )
+                    PORTFOLIO_MEDIA_IDS[user_id] = [target_message_id]
+                    schedule_portfolio_cleanup(user_id)
+                    if kind == "video":
+                        schedule_portfolio_autonext(user_id, next_index, auto_delay)
+                    return
+                except Exception:
+                    pass
+        except Exception:
+            pass
+
+    await clear_portfolio_media(user_id)
+    if kind == "video":
+        sent = await bot.send_video(
+            chat_id=user_id,
+            video=FSInputFile(media_path),
+            caption=caption,
+            reply_markup=reply_markup,
+        )
+    else:
+        sent = await bot.send_photo(
+            chat_id=user_id,
+            photo=FSInputFile(media_path),
+            caption=caption,
+            reply_markup=reply_markup,
+        )
+    PORTFOLIO_MEDIA_IDS[user_id] = [sent.message_id]
+    schedule_portfolio_cleanup(user_id)
+    if kind == "video":
+        schedule_portfolio_autonext(user_id, next_index, auto_delay)
 
 async def start_application(message: Message, state: FSMContext, user_id: int | None = None):
     target_user_id = user_id or message.chat.id
@@ -3217,12 +3492,21 @@ async def bootstrap_site_stage2_start(
     if not lead:
         lang = normalize_lang(start_lang or lang_for(message.from_user.id))
         if start_lang:
-            set_user_language(message.from_user.id, lang)
-        await send_or_edit_user_text(message.from_user.id, stage2_text(lang, "expired"), reply_markup=main_menu(lang))
+            set_lang_for(message.from_user.id, lang)
+        sent = await send_or_edit_user_text(
+            message.from_user.id,
+            stage2_text(lang, "expired"),
+            reply_markup=main_menu(lang),
+        )
+        if not sent:
+            try:
+                await message.answer(stage2_text(lang, "expired"))
+            except Exception:
+                logger.exception("Не удалось отправить fallback-сообщение об истечении site-токена")
         return True
 
     lang = normalize_lang(str(lead.get("lang") or start_lang or "ru"))
-    set_user_language(message.from_user.id, lang)
+    set_lang_for(message.from_user.id, lang)
     await state.clear()
     clear_form_data(message.from_user.id)
     legacy_user_id = lead.get("site_pending_user_id")
@@ -3277,12 +3561,17 @@ async def start(message: Message, state: FSMContext):
         if message.chat.type != "private":
             await message.answer(t("ru", "start_private_only"))
             return
+        logger.info(
+            "START_CMD user_id=%s text=%r",
+            message.from_user.id if message.from_user else None,
+            (message.text or "")[:200],
+        )
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
         start_payload = extract_start_payload(message.text)
         site_token, start_lang = extract_site_lead_start_data(start_payload)
         if start_lang:
-            set_user_language(message.from_user.id, start_lang)
+            set_lang_for(message.from_user.id, start_lang)
         if site_token:
             started = await bootstrap_site_stage2_start(message, state, site_token, start_lang=start_lang)
             if started:
@@ -3298,12 +3587,24 @@ async def start(message: Message, state: FSMContext):
         status = app.get("status") if app else None
         lang = lang_for(message.from_user.id)
         site_stage2 = is_site_quick_application(app, data)
-        await send_menu(
+        menu_ok = await send_menu(
             message,
             caption=t(lang, "menu_caption"),
             status=status,
             channel_url=stage2_channel_link(lang) if site_stage2 else None,
         )
+        if not menu_ok:
+            logger.warning("START_CMD menu send failed, using fallback text menu user_id=%s", message.from_user.id)
+            fallback_sent = await send_or_edit_user_text(
+                message.from_user.id,
+                t(lang, "menu_caption"),
+                reply_markup=main_menu(
+                    lang,
+                    channel_url=stage2_channel_link(lang) if site_stage2 else None,
+                ),
+            )
+            if not fallback_sent:
+                await message.answer(t(lang, "menu_caption"))
         if app and app.get("last_state") in FORM_PROGRESS_STATES and not get_form_data(message.from_user.id):
             set_last_state(message.from_user.id, None)
         can_resume = (
@@ -3333,9 +3634,17 @@ async def start(message: Message, state: FSMContext):
     except Exception:
         logger.exception("Ошибка в /start")
         try:
-            await message.answer(t(lang_for(message.from_user.id), "temp_error_retry"))
+            await message.answer(t("ru", "temp_error_retry"))
         except Exception:
             pass
+
+
+@dp.message(F.text.regexp(r"(?i)^\s*(?:start|старт)\s*$"))
+async def start_text_alias(message: Message, state: FSMContext):
+    if message.chat.type != "private":
+        return
+    await start(message, state)
+
 
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
@@ -3350,12 +3659,22 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     status = app.get("status") if app else None
     lang = lang_for(call.from_user.id)
     site_stage2 = is_site_quick_application(app, data)
-    await send_menu(
+    menu_ok = await send_menu(
         call.message,
         caption=t(lang, "menu_caption"),
         status=status,
         channel_url=stage2_channel_link(lang) if site_stage2 else None,
     )
+    if not menu_ok:
+        logger.warning("MAIN_MENU menu send failed, using fallback text menu user_id=%s", call.from_user.id)
+        await send_or_edit_user_text(
+            call.from_user.id,
+            t(lang, "menu_caption"),
+            reply_markup=main_menu(
+                lang,
+                channel_url=stage2_channel_link(lang) if site_stage2 else None,
+            ),
+        )
     await clear_user_flow_message(call.from_user.id)
 
 
@@ -3396,7 +3715,7 @@ async def set_language_handler(call: CallbackQuery, state: FSMContext):
         lang_code = call.data.split(":", 1)[1].strip().lower()
         if lang_code not in LANGUAGE_NAMES:
             lang_code = "ru"
-        set_user_language(call.from_user.id, lang_code)
+        set_lang_for(call.from_user.id, lang_code)
         lang = lang_for(call.from_user.id)
         app = get_application(call.from_user.id)
         data = get_form_data(call.from_user.id) or {}
@@ -3707,8 +4026,15 @@ async def stage2_intro_block_input(message: Message):
 @dp.message(StateFilter(ApplicationStates.name), F.text)
 async def step_name(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    name = m.text.strip()
+    name, too_long = normalize_user_text_input(m.text, FORM_NAME_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_NAME_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if len(name) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3726,8 +4052,15 @@ async def step_name(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.city), F.text)
 async def step_city(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    city = m.text.strip()
+    city, too_long = normalize_user_text_input(m.text, FORM_CITY_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_CITY_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if len(city) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3750,8 +4083,15 @@ async def step_city(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.phone), F.text)
 async def step_phone(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    phone = m.text.strip()
+    phone, too_long = normalize_user_text_input(m.text, FORM_PHONE_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_PHONE_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if not is_valid_phone(phone):
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3779,8 +4119,15 @@ async def step_phone(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.age), F.text)
 async def step_age(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    birthdate = m.text.strip()
+    birthdate, too_long = normalize_user_text_input(m.text, FORM_AGE_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_AGE_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if not is_valid_birthdate(birthdate):
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3807,8 +4154,15 @@ async def step_age(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.living), F.text)
 async def step_living(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    living_raw = m.text.strip()
+    living_raw, too_long = normalize_user_text_input(m.text, FORM_YES_NO_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_YES_NO_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     normalized = normalize_yes_no(living_raw)
     if not normalized:
         await send_or_edit_user_text(
@@ -3831,8 +4185,15 @@ async def step_living(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.devices), F.text)
 async def step_devices(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    devices = m.text.strip()
+    devices, too_long = normalize_user_text_input(m.text, FORM_DEVICES_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_DEVICES_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if len(devices) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3850,8 +4211,15 @@ async def step_devices(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.device_model), F.text)
 async def step_device_model(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    device_model = m.text.strip()
+    device_model, too_long = normalize_user_text_input(m.text, FORM_DEVICE_MODEL_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_DEVICE_MODEL_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if len(device_model) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3869,8 +4237,15 @@ async def step_device_model(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.work_time), F.text)
 async def step_work_time(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    work_time = m.text.strip()
+    work_time, too_long = normalize_user_text_input(m.text, FORM_WORK_TIME_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_WORK_TIME_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if not has_any_digit(work_time):
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3888,8 +4263,15 @@ async def step_work_time(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.headphones), F.text)
 async def step_headphones(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    headphones = m.text.strip()
+    headphones, too_long = normalize_user_text_input(m.text, FORM_HEADPHONES_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_HEADPHONES_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if len(headphones) < 2:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -3907,8 +4289,15 @@ async def step_headphones(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.telegram), F.text)
 async def step_tg(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    raw = m.text.strip()
+    raw, too_long = normalize_user_text_input(m.text, FORM_TELEGRAM_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_TELEGRAM_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     normalized = normalize_telegram(raw)
     if not normalized:
         await send_or_edit_user_text(
@@ -3937,8 +4326,15 @@ async def step_tg(m: Message, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.experience), F.text)
 async def step_exp(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    experience = m.text.strip()
+    experience, too_long = normalize_user_text_input(m.text, FORM_EXPERIENCE_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_EXPERIENCE_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
     if len(experience) < 1:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -4802,20 +5198,24 @@ async def open_create_post_mode(state: FSMContext):
     await state.set_state(ApplicationStates.admin_create_post)
     await sync_anonymous_create_post_state(enabled=True)
     await clear_admin_view_message()
-    await update_admin_menu_message(
-        post_creator_prompt(),
-        admin_create_post_keyboard()
-    )
+    await show_admin_create_post_prompt()
+
+
+async def show_admin_create_post_prompt(notice: str | None = None):
+    prompt = post_creator_prompt()
+    if notice:
+        prompt = f"{notice}\n\n{prompt}"
+    await update_admin_menu_message(prompt, admin_create_post_keyboard())
 
 
 @dp.message(Command("create_post"), F.chat.id == ADMIN_GROUP_ID)
 @dp.message(Command("crosspost"), F.chat.id == ADMIN_GROUP_ID)
 async def admin_create_post_command(message: Message, state: FSMContext):
     if not await can_manage_admin_group(message):
-        await message.answer("Недостаточно прав")
+        await delete_message_silent(message)
         return
     await open_create_post_mode(state)
-    await message.answer("📝 Режим создания поста включен. Отправь пост на русском (если в группе включена анонимность — тоже сработает).")
+    await delete_message_silent(message)
 
 
 @dp.message(StateFilter(ApplicationStates.admin_create_post), F.chat.id == ADMIN_GROUP_ID)
@@ -4823,21 +5223,25 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
     if message.from_user and message.from_user.is_bot and not is_anonymous_admin_post(message):
         return
     if not await can_manage_admin_group(message):
-        await message.answer("⚠️ Для публикации нужны права администратора этой группы.")
+        await delete_message_silent(message)
         return
     if message.text and message.text.strip().startswith("/"):
-        await message.answer("⚠️ Сейчас включён режим публикации. Отправь пост или нажми «Отменить».")
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt("⚠️ Сейчас включён режим публикации. Отправь пост или нажми «Отменить».")
         return
     if message.media_group_id:
-        await message.answer("⚠️ Альбомы не поддерживаются. Отправь один пост (одно сообщение).")
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt("⚠️ Альбомы не поддерживаются. Отправь один пост (одно сообщение).")
         return
     if not any([message.text, message.photo, message.video, message.document, message.animation]):
-        await message.answer("⚠️ Поддерживаются: текст, фото, видео, gif или документ.")
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt("⚠️ Поддерживаются: текст, фото, видео, gif или документ.")
         return
 
     ru_text, ru_entities = extract_post_text_and_entities(message)
     if ru_text and not CYRILLIC_RE.search(ru_text):
-        await message.answer("⚠️ Текст поста должен быть на русском, чтобы перевести его автоматически.")
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt("⚠️ Текст поста должен быть на русском, чтобы перевести его автоматически.")
         return
 
     try:
@@ -4913,12 +5317,15 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
             admin_menu_keyboard(counts, stage_counts)
         )
     except ValueError as exc:
-        await message.answer(str(exc))
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt(str(exc))
     except RuntimeError as exc:
-        await message.answer(str(exc))
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt(str(exc))
     except Exception:
         logger.exception("Ошибка публикации в режиме create_post")
-        await message.answer("⚠️ Не удалось опубликовать пост. Попробуй ещё раз.")
+        await delete_message_silent(message)
+        await show_admin_create_post_prompt("⚠️ Не удалось опубликовать пост. Попробуй ещё раз.")
 
 @dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
 async def admin_menu(message: Message, state: FSMContext):
@@ -4926,6 +5333,7 @@ async def admin_menu(message: Message, state: FSMContext):
     await sync_anonymous_create_post_state(enabled=False)
     await clear_admin_temp_messages()
     await ensure_admin_menu_posted()
+    await delete_message_silent(message)
 
 @dp.callback_query(F.data == "admin_post:cancel")
 async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
@@ -5301,27 +5709,38 @@ async def admin_post_edit_cancel(call: CallbackQuery, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.admin_edit_post_text), F.chat.id == ADMIN_GROUP_ID)
 async def admin_post_edit_text_submit(message: Message, state: FSMContext):
+    state_data = await state.get_data()
+    post_id = int(state_data.get("post_id", 0) or 0)
+    offset = int(state_data.get("posts_offset", 0) or 0)
+    async def show_notice(text: str):
+        if post_id:
+            await update_admin_view_message(
+                text,
+                admin_posts_edit_keyboard(post_id, offset),
+                None,
+            )
+        else:
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
+            await update_admin_menu_message(text, admin_menu_keyboard(counts, stage_counts))
     try:
         if not await can_manage_admin_group(message):
-            await message.answer("⚠️ Для редактирования нужны права администратора этой группы.")
+            await delete_message_silent(message)
             return
         if not message.text:
-            await message.answer("⚠️ Отправь текст поста (не фото и не файл).")
+            await show_notice("⚠️ Отправь текст поста (не фото и не файл).")
             return
         ru_text, ru_entities = extract_post_text_and_entities(message)
         if not ru_text.strip():
-            await message.answer("⚠️ Текст пустой. Отправь текст заново.")
+            await show_notice("⚠️ Текст пустой. Отправь текст заново.")
             return
         if not CYRILLIC_RE.search(ru_text):
-            await message.answer("⚠️ Текст должен быть на русском, чтобы сделать автоперевод.")
+            await show_notice("⚠️ Текст должен быть на русском, чтобы сделать автоперевод.")
             return
 
-        data = await state.get_data()
-        post_id = int(data.get("post_id", 0))
-        offset = int(data.get("posts_offset", 0))
         item = get_posted_message(post_id)
         if not item:
-            await message.answer("⚠️ Пост не найден.")
+            await show_notice("⚠️ Пост не найден.")
             await state.clear()
             await show_admin_posted_posts(offset)
             return
@@ -5362,39 +5781,48 @@ async def admin_post_edit_text_submit(message: Message, state: FSMContext):
         )
         await state.clear()
         await show_admin_posted_posts(offset)
-        try:
-            await message.delete()
-        except Exception:
-            pass
     except RuntimeError as exc:
-        await message.answer(str(exc))
+        await show_notice(str(exc))
     except Exception:
         logger.exception("Ошибка редактирования текста выложенного поста")
-        await message.answer("⚠️ Не удалось обновить текст поста.")
+        await show_notice("⚠️ Не удалось обновить текст поста.")
+    finally:
+        await delete_message_silent(message)
 
 
 @dp.message(StateFilter(ApplicationStates.admin_edit_post_photo), F.chat.id == ADMIN_GROUP_ID)
 async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
+    state_data = await state.get_data()
+    post_id = int(state_data.get("post_id", 0) or 0)
+    offset = int(state_data.get("posts_offset", 0) or 0)
+    async def show_notice(text: str):
+        if post_id:
+            await update_admin_view_message(
+                text,
+                admin_posts_edit_keyboard(post_id, offset),
+                None,
+            )
+        else:
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
+            await update_admin_menu_message(text, admin_menu_keyboard(counts, stage_counts))
     try:
         if not await can_manage_admin_group(message):
-            await message.answer("⚠️ Для редактирования нужны права администратора этой группы.")
+            await delete_message_silent(message)
             return
-        data = await state.get_data()
-        post_id = int(data.get("post_id", 0))
-        offset = int(data.get("posts_offset", 0))
         item = get_posted_message(post_id)
         if not item:
-            await message.answer("⚠️ Пост не найден.")
+            await show_notice("⚠️ Пост не найден.")
             await state.clear()
             await show_admin_posted_posts(offset)
             return
 
         content_type = str(item.get("content_type") or "").strip().lower()
-        expected_type = str(data.get("post_media_type") or content_type).strip().lower()
+        expected_type = str(state_data.get("post_media_type") or content_type).strip().lower()
         new_file_id = extract_media_file_id_for_post(message, expected_type)
         if not new_file_id:
             media_name = post_media_type_name(expected_type)
-            await message.answer(f"⚠️ Отправь именно {media_name} одним сообщением.")
+            await show_notice(f"⚠️ Отправь именно {media_name} одним сообщением.")
             return
 
         final_texts, final_entities = await replace_post_media_in_channels(
@@ -5409,15 +5837,13 @@ async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
         )
         await state.clear()
         await show_admin_posted_posts(offset)
-        try:
-            await message.delete()
-        except Exception:
-            pass
     except RuntimeError as exc:
-        await message.answer(str(exc))
+        await show_notice(str(exc))
     except Exception:
         logger.exception("Ошибка замены фото у выложенного поста")
-        await message.answer("⚠️ Не удалось заменить фото.")
+        await show_notice("⚠️ Не удалось заменить фото.")
+    finally:
+        await delete_message_silent(message)
 
 @dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
 async def admin_reset_db(message: Message):
@@ -5462,12 +5888,13 @@ async def portfolio_reviews(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        await clear_portfolio_media(call.from_user.id)
-        messages = await call.message.answer_media_group([
-            InputMediaPhoto(media=FSInputFile("media/review1.jpg")),
-            InputMediaPhoto(media=FSInputFile("media/review2.jpg")),
-        ])
-        track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
+        items = load_portfolio_player_items()
+        start_index = portfolio_start_index(items, "photo")
+        await show_portfolio_player(
+            call.from_user.id,
+            lang,
+            start_index,
+        )
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_reviews")
@@ -5480,22 +5907,61 @@ async def portfolio_streams(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        await clear_portfolio_media(call.from_user.id)
-        now = datetime.now(timezone.utc)
-        last = PORTFOLIO_VIDEO_LAST.get(call.from_user.id)
-        if last and (now - last).total_seconds() < PORTFOLIO_COOLDOWN_SECONDS:
-            await safe_call_answer(call, t(lang, "video_cooldown"))
-            return
-        PORTFOLIO_VIDEO_LAST[call.from_user.id] = now
-        messages = await call.message.answer_media_group([
-            InputMediaVideo(media=FSInputFile("media/stream1.MP4")),
-            InputMediaVideo(media=FSInputFile("media/stream2.MP4")),
-        ])
-        track_portfolio_media(call.from_user.id, [m.message_id for m in messages])
+        items = load_portfolio_player_items()
+        start_index = portfolio_start_index(items, "video")
+        await show_portfolio_player(
+            call.from_user.id,
+            lang,
+            start_index,
+        )
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_streams")
         await safe_call_answer(call, t(lang_for(call.from_user.id), "video_send_error"), show_alert=False)
+
+
+@dp.callback_query(F.data.startswith("portfolio_nav:"))
+async def portfolio_nav(call: CallbackQuery):
+    try:
+        lang = lang_for(call.from_user.id)
+        if not call.message:
+            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
+            return
+        _, raw_index = call.data.split(":", 1)
+        index = int(raw_index)
+        await show_portfolio_player(
+            call.from_user.id,
+            lang,
+            index,
+            source_message=call.message,
+        )
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка навигации портфолио")
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
+
+
+@dp.callback_query(F.data.startswith("portfolio_jump:"))
+async def portfolio_jump(call: CallbackQuery):
+    try:
+        lang = lang_for(call.from_user.id)
+        if not call.message:
+            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
+            return
+        _, raw_kind = call.data.split(":", 1)
+        kind = raw_kind.strip().lower()
+        items = load_portfolio_player_items()
+        target_index = portfolio_start_index(items, kind)
+        await show_portfolio_player(
+            call.from_user.id,
+            lang,
+            target_index,
+            source_message=call.message,
+        )
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка переключения секции портфолио")
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
 
 @dp.callback_query(F.data == "portfolio_pdf")
 async def portfolio_pdf(call: CallbackQuery):
@@ -5527,23 +5993,100 @@ async def portfolio_pdf(call: CallbackQuery):
 @dp.message(F.text == "/stats", F.chat.id == ADMIN_GROUP_ID)
 async def admin_stats(message: Message):
     await clear_admin_temp_messages()
-    msg = await message.answer(build_admin_stats_text())
-    track_admin_temp_message(msg.message_id)
+    counts = get_status_counts()
+    stage_counts = get_application_stage_counts()
+    await update_admin_menu_message(
+        build_admin_stats_text(),
+        admin_menu_keyboard(counts, stage_counts),
+    )
+    await delete_message_silent(message)
 
 @dp.message(F.text == "/excel", F.chat.id == ADMIN_GROUP_ID)
 async def admin_excel(message: Message):
     await clear_admin_temp_messages()
     if not rebuild_excel_from_db:
-        msg = await message.answer("🤍 Экспорт в Excel недоступен. Установи openpyxl.")
-        track_admin_temp_message(msg.message_id)
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
+        await update_admin_menu_message(
+            "🤍 Экспорт в Excel недоступен. Установи openpyxl.",
+            admin_menu_keyboard(counts, stage_counts),
+        )
+        await delete_message_silent(message)
         return
     file_path = rebuild_excel_from_db()
     if not file_path:
-        msg = await message.answer("🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨")
-        track_admin_temp_message(msg.message_id)
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
+        await update_admin_menu_message(
+            "🤍 Файл Excel ещё не создан. Отправь хотя бы одну заявку ✨",
+            admin_menu_keyboard(counts, stage_counts),
+        )
+        await delete_message_silent(message)
         return
     msg = await message.answer_document(FSInputFile(str(file_path)))
     track_admin_temp_message(msg.message_id)
+    await delete_message_silent(message)
+
+
+@dp.callback_query()
+async def fallback_stale_callback(call: CallbackQuery, state: FSMContext):
+    if call.message and call.message.chat.id == ADMIN_GROUP_ID:
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
+        await update_admin_menu_message(
+            "⚠️ Кнопка устарела. Меню обновлено.",
+            admin_menu_keyboard(counts, stage_counts),
+        )
+        await safe_call_answer(call)
+        return
+
+    if call.message and call.message.chat.type == "private":
+        lang = lang_for(call.from_user.id)
+        await safe_call_answer(call, t(lang, "stale_button"), show_alert=False)
+        current = await state.get_state()
+        if current in FORM_PROGRESS_STATES:
+            await send_or_edit_user_text(
+                call.from_user.id,
+                t(lang, "resume_prompt"),
+                reply_markup=continue_form_keyboard(lang),
+            )
+            return
+        app = get_application(call.from_user.id)
+        data = get_form_data(call.from_user.id) or {}
+        site_stage2 = is_site_quick_application(app, data)
+        await send_or_edit_user_text(
+            call.from_user.id,
+            t(lang, "menu_caption"),
+            reply_markup=main_menu(
+                lang,
+                channel_url=stage2_channel_link(lang) if site_stage2 else None,
+            ),
+        )
+        return
+
+    await safe_call_answer(call)
+
+
+@dp.message(F.chat.type == "private")
+async def fallback_private_message(message: Message, state: FSMContext):
+    if message.from_user and message.from_user.is_bot:
+        return
+    current = await state.get_state()
+    if current:
+        return
+    lang = lang_for(message.from_user.id)
+    app = get_application(message.from_user.id)
+    data = get_form_data(message.from_user.id) or {}
+    site_stage2 = is_site_quick_application(app, data)
+    await send_or_edit_user_text(
+        message.from_user.id,
+        t(lang, "unknown_input_hint"),
+        reply_markup=main_menu(
+            lang,
+            channel_url=stage2_channel_link(lang) if site_stage2 else None,
+        ),
+    )
+
 # ================= RUN =================
 
 async def main():
