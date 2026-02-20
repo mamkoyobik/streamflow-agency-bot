@@ -7,6 +7,7 @@ import random
 import re
 import traceback
 import urllib.error
+import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
@@ -1067,6 +1068,20 @@ def _normalize_telegram_url(value: str | None) -> str:
         return f"https://{raw}"
     return raw
 
+def _safe_http_url(value: str | None) -> str:
+    normalized = _normalize_telegram_url(value)
+    if not normalized:
+        return ""
+    try:
+        parsed = urllib.parse.urlparse(normalized)
+    except Exception:
+        return ""
+    if parsed.scheme not in {"http", "https"}:
+        return ""
+    if not parsed.netloc:
+        return ""
+    return normalized
+
 def _first_nonempty_env(*names: str) -> str:
     for name in names:
         raw = os.getenv(name, "").strip()
@@ -1074,12 +1089,13 @@ def _first_nonempty_env(*names: str) -> str:
             return raw
     return ""
 
-CHANNEL_PUBLIC_LINK = _normalize_telegram_url(
+DEFAULT_CHANNEL_PUBLIC_LINK = "https://t.me/streamflowagency"
+CHANNEL_PUBLIC_LINK = _safe_http_url(
     _first_nonempty_env("CHANNEL_LINK", "CHANNEL_PUBLIC_LINK")
-    or "https://t.me/streamflowagency"
-)
+    or DEFAULT_CHANNEL_PUBLIC_LINK
+) or DEFAULT_CHANNEL_PUBLIC_LINK
 CHANNEL_LINK_BY_LANG = {
-    "ru": _normalize_telegram_url(
+    "ru": _safe_http_url(
         _first_nonempty_env(
             "CHANNEL_LINK_RU",
             "RU_CHANNEL_LINK",
@@ -1087,7 +1103,7 @@ CHANNEL_LINK_BY_LANG = {
         )
     )
     or CHANNEL_PUBLIC_LINK,
-    "en": _normalize_telegram_url(
+    "en": _safe_http_url(
         _first_nonempty_env(
             "CHANNEL_LINK_EN",
             "EN_CHANNEL_LINK",
@@ -1096,7 +1112,7 @@ CHANNEL_LINK_BY_LANG = {
         )
     )
     or CHANNEL_PUBLIC_LINK,
-    "pt": _normalize_telegram_url(
+    "pt": _safe_http_url(
         _first_nonempty_env(
             "CHANNEL_LINK_PT",
             "PT_CHANNEL_LINK",
@@ -1106,7 +1122,7 @@ CHANNEL_LINK_BY_LANG = {
         )
     )
     or CHANNEL_PUBLIC_LINK,
-    "es": _normalize_telegram_url(
+    "es": _safe_http_url(
         _first_nonempty_env(
             "CHANNEL_LINK_ES",
             "ES_CHANNEL_LINK",
@@ -3316,6 +3332,10 @@ async def start(message: Message, state: FSMContext):
             )
     except Exception:
         logger.exception("Ошибка в /start")
+        try:
+            await message.answer(t(lang_for(message.from_user.id), "temp_error_retry"))
+        except Exception:
+            pass
 
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
