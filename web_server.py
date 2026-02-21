@@ -251,7 +251,7 @@ WA_TEXTS = {
             "2 — Сайт\n"
             "3 — Портфолио\n"
             "4 — О работе\n"
-            "5 — @streamflowmanager\n"
+            "5 — Менеджер\n"
             "6 — Канал\n"
             "7 — Сменить язык\n\n"
             "Напиши номер пункта."
@@ -285,7 +285,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Нужна именно фотография в профиль/полный рост (изображение).",
         "saved": (
             "✅ Заявка принята!\n\n"
-            "Мы передали её @streamflowmanager. Ожидай ответ в ближайшее время."
+            "Мы передали её менеджеру. Ожидай ответ в ближайшее время."
         ),
         "already": "Заявка уже отправлена. Если хочешь отправить новую, напиши START.",
     },
@@ -301,7 +301,7 @@ WA_TEXTS = {
             "2 — Website\n"
             "3 — Portfolio\n"
             "4 — About work\n"
-            "5 — @streamflowmanager\n"
+            "5 — Manager\n"
             "6 — Channel\n"
             "7 — Change language\n\n"
             "Send a menu number."
@@ -335,7 +335,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Please send a profile/full-body image.",
         "saved": (
             "✅ Application received!\n\n"
-            "We sent it to @streamflowmanager. You will get a reply soon."
+            "We sent it to the manager. You will get a reply soon."
         ),
         "already": "Application already sent. If you want to start again, type START.",
     },
@@ -351,7 +351,7 @@ WA_TEXTS = {
             "2 — Site\n"
             "3 — Portfólio\n"
             "4 — Sobre o trabalho\n"
-            "5 — @streamflowmanager\n"
+            "5 — Gerente\n"
             "6 — Canal\n"
             "7 — Trocar idioma\n\n"
             "Envie o número da opção."
@@ -385,7 +385,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Envie uma imagem de perfil/corpo inteiro, por favor.",
         "saved": (
             "✅ Candidatura recebida!\n\n"
-            "Enviamos para @streamflowmanager. Você receberá retorno em breve."
+            "Enviamos para o gerente. Você receberá retorno em breve."
         ),
         "already": "Candidatura já enviada. Se quiser começar de novo, digite START.",
     },
@@ -401,7 +401,7 @@ WA_TEXTS = {
             "2 — Sitio web\n"
             "3 — Portafolio\n"
             "4 — Sobre el trabajo\n"
-            "5 — @streamflowmanager\n"
+            "5 — Manager\n"
             "6 — Canal\n"
             "7 — Cambiar idioma\n\n"
             "Envía el número de opción."
@@ -435,7 +435,7 @@ WA_TEXTS = {
         "invalid_photo_full": "Necesito una imagen de perfil/cuerpo completo, por favor.",
         "saved": (
             "✅ Solicitud recibida.\n\n"
-            "La enviamos a @streamflowmanager. Te responderemos pronto."
+            "La enviamos al manager. Te responderemos pronto."
         ),
         "already": "La solicitud ya fue enviada. Si quieres reiniciar, escribe START.",
     },
@@ -1371,7 +1371,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Website", "description": "Open website"},
             {"id": "menu_portfolio", "title": "Portfolio", "description": "View portfolio"},
             {"id": "menu_about", "title": "About work", "description": "How it works"},
-            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Contact @streamflowmanager"},
+            {"id": "menu_manager", "title": "Manager", "description": "Contact manager"},
             {"id": "menu_channel", "title": "Channel", "description": "Telegram channel"},
             {"id": "menu_language", "title": "Change language", "description": "Switch language"},
         ]
@@ -1384,7 +1384,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Site", "description": "Abrir site"},
             {"id": "menu_portfolio", "title": "Portfólio", "description": "Ver portfólio"},
             {"id": "menu_about", "title": "Sobre o trabalho", "description": "Como funciona"},
-            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Falar com @streamflowmanager"},
+            {"id": "menu_manager", "title": "Gerente", "description": "Falar com o gerente"},
             {"id": "menu_channel", "title": "Canal", "description": "Canal do Telegram"},
             {"id": "menu_language", "title": "Trocar idioma", "description": "Mudar idioma"},
         ]
@@ -1397,7 +1397,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Sitio web", "description": "Abrir sitio"},
             {"id": "menu_portfolio", "title": "Portafolio", "description": "Ver portafolio"},
             {"id": "menu_about", "title": "Sobre el trabajo", "description": "Cómo funciona"},
-            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Contactar @streamflowmanager"},
+            {"id": "menu_manager", "title": "Manager", "description": "Contactar al manager"},
             {"id": "menu_channel", "title": "Canal", "description": "Canal de Telegram"},
             {"id": "menu_language", "title": "Cambiar idioma", "description": "Cambiar idioma"},
         ]
@@ -1410,7 +1410,7 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_site", "title": "Сайт", "description": "Открыть сайт"},
             {"id": "menu_portfolio", "title": "Портфолио", "description": "Посмотреть портфолио"},
             {"id": "menu_about", "title": "О работе", "description": "Как всё устроено"},
-            {"id": "menu_manager", "title": "@streamflowmanager", "description": "Связаться с @streamflowmanager"},
+            {"id": "menu_manager", "title": "Менеджер", "description": "Связаться с менеджером"},
             {"id": "menu_channel", "title": "Канал", "description": "Telegram канал"},
             {"id": "menu_language", "title": "Сменить язык", "description": "Выбрать язык"},
         ]
@@ -1597,7 +1597,7 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "photo_face_invalid": "Нужна именно фотография анфас (изображение).",
             "photo_full": "6/6 Пришли фото в полный рост (конфиденциально, только для проверки анкеты).",
             "photo_full_invalid": "Нужна именно фотография в полный рост (изображение).",
-            "done": "✅ Готово. Полная анкета отправлена @streamflowmanager.",
+            "done": "✅ Готово. Полная анкета отправлена менеджеру.",
             "expired": "⚠️ Ссылка устарела. Оставь новую заявку на сайте.",
         },
         "en": {
@@ -1614,7 +1614,7 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "photo_face_invalid": "Please send an image (front-face photo).",
             "photo_full": "6/6 Send a full-body photo (confidential, only for profile review).",
             "photo_full_invalid": "Please send an image (full-body photo).",
-            "done": "✅ Done. Your full application was sent to @streamflowmanager.",
+            "done": "✅ Done. Your full application was sent to the manager.",
             "expired": "⚠️ This link has expired. Please submit a new form on the website.",
         },
         "pt": {
@@ -1631,7 +1631,7 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "photo_face_invalid": "Envie uma imagem de frente, por favor.",
             "photo_full": "6/6 Envie uma foto de corpo inteiro (confidencial, só para análise).",
             "photo_full_invalid": "Envie uma imagem de corpo inteiro, por favor.",
-            "done": "✅ Pronto. Seu cadastro completo foi enviado para @streamflowmanager.",
+            "done": "✅ Pronto. Seu cadastro completo foi enviado para o gerente.",
             "expired": "⚠️ Este link expirou. Envie um novo formulário no site.",
         },
         "es": {
@@ -1648,7 +1648,7 @@ def _wa_stage2_text(lang: str, key: str) -> str:
             "photo_face_invalid": "Necesito una imagen de frente, por favor.",
             "photo_full": "6/6 Envía una foto de cuerpo completo (confidencial, solo para revisión del perfil).",
             "photo_full_invalid": "Necesito una imagen de cuerpo completo, por favor.",
-            "done": "✅ Listo. Tu solicitud completa fue enviada a @streamflowmanager.",
+            "done": "✅ Listo. Tu solicitud completa fue enviada al manager.",
             "expired": "⚠️ Este enlace venció. Envía una nueva solicitud desde el sitio.",
         },
     }
@@ -2045,7 +2045,6 @@ def build_admin_full_text(data: dict, web_id: str, submitted_at: str, source_lab
         f"📞 Телефон: {_safe(data.get('phone'))}\n"
         f"🏠 Помещение без посторонних: {_safe(data.get('living'))}\n"
         f"📱 Устройство для работы: {device_value}\n"
-        f"🎧 Наушники: {_safe(data.get('headphones'))}\n"
         f"⏱ Время работы: {_safe(data.get('work_time'))}\n"
         f"💼 Опыт: {_safe(data.get('experience'))}\n"
         f"💬 Telegram: {_safe(data.get('telegram'))}\n"

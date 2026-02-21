@@ -230,12 +230,21 @@ def language_keyboard(current_lang: str = "ru", include_home: bool = True):
         rows.append([InlineKeyboardButton(text=t(current_lang, "menu_home"), callback_data="main_menu")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
-def reject_templates_keyboard():
+def reject_templates_keyboard(
+    user_id: int | None = None,
+    filter_key: str | None = None,
+    offset: int | None = None,
+):
+    callback_suffix = ""
+    if user_id is not None:
+        filter_part = (filter_key or "all").strip() or "all"
+        offset_part = int(offset or 0)
+        callback_suffix = f":{int(user_id)}:{filter_part}:{offset_part}"
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🕊 Сейчас не актуально", callback_data="reject_tpl:1")],
-        [InlineKeyboardButton(text="🧩 Не совпали условия", callback_data="reject_tpl:2")],
-        [InlineKeyboardButton(text="🕐 Вернёмся позже", callback_data="reject_tpl:3")],
-        [InlineKeyboardButton(text="✍️ Своя причина", callback_data="reject_tpl:custom")],
+        [InlineKeyboardButton(text="🕊 Сейчас не актуально", callback_data=f"reject_tpl:1{callback_suffix}")],
+        [InlineKeyboardButton(text="🧩 Не совпали условия", callback_data=f"reject_tpl:2{callback_suffix}")],
+        [InlineKeyboardButton(text="🕐 Вернёмся позже", callback_data=f"reject_tpl:3{callback_suffix}")],
+        [InlineKeyboardButton(text="✍️ Своя причина", callback_data=f"reject_tpl:custom{callback_suffix}")],
         [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
     ])
 

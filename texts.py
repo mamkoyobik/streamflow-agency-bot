@@ -108,7 +108,7 @@ TRANSLATIONS = {
             "• твоя активность\n"
             "• умение общаться\n"
             "• регулярность выходов\n"
-            "• следование рекомендациям @streamflowmanager\n\n"
+            "• следование рекомендациям менеджера\n\n"
             "<b>Выплаты:</b>\n"
             "• происходят еженедельно\n"
             "• без задержек\n"
@@ -164,7 +164,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Фото анфас",
         "photo_full_label": "🧍 Фото в профиль",
         "profile_about_title": "ℹ️ <b>Подробнее о работе</b>\n\n• Удалённый формат\n• Без 18+\n• Поддержка 24/7\n• Обучение с нуля",
-        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>Менеджер</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Портфолио моделей</b>\n\nЗдесь ты можешь посмотреть примеры работы, отзывы и реальные кейсы.",
         "portfolio_send_error": "Не удалось отправить материалы",
         "video_cooldown": "🤍 Видео уже отправлены, посмотри, пожалуйста ✨",
@@ -273,7 +273,7 @@ TRANSLATIONS = {
             "• your activity level\n"
             "• communication skills\n"
             "• regular streaming schedule\n"
-            "• following @streamflowmanager recommendations\n\n"
+            "• following manager recommendations\n\n"
             "<b>Payouts:</b>\n"
             "• weekly\n"
             "• without delays\n"
@@ -328,7 +328,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Front-face photo",
         "photo_full_label": "🧍 Profile photo",
         "profile_about_title": "ℹ️ <b>About the work</b>\n\n• Remote format\n• No 18+\n• 24/7 support\n• Training from scratch",
-        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>Manager</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Model portfolio</b>\n\nHere you can view work samples, reviews and real cases.",
         "portfolio_send_error": "Failed to send materials",
         "video_cooldown": "🤍 Videos were already sent, please check them ✨",
@@ -437,7 +437,7 @@ TRANSLATIONS = {
             "• sua atividade\n"
             "• sua comunicação\n"
             "• regularidade nas transmissões\n"
-            "• seguir recomendações de @streamflowmanager\n\n"
+            "• seguir recomendações do gerente\n\n"
             "<b>Pagamentos:</b>\n"
             "• semanais\n"
             "• sem atrasos\n"
@@ -493,7 +493,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Foto de frente",
         "photo_full_label": "🧍 Foto de perfil",
         "profile_about_title": "ℹ️ <b>Sobre o trabalho</b>\n\n• Formato remoto\n• Sem 18+\n• Suporte 24/7\n• Treinamento do zero",
-        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>Gerente</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Portfólio de modelos</b>\n\nAqui você pode ver exemplos, avaliações e casos reais.",
         "portfolio_send_error": "Não foi possível enviar os materiais",
         "video_cooldown": "🤍 Os vídeos já foram enviados, confira por favor ✨",
@@ -602,7 +602,7 @@ TRANSLATIONS = {
             "• tu actividad\n"
             "• tu comunicación\n"
             "• regularidad de salidas\n"
-            "• seguir recomendaciones de @streamflowmanager\n\n"
+            "• seguir recomendaciones del manager\n\n"
             "<b>Pagos:</b>\n"
             "• semanales\n"
             "• sin retrasos\n"
@@ -658,7 +658,7 @@ TRANSLATIONS = {
         "photo_face_label": "📷 Foto de frente",
         "photo_full_label": "🧍 Foto de perfil",
         "profile_about_title": "ℹ️ <b>Sobre el trabajo</b>\n\n• Formato remoto\n• Sin 18+\n• Soporte 24/7\n• Formación desde cero",
-        "profile_contact_title": "💬 <b>@streamflowmanager</b>\n\n{link}",
+        "profile_contact_title": "💬 <b>Manager</b>\n\n{link}",
         "profile_portfolio_title": "📁 <b>Portafolio de modelos</b>\n\nAquí puedes ver ejemplos, reseñas y casos reales.",
         "portfolio_send_error": "No se pudieron enviar los materiales",
         "video_cooldown": "🤍 Los videos ya fueron enviados, revísalos por favor ✨",

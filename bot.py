@@ -116,7 +116,6 @@ from application_rules import (
     FORM_EXPERIENCE_MAX_LEN as SHARED_FORM_EXPERIENCE_MAX_LEN,
     FORM_YES_NO_MAX_LEN as SHARED_FORM_YES_NO_MAX_LEN,
     FORM_DEVICES_MAX_LEN as SHARED_FORM_DEVICES_MAX_LEN,
-    FORM_HEADPHONES_MAX_LEN as SHARED_FORM_HEADPHONES_MAX_LEN,
     normalize_user_text_input as normalize_user_text_input_shared,
     normalize_phone as normalize_phone_shared,
     is_valid_phone as is_valid_phone_shared,
@@ -634,7 +633,6 @@ FORM_DATA_FIELDS = {
     "devices",
     "device_model",
     "work_time",
-    "headphones",
     "telegram",
     "experience",
     "photo_face",
@@ -647,7 +645,6 @@ OPTIONAL_FORM_DATA_FIELDS = {
     "country",
     "lang",
     "devices",
-    "headphones",
     "photo_face",
     "photo_full",
     "site_lead_token",
@@ -678,7 +675,6 @@ STATE_TO_FIELD = {
     ApplicationStates.devices: "devices",
     ApplicationStates.device_model: "device_model",
     ApplicationStates.work_time: "work_time",
-    ApplicationStates.headphones: "headphones",
     ApplicationStates.telegram: "telegram",
     ApplicationStates.experience: "experience",
     ApplicationStates.photo_face: "photo_face",
@@ -817,7 +813,6 @@ FORM_TELEGRAM_MAX_LEN = SHARED_FORM_TELEGRAM_MAX_LEN
 FORM_EXPERIENCE_MAX_LEN = SHARED_FORM_EXPERIENCE_MAX_LEN
 FORM_YES_NO_MAX_LEN = SHARED_FORM_YES_NO_MAX_LEN
 FORM_DEVICES_MAX_LEN = SHARED_FORM_DEVICES_MAX_LEN
-FORM_HEADPHONES_MAX_LEN = SHARED_FORM_HEADPHONES_MAX_LEN
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
@@ -925,7 +920,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• отвечаем по графику, выплатам и процессу\n\n"
             "Дальше выбери удобный формат:\n"
             "• быстро пройти всё в боте и подать заявку без переписок\n"
-            f"• или написать {PUBLIC_MANAGER_HANDLE} и записаться через него"
+            "• или написать менеджеру и записаться через него"
         ),
         "step1": (
             "✅ Предзаявка сохранена.\n\n"
@@ -954,7 +949,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• ℹ️ Подробнее о работе\n"
             "• 📣 Наш канал\n\n"
             "После этого нажми «🌸 Стать моделью» и продолжим.\n"
-            f"Если останутся вопросы — пиши {PUBLIC_MANAGER_HANDLE}."
+            "Если останутся вопросы — пиши менеджеру."
         ),
         "channel": "📣 Открыть канал",
         "continue_bot": "✅ Подать заявку через бота",
@@ -972,7 +967,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• transparent schedule, payouts and workflow\n\n"
             "Now choose your path:\n"
             "• complete everything in the bot and submit without extra chats\n"
-            f"• or message {PUBLIC_MANAGER_HANDLE} and apply through them"
+            "• or message the manager and apply through them"
         ),
         "step1": (
             "✅ Pre-application saved.\n\n"
@@ -1001,7 +996,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• ℹ️ About the work\n"
             "• 📣 Our channel\n\n"
             "Then tap “🌸 Become a model” to continue.\n"
-            f"If you have questions, message {PUBLIC_MANAGER_HANDLE}."
+            "If you have questions, message the manager."
         ),
         "channel": "📣 Open channel",
         "continue_bot": "✅ Apply through bot",
@@ -1019,7 +1014,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• regras transparentes de rotina, pagamento e processo\n\n"
             "Agora escolha o caminho:\n"
             "• concluir tudo no bot e enviar sem perder tempo em chats\n"
-            f"• ou falar com {PUBLIC_MANAGER_HANDLE} e se cadastrar por ele"
+            "• ou falar com o gerente e se cadastrar por ele"
         ),
         "step1": (
             "✅ Pré-cadastro salvo.\n\n"
@@ -1048,7 +1043,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• ℹ️ Sobre o trabalho\n"
             "• 📣 Nosso canal\n\n"
             "Depois toque em “🌸 Tornar-se modelo” para continuar.\n"
-            f"Se tiver dúvidas, fale com {PUBLIC_MANAGER_HANDLE}."
+            "Se tiver dúvidas, fale com o gerente."
         ),
         "channel": "📣 Abrir canal",
         "continue_bot": "✅ Enviar pelo bot",
@@ -1066,7 +1061,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• reglas transparentes sobre horario, pagos y proceso\n\n"
             "Ahora elige tu camino:\n"
             "• completar todo en el bot y enviar sin perder tiempo en chats\n"
-            f"• o escribir a {PUBLIC_MANAGER_HANDLE} y registrarte por su vía"
+            "• o escribir al manager y registrarte por su vía"
         ),
         "step1": (
             "✅ Pre-solicitud guardada.\n\n"
@@ -1095,7 +1090,7 @@ STAGE2_BRIDGE_TEXTS = {
             "• ℹ️ Sobre el trabajo\n"
             "• 📣 Nuestro canal\n\n"
             "Después pulsa “🌸 Ser modelo” para continuar.\n"
-            f"Si tienes preguntas, escribe a {PUBLIC_MANAGER_HANDLE}."
+            "Si tienes preguntas, escribe al manager."
         ),
         "channel": "📣 Abrir canal",
         "continue_bot": "✅ Enviar por el bot",
@@ -2421,7 +2416,6 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"📞 Телефон: {_safe_text(data.get('phone', '—'))}\n"
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
         f"📱 Устройство для работы: {device_value}\n"
-        f"🎧 Наушники: {_safe_text(data.get('headphones', '—'))}\n"
         f"⏱ Время работы: {_safe_text(data.get('work_time', '—'))}\n"
         f"💼 Опыт: {_safe_text(data.get('experience', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
@@ -3562,6 +3556,69 @@ async def send_or_edit_user_text(
         logger.exception("Ошибка отправки сообщения пользователю")
         return False
 
+async def send_or_edit_user_preview(
+    user_id: int,
+    media: str | FSInputFile,
+    caption: str,
+    reply_markup=None,
+) -> bool:
+    message_id = get_flow_message_id(user_id)
+    safe_caption = fit_caption(caption)
+    if message_id:
+        try:
+            await bot.edit_message_media(
+                chat_id=user_id,
+                message_id=message_id,
+                media=InputMediaPhoto(
+                    media=media,
+                    caption=safe_caption,
+                    parse_mode=ParseMode.HTML,
+                ),
+                reply_markup=reply_markup,
+            )
+            return True
+        except TelegramBadRequest as e:
+            err = str(e).lower()
+            if "message is not modified" in err:
+                try:
+                    await bot.edit_message_reply_markup(
+                        chat_id=user_id,
+                        message_id=message_id,
+                        reply_markup=reply_markup,
+                    )
+                except Exception:
+                    pass
+                return True
+            logger.warning("edit_message_media failed for user %s: %s", user_id, e)
+        except TelegramForbiddenError:
+            logger.warning("Нет прав на обновление preview сообщения пользователя")
+            return False
+        except Exception:
+            logger.exception("Не удалось обновить preview сообщения пользователя")
+
+    if message_id:
+        try:
+            await bot.delete_message(user_id, message_id)
+        except Exception:
+            pass
+
+    try:
+        msg = await bot.send_photo(
+            user_id,
+            photo=media,
+            caption=safe_caption,
+            parse_mode=ParseMode.HTML,
+            reply_markup=reply_markup,
+        )
+        set_flow_message_id(user_id, msg.message_id)
+        return True
+    except TelegramForbiddenError:
+        logger.warning("Нет прав на отправку preview сообщения пользователю")
+        return False
+    except Exception:
+        logger.exception("Ошибка отправки preview сообщения пользователю")
+        return False
+
 async def clear_user_flow_message(user_id: int):
     message_id = get_flow_message_id(user_id)
     if not message_id:
@@ -3571,6 +3628,16 @@ async def clear_user_flow_message(user_id: int):
     except Exception:
         pass
     set_flow_message_id(user_id, None)
+
+async def clear_user_menu_message(user_id: int):
+    message_id = get_menu_message_id(user_id)
+    if not message_id:
+        return
+    try:
+        await bot.delete_message(user_id, message_id)
+    except Exception:
+        pass
+    set_menu_message_id(user_id, None)
 
 async def clear_portfolio_media(user_id: int):
     auto_task = PORTFOLIO_AUTONEXT_TASKS.pop(user_id, None)
@@ -4788,26 +4855,10 @@ async def step_work_time(m: Message, state: FSMContext):
         ApplicationStates.experience
     )
 
-@dp.message(StateFilter(ApplicationStates.headphones), F.text)
+@dp.message(StateFilter(ApplicationStates.headphones))
 async def step_headphones(m: Message, state: FSMContext):
-    lang = lang_for(m.from_user.id)
-    headphones, too_long = normalize_user_text_input(m.text, FORM_HEADPHONES_MAX_LEN)
+    # Compatibility handler for users stuck on an old questionnaire step.
     await delete_user_message(m)
-    if too_long:
-        await send_or_edit_user_text(
-            m.from_user.id,
-            t(lang, "field_too_long", max=FORM_HEADPHONES_MAX_LEN),
-            reply_markup=form_keyboard(lang),
-        )
-        return
-    if len(headphones) < 2:
-        await send_or_edit_user_text(
-            m.from_user.id,
-            t(lang, "field_headphones_prompt"),
-            reply_markup=form_keyboard(lang)
-        )
-        return
-    await update_form_field(state, m.from_user.id, headphones=headphones)
     await send_next_question(
         m,
         state,
@@ -4968,7 +5019,6 @@ TEXT_STATES = (
     ApplicationStates.devices,
     ApplicationStates.device_model,
     ApplicationStates.work_time,
-    ApplicationStates.headphones,
     ApplicationStates.telegram,
     ApplicationStates.experience,
     ApplicationStates.edit_value,
@@ -4989,11 +5039,25 @@ async def reject_reason_non_text(m: Message, state: FSMContext):
     if not await can_manage_admin_group(m):
         await delete_message_silent(m)
         return
+    data = await state.get_data()
+    uid = int(data.get("reject_uid") or 0)
+    view_mode = bool(data.get("reject_view"))
+    view_filter = str(data.get("reject_filter") or "all")
+    view_offset = int(data.get("reject_offset") or 0)
     await delete_message_silent(m)
-    await update_admin_menu_message(
-        "🤍 Пожалуйста, напиши причину отказа текстом.",
-        reject_reason_keyboard()
-    )
+    if uid > 0 and view_mode:
+        form_data = get_form_data(uid) or {}
+        photo_id = await _preferred_admin_photo(uid, form_data)
+        await update_admin_view_message(
+            "🤍 Пожалуйста, напиши причину отказа текстом.",
+            reject_reason_keyboard(),
+            photo_id,
+        )
+    else:
+        await update_admin_menu_message(
+            "🤍 Пожалуйста, напиши причину отказа текстом.",
+            reject_reason_keyboard()
+        )
 
 @dp.callback_query(F.data == "form_back")
 async def form_back(call: CallbackQuery, state: FSMContext):
@@ -5131,12 +5195,20 @@ async def contact(call: CallbackQuery):
         await safe_call_answer(call)
         await clear_portfolio_media(call.from_user.id)
         username = PUBLIC_MANAGER_USERNAME
+        link_titles = {
+            "ru": "Открыть чат с менеджером",
+            "en": "Open manager chat",
+            "pt": "Abrir chat com o gerente",
+            "es": "Abrir chat con manager",
+        }
+        manager_link = f"https://t.me/{username}"
+        manager_link_html = f'<a href="{manager_link}">{link_titles.get(lang, link_titles["ru"])}</a>'
         await send_or_edit_user_text(
             call.from_user.id,
             t(
                 lang,
                 "profile_contact_title",
-                link=f"https://t.me/{username}",
+                link=manager_link_html,
             ),
             reply_markup=main_menu(lang)
         )
@@ -5269,9 +5341,6 @@ async def save_edited_value(m: Message, state: FSMContext):
         return
     if field == "work_time" and not has_any_digit(value):
         await send_or_edit_user_text(m.from_user.id, t(lang, "field_work_time_invalid"))
-        return
-    if field == "headphones" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, t(lang, "field_headphones_prompt"))
         return
     if field == "telegram":
         normalized = normalize_telegram(value)
@@ -5413,13 +5482,16 @@ async def preview_photo(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, miss_text, show_alert=False)
             return
 
-        if _is_http_url(photo_ref):
-            resolved = await _ensure_admin_photo_ref(user_id, data, photo_key)
-            if resolved:
-                photo_ref = resolved
-
-        caption = t(lang, "photo_face_label") if photo_type == "face" else t(lang, "photo_full_label")
-        await bot.send_photo(user_id, photo_ref, caption=caption)
+        await state.update_data(preview_photo_mode=photo_type)
+        if not call.message:
+            await safe_call_answer(call)
+            return
+        await show_preview(
+            call.message,
+            state,
+            user_id=user_id,
+            show_loading=False,
+        )
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в preview_photo")
@@ -5472,18 +5544,25 @@ async def preview_back(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка в preview_back")
         await safe_call_answer(call, "Не удалось открыть предпросмотр", show_alert=False)
 
-async def show_preview(m: Message, state: FSMContext, user_id: int | None = None):
+async def show_preview(
+    m: Message,
+    state: FSMContext,
+    user_id: int | None = None,
+    show_loading: bool = True,
+):
     target_user_id = user_id or m.chat.id
     lang = lang_for(target_user_id)
     data = _merge_preview_payload(target_user_id, await state.get_data())
-    await send_or_edit_user_text(target_user_id, t(lang, "loading_text"))
-    for text in (
-        t(lang, "loading_stage_1"),
-        t(lang, "loading_stage_2"),
-    ):
-        await asyncio.sleep(random.uniform(0.4, 0.8))
-        await send_or_edit_user_text(target_user_id, text)
-    await asyncio.sleep(random.uniform(0.3, 0.6))
+    if show_loading:
+        await clear_user_menu_message(target_user_id)
+        await send_or_edit_user_text(target_user_id, t(lang, "loading_text"))
+        for text in (
+            t(lang, "loading_stage_1"),
+            t(lang, "loading_stage_2"),
+        ):
+            await asyncio.sleep(random.uniform(0.4, 0.8))
+            await send_or_edit_user_text(target_user_id, text)
+        await asyncio.sleep(random.uniform(0.3, 0.6))
     status = get_status(target_user_id) or "new"
     status_caption = status_label(status, lang)
     text = t(
@@ -5496,15 +5575,35 @@ async def show_preview(m: Message, state: FSMContext, user_id: int | None = None
         living=_safe_text(data.get("living", "—")),
         devices=_safe_text(data.get("devices", "—")),
         device_model=_safe_text(data.get("device_model", "—")),
-        headphones=_safe_text(data.get("headphones", "—")),
         work_time=_safe_text(data.get("work_time", "—")),
         experience=_safe_text(data.get("experience", "—")),
         telegram=_safe_text(data.get("telegram", "—")),
         status=status_caption,
     )
+    preferred_mode = str(data.get("preview_photo_mode") or "").strip().lower()
+    face_photo = str(data.get("photo_face") or "").strip()
+    full_photo = str(data.get("photo_full") or "").strip()
+    if preferred_mode == "full":
+        preview_photo_ref = full_photo or face_photo
+        actual_mode = "full" if full_photo else ("face" if face_photo else "")
+    else:
+        preview_photo_ref = face_photo or full_photo
+        actual_mode = "face" if face_photo else ("full" if full_photo else "")
+    if actual_mode:
+        await state.update_data(preview_photo_mode=actual_mode)
+    media_for_preview: str | FSInputFile
+    if preview_photo_ref:
+        media_for_preview = preview_photo_ref
+    else:
+        media_for_preview = FSInputFile("media/menu.jpg")
     await state.set_state(ApplicationStates.preview)
     set_last_state(target_user_id, ApplicationStates.preview.state)
-    await send_or_edit_user_text(target_user_id, text, reply_markup=preview_keyboard(lang))
+    await send_or_edit_user_preview(
+        target_user_id,
+        media_for_preview,
+        text,
+        reply_markup=preview_keyboard(lang),
+    )
 
 # ================= CONFIRM SEND =================
 
@@ -5611,7 +5710,6 @@ async def admin_accept(call: CallbackQuery):
         if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
-        await safe_call_answer(call)
         parts = call.data.split(":")
         try:
             uid = int(parts[1])
@@ -5688,7 +5786,6 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
         if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
-        await safe_call_answer(call)
         parts = call.data.split(":")
         try:
             uid = int(parts[1])
@@ -5703,19 +5800,38 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
                 view_offset = max(int(parts[4]), 0)
             except Exception:
                 view_offset = 0
+        flow_payload = {
+            "reject_uid": uid,
+            "reject_view": view_mode,
+            "reject_filter": view_filter or "all",
+            "reject_offset": view_offset,
+        }
         await state.set_state(ApplicationStates.admin_reject_reason)
-        await state.update_data(
-            reject_uid=uid,
-            reject_view=view_mode,
-            reject_filter=view_filter,
-            reject_offset=view_offset,
+        await state.update_data(**flow_payload)
+        await sync_anonymous_admin_state(
+            chat_id=call.message.chat.id if call.message else None,
+            target_state=ApplicationStates.admin_reject_reason,
+            data=flow_payload,
         )
-        await update_admin_menu_message(
-            "✍️ Укажи причину отказа:\n\n"
-            "Можно выбрать готовый вариант или написать свой текст.",
-            reject_templates_keyboard()
+
+        prompt = (
+            "✍️ <b>Отклонение заявки</b>\n\n"
+            "Выбери готовую причину или нажми «Своя причина» и напиши текст вручную."
         )
-        await safe_call_answer(call)
+        if view_mode:
+            form_data = get_form_data(uid) or {}
+            photo_id = await _preferred_admin_photo(uid, form_data)
+            await update_admin_view_message(
+                prompt,
+                reject_templates_keyboard(uid, view_filter or "all", view_offset),
+                photo_id,
+            )
+        else:
+            await update_admin_menu_message(
+                prompt,
+                reject_templates_keyboard(uid, view_filter or "all", view_offset),
+            )
+        await safe_call_answer(call, "Выбери причину отказа", show_alert=True)
     except Exception:
         logger.exception("Ошибка в admin_reject")
         await safe_call_answer(call, "Ошибка при открытии отказа", show_alert=True)
@@ -5726,22 +5842,62 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
         if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
-        await safe_call_answer(call)
-        tpl_code = call.data.split(":", 1)[1]
+        parts = call.data.split(":")
+        tpl_code = parts[1] if len(parts) > 1 else ""
+        uid_from_callback: int | None = None
+        filter_from_callback: str | None = None
+        offset_from_callback: int | None = None
+        if len(parts) > 2:
+            try:
+                uid_from_callback = int(parts[2])
+            except Exception:
+                uid_from_callback = None
+        if len(parts) > 3:
+            filter_from_callback = str(parts[3] or "").strip() or None
+        if len(parts) > 4:
+            try:
+                offset_from_callback = max(int(parts[4]), 0)
+            except Exception:
+                offset_from_callback = 0
+
         state_data = await state.get_data()
-        uid = state_data.get("reject_uid")
+        uid = uid_from_callback or state_data.get("reject_uid")
         if not uid:
             await safe_call_answer(call, "🤍 Не вижу кандидата")
             return
+        view_mode = bool(state_data.get("reject_view")) or (uid_from_callback is not None)
+        view_filter = filter_from_callback or str(state_data.get("reject_filter") or "all")
+        view_offset = offset_from_callback if offset_from_callback is not None else int(state_data.get("reject_offset") or 0)
+
+        await state.update_data(
+            reject_uid=uid,
+            reject_view=view_mode,
+            reject_filter=view_filter,
+            reject_offset=view_offset,
+        )
+        await sync_anonymous_admin_state(
+            chat_id=call.message.chat.id if call.message else None,
+            target_state=ApplicationStates.admin_reject_reason,
+            data=await state.get_data(),
+        )
+
         form_data = get_form_data(uid) or {}
         user_lang = submission_lang_for_user(uid, form_data)
 
         if tpl_code == "custom":
-            await update_admin_menu_message(
-                "✍️ Напиши свою причину отказа:",
-                reject_reason_keyboard()
-            )
-            await safe_call_answer(call)
+            if view_mode:
+                photo_id = await _preferred_admin_photo(uid, form_data)
+                await update_admin_view_message(
+                    "✍️ <b>Своя причина отказа</b>\n\nНапиши текст следующим сообщением в чат админки.",
+                    reject_reason_keyboard(),
+                    photo_id,
+                )
+            else:
+                await update_admin_menu_message(
+                    "✍️ Напиши свою причину отказа:",
+                    reject_reason_keyboard()
+                )
+            await safe_call_answer(call, "Введи свой текст отказа", show_alert=True)
             return
 
         reason = auto_reject_reason(tpl_code, user_lang)
@@ -5770,13 +5926,13 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "rejected")
         try:
-            if bool(state_data.get("reject_view")) and state_data.get("reject_filter"):
+            if view_mode and view_filter:
                 await send_admin_list(
                     call,
-                    str(state_data.get("reject_filter")),
-                    int(state_data.get("reject_offset") or 0),
+                    view_filter,
+                    view_offset,
                 )
-            elif bool(state_data.get("reject_view")):
+            elif view_mode:
                 data = get_form_data(uid) or {}
                 contact_url = contact_url_for_user(uid, data)
                 photo_id = await _preferred_admin_photo(uid, data)
@@ -5792,7 +5948,11 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
         except Exception:
             logger.exception("Ошибка возврата в админ-меню")
         await state.clear()
-        await safe_call_answer(call)
+        await sync_anonymous_admin_state(
+            chat_id=call.message.chat.id if call.message else None,
+            target_state=None,
+        )
+        await safe_call_answer(call, "Заявка отклонена")
     except Exception:
         logger.exception("Ошибка в reject_template")
         await safe_call_answer(call, "Ошибка при отклонении", show_alert=True)
@@ -5803,6 +5963,7 @@ async def reject_reason(m: Message, state: FSMContext):
         if not await can_manage_admin_group(m):
             await delete_message_silent(m)
             return
+        await delete_message_silent(m)
         data = await state.get_data()
         uid = data.get("reject_uid")
         if not uid:
@@ -5833,7 +5994,23 @@ async def reject_reason(m: Message, state: FSMContext):
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "rejected")
         try:
-            if bool(data.get("reject_view")):
+            if bool(data.get("reject_view")) and data.get("reject_filter"):
+                filter_key = str(data.get("reject_filter") or "all")
+                offset = int(data.get("reject_offset") or 0)
+                total = _apps_total_for_filter(filter_key)
+                if total > 0:
+                    if offset < 0:
+                        offset = 0
+                    if offset >= total:
+                        offset = total - 1
+                    await _render_admin_list_message(
+                        filter_key=filter_key,
+                        offset=offset,
+                        user_id=uid,
+                        item_status="rejected",
+                        total=total,
+                    )
+            elif bool(data.get("reject_view")):
                 form_data = get_form_data(uid) or {}
                 contact_url = contact_url_for_user(uid, form_data)
                 photo_id = await _preferred_admin_photo(uid, form_data)
@@ -5849,6 +6026,10 @@ async def reject_reason(m: Message, state: FSMContext):
         except Exception:
             logger.exception("Ошибка возврата в админ-меню")
         await state.clear()
+        await sync_anonymous_admin_state(
+            chat_id=m.chat.id if m.chat else None,
+            target_state=None,
+        )
     except Exception:
         logger.exception("Ошибка в reject_reason")
 
@@ -5859,7 +6040,6 @@ async def admin_send_model(call: CallbackQuery, state: FSMContext):
         if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
-        await safe_call_answer(call)
         parts = call.data.split(":")
         try:
             uid = int(parts[1])
@@ -6019,12 +6199,11 @@ async def admin_send_model_message(message: Message, state: FSMContext):
 
 
 @dp.callback_query(StateFilter("*"), F.data.startswith("admin_request_info:"))
-async def admin_request_info(call: CallbackQuery, state: FSMContext):
+async def admin_request_info(call: CallbackQuery):
     try:
         if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
-        await safe_call_answer(call)
         parts = call.data.split(":")
         try:
             uid = int(parts[1])
@@ -6052,20 +6231,42 @@ async def admin_request_info(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, "Для полной анкеты уточнение не требуется", show_alert=True)
             return
         candidate_name = str(form_data.get("name") or f"ID {uid}")
-        await state.set_state(ApplicationStates.admin_request_info_message)
-        await state.update_data(
-            request_info_uid=uid,
-            request_info_view=view_mode,
-            request_info_filter=view_filter,
-            request_info_offset=view_offset,
+        user_lang = submission_lang_for_user(uid, form_data)
+        locale = normalize_lang(user_lang)
+        continue_line = {
+            "ru": "Нажми «Продолжить» ниже, чтобы дозаполнить анкету и перейти к старту работы.",
+            "en": "Tap “Continue” below to complete your form and move to work start.",
+            "pt": "Toque em “Continuar” abaixo para completar o cadastro e iniciar o trabalho.",
+            "es": "Pulsa “Continuar” abajo para completar tu solicitud y pasar al inicio del trabajo.",
+        }.get(locale, "Нажми «Продолжить» ниже, чтобы дозаполнить анкету и перейти к старту работы.")
+        message_text = f"{auto_request_info_text(user_lang)}\n\n{continue_line}"
+
+        await send_or_edit_user_text(
+            uid,
+            message_text,
+            reply_markup=continue_form_keyboard(user_lang),
         )
+
+        form_data[AUTO_REQUEST_INFO_FLAG_KEY] = datetime.now(timezone.utc).isoformat()
+        set_form_data(uid, form_data)
+
+        if view_mode and view_filter:
+            await send_admin_list(call, view_filter, view_offset, preferred_user_id=uid)
+        else:
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
+            await update_admin_menu_message(
+                f"✅ Запрос уточнения отправлен кандидату (ID: {uid}, имя: {html.escape(candidate_name)}).",
+                admin_menu_keyboard(counts, stage_counts),
+            )
+        await safe_call_answer(call, "Запрос уточнения отправлен", show_alert=True)
+    except TelegramForbiddenError:
         await update_admin_menu_message(
-            "📝 <b>Запрос уточнения</b>\n\n"
-            f"Кандидат: <b>{html.escape(candidate_name)}</b>\n\n"
-            "Отправь одним сообщением, что именно нужно уточнить.\n"
-            "Сообщение уйдёт кандидату в личку от бота.",
-            admin_request_info_keyboard(),
+            "⚠️ Не удалось доставить запрос уточнения.\n"
+            "Пользователь не открыл чат с ботом или заблокировал бота.",
+            admin_menu_keyboard(get_status_counts(), get_application_stage_counts()),
         )
+        await safe_call_answer(call, "Сообщение не доставлено", show_alert=True)
     except Exception:
         logger.exception("Ошибка в admin_request_info")
         await safe_call_answer(call, "Не удалось открыть запрос уточнения", show_alert=True)
