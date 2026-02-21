@@ -1139,12 +1139,30 @@ def _download_wa_photo(url: str) -> tuple[bytes, str] | None:
         return None
 
 
-def _send_whatsapp_photo_to_admin(url: str, filename: str) -> int | None:
+def _extract_telegram_photo_file_id(payload: dict | None) -> str | None:
+    if not isinstance(payload, dict):
+        return None
+    message = payload.get("result")
+    if not isinstance(message, dict):
+        return None
+    photos = message.get("photo")
+    if not isinstance(photos, list):
+        return None
+    for item in reversed(photos):
+        if not isinstance(item, dict):
+            continue
+        file_id = str(item.get("file_id") or "").strip()
+        if file_id:
+            return file_id
+    return None
+
+
+def _send_whatsapp_photo_to_admin(url: str, filename: str) -> str | None:
     try:
         result = telegram_request("sendPhoto", {"chat_id": str(ADMIN_GROUP_ID), "photo": url})
-        message_id = result.get("result", {}).get("message_id") if isinstance(result, dict) else None
-        if isinstance(message_id, int):
-            return message_id
+        file_id = _extract_telegram_photo_file_id(result)
+        if file_id:
+            return file_id
     except Exception as err:
         print("sendPhoto by URL failed:", err)
 
@@ -1164,9 +1182,9 @@ def _send_whatsapp_photo_to_admin(url: str, filename: str) -> int | None:
                 }
             },
         )
-        message_id = result.get("result", {}).get("message_id") if isinstance(result, dict) else None
-        if isinstance(message_id, int):
-            return message_id
+        file_id = _extract_telegram_photo_file_id(result)
+        if file_id:
+            return file_id
     except Exception as err:
         print("sendPhoto by upload failed:", err)
     return None
@@ -1185,22 +1203,38 @@ def _build_admin_whatsapp_keyboard(user_id: int, wa_phone: str | None) -> dict:
     return {"inline_keyboard": rows}
 
 
-def _send_application_to_admin_from_whatsapp(data: dict, user_id: int, wa_phone: str | None) -> None:
+def _send_application_to_admin_from_whatsapp(
+    data: dict,
+    user_id: int,
+    wa_phone: str | None,
+    source: str = "whatsapp",
+    status: str = "pending",
+) -> None:
     if not BOT_TOKEN or not ADMIN_GROUP_ID:
         return
     submitted_at = format_submit_time(datetime.now(timezone.utc).isoformat())
     text = _build_admin_whatsapp_application_text(data, user_id, submitted_at)
-    for raw_url, filename in (
-        (data.get("photo_face"), f"wa_face_{abs(user_id)}.jpg"),
-        (data.get("photo_full"), f"wa_full_{abs(user_id)}.jpg"),
+    photo_refs_changed = False
+    for field, filename in (
+        ("photo_face", f"wa_face_{abs(user_id)}.jpg"),
+        ("photo_full", f"wa_full_{abs(user_id)}.jpg"),
     ):
+        raw_url = data.get(field)
         media_url = _wa_media_url(raw_url)
         if not media_url:
             continue
         try:
-            _send_whatsapp_photo_to_admin(media_url, filename)
+            file_id = _send_whatsapp_photo_to_admin(media_url, filename)
+            if file_id:
+                data[field] = file_id
+                photo_refs_changed = True
         except Exception as err:
             print("Failed to send WhatsApp photo to admin:", err)
+    if photo_refs_changed:
+        try:
+            save_web_application(user_id, data, source=source, status=status)
+        except Exception as err:
+            print("Failed to persist Telegram photo file_id for WhatsApp application:", err)
     payload = {
         "chat_id": str(ADMIN_GROUP_ID),
         "text": text,
@@ -1783,7 +1817,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                 except Exception as err:
                     print("Excel error (site->whatsapp):", err)
             try:
-                _send_application_to_admin_from_whatsapp(data, user_id, from_phone)
+                _send_application_to_admin_from_whatsapp(data, user_id, from_phone, source="site", status="pending")
             except Exception as err:
                 print("Failed to send site->whatsapp application to admin:", err)
             try:
@@ -1945,7 +1979,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             except Exception as err:
                 print("Excel error (whatsapp):", err)
         try:
-            _send_application_to_admin_from_whatsapp(data, user_id, from_phone)
+            _send_application_to_admin_from_whatsapp(data, user_id, from_phone, source="whatsapp", status="pending")
         except Exception as err:
             print("Failed to send whatsapp application card to admin:", err)
         try:

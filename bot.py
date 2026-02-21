@@ -16,7 +16,8 @@ from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
     InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaAnimation,
     ChatJoinRequest, InlineKeyboardMarkup, MessageEntity,
-    BotCommand, BotCommandScopeDefault, BotCommandScopeChatAdministrators
+    BotCommand, BotCommandScopeDefault, BotCommandScopeChatAdministrators,
+    BufferedInputFile,
 )
 try:
     from aiogram.client.default import DefaultBotProperties
@@ -175,8 +176,9 @@ async def global_error_handler(event: ErrorEvent):
     try:
         exc_name = html.escape(type(exception).__name__)
         exc_text = html.escape(str(exception))[:1200]
+        admin_chat_id = current_admin_chat_id()
         await bot.send_message(
-            ADMIN_GROUP_ID,
+            admin_chat_id,
             "⚠️ <b>Ошибка в боте</b>\n\n"
             f"{exc_name}: {exc_text}"
         )
@@ -519,6 +521,40 @@ async def safe_call_answer(call: CallbackQuery, text: str | None = None, show_al
     except Exception:
         pass
 
+
+def current_admin_chat_id() -> int:
+    raw = get_setting(ADMIN_CHAT_ID_SETTING_KEY)
+    if raw and str(raw).lstrip("-").isdigit():
+        return int(raw)
+    return int(ADMIN_GROUP_ID)
+
+
+def bind_admin_chat_id(chat_id: int | None) -> None:
+    if not chat_id:
+        return
+    chat_id = int(chat_id)
+    current = current_admin_chat_id()
+    if chat_id == current:
+        return
+    set_setting(ADMIN_CHAT_ID_SETTING_KEY, str(chat_id))
+    # Message ids are chat-scoped; reset to avoid editing stale messages in another chat.
+    set_setting(ADMIN_MENU_SETTING_KEY, None)
+    set_setting(ADMIN_NOTIFY_SETTING_KEY, None)
+    set_setting(ADMIN_VIEW_SETTING_KEY, None)
+    set_setting(ADMIN_PHOTOS_SETTING_KEY, None)
+    logger.warning("Admin chat rebound from %s to %s", current, chat_id)
+
+
+def is_admin_chat(chat_id: int | None) -> bool:
+    if chat_id is None:
+        return False
+    try:
+        cid = int(chat_id)
+    except Exception:
+        return False
+    return cid in {int(ADMIN_GROUP_ID), int(current_admin_chat_id())}
+
+
 def normalize_telegram(text: str) -> str | None:
     return normalize_telegram_shared(text)
 
@@ -786,6 +822,7 @@ DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
 ADMIN_ARCHIVE_CHECK_HOURS = 6
+ADMIN_CHAT_ID_SETTING_KEY = "admin_chat_id"
 ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_LIST_LIMIT = 1
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
@@ -1259,10 +1296,15 @@ async def setup_bot_commands() -> None:
         BotCommand(command="reset_db", description="Сбросить базу (опасно)"),
     ]
     await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
-    await bot.set_my_commands(
-        admin_commands,
-        scope=BotCommandScopeChatAdministrators(chat_id=ADMIN_GROUP_ID),
-    )
+    admin_scope_ids: list[int] = [int(ADMIN_GROUP_ID)]
+    active_admin_chat_id = int(current_admin_chat_id())
+    if active_admin_chat_id not in admin_scope_ids:
+        admin_scope_ids.append(active_admin_chat_id)
+    for chat_id in admin_scope_ids:
+        await bot.set_my_commands(
+            admin_commands,
+            scope=BotCommandScopeChatAdministrators(chat_id=chat_id),
+        )
 
 
 def extract_post_text(message: Message) -> str:
@@ -1721,50 +1763,61 @@ def is_anonymous_admin_post(message: Message) -> bool:
 
 
 async def can_manage_admin_group(message: Message) -> bool:
-    if message.chat.id != ADMIN_GROUP_ID:
+    if not message or not message.chat:
         return False
-    if is_anonymous_admin_post(message):
+    if message.chat.type not in {"group", "supergroup"}:
+        return False
+    chat_id = int(message.chat.id)
+    if is_anonymous_admin_post(message) and is_admin_chat(chat_id):
         return True
     if not message.from_user:
         return False
     if message.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
+        bind_admin_chat_id(chat_id)
         return True
     if message.from_user.id in ADMIN_ALLOWED_USER_IDS:
+        bind_admin_chat_id(chat_id)
         return True
     username = (message.from_user.username or "").strip().lower()
     if username in ADMIN_ALLOWED_USERNAMES:
+        bind_admin_chat_id(chat_id)
         return True
-    if await is_admin_actor(message.chat.id, message.from_user.id):
+    if not is_admin_chat(chat_id):
+        return False
+    if await is_admin_actor(chat_id, message.from_user.id):
         return True
-    return await is_group_member(message.chat.id, message.from_user.id)
+    return await is_group_member(chat_id, message.from_user.id)
 
 
 async def can_manage_admin_callback(call: CallbackQuery) -> bool:
     if not call.message or not call.from_user:
         return False
-    chat_id = call.message.chat.id
+    if call.message.chat.type not in {"group", "supergroup"}:
+        return False
+    chat_id = int(call.message.chat.id)
     if call.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
+        bind_admin_chat_id(chat_id)
         return True
     if call.from_user.id in ADMIN_ALLOWED_USER_IDS:
+        bind_admin_chat_id(chat_id)
         return True
     username = (call.from_user.username or "").strip().lower()
     if username in ADMIN_ALLOWED_USERNAMES:
+        bind_admin_chat_id(chat_id)
         return True
-    if chat_id == ADMIN_GROUP_ID:
-        if await is_admin_actor(ADMIN_GROUP_ID, call.from_user.id):
+    if is_admin_chat(chat_id):
+        if await is_admin_actor(chat_id, call.from_user.id):
             return True
-        return await is_group_member(ADMIN_GROUP_ID, call.from_user.id)
-    # Fallback for cases when admin chat ID was changed but admin still presses buttons in admin group.
-    if await is_admin_actor(chat_id, call.from_user.id):
-        return True
-    return await is_group_member(chat_id, call.from_user.id)
+        return await is_group_member(chat_id, call.from_user.id)
+    return False
 
 
 async def sync_anonymous_create_post_state(enabled: bool):
     try:
+        admin_chat_id = current_admin_chat_id()
         anon_ctx = dp.fsm.get_context(
             bot=bot,
-            chat_id=ADMIN_GROUP_ID,
+            chat_id=admin_chat_id,
             user_id=ANONYMOUS_ADMIN_BOT_ID,
         )
         if enabled:
@@ -2389,9 +2442,10 @@ async def update_admin_summary_message(user_id: int, status: str) -> bool:
         return False
     data = get_form_data(user_id) or {}
     contact_url = contact_url_for_user(user_id, data)
+    admin_chat_id = current_admin_chat_id()
     try:
         await bot.edit_message_text(
-            chat_id=ADMIN_GROUP_ID,
+            chat_id=admin_chat_id,
             message_id=message_id,
             text=build_admin_summary(data, user_id, status),
             reply_markup=admin_keyboard_for_status(user_id, status, contact_url=contact_url)
@@ -2445,11 +2499,12 @@ async def daily_stats_task():
             target += timedelta(days=1)
         await asyncio.sleep((target - now).total_seconds())
         try:
-            await bot.send_message(ADMIN_GROUP_ID, build_admin_stats_text())
+            admin_chat_id = current_admin_chat_id()
+            await bot.send_message(admin_chat_id, build_admin_stats_text())
             file_path = Path("applications.xlsx")
             if file_path.exists():
                 await bot.send_document(
-                    ADMIN_GROUP_ID,
+                    admin_chat_id,
                     FSInputFile(str(file_path))
                 )
         except Exception:
@@ -2458,12 +2513,13 @@ async def daily_stats_task():
 async def archive_admin_messages_once() -> int:
     archived = 0
     rows = get_admin_messages_for_archive(ADMIN_ARCHIVE_DAYS)
+    admin_chat_id = current_admin_chat_id()
     for user_id, message_id in rows:
         data = get_form_data(user_id) or {}
         status = get_status(user_id) or "accepted"
         try:
             await bot.edit_message_text(
-                chat_id=ADMIN_GROUP_ID,
+                chat_id=admin_chat_id,
                 message_id=message_id,
                 text=build_admin_summary(data, user_id, status, archived=True),
                 reply_markup=None
@@ -2473,7 +2529,7 @@ async def archive_admin_messages_once() -> int:
         except Exception:
             try:
                 await bot.edit_message_reply_markup(
-                    chat_id=ADMIN_GROUP_ID,
+                    chat_id=admin_chat_id,
                     message_id=message_id,
                     reply_markup=None
                 )
@@ -2560,6 +2616,7 @@ async def auto_request_info_task():
 
 async def ensure_admin_menu_posted():
     try:
+        admin_chat_id = current_admin_chat_id()
         try:
             counts = get_status_counts()
             stage_counts = get_application_stage_counts()
@@ -2572,7 +2629,7 @@ async def ensure_admin_menu_posted():
         if stored_id:
             try:
                 await bot.edit_message_text(
-                    chat_id=ADMIN_GROUP_ID,
+                    chat_id=admin_chat_id,
                     message_id=int(stored_id),
                     text=menu_text,
                     reply_markup=admin_menu_keyboard(counts, stage_counts)
@@ -2586,7 +2643,7 @@ async def ensure_admin_menu_posted():
                 logger.exception("Не удалось обновить существующее админ-меню")
         try:
             msg = await bot.send_message(
-                ADMIN_GROUP_ID,
+                admin_chat_id,
                 menu_text,
                 reply_markup=admin_menu_keyboard(counts, stage_counts)
             )
@@ -2598,11 +2655,12 @@ async def ensure_admin_menu_posted():
 
 async def update_admin_menu_message(text: str, reply_markup: InlineKeyboardMarkup):
     try:
+        admin_chat_id = current_admin_chat_id()
         stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
         if stored_id and stored_id.isdigit():
             try:
                 await bot.edit_message_text(
-                    chat_id=ADMIN_GROUP_ID,
+                    chat_id=admin_chat_id,
                     message_id=int(stored_id),
                     text=text,
                     reply_markup=reply_markup
@@ -2616,7 +2674,7 @@ async def update_admin_menu_message(text: str, reply_markup: InlineKeyboardMarku
                 logger.exception("Не удалось обновить админ-сообщение")
         try:
             msg = await bot.send_message(
-                ADMIN_GROUP_ID,
+                admin_chat_id,
                 text,
                 reply_markup=reply_markup
             )
@@ -2638,10 +2696,11 @@ def _parse_admin_photo_ids(value: str | None) -> list[int]:
 
 async def clear_admin_notify():
     try:
+        admin_chat_id = current_admin_chat_id()
         stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
         if stored_id and stored_id.isdigit():
             try:
-                await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+                await bot.delete_message(admin_chat_id, int(stored_id))
             except Exception:
                 pass
         set_setting(ADMIN_NOTIFY_SETTING_KEY, None)
@@ -2650,21 +2709,110 @@ async def clear_admin_notify():
 
 async def clear_admin_view_message():
     try:
+        admin_chat_id = current_admin_chat_id()
         stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
         if stored_id and stored_id.isdigit():
             try:
-                await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+                await bot.delete_message(admin_chat_id, int(stored_id))
             except Exception:
                 pass
         set_setting(ADMIN_VIEW_SETTING_KEY, None)
     except Exception:
         logger.exception("Ошибка очистки карточки просмотра")
 
+
+def _is_http_url(value: str | None) -> bool:
+    raw = (value or "").strip().lower()
+    return raw.startswith("http://") or raw.startswith("https://")
+
+
+def _photo_caption_fallback(text: str) -> str:
+    plain = re.sub(r"<[^>]+>", "", text or "")
+    plain = html.unescape(plain).strip()
+    if not plain:
+        plain = "Анкета кандидата"
+    if len(plain) > 1024:
+        plain = plain[:1021] + "..."
+    return plain
+
+
+async def _resolve_remote_photo_file_id(url: str) -> str | None:
+    raw_url = (url or "").strip()
+    if not _is_http_url(raw_url):
+        return None
+    admin_chat_id = current_admin_chat_id()
+    try:
+        msg = await bot.send_photo(admin_chat_id, raw_url)
+        file_id = msg.photo[-1].file_id if getattr(msg, "photo", None) else None
+        try:
+            await bot.delete_message(admin_chat_id, msg.message_id)
+        except Exception:
+            pass
+        if file_id:
+            return str(file_id)
+    except Exception:
+        pass
+
+    headers = {"Accept": "*/*"}
+    infobip_key = (os.getenv("INFOBIP_API_KEY", "") or "").strip()
+    if infobip_key and "infobip" in raw_url.lower():
+        headers["Authorization"] = f"App {infobip_key}"
+    try:
+        req = urllib.request.Request(raw_url, headers=headers, method="GET")
+        with urllib.request.urlopen(req, timeout=20) as resp:
+            payload = resp.read()
+            if not payload:
+                return None
+            content_type = (resp.headers.get("Content-Type", "") or "").split(";", 1)[0].strip().lower()
+            filename = "candidate_photo.jpg"
+            if content_type == "image/png":
+                filename = "candidate_photo.png"
+            elif content_type == "image/webp":
+                filename = "candidate_photo.webp"
+        msg = await bot.send_photo(admin_chat_id, BufferedInputFile(payload, filename))
+        file_id = msg.photo[-1].file_id if getattr(msg, "photo", None) else None
+        try:
+            await bot.delete_message(admin_chat_id, msg.message_id)
+        except Exception:
+            pass
+        if file_id:
+            return str(file_id)
+    except Exception:
+        return None
+    return None
+
+
+async def _ensure_admin_photo_ref(user_id: int, data: dict, field_key: str) -> str | None:
+    raw_ref = str(data.get(field_key) or "").strip()
+    if not raw_ref:
+        return None
+    if not _is_http_url(raw_ref):
+        return raw_ref
+    resolved = await _resolve_remote_photo_file_id(raw_ref)
+    if not resolved:
+        logger.warning("Failed to resolve remote photo for user_id=%s field=%s", user_id, field_key)
+        return None
+    data[field_key] = resolved
+    try:
+        set_form_data(user_id, data)
+    except Exception:
+        logger.exception("Не удалось сохранить Telegram file_id фото для user_id=%s", user_id)
+    return resolved
+
+
+async def _preferred_admin_photo(user_id: int, data: dict) -> str | None:
+    face = await _ensure_admin_photo_ref(user_id, data, "photo_face")
+    if face:
+        return face
+    return await _ensure_admin_photo_ref(user_id, data, "photo_full")
+
+
 async def update_admin_view_message(
     text: str,
     reply_markup: InlineKeyboardMarkup,
     photo_id: str | None
 ):
+    admin_chat_id = current_admin_chat_id()
     try:
         stored_id = get_setting(ADMIN_VIEW_SETTING_KEY)
     except Exception:
@@ -2675,7 +2823,7 @@ async def update_admin_view_message(
         if photo_id:
             try:
                 await bot.edit_message_media(
-                    chat_id=ADMIN_GROUP_ID,
+                    chat_id=admin_chat_id,
                     message_id=msg_id,
                     media=InputMediaPhoto(
                         media=photo_id,
@@ -2687,14 +2835,45 @@ async def update_admin_view_message(
                 return
             except Exception:
                 try:
-                    await bot.delete_message(ADMIN_GROUP_ID, msg_id)
+                    await bot.edit_message_media(
+                        chat_id=admin_chat_id,
+                        message_id=msg_id,
+                        media=InputMediaPhoto(
+                            media=photo_id,
+                            caption=_photo_caption_fallback(text),
+                        ),
+                        reply_markup=reply_markup
+                    )
+                    return
                 except Exception:
-                    pass
-                set_setting(ADMIN_VIEW_SETTING_KEY, None)
+                    try:
+                        await bot.edit_message_caption(
+                            chat_id=admin_chat_id,
+                            message_id=msg_id,
+                            caption=_photo_caption_fallback(text),
+                            reply_markup=reply_markup,
+                        )
+                        return
+                    except Exception:
+                        try:
+                            await bot.edit_message_text(
+                                chat_id=admin_chat_id,
+                                message_id=msg_id,
+                                text=text,
+                                reply_markup=reply_markup,
+                            )
+                            return
+                        except Exception:
+                            pass
+                    try:
+                        await bot.delete_message(admin_chat_id, msg_id)
+                    except Exception:
+                        pass
+                    set_setting(ADMIN_VIEW_SETTING_KEY, None)
         else:
             try:
                 await bot.edit_message_text(
-                    chat_id=ADMIN_GROUP_ID,
+                    chat_id=admin_chat_id,
                     message_id=msg_id,
                     text=text,
                     reply_markup=reply_markup
@@ -2702,22 +2881,37 @@ async def update_admin_view_message(
                 return
             except Exception:
                 try:
-                    await bot.delete_message(ADMIN_GROUP_ID, msg_id)
+                    await bot.delete_message(admin_chat_id, msg_id)
                 except Exception:
                     pass
                 set_setting(ADMIN_VIEW_SETTING_KEY, None)
 
     try:
         if photo_id:
-            msg = await bot.send_photo(
-                ADMIN_GROUP_ID,
-                photo_id,
-                caption=text,
-                reply_markup=reply_markup
-            )
+            try:
+                msg = await bot.send_photo(
+                    admin_chat_id,
+                    photo_id,
+                    caption=text,
+                    reply_markup=reply_markup
+                )
+            except Exception:
+                try:
+                    msg = await bot.send_photo(
+                        admin_chat_id,
+                        photo_id,
+                        caption=_photo_caption_fallback(text),
+                        reply_markup=reply_markup
+                    )
+                except Exception:
+                    msg = await bot.send_message(
+                        admin_chat_id,
+                        text,
+                        reply_markup=reply_markup
+                    )
         else:
             msg = await bot.send_message(
-                ADMIN_GROUP_ID,
+                admin_chat_id,
                 text,
                 reply_markup=reply_markup
             )
@@ -2726,21 +2920,22 @@ async def update_admin_view_message(
         logger.exception("Ошибка отправки сообщения просмотра анкеты")
 
 async def update_admin_photos(user_id: int):
+    admin_chat_id = current_admin_chat_id()
     stored_ids = _parse_admin_photo_ids(get_setting(ADMIN_PHOTOS_SETTING_KEY))
     for msg_id in stored_ids:
         try:
-            await bot.delete_message(ADMIN_GROUP_ID, msg_id)
+            await bot.delete_message(admin_chat_id, msg_id)
         except Exception:
             pass
     data = get_form_data(user_id) or {}
-    face = data.get("photo_face")
-    full = data.get("photo_full")
+    face = await _ensure_admin_photo_ref(user_id, data, "photo_face")
+    full = await _ensure_admin_photo_ref(user_id, data, "photo_full")
     if not face or not full:
         set_setting(ADMIN_PHOTOS_SETTING_KEY, None)
         return
     try:
         messages = await bot.send_media_group(
-            ADMIN_GROUP_ID,
+            admin_chat_id,
             [
                 InputMediaPhoto(media=face),
                 InputMediaPhoto(media=full),
@@ -2752,6 +2947,7 @@ async def update_admin_photos(user_id: int):
         logger.exception("Ошибка отправки фото админу")
 
 async def notify_admin_new_application():
+    admin_chat_id = current_admin_chat_id()
     try:
         counts = get_status_counts()
     except Exception:
@@ -2765,20 +2961,21 @@ async def notify_admin_new_application():
     stored_id = get_setting(ADMIN_NOTIFY_SETTING_KEY)
     if stored_id and stored_id.isdigit():
         try:
-            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+            await bot.delete_message(admin_chat_id, int(stored_id))
         except Exception:
             logger.exception("Не удалось удалить старое уведомление")
     try:
-        msg = await bot.send_message(ADMIN_GROUP_ID, text)
+        msg = await bot.send_message(admin_chat_id, text)
         set_setting(ADMIN_NOTIFY_SETTING_KEY, str(msg.message_id))
     except Exception:
         logger.exception("Ошибка уведомления о заявке")
 
 async def set_admin_menu_message_id(message_id: int):
+    admin_chat_id = current_admin_chat_id()
     stored_id = get_setting(ADMIN_MENU_SETTING_KEY)
     if stored_id and stored_id.isdigit() and int(stored_id) != message_id:
         try:
-            await bot.delete_message(ADMIN_GROUP_ID, int(stored_id))
+            await bot.delete_message(admin_chat_id, int(stored_id))
         except Exception:
             logger.exception("Не удалось удалить старое админ-меню")
     set_setting(ADMIN_MENU_SETTING_KEY, str(message_id))
@@ -2882,7 +3079,7 @@ async def _render_admin_list_message(
         if effective_show_full
         else build_admin_brief_text(data, user_id, item_status)
     )
-    photo_id = data.get("photo_face") or data.get("photo_full")
+    photo_id = await _preferred_admin_photo(user_id, data)
     await update_admin_view_message(
         f"{header}{body}",
         admin_list_view_keyboard(
@@ -2912,6 +3109,7 @@ async def send_admin_list(
         apps = _list_apps_by_filter(filter_key)
         label = _admin_list_label(filter_key)
         if not apps:
+            await clear_admin_view_message()
             counts = get_status_counts()
             stage_counts = get_application_stage_counts()
             await update_admin_menu_message(
@@ -2996,8 +3194,9 @@ async def show_posted_media_preview(item: dict) -> None:
     if not isinstance(ru_channel_id, int) or not isinstance(ru_message_id, int) or ru_message_id <= 0:
         return
     try:
+        admin_chat_id = current_admin_chat_id()
         copied = await bot.copy_message(
-            chat_id=ADMIN_GROUP_ID,
+            chat_id=admin_chat_id,
             from_chat_id=ru_channel_id,
             message_id=ru_message_id,
         )
@@ -3397,11 +3596,12 @@ def track_admin_temp_message(message_id: int | None):
 async def clear_admin_temp_messages():
     if not ADMIN_TEMP_MESSAGE_IDS:
         return
+    admin_chat_id = current_admin_chat_id()
     ids = ADMIN_TEMP_MESSAGE_IDS.copy()
     ADMIN_TEMP_MESSAGE_IDS.clear()
     for message_id in ids:
         try:
-            await bot.delete_message(ADMIN_GROUP_ID, message_id)
+            await bot.delete_message(admin_chat_id, message_id)
         except Exception:
             pass
 
@@ -4764,8 +4964,10 @@ async def reject_non_text(m: Message):
 
 @dp.message(StateFilter(ApplicationStates.admin_reject_reason), ~F.text)
 async def reject_reason_non_text(m: Message, state: FSMContext):
-    if m.chat.id != ADMIN_GROUP_ID:
+    if not await can_manage_admin_group(m):
+        await delete_message_silent(m)
         return
+    await delete_message_silent(m)
     await update_admin_menu_message(
         "🤍 Пожалуйста, напиши причину отказа текстом.",
         reject_reason_keyboard()
@@ -5374,7 +5576,7 @@ async def admin_accept(call: CallbackQuery):
                 else:
                     data = get_form_data(uid) or {}
                     contact_url = contact_url_for_user(uid, data)
-                    photo_id = data.get("photo_face") or data.get("photo_full")
+                    photo_id = await _preferred_admin_photo(uid, data)
                     await update_admin_view_message(
                         build_admin_full_text(data, uid, "accepted"),
                         admin_list_item_keyboard(uid, "accepted", contact_url=contact_url),
@@ -5484,7 +5686,7 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             elif bool(state_data.get("reject_view")):
                 data = get_form_data(uid) or {}
                 contact_url = contact_url_for_user(uid, data)
-                photo_id = data.get("photo_face") or data.get("photo_full")
+                photo_id = await _preferred_admin_photo(uid, data)
                 await update_admin_view_message(
                     build_admin_full_text(data, uid, "rejected"),
                     admin_list_item_keyboard(uid, "rejected", contact_url=contact_url),
@@ -5505,7 +5707,8 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
 @dp.message(StateFilter(ApplicationStates.admin_reject_reason), F.text)
 async def reject_reason(m: Message, state: FSMContext):
     try:
-        if m.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_group(m):
+            await delete_message_silent(m)
             return
         data = await state.get_data()
         uid = data.get("reject_uid")
@@ -5540,7 +5743,7 @@ async def reject_reason(m: Message, state: FSMContext):
             if bool(data.get("reject_view")):
                 form_data = get_form_data(uid) or {}
                 contact_url = contact_url_for_user(uid, form_data)
-                photo_id = form_data.get("photo_face") or form_data.get("photo_full")
+                photo_id = await _preferred_admin_photo(uid, form_data)
                 await update_admin_view_message(
                     build_admin_full_text(form_data, uid, "rejected"),
                     admin_list_item_keyboard(uid, "rejected", contact_url=contact_url),
@@ -5625,8 +5828,6 @@ async def admin_send_model_cancel(call: CallbackQuery, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.admin_send_model_message), ~F.text)
 async def admin_send_model_non_text(message: Message):
-    if message.chat.id != ADMIN_GROUP_ID:
-        return
     if not await can_manage_admin_group(message):
         await delete_message_silent(message)
         return
@@ -5640,8 +5841,6 @@ async def admin_send_model_non_text(message: Message):
 @dp.message(StateFilter(ApplicationStates.admin_send_model_message), F.text)
 async def admin_send_model_message(message: Message, state: FSMContext):
     try:
-        if message.chat.id != ADMIN_GROUP_ID:
-            return
         if not await can_manage_admin_group(message):
             await delete_message_silent(message)
             return
@@ -5781,8 +5980,6 @@ async def admin_request_info_cancel(call: CallbackQuery, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.admin_request_info_message), ~F.text)
 async def admin_request_info_non_text(message: Message):
-    if message.chat.id != ADMIN_GROUP_ID:
-        return
     if not await can_manage_admin_group(message):
         await delete_message_silent(message)
         return
@@ -5796,8 +5993,6 @@ async def admin_request_info_non_text(message: Message):
 @dp.message(StateFilter(ApplicationStates.admin_request_info_message), F.text)
 async def admin_request_info_message(message: Message, state: FSMContext):
     try:
-        if message.chat.id != ADMIN_GROUP_ID:
-            return
         if not await can_manage_admin_group(message):
             await delete_message_silent(message)
             return
@@ -5873,6 +6068,9 @@ async def admin_card_toggle(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_status:"))
 async def admin_status(call: CallbackQuery):
     try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
         _, uid, status = call.data.split(":", 2)
         status_label = STATUS_LABELS.get(status, status)
         await safe_call_answer(call, f"Статус: {status_label}", show_alert=False)
@@ -5882,6 +6080,9 @@ async def admin_status(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_photos:"))
 async def admin_photos(call: CallbackQuery):
     try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
         if not call.message:
             await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
             return
@@ -5889,7 +6090,7 @@ async def admin_photos(call: CallbackQuery):
         data = get_form_data(uid) or {}
         is_full_stage = detect_application_stage(data) == APPLICATION_STAGE_FULL
         contact_url = contact_url_for_user(uid, data)
-        photo_id = data.get("photo_face") or data.get("photo_full")
+        photo_id = await _preferred_admin_photo(uid, data)
         if not photo_id:
             await safe_call_answer(call, "Фото не найдено", show_alert=False)
             return
@@ -5929,8 +6130,8 @@ async def show_admin_create_post_prompt(notice: str | None = None):
     await update_admin_menu_message(prompt, admin_create_post_keyboard())
 
 
-@dp.message(Command("create_post"), F.chat.id == ADMIN_GROUP_ID)
-@dp.message(Command("crosspost"), F.chat.id == ADMIN_GROUP_ID)
+@dp.message(Command("create_post"))
+@dp.message(Command("crosspost"))
 async def admin_create_post_command(message: Message, state: FSMContext):
     if not await can_manage_admin_group(message):
         await delete_message_silent(message)
@@ -5939,7 +6140,7 @@ async def admin_create_post_command(message: Message, state: FSMContext):
     await delete_message_silent(message)
 
 
-@dp.message(StateFilter(ApplicationStates.admin_create_post), F.chat.id == ADMIN_GROUP_ID)
+@dp.message(StateFilter(ApplicationStates.admin_create_post))
 async def admin_create_post_submit(message: Message, state: FSMContext):
     if message.from_user and message.from_user.is_bot and not is_anonymous_admin_post(message):
         return
@@ -6048,8 +6249,11 @@ async def admin_create_post_submit(message: Message, state: FSMContext):
         await delete_message_silent(message)
         await show_admin_create_post_prompt("⚠️ Не удалось опубликовать пост. Попробуй ещё раз.")
 
-@dp.message(F.text == "/admin", F.chat.id == ADMIN_GROUP_ID)
+@dp.message(F.text == "/admin")
 async def admin_menu(message: Message, state: FSMContext):
+    if not await can_manage_admin_group(message):
+        await delete_message_silent(message)
+        return
     await state.clear()
     await sync_anonymous_create_post_state(enabled=False)
     await clear_admin_temp_messages()
@@ -6059,7 +6263,7 @@ async def admin_menu(message: Message, state: FSMContext):
 @dp.callback_query(F.data == "admin_post:cancel")
 async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await state.clear()
@@ -6073,9 +6277,6 @@ async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(StateFilter("*"), F.data.startswith("admin_menu:"))
 async def admin_menu_action(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
-            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
-            return
         if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
@@ -6225,6 +6426,9 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
 
 @dp.callback_query(StateFilter("*"), F.data.startswith("admin_list:"))
 async def admin_list_pagination(call: CallbackQuery):
+    if not await can_manage_admin_callback(call):
+        await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+        return
     try:
         _, filter_key, offset_raw = call.data.split(":", 2)
         offset = int(offset_raw)
@@ -6240,6 +6444,9 @@ async def admin_list_pagination(call: CallbackQuery):
 @dp.callback_query(StateFilter("*"), F.data.startswith("admin_view_photo:"))
 async def admin_view_photo(call: CallbackQuery):
     try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
         if not call.message:
             await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
             return
@@ -6260,7 +6467,8 @@ async def admin_view_photo(call: CallbackQuery):
             # Backward compatibility for old buttons without mode in callback.
             show_full = is_full_stage
         contact_url = contact_url_for_user(uid, data)
-        photo_id = data.get("photo_face") if photo_type == "face" else data.get("photo_full")
+        photo_key = "photo_face" if photo_type == "face" else "photo_full"
+        photo_id = await _ensure_admin_photo_ref(uid, data, photo_key)
         if not photo_id:
             await safe_call_answer(call, "Фото не найдено", show_alert=False)
             return
@@ -6310,7 +6518,7 @@ async def admin_view_photo(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_posts:"))
 async def admin_posts_pagination(call: CallbackQuery):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         _, offset_raw = call.data.split(":", 1)
@@ -6325,7 +6533,7 @@ async def admin_posts_pagination(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_post_delete:"))
 async def admin_post_delete(call: CallbackQuery):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         _, post_id_raw, offset_raw = call.data.split(":", 2)
@@ -6350,7 +6558,7 @@ async def admin_post_delete(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("admin_post_edit_text:"))
 async def admin_post_edit_text(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         _, post_id_raw, offset_raw = call.data.split(":", 2)
@@ -6429,7 +6637,7 @@ def extract_media_file_id_for_post(message: Message, content_type: str) -> str |
 @dp.callback_query(F.data.startswith("admin_post_edit_photo:"))
 async def admin_post_edit_photo(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         _, post_id_raw, offset_raw = call.data.split(":", 2)
@@ -6460,7 +6668,7 @@ async def admin_post_edit_photo(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data.startswith("admin_post_edit_cancel:"))
 async def admin_post_edit_cancel(call: CallbackQuery, state: FSMContext):
     try:
-        if not call.message or call.message.chat.id != ADMIN_GROUP_ID:
+        if not await can_manage_admin_callback(call):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         _, post_id_raw, offset_raw = call.data.split(":", 2)
@@ -6474,7 +6682,7 @@ async def admin_post_edit_cancel(call: CallbackQuery, state: FSMContext):
         await safe_call_answer(call, "Не удалось отменить", show_alert=False)
 
 
-@dp.message(StateFilter(ApplicationStates.admin_edit_post_text), F.chat.id == ADMIN_GROUP_ID)
+@dp.message(StateFilter(ApplicationStates.admin_edit_post_text))
 async def admin_post_edit_text_submit(message: Message, state: FSMContext):
     state_data = await state.get_data()
     post_id = int(state_data.get("post_id", 0) or 0)
@@ -6557,7 +6765,7 @@ async def admin_post_edit_text_submit(message: Message, state: FSMContext):
         await delete_message_silent(message)
 
 
-@dp.message(StateFilter(ApplicationStates.admin_edit_post_photo), F.chat.id == ADMIN_GROUP_ID)
+@dp.message(StateFilter(ApplicationStates.admin_edit_post_photo))
 async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
     state_data = await state.get_data()
     post_id = int(state_data.get("post_id", 0) or 0)
@@ -6612,16 +6820,23 @@ async def admin_post_edit_photo_submit(message: Message, state: FSMContext):
     finally:
         await delete_message_silent(message)
 
-@dp.message(F.text == "/reset_db", F.chat.id == ADMIN_GROUP_ID)
+@dp.message(F.text == "/reset_db")
 async def admin_reset_db(message: Message):
+    if not await can_manage_admin_group(message):
+        await delete_message_silent(message)
+        return
     await update_admin_menu_message(
         "⚠️ Ты уверена, что хочешь полностью обнулить базу и статистику?",
         confirm_reset_db_keyboard()
     )
+    await delete_message_silent(message)
 
 @dp.callback_query(F.data == "admin_reset_db:confirm")
 async def admin_reset_db_confirm(call: CallbackQuery):
     try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
         reset_all_data()
         file_path = Path("applications.xlsx")
         if file_path.exists():
@@ -6644,6 +6859,9 @@ async def admin_reset_db_confirm(call: CallbackQuery):
 
 @dp.callback_query(F.data == "admin_reset_db:cancel")
 async def admin_reset_db_cancel(call: CallbackQuery):
+    if not await can_manage_admin_callback(call):
+        await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+        return
     await post_admin_menu()
     await safe_call_answer(call, "Отменено")
 
@@ -6757,8 +6975,11 @@ async def portfolio_pdf(call: CallbackQuery):
 
 # ================= ADMIN STATS =================
 
-@dp.message(F.text == "/stats", F.chat.id == ADMIN_GROUP_ID)
+@dp.message(F.text == "/stats")
 async def admin_stats(message: Message):
+    if not await can_manage_admin_group(message):
+        await delete_message_silent(message)
+        return
     await clear_admin_temp_messages()
     counts = get_status_counts()
     stage_counts = get_application_stage_counts()
@@ -6768,8 +6989,11 @@ async def admin_stats(message: Message):
     )
     await delete_message_silent(message)
 
-@dp.message(F.text == "/excel", F.chat.id == ADMIN_GROUP_ID)
+@dp.message(F.text == "/excel")
 async def admin_excel(message: Message):
+    if not await can_manage_admin_group(message):
+        await delete_message_silent(message)
+        return
     await clear_admin_temp_messages()
     if not rebuild_excel_from_db:
         counts = get_status_counts()
@@ -6797,7 +7021,7 @@ async def admin_excel(message: Message):
 
 @dp.callback_query()
 async def fallback_stale_callback(call: CallbackQuery, state: FSMContext):
-    if call.message and call.message.chat.id == ADMIN_GROUP_ID:
+    if call.message and is_admin_chat(call.message.chat.id):
         counts = get_status_counts()
         stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
