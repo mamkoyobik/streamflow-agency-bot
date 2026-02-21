@@ -40,6 +40,10 @@ def form_keyboard(lang: str = "ru"):
 def preview_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
         [
+            InlineKeyboardButton(text=t(lang, "photo_face_label"), callback_data="preview_photo:face"),
+            InlineKeyboardButton(text=t(lang, "photo_full_label"), callback_data="preview_photo:full"),
+        ],
+        [
             InlineKeyboardButton(text=t(lang, "btn_edit_data"), callback_data="preview_edit")
         ],
         [

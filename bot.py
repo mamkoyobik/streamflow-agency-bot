@@ -5368,6 +5368,77 @@ async def receive_edited_photo(m: Message, state: FSMContext):
 
     await show_preview(m, state)
 
+def _merge_preview_payload(user_id: int, state_data: dict | None) -> dict:
+    merged: dict = {}
+    saved = get_form_data(user_id) or {}
+    if isinstance(saved, dict):
+        merged.update(saved)
+    if isinstance(state_data, dict):
+        for key, value in state_data.items():
+            if value is not None:
+                merged[key] = value
+    return merged
+
+@dp.callback_query(StateFilter(ApplicationStates.preview), F.data.startswith("preview_photo:"))
+async def preview_photo(call: CallbackQuery, state: FSMContext):
+    try:
+        if ":" not in (call.data or ""):
+            await safe_call_answer(call, "Некорректная команда", show_alert=False)
+            return
+        _, photo_type = str(call.data).split(":", 1)
+        if photo_type not in {"face", "full"}:
+            await safe_call_answer(call, "Некорректный тип фото", show_alert=False)
+            return
+
+        user_id = call.from_user.id
+        lang = lang_for(user_id)
+        data = _merge_preview_payload(user_id, await state.get_data())
+        photo_key = "photo_face" if photo_type == "face" else "photo_full"
+        photo_ref = str(data.get(photo_key) or "").strip()
+
+        if not photo_ref:
+            miss_text = (
+                "Сначала загрузи это фото через «Изменить фото»."
+                if lang == "ru"
+                else (
+                    "Please upload this photo first via “Edit photo”."
+                    if lang == "en"
+                    else (
+                        "Primeiro envie esta foto em “Editar foto”."
+                        if lang == "pt"
+                        else "Primero sube esta foto en “Editar foto”."
+                    )
+                )
+            )
+            await safe_call_answer(call, miss_text, show_alert=False)
+            return
+
+        if _is_http_url(photo_ref):
+            resolved = await _ensure_admin_photo_ref(user_id, data, photo_key)
+            if resolved:
+                photo_ref = resolved
+
+        caption = t(lang, "photo_face_label") if photo_type == "face" else t(lang, "photo_full_label")
+        await bot.send_photo(user_id, photo_ref, caption=caption)
+        await safe_call_answer(call)
+    except Exception:
+        logger.exception("Ошибка в preview_photo")
+        lang = lang_for(call.from_user.id)
+        fail_text = (
+            "Не удалось открыть фото. Попробуй ещё раз."
+            if lang == "ru"
+            else (
+                "Couldn't open the photo. Please try again."
+                if lang == "en"
+                else (
+                    "Nao foi possivel abrir a foto. Tente novamente."
+                    if lang == "pt"
+                    else "No se pudo abrir la foto. Intentalo de nuevo."
+                )
+            )
+        )
+        await safe_call_answer(call, fail_text, show_alert=False)
+
 @dp.message(StateFilter(ApplicationStates.preview), ~F.photo)
 async def reject_text_when_waiting_photo(m: Message, state: FSMContext):
     data = await state.get_data()
@@ -5404,7 +5475,7 @@ async def preview_back(call: CallbackQuery, state: FSMContext):
 async def show_preview(m: Message, state: FSMContext, user_id: int | None = None):
     target_user_id = user_id or m.chat.id
     lang = lang_for(target_user_id)
-    data = await state.get_data()
+    data = _merge_preview_payload(target_user_id, await state.get_data())
     await send_or_edit_user_text(target_user_id, t(lang, "loading_text"))
     for text in (
         t(lang, "loading_stage_1"),
