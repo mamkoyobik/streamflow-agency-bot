@@ -29,6 +29,8 @@ class ApplicationStates(StatesGroup):
 
     # ===== Админ =====
     admin_reject_reason = State()
+    admin_send_model_message = State()
+    admin_request_info_message = State()
     admin_create_post = State()
     admin_edit_post_text = State()
     admin_edit_post_photo = State()

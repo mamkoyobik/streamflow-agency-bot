@@ -204,11 +204,11 @@ const I18N = {
     'form.prev': 'Назад',
     'form.next': 'Далее',
     'form.submit': 'Отправить заявку',
-    'form.nextChoiceTitle': 'Выбери, где продолжить анкету:',
+    'form.nextChoiceTitle': 'Продолжить в выбранном мессенджере:',
     'form.openTelegram': 'Продолжить в Telegram',
     'form.openWhatsapp': 'Продолжить в WhatsApp',
     'form.sending': 'Отправка...',
-    'form.success': '✅ Заявка отправлена. Выбери удобный мессенджер для продолжения.',
+    'form.success': '✅ Заявка принята мгновенно и автоматически.',
     'form.redirecting': 'Выбери удобный мессенджер для продолжения.',
     'form.nextUnavailable': '⚠️ Для выбранного мессенджера ссылка пока не настроена.',
     'form.sendError': 'Ошибка отправки.',
@@ -344,11 +344,11 @@ const I18N = {
     'form.prev': 'Back',
     'form.next': 'Next',
     'form.submit': 'Send application',
-    'form.nextChoiceTitle': 'Choose where to continue your application:',
+    'form.nextChoiceTitle': 'Continue in your selected messenger:',
     'form.openTelegram': 'Continue in Telegram',
     'form.openWhatsapp': 'Continue in WhatsApp',
     'form.sending': 'Sending...',
-    'form.success': '✅ Application sent. Choose your preferred messenger to continue.',
+    'form.success': '✅ Application received instantly and automatically.',
     'form.redirecting': 'Choose your preferred messenger to continue.',
     'form.nextUnavailable': '⚠️ Link for the selected messenger is not configured yet.',
     'form.sendError': 'Sending error.',
@@ -484,11 +484,11 @@ const I18N = {
     'form.prev': 'Voltar',
     'form.next': 'Avançar',
     'form.submit': 'Enviar cadastro',
-    'form.nextChoiceTitle': 'Escolha onde continuar o cadastro:',
+    'form.nextChoiceTitle': 'Continuar no mensageiro escolhido:',
     'form.openTelegram': 'Continuar no Telegram',
     'form.openWhatsapp': 'Continuar no WhatsApp',
     'form.sending': 'Enviando...',
-    'form.success': '✅ Cadastro enviado. Escolha o mensageiro para continuar.',
+    'form.success': '✅ Cadastro recebido instantaneamente e automaticamente.',
     'form.redirecting': 'Escolha o mensageiro para continuar.',
     'form.nextUnavailable': '⚠️ O link para o mensageiro selecionado ainda não está configurado.',
     'form.sendError': 'Erro ao enviar.',
@@ -624,11 +624,11 @@ const I18N = {
     'form.prev': 'Atrás',
     'form.next': 'Siguiente',
     'form.submit': 'Enviar solicitud',
-    'form.nextChoiceTitle': 'Elige dónde continuar la solicitud:',
+    'form.nextChoiceTitle': 'Continuar en el mensajero elegido:',
     'form.openTelegram': 'Continuar en Telegram',
     'form.openWhatsapp': 'Continuar en WhatsApp',
     'form.sending': 'Enviando...',
-    'form.success': '✅ Solicitud enviada. Elige el mensajero para continuar.',
+    'form.success': '✅ Solicitud recibida al instante y automáticamente.',
     'form.redirecting': 'Elige el mensajero para continuar.',
     'form.nextUnavailable': '⚠️ El enlace del mensajero seleccionado aún no está configurado.',
     'form.sendError': 'Error al enviar.',
@@ -1848,8 +1848,11 @@ async function sendApplication(formData, elements, options = {}) {
         if (selectedButtonShown) {
           formNext.classList.remove('hidden');
           if (formStatus) {
-            const postText = hasAnyNextLink ? siteText('form.redirecting') : siteText('form.nextUnavailable');
-            formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${postText}`;
+            if (hasAnyNextLink) {
+              formStatus.innerHTML = payload.message || siteText('form.success');
+            } else {
+              formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${siteText('form.nextUnavailable')}`;
+            }
           }
         } else {
           formNext.classList.add('hidden');

@@ -132,7 +132,7 @@ FIELD_ERRORS = {
         "age": "🤍 Напиши дату рождения в формате 01.01.2000 (только 18+):",
         "yes_no": "🤍 Ответь, пожалуйста, «да» или «нет»:",
         "devices": "🤍 Уточни, пожалуйста, какие устройства есть:",
-        "device_model": "🤍 Напиши модель устройства, пожалуйста:",
+        "device_model": "🤍 Напиши устройство, на котором будешь работать (например: iPhone 13 / Samsung A54 / ноутбук):",
         "work_time": "🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):",
         "telegram": "🤍 Укажи, пожалуйста, Telegram в формате @username:",
         "whatsapp": "🤍 Укажи, пожалуйста, WhatsApp в формате +7 900 000 00 00:",
@@ -147,7 +147,7 @@ FIELD_ERRORS = {
         "age": "Please enter birth date as 01.01.2000 (18+ only).",
         "yes_no": "Please answer yes or no.",
         "devices": "Please specify available devices.",
-        "device_model": "Please enter your device model.",
+        "device_model": "Please enter the device you will work on (for example: iPhone 13 / Samsung A54 / laptop).",
         "work_time": "Please enter work hours as a number (example: 6).",
         "telegram": "Please enter Telegram as @username.",
         "whatsapp": "Please enter WhatsApp in international format, example: +1 555 123 4567",
@@ -162,7 +162,7 @@ FIELD_ERRORS = {
         "age": "Informe a data no formato 01.01.2000 (somente 18+).",
         "yes_no": "Responda sim ou não.",
         "devices": "Informe os dispositivos disponíveis.",
-        "device_model": "Informe o modelo do dispositivo.",
+        "device_model": "Informe o dispositivo em que você vai trabalhar (ex.: iPhone 13 / Samsung A54 / notebook).",
         "work_time": "Informe as horas com número (ex.: 6).",
         "telegram": "Informe o Telegram no formato @username.",
         "whatsapp": "Informe o WhatsApp no formato internacional, ex.: +55 11 99999 9999",
@@ -177,7 +177,7 @@ FIELD_ERRORS = {
         "age": "Indica la fecha en formato 01.01.2000 (solo 18+).",
         "yes_no": "Responde sí o no.",
         "devices": "Indica qué dispositivos tienes.",
-        "device_model": "Indica el modelo del dispositivo.",
+        "device_model": "Indica el dispositivo con el que trabajarás (ej.: iPhone 13 / Samsung A54 / portátil).",
         "work_time": "Indica horas con número (ej.: 6).",
         "telegram": "Indica Telegram en formato @username.",
         "whatsapp": "Indica WhatsApp en formato internacional, ejemplo: +34 600 000 000",
@@ -198,7 +198,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Фото слишком большое. Пришли файл меньше 10 МБ.",
         "token_missing": "Не настроен BOT_TOKEN или ADMIN_GROUP_ID.",
         "db_error": "Ошибка сохранения анкеты. Попробуй ещё раз.",
-        "success": "✅ Заявка принята мгновенно и автоматически. Дальше выбери удобный мессенджер для продолжения.",
+        "success": "✅ Заявка принята мгновенно и автоматически.",
     },
     "en": {
         "bad_size": "Invalid request size.",
@@ -210,7 +210,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Photo is too large. Please upload under 10MB.",
         "token_missing": "BOT_TOKEN or ADMIN_GROUP_ID is not configured.",
         "db_error": "Failed to save application. Please try again.",
-        "success": "✅ Application received instantly and automatically. Choose your preferred messenger to continue.",
+        "success": "✅ Application received instantly and automatically.",
     },
     "pt": {
         "bad_size": "Tamanho da requisição inválido.",
@@ -222,7 +222,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "Foto muito grande. Envie arquivo menor que 10MB.",
         "token_missing": "BOT_TOKEN ou ADMIN_GROUP_ID não configurado.",
         "db_error": "Falha ao salvar candidatura. Tente novamente.",
-        "success": "✅ Cadastro recebido instantaneamente e automaticamente. Escolha o mensageiro para continuar.",
+        "success": "✅ Cadastro recebido instantaneamente e automaticamente.",
     },
     "es": {
         "bad_size": "Tamaño de solicitud inválido.",
@@ -234,7 +234,7 @@ GENERAL_MESSAGES = {
         "photo_too_big": "La foto es demasiado grande. Sube un archivo menor de 10MB.",
         "token_missing": "BOT_TOKEN o ADMIN_GROUP_ID no están configurados.",
         "db_error": "Error al guardar la solicitud. Inténtalo de nuevo.",
-        "success": "✅ Solicitud recibida al instante y automáticamente. Elige el mensajero para continuar.",
+        "success": "✅ Solicitud recibida al instante y automáticamente.",
     },
 }
 
@@ -267,8 +267,8 @@ WA_TEXTS = {
         "invalid_phone": "Номер некорректный. Пример: +7 900 000 00 00",
         "ask_age": "Укажи дату рождения в формате 01.01.2000 (только 18+):",
         "invalid_age": "Дата некорректна. Нужен формат 01.01.2000 и возраст 18+.",
-        "ask_device": "Напиши модель устройства (например: iPhone 13):",
-        "invalid_device": "Модель слишком короткая. Напиши устройство ещё раз:",
+        "ask_device": "Напиши устройство, на котором будешь работать (например: iPhone 13 / Samsung A54 / ноутбук):",
+        "invalid_device": "Ответ слишком короткий. Напиши устройство ещё раз:",
         "ask_telegram": "Укажи Telegram для связи в формате @username:",
         "invalid_telegram": "Telegram некорректный. Пример: @username",
         "ask_city": "Город и страна проживания:",
@@ -317,8 +317,8 @@ WA_TEXTS = {
         "invalid_phone": "Invalid phone number. Example: +1 555 123 4567",
         "ask_age": "Enter birth date in format 01.01.2000 (18+ only):",
         "invalid_age": "Invalid date. Use 01.01.2000 format and 18+ age.",
-        "ask_device": "Send your device model (example: iPhone 13):",
-        "invalid_device": "Device model is too short. Please enter again:",
+        "ask_device": "Send the device you will work on (example: iPhone 13 / Samsung A54 / laptop):",
+        "invalid_device": "Answer is too short. Please enter your device again:",
         "ask_telegram": "Send your Telegram username in format @username:",
         "invalid_telegram": "Invalid Telegram username. Example: @username",
         "ask_city": "Your city and country:",
@@ -367,8 +367,8 @@ WA_TEXTS = {
         "invalid_phone": "Telefone inválido. Exemplo: +55 11 99999 9999",
         "ask_age": "Informe sua data de nascimento no formato 01.01.2000 (somente 18+):",
         "invalid_age": "Data inválida. Use o formato 01.01.2000 e idade 18+.",
-        "ask_device": "Informe o modelo do seu dispositivo (ex.: iPhone 13):",
-        "invalid_device": "Modelo muito curto. Envie novamente:",
+        "ask_device": "Informe o dispositivo em que você vai trabalhar (ex.: iPhone 13 / Samsung A54 / notebook):",
+        "invalid_device": "Resposta muito curta. Informe o dispositivo novamente:",
         "ask_telegram": "Informe seu Telegram no formato @username:",
         "invalid_telegram": "Telegram inválido. Exemplo: @username",
         "ask_city": "Cidade e país onde você mora:",
@@ -417,8 +417,8 @@ WA_TEXTS = {
         "invalid_phone": "Número inválido. Ejemplo: +34 600 000 000",
         "ask_age": "Indica fecha de nacimiento en formato 01.01.2000 (solo 18+):",
         "invalid_age": "Fecha inválida. Usa formato 01.01.2000 y edad 18+.",
-        "ask_device": "Indica el modelo de tu dispositivo (ej.: iPhone 13):",
-        "invalid_device": "Modelo demasiado corto. Escríbelo otra vez:",
+        "ask_device": "Indica el dispositivo con el que trabajarás (ej.: iPhone 13 / Samsung A54 / portátil):",
+        "invalid_device": "La respuesta es demasiado corta. Escríbelo otra vez:",
         "ask_telegram": "Indica tu Telegram en formato @username:",
         "invalid_telegram": "Telegram inválido. Ejemplo: @username",
         "ask_city": "Ciudad y país de residencia:",
@@ -686,8 +686,27 @@ def has_any_digit(text: str) -> bool:
     return shared_has_any_digit(text)
 
 
-def normalize_yes_no(text: str) -> str | None:
-    return shared_normalize_yes_no(text)
+YES_NO_BY_LANG = {
+    "ru": {"yes": "Да", "no": "Нет"},
+    "en": {"yes": "Yes", "no": "No"},
+    "pt": {"yes": "Sim", "no": "Não"},
+    "es": {"yes": "Sí", "no": "No"},
+}
+
+
+def normalize_yes_no(text: str, lang: str | None = None) -> str | None:
+    value = shared_normalize_yes_no(text)
+    if not value:
+        return None
+    raw = str(value).strip().lower()
+    if raw in {"да", "yes", "sim", "sí", "si"}:
+        key = "yes"
+    elif raw in {"нет", "no", "não", "nao"}:
+        key = "no"
+    else:
+        return value
+    locale = normalize_site_lang(lang or "ru")
+    return YES_NO_BY_LANG.get(locale, YES_NO_BY_LANG["ru"]).get(key, value)
 
 
 def normalize_telegram(text: str) -> str | None:
@@ -1678,7 +1697,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
 
     if mode == "site_stage2":
         if step == "living":
-            living = normalize_yes_no(text)
+            living = normalize_yes_no(text, lang=lang)
             if not living:
                 return True, _wa_stage2_text(lang, "living_invalid")
             data["living"] = living
@@ -1879,7 +1898,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_living")
 
     if step == "living":
-        living = normalize_yes_no(text)
+        living = normalize_yes_no(text, lang=lang)
         if not living:
             return True, wa_t(lang, "invalid_living")
         data["living"] = living
@@ -1982,6 +2001,7 @@ def submission_country(data: dict) -> str:
 
 def build_admin_full_text(data: dict, web_id: str, submitted_at: str, source_label: str = "Сайт") -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
+    device_value = _safe(data.get("device_model") or data.get("devices"))
     return (
         "📋 <b>Полная анкета</b>\n\n"
         f"👤 Имя: {_safe(data.get('name'))}\n"
@@ -1990,8 +2010,7 @@ def build_admin_full_text(data: dict, web_id: str, submitted_at: str, source_lab
         f"🏳️ Страна подачи: {_safe(submission_country(data))}\n"
         f"📞 Телефон: {_safe(data.get('phone'))}\n"
         f"🏠 Помещение без посторонних: {_safe(data.get('living'))}\n"
-        f"📱 Устройства: {_safe(data.get('devices'))}\n"
-        f"📲 Модель: {_safe(data.get('device_model'))}\n"
+        f"📱 Устройство для работы: {device_value}\n"
         f"🎧 Наушники: {_safe(data.get('headphones'))}\n"
         f"⏱ Время работы: {_safe(data.get('work_time'))}\n"
         f"💼 Опыт: {_safe(data.get('experience'))}\n"

@@ -126,6 +126,12 @@ TRANSLATIONS = {
         "portfolio_menu_pdf": "📄 PDF портфолио",
         "resume_prompt": "🤍 Похоже, анкета не завершена.\n\nХочешь продолжить заполнение?",
         "already_started_prompt": "🤍 Похоже, анкета уже начата.\n\nПродолжим с того места, где остановились?",
+        "already_started_site_prompt": (
+            "🤍 Ты уже заполнила часть анкеты на сайте.\n\n"
+            "Чтобы мы могли запустить тебя в работу, нужно дозаполнить анкету до конца.\n"
+            "Все данные остаются конфиденциальными.\n\n"
+            "Продолжим с того места, где остановились?"
+        ),
         "pending_status_text": "🤍 Твоя заявка сейчас на рассмотрении.",
         "accepted_status_text": "🤍 Твоя заявка уже одобрена.",
         "rejected_status_text": "🤍 Мы уже отвечали по твоей заявке.",
@@ -144,7 +150,7 @@ TRANSLATIONS = {
         "field_age_invalid": "🤍 Напиши дату рождения в формате 01.01.2000 (только 18+):",
         "field_yes_no": "🤍 Ответь, пожалуйста, «да» или «нет»:",
         "field_devices_short": "🤍 Уточни, пожалуйста, какие устройства есть:",
-        "field_device_model_short": "🤍 Напиши модель устройства, пожалуйста:",
+        "field_device_model_short": "🤍 Напиши устройство, на котором будешь работать (например: iPhone 13 / Samsung A54 / ноутбук):",
         "field_work_time_invalid": "🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):",
         "field_headphones_prompt": "🤍 Подскажи, пожалуйста, есть ли наушники с микрофоном:",
         "field_telegram_invalid": "🤍 Укажи, пожалуйста, Telegram в формате @username:",
@@ -284,6 +290,12 @@ TRANSLATIONS = {
         "portfolio_menu_pdf": "📄 Portfolio PDF",
         "resume_prompt": "🤍 Looks like your form is not finished.\n\nDo you want to continue?",
         "already_started_prompt": "🤍 Looks like your application is already started.\n\nContinue where you left off?",
+        "already_started_site_prompt": (
+            "🤍 You already completed part of the application on the website.\n\n"
+            "To start working, we need your full application details.\n"
+            "Everything stays confidential.\n\n"
+            "Continue where you left off?"
+        ),
         "pending_status_text": "🤍 Your application is under review.",
         "accepted_status_text": "🤍 Your application has already been approved.",
         "rejected_status_text": "🤍 We have already replied to your application.",
@@ -302,7 +314,7 @@ TRANSLATIONS = {
         "field_age_invalid": "🤍 Please enter birth date as 01.01.2000 (18+ only):",
         "field_yes_no": "🤍 Please answer \"yes\" or \"no\":",
         "field_devices_short": "🤍 Please specify your devices:",
-        "field_device_model_short": "🤍 Please enter device model:",
+        "field_device_model_short": "🤍 Please enter the device you will work on (for example: iPhone 13 / Samsung A54 / laptop):",
         "field_work_time_invalid": "🤍 Please enter hours using digits (example: 6):",
         "field_headphones_prompt": "🤍 Please tell us if you have headphones with mic:",
         "field_telegram_invalid": "🤍 Please provide Telegram in format @username:",
@@ -443,6 +455,12 @@ TRANSLATIONS = {
         "portfolio_menu_pdf": "📄 PDF do portfólio",
         "resume_prompt": "🤍 Parece que seu formulário não foi concluído.\n\nQuer continuar?",
         "already_started_prompt": "🤍 Parece que sua candidatura já foi iniciada.\n\nContinuar de onde parou?",
+        "already_started_site_prompt": (
+            "🤍 Você já preencheu parte do cadastro no site.\n\n"
+            "Para começar a trabalhar, precisamos concluir o cadastro completo.\n"
+            "Tudo fica confidencial.\n\n"
+            "Continuar de onde parou?"
+        ),
         "pending_status_text": "🤍 Sua candidatura está em análise.",
         "accepted_status_text": "🤍 Sua candidatura já foi aprovada.",
         "rejected_status_text": "🤍 Já respondemos sua candidatura.",
@@ -461,7 +479,7 @@ TRANSLATIONS = {
         "field_age_invalid": "🤍 Informe a data de nascimento no formato 01.01.2000 (somente 18+):",
         "field_yes_no": "🤍 Responda \"sim\" ou \"não\":",
         "field_devices_short": "🤍 Informe quais dispositivos você tem:",
-        "field_device_model_short": "🤍 Informe o modelo do dispositivo:",
+        "field_device_model_short": "🤍 Informe o dispositivo em que você vai trabalhar (ex.: iPhone 13 / Samsung A54 / notebook):",
         "field_work_time_invalid": "🤍 Informe as horas com números (exemplo: 6):",
         "field_headphones_prompt": "🤍 Você tem fones com microfone?",
         "field_telegram_invalid": "🤍 Informe o Telegram no formato @username:",
@@ -602,6 +620,12 @@ TRANSLATIONS = {
         "portfolio_menu_pdf": "📄 PDF del portafolio",
         "resume_prompt": "🤍 Parece que tu formulario no está completo.\n\n¿Quieres continuar?",
         "already_started_prompt": "🤍 Parece que tu solicitud ya está iniciada.\n\n¿Continuamos desde donde quedaste?",
+        "already_started_site_prompt": (
+            "🤍 Ya completaste una parte de la solicitud en el sitio.\n\n"
+            "Para empezar a trabajar necesitamos completar todos los datos.\n"
+            "Todo es confidencial.\n\n"
+            "¿Seguimos desde donde lo dejaste?"
+        ),
         "pending_status_text": "🤍 Tu solicitud está en revisión.",
         "accepted_status_text": "🤍 Tu solicitud ya fue aprobada.",
         "rejected_status_text": "🤍 Ya respondimos tu solicitud.",
@@ -620,7 +644,7 @@ TRANSLATIONS = {
         "field_age_invalid": "🤍 Escribe la fecha de nacimiento como 01.01.2000 (solo 18+):",
         "field_yes_no": "🤍 Responde \"sí\" o \"no\":",
         "field_devices_short": "🤍 Indica qué dispositivos tienes:",
-        "field_device_model_short": "🤍 Escribe el modelo del dispositivo:",
+        "field_device_model_short": "🤍 Escribe el dispositivo con el que vas a trabajar (ej.: iPhone 13 / Samsung A54 / portátil):",
         "field_work_time_invalid": "🤍 Indica horas con números (ejemplo: 6):",
         "field_headphones_prompt": "🤍 ¿Tienes auriculares con micrófono?",
         "field_telegram_invalid": "🤍 Indica Telegram en formato @username:",
@@ -700,7 +724,7 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.name: "Как тебя зовут?\n\nНапиши имя полностью:",
         ApplicationStates.phone: "Контактный телефон (+код):",
         ApplicationStates.age: "Дата рождения\n\nПример: 01.01.2000",
-        ApplicationStates.device_model: "Модель устройства:",
+        ApplicationStates.device_model: "На каком устройстве ты будешь работать?\n\nНапиши модель (например: iPhone 13 / Samsung A54 / ноутбук):",
         ApplicationStates.telegram: "Telegram (@username):",
         ApplicationStates.city: "В какой стране ты сейчас?\n\nМожно в формате: Город, Страна",
         ApplicationStates.work_time: "Сколько часов в день готова уделять?",
@@ -715,7 +739,7 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.name: "What is your full name?",
         ApplicationStates.phone: "Contact phone (+country code):",
         ApplicationStates.age: "Birth date\n\nExample: 01.01.2000",
-        ApplicationStates.device_model: "Device model:",
+        ApplicationStates.device_model: "What device will you work on?\n\nEnter model (for example: iPhone 13 / Samsung A54 / laptop):",
         ApplicationStates.telegram: "Telegram (@username):",
         ApplicationStates.city: "Which country are you currently in?\n\nYou can write: City, Country",
         ApplicationStates.work_time: "How many hours per day can you commit?",
@@ -730,7 +754,7 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.name: "Qual é seu nome completo?",
         ApplicationStates.phone: "Telefone de contato (+código):",
         ApplicationStates.age: "Data de nascimento\n\nExemplo: 01.01.2000",
-        ApplicationStates.device_model: "Modelo do dispositivo:",
+        ApplicationStates.device_model: "Em qual dispositivo você vai trabalhar?\n\nInforme o modelo (ex.: iPhone 13 / Samsung A54 / notebook):",
         ApplicationStates.telegram: "Telegram (@username):",
         ApplicationStates.city: "Em qual país você está agora?\n\nPode escrever: Cidade, País",
         ApplicationStates.work_time: "Quantas horas por dia você pode dedicar?",
@@ -745,7 +769,7 @@ FORM_QUESTIONS_BY_LANG = {
         ApplicationStates.name: "¿Cuál es tu nombre completo?",
         ApplicationStates.phone: "Teléfono de contacto (+código):",
         ApplicationStates.age: "Fecha de nacimiento\n\nEjemplo: 01.01.2000",
-        ApplicationStates.device_model: "Modelo del dispositivo:",
+        ApplicationStates.device_model: "¿Con qué dispositivo vas a trabajar?\n\nEscribe el modelo (ej.: iPhone 13 / Samsung A54 / portátil):",
         ApplicationStates.telegram: "Telegram (@username):",
         ApplicationStates.city: "¿En qué país estás ahora?\n\nPuedes escribir: Ciudad, País",
         ApplicationStates.work_time: "¿Cuántas horas por día puedes dedicar?",

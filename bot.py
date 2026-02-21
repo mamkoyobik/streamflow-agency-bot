@@ -481,8 +481,33 @@ def country_from_phone(phone: str | None) -> str | None:
             return PHONE_COUNTRY_BY_CODE[code]
     return None
 
-def normalize_yes_no(text: str) -> str | None:
-    return normalize_yes_no_shared(text)
+YES_NO_BY_LANG = {
+    "ru": {"yes": "Да", "no": "Нет"},
+    "en": {"yes": "Yes", "no": "No"},
+    "pt": {"yes": "Sim", "no": "Não"},
+    "es": {"yes": "Sí", "no": "No"},
+}
+
+
+def localize_yes_no_value(value: str | None, lang: str | None) -> str | None:
+    if value is None:
+        return None
+    raw = str(value).strip().lower()
+    if raw in {"да", "yes", "sim", "sí", "si"}:
+        key = "yes"
+    elif raw in {"нет", "no", "não", "nao"}:
+        key = "no"
+    else:
+        return value
+    locale = normalize_lang(lang)
+    return YES_NO_BY_LANG.get(locale, YES_NO_BY_LANG["ru"]).get(key, value)
+
+
+def normalize_yes_no(text: str, lang: str | None = None) -> str | None:
+    normalized = normalize_yes_no_shared(text)
+    if not normalized:
+        return None
+    return localize_yes_no_value(normalized, lang)
 
 
 async def safe_call_answer(call: CallbackQuery, text: str | None = None, show_alert: bool = False):
@@ -799,6 +824,27 @@ CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
 PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
+
+
+def _parse_admin_allowed_ids() -> set[int]:
+    raw_values = [
+        os.getenv("ADMIN_USER_ID", ""),
+        os.getenv("ADMIN_USER_IDS", ""),
+        os.getenv("ADMIN_ID", ""),
+    ]
+    result: set[int] = set()
+    for raw in raw_values:
+        for part in str(raw or "").replace(";", ",").split(","):
+            value = part.strip()
+            if not value:
+                continue
+            if value.lstrip("-").isdigit():
+                result.add(int(value))
+    return result
+
+
+ADMIN_ALLOWED_USER_IDS = _parse_admin_allowed_ids()
+ADMIN_ALLOWED_USERNAME = ADMIN_USERNAME.lstrip("@").strip().lower()
 TRANSLATABLE_ENTITY_TYPES = {
     "bold",
     "italic",
@@ -1632,6 +1678,11 @@ async def can_manage_admin_group(message: Message) -> bool:
         return True
     if not message.from_user:
         return False
+    if message.from_user.id in ADMIN_ALLOWED_USER_IDS:
+        return True
+    username = (message.from_user.username or "").strip().lower()
+    if ADMIN_ALLOWED_USERNAME and username == ADMIN_ALLOWED_USERNAME:
+        return True
     return await is_admin_actor(message.chat.id, message.from_user.id)
 
 
@@ -1640,6 +1691,11 @@ async def can_manage_admin_callback(call: CallbackQuery) -> bool:
         return False
     chat_id = call.message.chat.id
     if chat_id == ADMIN_GROUP_ID and call.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
+        return True
+    if call.from_user.id in ADMIN_ALLOWED_USER_IDS:
+        return True
+    username = (call.from_user.username or "").strip().lower()
+    if ADMIN_ALLOWED_USERNAME and username == ADMIN_ALLOWED_USERNAME:
         return True
     if chat_id == ADMIN_GROUP_ID:
         return await is_admin_actor(ADMIN_GROUP_ID, call.from_user.id)
@@ -1962,19 +2018,25 @@ def build_admin_posted_item_text(item: dict, offset: int, total: int) -> str:
 def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str:
     stage_quick = (stage_counts or {}).get("quick", 0)
     stage_full = (stage_counts or {}).get("full", 0)
+    pending = counts.get("pending", 0)
+    accepted = counts.get("accepted", 0)
+    rejected = counts.get("rejected", 0)
+    reviewed = accepted + rejected
+    total = counts.get("total", pending + reviewed)
     return (
-        "🛠 <b>Админ-меню</b>\n\n"
-        "Зоны:\n"
-        "• Контент: посты\n"
-        "• Заявки: статусы и этапы\n"
-        "• Аналитика: статистика и Excel\n"
-        "• Сервис: архив, обновление, сброс\n\n"
-        f"Ожидают подтверждения: <b>{counts.get('pending', 0)}</b>\n"
-        f"Принятые: <b>{counts.get('accepted', 0)}</b>\n"
-        f"Отклонённые: <b>{counts.get('rejected', 0)}</b>\n\n"
-        f"1️⃣ Прошёл первый этап: <b>{stage_quick}</b>\n"
-        f"2️⃣ Полностью заполнил заявку: <b>{stage_full}</b>\n\n"
-        "Выбери раздел ниже ✨"
+        "🛠 <b>Админ-панель</b>\n\n"
+        "Быстрые разделы:\n"
+        "• 🆕 Новые\n"
+        "• 1️⃣ Этап 1\n"
+        "• 2️⃣ Этап 2\n"
+        "• ✅ Решённые\n"
+        "• 📣 Посты\n\n"
+        f"Ожидают: <b>{pending}</b>\n"
+        f"Решённые: <b>{reviewed}</b>\n"
+        f"Этап 1: <b>{stage_quick}</b>\n"
+        f"Этап 2: <b>{stage_full}</b>\n"
+        f"Всего: <b>{total}</b>\n\n"
+        "Источники и сервис — отдельными кнопками ниже."
     )
 
 async def persist_form_data(state: FSMContext, user_id: int):
@@ -2216,6 +2278,7 @@ def build_admin_summary(
 def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
     status_label = STATUS_LABELS.get(status, status)
     submit_time = submit_time_label_for_user(user_id)
+    device_value = _safe_text(data.get("device_model") or data.get("devices") or "—")
     return (
         "📋 <b>Полная анкета</b>\n\n"
         f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
@@ -2225,14 +2288,33 @@ def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
         f"🧩 Этап анкеты: {_safe_text(application_stage_label(data))}\n"
         f"📞 Телефон: {_safe_text(data.get('phone', '—'))}\n"
         f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
-        f"📱 Устройства: {_safe_text(data.get('devices', '—'))}\n"
-        f"📲 Модель: {_safe_text(data.get('device_model', '—'))}\n"
+        f"📱 Устройство для работы: {device_value}\n"
         f"🎧 Наушники: {_safe_text(data.get('headphones', '—'))}\n"
         f"⏱ Время работы: {_safe_text(data.get('work_time', '—'))}\n"
         f"💼 Опыт: {_safe_text(data.get('experience', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"🆔 ID: {user_id}\n"
         f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
+        f"🕒 Время подачи: {submit_time}\n\n"
+        f"Статус: <b>{status_label}</b>"
+    )
+
+
+def build_admin_brief_text(data: dict, user_id: int, status: str) -> str:
+    status_label = STATUS_LABELS.get(status, status)
+    submit_time = submit_time_label_for_user(user_id)
+    telegram = _safe_text(data.get("telegram", "—"))
+    phone = _safe_text(data.get("phone", "—"))
+    primary_contact = telegram if telegram != "—" else phone
+    return (
+        "📌 <b>Краткая карточка</b>\n\n"
+        f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
+        f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
+        f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
+        f"🧩 Этап анкеты: {_safe_text(application_stage_label(data))}\n"
+        f"☎️ Контакт: {primary_contact}\n"
+        f"🆔 ID: {user_id}\n"
+        f"🧭 Источник: {source_label_for_user(user_id)}\n"
         f"🕒 Время подачи: {submit_time}\n\n"
         f"Статус: <b>{status_label}</b>"
     )
@@ -2593,28 +2675,113 @@ async def post_admin_menu():
 def _admin_list_label(filter_key: str | None) -> str:
     return {
         "pending": "Ожидают подтверждения",
+        "reviewed": "Решённые",
         "accepted": "Принятые",
         "rejected": "Отклонённые",
         "all": "Все заявки",
         "stage_quick": "Прошли только первый этап",
         "stage_full": "Полностью заполненные заявки",
+        "src_site": "Источник: сайт",
+        "src_bot": "Источник: бот",
+        "src_unknown": "Источник: не определён",
         None: "Все заявки",
     }.get(filter_key, "Все заявки")
+
+def _list_apps_by_filter(filter_key: str) -> list[dict]:
+    status = None if filter_key in {
+        "all",
+        "reviewed",
+        "stage_quick",
+        "stage_full",
+        "src_site",
+        "src_bot",
+        "src_unknown",
+    } else filter_key
+    if filter_key == "stage_quick":
+        return list_applications_by_stage("quick", status=None)
+    if filter_key == "stage_full":
+        return list_applications_by_stage("full", status=None)
+    apps = list_applications(status)
+    if filter_key == "reviewed":
+        return [a for a in apps if a.get("status") in {"accepted", "rejected"}]
+    if filter_key in {"src_site", "src_bot", "src_unknown"}:
+        expected = {"src_site": "site", "src_bot": "bot", "src_unknown": "unknown"}[filter_key]
+        filtered: list[dict] = []
+        for app in apps:
+            source = (get_source(int(app.get("user_id") or 0)) or "").strip().lower()
+            source_key = source if source in {"site", "bot"} else "unknown"
+            if source_key == expected:
+                filtered.append(app)
+        return filtered
+    return apps
+
+
+def _apps_total_for_filter(filter_key: str) -> int:
+    try:
+        return len(_list_apps_by_filter(filter_key))
+    except Exception:
+        logger.exception("Ошибка подсчёта заявок для фильтра %s", filter_key)
+        return 0
+
+
+def _build_admin_list_header(
+    label: str,
+    offset: int,
+    total: int,
+) -> str:
+    page = offset // ADMIN_LIST_LIMIT + 1
+    pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
+    return (
+        f"🗂 <b>{label}</b>\n\n"
+        f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
+        f"Страница: <b>{page}/{pages}</b>\n\n"
+    )
+
+
+async def _render_admin_list_message(
+    filter_key: str,
+    offset: int,
+    user_id: int,
+    item_status: str,
+    total: int,
+    show_full: bool = False,
+):
+    data = get_form_data(user_id) or {}
+    contact_url = contact_url_for_user(user_id, data)
+    label = _admin_list_label(filter_key)
+    header = _build_admin_list_header(label, offset, total)
+    body = (
+        build_admin_full_text(data, user_id, item_status)
+        if show_full
+        else build_admin_brief_text(data, user_id, item_status)
+    )
+    photo_id = data.get("photo_face") or data.get("photo_full")
+    await update_admin_view_message(
+        f"{header}{body}",
+        admin_list_view_keyboard(
+            user_id,
+            item_status,
+            filter_key,
+            offset,
+            total,
+            ADMIN_LIST_LIMIT,
+            contact_url=contact_url,
+            show_full=show_full,
+        ),
+        photo_id,
+    )
+
 
 async def send_admin_list(
     call: CallbackQuery,
     filter_key: str,
-    offset: int = 0
+    offset: int = 0,
+    preferred_user_id: int | None = None,
+    show_full: bool = False,
 ):
     await safe_call_answer(call)
     try:
-        status = None if filter_key in {"all", "stage_quick", "stage_full"} else filter_key
-        if filter_key == "stage_quick":
-            apps = list_applications_by_stage("quick", status=None)
-        elif filter_key == "stage_full":
-            apps = list_applications_by_stage("full", status=None)
-        else:
-            apps = list_applications(status)
+        apps = _list_apps_by_filter(filter_key)
         label = _admin_list_label(filter_key)
         if not apps:
             counts = get_status_counts()
@@ -2630,25 +2797,24 @@ async def send_admin_list(
             offset = 0
         if offset >= total:
             offset = max(total - 1, 0)
+        if preferred_user_id is not None:
+            for idx, app in enumerate(apps):
+                if int(app.get("user_id") or 0) == int(preferred_user_id):
+                    offset = idx
+                    break
         slice_items = apps[offset: offset + ADMIN_LIST_LIMIT]
-        page = offset // ADMIN_LIST_LIMIT + 1
-        pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
         current = slice_items[0]
         user_id = current["user_id"]
-        item_status = current["status"] or status or "pending"
-        data = get_form_data(user_id) or {}
-        contact_url = contact_url_for_user(user_id, data)
-        text = (
-            f"🗂 <b>{label}</b>\n\n"
-            f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
-            f"Страница: <b>{page}/{pages}</b>\n\n"
-            f"{build_admin_full_text(data, user_id, item_status)}"
-        )
-        photo_id = data.get("photo_face") or data.get("photo_full")
-        await update_admin_view_message(
-            text,
-            admin_list_view_keyboard(user_id, item_status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
-            photo_id
+        item_status = (current.get("status") or "pending").strip().lower()
+        if item_status not in {"pending", "accepted", "rejected"}:
+            item_status = "pending"
+        await _render_admin_list_message(
+            filter_key=filter_key,
+            offset=offset,
+            user_id=user_id,
+            item_status=item_status,
+            total=total,
+            show_full=show_full,
         )
     except Exception:
         logger.exception("Ошибка отображения списка заявок")
@@ -3561,6 +3727,7 @@ async def start(message: Message, state: FSMContext):
         if message.chat.type != "private":
             await message.answer(t("ru", "start_private_only"))
             return
+        await delete_user_message(message)
         logger.info(
             "START_CMD user_id=%s text=%r",
             message.from_user.id if message.from_user else None,
@@ -3568,6 +3735,7 @@ async def start(message: Message, state: FSMContext):
         )
         await state.clear()
         await clear_portfolio_media(message.from_user.id)
+        await clear_user_flow_message(message.from_user.id)
         start_payload = extract_start_payload(message.text)
         site_token, start_lang = extract_site_lead_start_data(start_payload)
         if start_lang:
@@ -3617,13 +3785,18 @@ async def start(message: Message, state: FSMContext):
         )
         if can_resume:
             pending_site_quick = app.get("status") == "pending" and is_site_quick_application(app, data)
+            started_site_quick = app.get("status") in {None, "new"} and is_site_quick_application(app, data)
             resume_text = (
                 stage2_text(lang, "gate")
                 if pending_site_quick
                 else (
-                    stage2_text(lang, "step2")
-                    if app.get("status") == "pending" and is_quick_application(data)
-                    else t(lang, "resume_prompt")
+                    t(lang, "already_started_site_prompt")
+                    if started_site_quick
+                    else (
+                        stage2_text(lang, "step2")
+                        if app.get("status") == "pending" and is_quick_application(data)
+                        else t(lang, "resume_prompt")
+                    )
                 )
             )
             await send_or_edit_user_text(
@@ -3811,9 +3984,14 @@ async def apply(call: CallbackQuery, state: FSMContext):
             set_last_state(call.from_user.id, None)
             last_state = None
         if (current and current in FORM_PROGRESS_STATES) or (last_state in FORM_PROGRESS_STATES):
+            resume_prompt = (
+                t(lang, "already_started_site_prompt")
+                if is_site_quick_application(app, form_data)
+                else t(lang, "already_started_prompt")
+            )
             await send_or_edit_user_text(
                 call.from_user.id,
-                t(lang, "already_started_prompt"),
+                resume_prompt,
                 reply_markup=continue_form_keyboard(lang)
             )
             return
@@ -4163,7 +4341,7 @@ async def step_living(m: Message, state: FSMContext):
             reply_markup=form_keyboard(lang),
         )
         return
-    normalized = normalize_yes_no(living_raw)
+    normalized = normalize_yes_no(living_raw, lang=lang)
     if not normalized:
         await send_or_edit_user_text(
             m.from_user.id,
@@ -4532,9 +4710,10 @@ async def form_back(call: CallbackQuery, state: FSMContext):
 @dp.callback_query(F.data == "about_work")
 async def about_work(call: CallbackQuery):
     lang = lang_for(call.from_user.id)
+    await safe_call_answer(call)
     await clear_portfolio_media(call.from_user.id)
-    await edit_or_send(
-        call,
+    await send_or_edit_user_text(
+        call.from_user.id,
         t(lang, "about_work_text"),
         reply_markup=about_menu(lang)
     )
@@ -4543,9 +4722,10 @@ async def about_work(call: CallbackQuery):
 @dp.callback_query(F.data == "about_platforms")
 async def about_platforms(call: CallbackQuery):
     lang = lang_for(call.from_user.id)
+    await safe_call_answer(call)
     await clear_portfolio_media(call.from_user.id)
-    await edit_or_send(
-        call,
+    await send_or_edit_user_text(
+        call.from_user.id,
         t(lang, "about_platforms_text"),
         reply_markup=about_menu(lang)
     )
@@ -4554,9 +4734,10 @@ async def about_platforms(call: CallbackQuery):
 @dp.callback_query(F.data == "about_income")
 async def about_income(call: CallbackQuery):
     lang = lang_for(call.from_user.id)
+    await safe_call_answer(call)
     await clear_portfolio_media(call.from_user.id)
-    await edit_or_send(
-        call,
+    await send_or_edit_user_text(
+        call.from_user.id,
         t(lang, "about_income_text"),
         reply_markup=about_menu(lang)
     )
@@ -4565,9 +4746,10 @@ async def about_income(call: CallbackQuery):
 async def portfolio(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
+        await safe_call_answer(call)
         await clear_portfolio_media(call.from_user.id)
-        await edit_or_send(
-            call,
+        await send_or_edit_user_text(
+            call.from_user.id,
             t(lang, "profile_portfolio_title"),
             reply_markup=portfolio_menu(lang)
         )
@@ -4579,9 +4761,10 @@ async def portfolio(call: CallbackQuery):
 async def about(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
+        await safe_call_answer(call)
         await clear_portfolio_media(call.from_user.id)
-        await edit_or_send(
-            call,
+        await send_or_edit_user_text(
+            call.from_user.id,
             t(lang, "profile_about_title"),
             reply_markup=about_menu(lang)
         )
@@ -4593,10 +4776,11 @@ async def about(call: CallbackQuery):
 async def contact(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
+        await safe_call_answer(call)
         await clear_portfolio_media(call.from_user.id)
         username = PUBLIC_MANAGER_USERNAME
-        await edit_or_send(
-            call,
+        await send_or_edit_user_text(
+            call.from_user.id,
             t(
                 lang,
                 "profile_contact_title",
@@ -4720,7 +4904,7 @@ async def save_edited_value(m: Message, state: FSMContext):
     if field == "age":
         value = normalize_birthdate(value) or value
     if field == "living":
-        normalized = normalize_yes_no(value)
+        normalized = normalize_yes_no(value, lang=lang)
         if not normalized:
             await send_or_edit_user_text(m.from_user.id, t(lang, "field_yes_no"))
             return
@@ -5006,32 +5190,70 @@ async def admin_accept(call: CallbackQuery):
             return
         await safe_call_answer(call)
         parts = call.data.split(":")
-        uid = int(parts[1])
-        view_mode = len(parts) > 2 and parts[2] == "view"
         try:
-            user_lang = lang_for(uid)
-            caption = build_menu_caption_with_status(
-                "accepted",
-                t(user_lang, "accept_caption"),
-                lang=user_lang,
-                tail=t(user_lang, "approved_tail")
-            )
-            if not is_site_source(uid):
-                await send_or_edit_user_menu(uid, caption, lang=user_lang)
-                await clear_user_flow_message(uid)
+            uid = int(parts[1])
         except Exception:
-            logger.exception("Ошибка отправки меню после принятия")
+            await safe_call_answer(call, "Некорректный ID заявки", show_alert=True)
+            return
+        view_mode = len(parts) > 2 and parts[2] == "view"
+        view_filter: str | None = None
+        view_offset = 0
+        if view_mode and len(parts) > 4:
+            view_filter = parts[3]
+            try:
+                view_offset = max(int(parts[4]), 0)
+            except Exception:
+                view_offset = 0
+
         set_status(uid, "accepted")
         if update_application_status:
             try:
                 update_application_status(uid, "accepted")
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
+
+        try:
+            if uid > 0:
+                form_data = get_form_data(uid) or {}
+                user_lang = submission_lang_for_user(uid, form_data)
+                app = get_application(uid)
+                site_stage2 = is_site_quick_application(app, form_data)
+                channel_url = stage2_channel_link(user_lang) if site_stage2 else None
+            else:
+                form_data = {}
+                user_lang = "ru"
+                channel_url = None
+            caption = build_menu_caption_with_status(
+                "accepted",
+                t(user_lang, "accept_caption"),
+                lang=user_lang,
+                tail=t(user_lang, "approved_tail")
+            )
+            if uid > 0:
+                await send_or_edit_user_menu(uid, caption, lang=user_lang, channel_url=channel_url)
+                await clear_user_flow_message(uid)
+        except Exception:
+            logger.exception("Ошибка отправки меню после принятия")
         await update_admin_summary_message(uid, "accepted")
         try:
             await post_admin_menu()
         except Exception:
             logger.exception("Ошибка возврата в админ-меню")
+        if view_mode:
+            try:
+                if view_filter:
+                    await send_admin_list(call, view_filter, view_offset)
+                else:
+                    data = get_form_data(uid) or {}
+                    contact_url = contact_url_for_user(uid, data)
+                    photo_id = data.get("photo_face") or data.get("photo_full")
+                    await update_admin_view_message(
+                        build_admin_full_text(data, uid, "accepted"),
+                        admin_list_item_keyboard(uid, "accepted", contact_url=contact_url),
+                        photo_id,
+                    )
+            except Exception:
+                logger.exception("Ошибка обновления карточки после принятия")
         await safe_call_answer(call, "Принято")
     except Exception:
         logger.exception("Ошибка в admin_accept")
@@ -5045,10 +5267,26 @@ async def admin_reject(call: CallbackQuery, state: FSMContext):
             return
         await safe_call_answer(call)
         parts = call.data.split(":")
-        uid = int(parts[1])
+        try:
+            uid = int(parts[1])
+        except Exception:
+            await safe_call_answer(call, "Некорректный ID заявки", show_alert=True)
+            return
         view_mode = len(parts) > 2 and parts[2] == "view"
+        view_filter = parts[3] if view_mode and len(parts) > 4 else None
+        view_offset = 0
+        if view_mode and len(parts) > 4:
+            try:
+                view_offset = max(int(parts[4]), 0)
+            except Exception:
+                view_offset = 0
         await state.set_state(ApplicationStates.admin_reject_reason)
-        await state.update_data(reject_uid=uid, reject_view=view_mode)
+        await state.update_data(
+            reject_uid=uid,
+            reject_view=view_mode,
+            reject_filter=view_filter,
+            reject_offset=view_offset,
+        )
         await update_admin_menu_message(
             "✍️ Укажи причину отказа:\n\n"
             "Можно выбрать готовый вариант или написать свой текст.",
@@ -5096,7 +5334,7 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
                 lang=user_lang,
                 intro=intro
             )
-            if not is_site_source(uid):
+            if uid > 0:
                 await send_or_edit_user_menu(uid, caption, lang=user_lang)
                 await clear_user_flow_message(uid)
         except Exception:
@@ -5108,6 +5346,24 @@ async def reject_template(call: CallbackQuery, state: FSMContext):
             except Exception:
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "rejected")
+        try:
+            if bool(state_data.get("reject_view")) and state_data.get("reject_filter"):
+                await send_admin_list(
+                    call,
+                    str(state_data.get("reject_filter")),
+                    int(state_data.get("reject_offset") or 0),
+                )
+            elif bool(state_data.get("reject_view")):
+                data = get_form_data(uid) or {}
+                contact_url = contact_url_for_user(uid, data)
+                photo_id = data.get("photo_face") or data.get("photo_full")
+                await update_admin_view_message(
+                    build_admin_full_text(data, uid, "rejected"),
+                    admin_list_item_keyboard(uid, "rejected", contact_url=contact_url),
+                    photo_id,
+                )
+        except Exception:
+            logger.exception("Ошибка обновления карточки после отклонения")
         try:
             await post_admin_menu()
         except Exception:
@@ -5140,7 +5396,7 @@ async def reject_reason(m: Message, state: FSMContext):
                 lang=user_lang,
                 intro=intro
             )
-            if not is_site_source(uid):
+            if uid > 0:
                 await send_or_edit_user_menu(uid, caption, lang=user_lang)
                 await clear_user_flow_message(uid)
         except Exception:
@@ -5153,12 +5409,332 @@ async def reject_reason(m: Message, state: FSMContext):
                 logger.exception("Ошибка обновления статуса в Excel")
         await update_admin_summary_message(uid, "rejected")
         try:
+            if bool(data.get("reject_view")):
+                form_data = get_form_data(uid) or {}
+                contact_url = contact_url_for_user(uid, form_data)
+                photo_id = form_data.get("photo_face") or form_data.get("photo_full")
+                await update_admin_view_message(
+                    build_admin_full_text(form_data, uid, "rejected"),
+                    admin_list_item_keyboard(uid, "rejected", contact_url=contact_url),
+                    photo_id,
+                )
+        except Exception:
+            logger.exception("Ошибка обновления карточки после отклонения")
+        try:
             await post_admin_menu()
         except Exception:
             logger.exception("Ошибка возврата в админ-меню")
         await state.clear()
     except Exception:
         logger.exception("Ошибка в reject_reason")
+
+
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_send_model:"))
+async def admin_send_model(call: CallbackQuery, state: FSMContext):
+    try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        await safe_call_answer(call)
+        parts = call.data.split(":")
+        try:
+            uid = int(parts[1])
+        except Exception:
+            await safe_call_answer(call, "Некорректный ID заявки", show_alert=True)
+            return
+        if uid <= 0:
+            await safe_call_answer(call, "Для этого источника отправка недоступна", show_alert=True)
+            return
+        if (get_status(uid) or "pending") != "accepted":
+            await safe_call_answer(call, "Сначала прими заявку", show_alert=True)
+            return
+
+        view_mode = len(parts) > 2 and parts[2] == "view"
+        view_filter = parts[3] if view_mode and len(parts) > 4 else None
+        view_offset = 0
+        if view_mode and len(parts) > 4:
+            try:
+                view_offset = max(int(parts[4]), 0)
+            except Exception:
+                view_offset = 0
+
+        form_data = get_form_data(uid) or {}
+        candidate_name = str(form_data.get("name") or f"ID {uid}")
+
+        await state.set_state(ApplicationStates.admin_send_model_message)
+        await state.update_data(
+            send_model_uid=uid,
+            send_model_view=view_mode,
+            send_model_filter=view_filter,
+            send_model_offset=view_offset,
+        )
+        await update_admin_menu_message(
+            "📨 <b>Отправка сообщения модели</b>\n\n"
+            f"Кандидат: <b>{html.escape(candidate_name)}</b>\n\n"
+            "Отправь одним сообщением уникальный текст для этой модели.\n"
+            "Можно вставить Zoom-ссылку.\n\n"
+            "Сообщение уйдёт в личку пользователю от бота.",
+            admin_send_model_keyboard(),
+        )
+    except Exception:
+        logger.exception("Ошибка в admin_send_model")
+        await safe_call_answer(call, "Не удалось открыть отправку сообщения", show_alert=True)
+
+
+@dp.callback_query(StateFilter(ApplicationStates.admin_send_model_message), F.data == "admin_send_model_cancel")
+async def admin_send_model_cancel(call: CallbackQuery, state: FSMContext):
+    try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        await state.clear()
+        await post_admin_menu()
+        await safe_call_answer(call, "Отменено")
+    except Exception:
+        logger.exception("Ошибка в admin_send_model_cancel")
+        await safe_call_answer(call, "Не удалось отменить", show_alert=False)
+
+
+@dp.message(StateFilter(ApplicationStates.admin_send_model_message), ~F.text)
+async def admin_send_model_non_text(message: Message):
+    if message.chat.id != ADMIN_GROUP_ID:
+        return
+    if not await can_manage_admin_group(message):
+        await delete_message_silent(message)
+        return
+    await delete_message_silent(message)
+    await update_admin_menu_message(
+        "⚠️ Отправь текстовым сообщением.\n\nМожно вставить ссылку Zoom.",
+        admin_send_model_keyboard(),
+    )
+
+
+@dp.message(StateFilter(ApplicationStates.admin_send_model_message), F.text)
+async def admin_send_model_message(message: Message, state: FSMContext):
+    try:
+        if message.chat.id != ADMIN_GROUP_ID:
+            return
+        if not await can_manage_admin_group(message):
+            await delete_message_silent(message)
+            return
+        if message.text and message.text.strip().startswith("/"):
+            await delete_message_silent(message)
+            await update_admin_menu_message(
+                "⚠️ Отправь именно текст для модели, а не команду.\n\nМожно вставить Zoom-ссылку.",
+                admin_send_model_keyboard(),
+            )
+            return
+
+        data = await state.get_data()
+        uid_raw = data.get("send_model_uid")
+        try:
+            uid = int(uid_raw)
+        except Exception:
+            uid = 0
+        if uid <= 0:
+            await state.clear()
+            await delete_message_silent(message)
+            await post_admin_menu()
+            return
+
+        if (get_status(uid) or "pending") != "accepted":
+            await state.clear()
+            await delete_message_silent(message)
+            counts = get_status_counts()
+            stage_counts = get_application_stage_counts()
+            await update_admin_menu_message(
+                "⚠️ Заявка больше не в статусе «Принято». Сначала проверь статус.",
+                admin_menu_keyboard(counts, stage_counts),
+            )
+            return
+
+        await bot.copy_message(
+            chat_id=uid,
+            from_chat_id=message.chat.id,
+            message_id=message.message_id,
+        )
+        await delete_message_silent(message)
+        await state.clear()
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
+        await update_admin_menu_message(
+            f"✅ Сообщение отправлено модели (ID: {uid}).",
+            admin_menu_keyboard(counts, stage_counts),
+        )
+    except TelegramForbiddenError:
+        data = await state.get_data()
+        uid_raw = data.get("send_model_uid")
+        logger.warning(
+            "Пользователь %s заблокировал бота или не открыл диалог",
+            uid_raw if uid_raw is not None else "unknown",
+        )
+        await update_admin_menu_message(
+            "⚠️ Не удалось доставить сообщение.\n"
+            "Пользователь не открыл чат с ботом или заблокировал бота.",
+            admin_send_model_keyboard(),
+        )
+    except Exception:
+        logger.exception("Ошибка в admin_send_model_message")
+        await update_admin_menu_message(
+            "⚠️ Ошибка отправки. Попробуй отправить текст ещё раз.",
+            admin_send_model_keyboard(),
+        )
+
+
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_request_info:"))
+async def admin_request_info(call: CallbackQuery, state: FSMContext):
+    try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        await safe_call_answer(call)
+        parts = call.data.split(":")
+        try:
+            uid = int(parts[1])
+        except Exception:
+            await safe_call_answer(call, "Некорректный ID заявки", show_alert=True)
+            return
+        if uid <= 0:
+            await safe_call_answer(call, "Для этого источника отправка недоступна", show_alert=True)
+            return
+        if (get_status(uid) or "pending") != "pending":
+            await safe_call_answer(call, "Запрос уточнения доступен только для новых заявок", show_alert=True)
+            return
+
+        view_mode = len(parts) > 2 and parts[2] == "view"
+        view_filter = parts[3] if view_mode and len(parts) > 4 else None
+        view_offset = 0
+        if view_mode and len(parts) > 4:
+            try:
+                view_offset = max(int(parts[4]), 0)
+            except Exception:
+                view_offset = 0
+
+        form_data = get_form_data(uid) or {}
+        candidate_name = str(form_data.get("name") or f"ID {uid}")
+        await state.set_state(ApplicationStates.admin_request_info_message)
+        await state.update_data(
+            request_info_uid=uid,
+            request_info_view=view_mode,
+            request_info_filter=view_filter,
+            request_info_offset=view_offset,
+        )
+        await update_admin_menu_message(
+            "📝 <b>Запрос уточнения</b>\n\n"
+            f"Кандидат: <b>{html.escape(candidate_name)}</b>\n\n"
+            "Отправь одним сообщением, что именно нужно уточнить.\n"
+            "Сообщение уйдёт кандидату в личку от бота.",
+            admin_request_info_keyboard(),
+        )
+    except Exception:
+        logger.exception("Ошибка в admin_request_info")
+        await safe_call_answer(call, "Не удалось открыть запрос уточнения", show_alert=True)
+
+
+@dp.callback_query(StateFilter(ApplicationStates.admin_request_info_message), F.data == "admin_request_info_cancel")
+async def admin_request_info_cancel(call: CallbackQuery, state: FSMContext):
+    try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        await state.clear()
+        await post_admin_menu()
+        await safe_call_answer(call, "Отменено")
+    except Exception:
+        logger.exception("Ошибка в admin_request_info_cancel")
+        await safe_call_answer(call, "Не удалось отменить", show_alert=False)
+
+
+@dp.message(StateFilter(ApplicationStates.admin_request_info_message), ~F.text)
+async def admin_request_info_non_text(message: Message):
+    if message.chat.id != ADMIN_GROUP_ID:
+        return
+    if not await can_manage_admin_group(message):
+        await delete_message_silent(message)
+        return
+    await delete_message_silent(message)
+    await update_admin_menu_message(
+        "⚠️ Отправь текстовым сообщением, что нужно уточнить.",
+        admin_request_info_keyboard(),
+    )
+
+
+@dp.message(StateFilter(ApplicationStates.admin_request_info_message), F.text)
+async def admin_request_info_message(message: Message, state: FSMContext):
+    try:
+        if message.chat.id != ADMIN_GROUP_ID:
+            return
+        if not await can_manage_admin_group(message):
+            await delete_message_silent(message)
+            return
+        if message.text and message.text.strip().startswith("/"):
+            await delete_message_silent(message)
+            await update_admin_menu_message(
+                "⚠️ Отправь именно текст для кандидата, а не команду.",
+                admin_request_info_keyboard(),
+            )
+            return
+
+        data = await state.get_data()
+        uid_raw = data.get("request_info_uid")
+        try:
+            uid = int(uid_raw)
+        except Exception:
+            uid = 0
+        if uid <= 0:
+            await state.clear()
+            await delete_message_silent(message)
+            await post_admin_menu()
+            return
+
+        await bot.copy_message(
+            chat_id=uid,
+            from_chat_id=message.chat.id,
+            message_id=message.message_id,
+        )
+        await delete_message_silent(message)
+        await state.clear()
+        counts = get_status_counts()
+        stage_counts = get_application_stage_counts()
+        await update_admin_menu_message(
+            f"✅ Запрос уточнения отправлен кандидату (ID: {uid}).",
+            admin_menu_keyboard(counts, stage_counts),
+        )
+    except TelegramForbiddenError:
+        await update_admin_menu_message(
+            "⚠️ Не удалось доставить сообщение.\n"
+            "Пользователь не открыл чат с ботом или заблокировал бота.",
+            admin_request_info_keyboard(),
+        )
+    except Exception:
+        logger.exception("Ошибка в admin_request_info_message")
+        await update_admin_menu_message(
+            "⚠️ Ошибка отправки. Попробуй ещё раз.",
+            admin_request_info_keyboard(),
+        )
+
+
+@dp.callback_query(StateFilter("*"), F.data.startswith("admin_card:"))
+async def admin_card_toggle(call: CallbackQuery):
+    try:
+        if not await can_manage_admin_callback(call):
+            await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+            return
+        _, uid_raw, mode, filter_key, offset_raw = call.data.split(":", 4)
+        uid = int(uid_raw)
+        offset = int(offset_raw)
+        show_full = str(mode).strip().lower() == "full"
+        await send_admin_list(
+            call,
+            filter_key=filter_key,
+            offset=offset,
+            preferred_user_id=uid,
+            show_full=show_full,
+        )
+    except Exception:
+        logger.exception("Ошибка в admin_card_toggle")
+        await safe_call_answer(call, "Не удалось обновить карточку", show_alert=False)
+
 
 @dp.callback_query(F.data.startswith("admin_status:"))
 async def admin_status(call: CallbackQuery):
@@ -5367,6 +5943,8 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
                 ApplicationStates.admin_create_post.state,
                 ApplicationStates.admin_edit_post_text.state,
                 ApplicationStates.admin_edit_post_photo.state,
+                ApplicationStates.admin_send_model_message.state,
+                ApplicationStates.admin_request_info_message.state,
             }:
                 await state.clear()
                 if current_state == ApplicationStates.admin_create_post.state:
@@ -5398,6 +5976,13 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
                 admin_menu_analytics_keyboard()
             )
             return
+        if action == "sources":
+            await clear_admin_view_message()
+            await update_admin_menu_message(
+                "🌐 <b>Фильтр по источнику</b>\n\nБыстрый просмотр заявок из сайта или бота.",
+                admin_menu_sources_keyboard()
+            )
+            return
         if action == "cat_service":
             await clear_admin_view_message()
             await update_admin_menu_message(
@@ -5412,7 +5997,18 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             await clear_admin_view_message()
             await show_admin_posted_posts(0)
             return
-        if action in {"pending", "accepted", "rejected", "all", "stage_quick", "stage_full"}:
+        if action in {
+            "pending",
+            "reviewed",
+            "accepted",
+            "rejected",
+            "all",
+            "stage_quick",
+            "stage_full",
+            "src_site",
+            "src_bot",
+            "src_unknown",
+        }:
             await clear_admin_notify()
             await send_admin_list(call, action, 0)
             return
@@ -5502,9 +6098,16 @@ async def admin_view_photo(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, "Сообщение недоступно", show_alert=False)
             return
-        _, uid_raw, photo_type, filter_key, offset_raw = call.data.split(":", 4)
-        uid = int(uid_raw)
-        offset = int(offset_raw)
+        parts = call.data.split(":")
+        if len(parts) < 5:
+            await safe_call_answer(call, "Некорректные данные фото", show_alert=False)
+            return
+        uid = int(parts[1])
+        photo_type = parts[2]
+        filter_key = parts[3]
+        offset = int(parts[4])
+        mode = parts[5] if len(parts) > 5 else "brief"
+        show_full = str(mode).strip().lower() == "full"
         data = get_form_data(uid) or {}
         contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") if photo_type == "face" else data.get("photo_full")
@@ -5513,26 +6116,39 @@ async def admin_view_photo(call: CallbackQuery):
             return
         status = get_status(uid) or "pending"
         label = _admin_list_label(filter_key)
-        if filter_key == "stage_quick":
-            total = len(list_applications_by_stage("quick"))
-        elif filter_key == "stage_full":
-            total = len(list_applications_by_stage("full"))
-        else:
-            total = len(list_applications(None if filter_key == "all" else filter_key))
+        total = _apps_total_for_filter(filter_key)
         if total == 0:
             await safe_call_answer(call)
             return
+        if offset < 0:
+            offset = 0
+        if offset >= total:
+            offset = total - 1
         page = offset // ADMIN_LIST_LIMIT + 1
         pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
+        body = (
+            build_admin_full_text(data, uid, status)
+            if show_full
+            else build_admin_brief_text(data, uid, status)
+        )
         text = (
             f"🗂 <b>{label}</b>\n\n"
             f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
             f"Страница: <b>{page}/{pages}</b>\n\n"
-            f"{build_admin_full_text(data, uid, status)}"
+            f"{body}"
         )
         await update_admin_view_message(
             text,
-            admin_list_view_keyboard(uid, status, filter_key, offset, total, ADMIN_LIST_LIMIT, contact_url=contact_url),
+            admin_list_view_keyboard(
+                uid,
+                status,
+                filter_key,
+                offset,
+                total,
+                ADMIN_LIST_LIMIT,
+                contact_url=contact_url,
+                show_full=show_full,
+            ),
             photo_id
         )
         await safe_call_answer(call)
