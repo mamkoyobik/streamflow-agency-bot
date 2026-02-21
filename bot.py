@@ -739,6 +739,9 @@ def _get_env_float(name: str, default: float, min_value: float) -> float:
 
 PORTFOLIO_AUTO_DELETE_SECONDS = 120
 PORTFOLIO_VIDEO_AUTONEXT_SECONDS = _get_env_int("PORTFOLIO_VIDEO_AUTONEXT_SECONDS", default=18, min_value=5)
+AUTO_REQUEST_INFO_DELAY_MINUTES = _get_env_int("AUTO_REQUEST_INFO_DELAY_MINUTES", default=45, min_value=5)
+AUTO_REQUEST_INFO_CHECK_SECONDS = _get_env_int("AUTO_REQUEST_INFO_CHECK_SECONDS", default=120, min_value=30)
+AUTO_REQUEST_INFO_FLAG_KEY = "auto_info_requested_at"
 PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
 PORTFOLIO_CLEANUP_TASKS: dict[int, asyncio.Task] = {}
 PORTFOLIO_AUTONEXT_TASKS: dict[int, asyncio.Task] = {}
@@ -845,6 +848,14 @@ def _parse_admin_allowed_ids() -> set[int]:
 
 ADMIN_ALLOWED_USER_IDS = _parse_admin_allowed_ids()
 ADMIN_ALLOWED_USERNAME = ADMIN_USERNAME.lstrip("@").strip().lower()
+ADMIN_ALLOWED_USERNAMES = {
+    item
+    for item in {
+        ADMIN_ALLOWED_USERNAME,
+        PUBLIC_MANAGER_USERNAME.strip().lower(),
+    }
+    if item
+}
 TRANSLATABLE_ENTITY_TYPES = {
     "bold",
     "italic",
@@ -898,7 +909,7 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "Что дальше",
         "start": "Продолжить этап 2 (обязательно)",
-        "manager": f"💬 Написать {PUBLIC_MANAGER_HANDLE}",
+        "manager": "💬 Связь с менеджером",
         "menu_recommendation": (
             "✅ Первая часть анкеты принята мгновенно и автоматически.\n\n"
             "Чтобы быстрее понять формат, открой пункты:\n"
@@ -945,7 +956,7 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "What’s next",
         "start": "Continue Step 2 (required)",
-        "manager": f"💬 Message {PUBLIC_MANAGER_HANDLE}",
+        "manager": "💬 Contact manager",
         "menu_recommendation": (
             "✅ The first part of your application was accepted instantly and automatically.\n\n"
             "To understand the format better, open these sections:\n"
@@ -992,7 +1003,7 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "Próximo passo",
         "start": "Continuar Etapa 2 (obrigatória)",
-        "manager": f"💬 Falar com {PUBLIC_MANAGER_HANDLE}",
+        "manager": "💬 Contato com gerente",
         "menu_recommendation": (
             "✅ A primeira parte do cadastro foi aceita de forma instantânea e automática.\n\n"
             "Para entender melhor o formato, abra as seções:\n"
@@ -1039,7 +1050,7 @@ STAGE2_BRIDGE_TEXTS = {
         ),
         "next": "Qué sigue",
         "start": "Continuar Etapa 2 (obligatoria)",
-        "manager": f"💬 Escribir a {PUBLIC_MANAGER_HANDLE}",
+        "manager": "💬 Contacto con manager",
         "menu_recommendation": (
             "✅ La primera parte de tu solicitud fue aceptada al instante y de forma automática.\n\n"
             "Para conocer mejor el formato, abre estas secciones:\n"
@@ -1062,6 +1073,33 @@ def stage2_text(lang: str, key: str) -> str:
     return STAGE2_BRIDGE_TEXTS.get(locale, STAGE2_BRIDGE_TEXTS["ru"]).get(
         key, STAGE2_BRIDGE_TEXTS["ru"][key]
     )
+
+
+def auto_request_info_text(lang: str) -> str:
+    locale = normalize_lang(lang)
+    mapping = {
+        "ru": (
+            "📝 Заявка пока на рассмотрении.\n\n"
+            "Чтобы ускорить решение, дополни анкету до конца — это занимает около 2 минут.\n"
+            "Все данные конфиденциальны."
+        ),
+        "en": (
+            "📝 Your application is still under review.\n\n"
+            "To speed up the decision, please complete the full form — it takes about 2 minutes.\n"
+            "All data is confidential."
+        ),
+        "pt": (
+            "📝 Sua candidatura ainda está em análise.\n\n"
+            "Para acelerar a decisão, complete o formulário até o fim — leva cerca de 2 minutos.\n"
+            "Todos os dados são confidenciais."
+        ),
+        "es": (
+            "📝 Tu solicitud sigue en revisión.\n\n"
+            "Para acelerar la decisión, completa el formulario hasta el final — tarda unos 2 minutos.\n"
+            "Todos los datos son confidenciales."
+        ),
+    }
+    return mapping.get(locale, mapping["ru"])
 
 def manager_contact_url() -> str | None:
     manager_username = PUBLIC_MANAGER_USERNAME or ADMIN_USERNAME.lstrip("@").strip()
@@ -1666,6 +1704,17 @@ async def is_admin_actor(chat_id: int, user_id: int | None) -> bool:
     return member.status in {"creator", "administrator"}
 
 
+async def is_group_member(chat_id: int, user_id: int | None) -> bool:
+    if not user_id:
+        return False
+    try:
+        member = await bot.get_chat_member(chat_id, user_id)
+    except Exception:
+        logger.exception("Не удалось проверить членство в чате")
+        return False
+    return member.status not in {"left", "kicked"}
+
+
 def is_anonymous_admin_post(message: Message) -> bool:
     sender_chat = getattr(message, "sender_chat", None)
     return bool(sender_chat and sender_chat.id == message.chat.id)
@@ -1678,29 +1727,37 @@ async def can_manage_admin_group(message: Message) -> bool:
         return True
     if not message.from_user:
         return False
+    if message.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
+        return True
     if message.from_user.id in ADMIN_ALLOWED_USER_IDS:
         return True
     username = (message.from_user.username or "").strip().lower()
-    if ADMIN_ALLOWED_USERNAME and username == ADMIN_ALLOWED_USERNAME:
+    if username in ADMIN_ALLOWED_USERNAMES:
         return True
-    return await is_admin_actor(message.chat.id, message.from_user.id)
+    if await is_admin_actor(message.chat.id, message.from_user.id):
+        return True
+    return await is_group_member(message.chat.id, message.from_user.id)
 
 
 async def can_manage_admin_callback(call: CallbackQuery) -> bool:
     if not call.message or not call.from_user:
         return False
     chat_id = call.message.chat.id
-    if chat_id == ADMIN_GROUP_ID and call.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
+    if call.from_user.id == ANONYMOUS_ADMIN_BOT_ID:
         return True
     if call.from_user.id in ADMIN_ALLOWED_USER_IDS:
         return True
     username = (call.from_user.username or "").strip().lower()
-    if ADMIN_ALLOWED_USERNAME and username == ADMIN_ALLOWED_USERNAME:
+    if username in ADMIN_ALLOWED_USERNAMES:
         return True
     if chat_id == ADMIN_GROUP_ID:
-        return await is_admin_actor(ADMIN_GROUP_ID, call.from_user.id)
+        if await is_admin_actor(ADMIN_GROUP_ID, call.from_user.id):
+            return True
+        return await is_group_member(ADMIN_GROUP_ID, call.from_user.id)
     # Fallback for cases when admin chat ID was changed but admin still presses buttons in admin group.
-    return await is_admin_actor(chat_id, call.from_user.id)
+    if await is_admin_actor(chat_id, call.from_user.id):
+        return True
+    return await is_group_member(chat_id, call.from_user.id)
 
 
 async def sync_anonymous_create_post_state(enabled: bool):
@@ -2030,13 +2087,13 @@ def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str
         "• 1️⃣ Этап 1\n"
         "• 2️⃣ Этап 2\n"
         "• ✅ Решённые\n"
-        "• 📣 Посты\n\n"
+        "• 📝 Создать пост\n"
+        "• 📣 Выложенные посты\n\n"
         f"Ожидают: <b>{pending}</b>\n"
         f"Решённые: <b>{reviewed}</b>\n"
         f"Этап 1: <b>{stage_quick}</b>\n"
         f"Этап 2: <b>{stage_full}</b>\n"
-        f"Всего: <b>{total}</b>\n\n"
-        "Источники и сервис — отдельными кнопками ниже."
+        f"Всего: <b>{total}</b>"
     )
 
 async def persist_form_data(state: FSMContext, user_id: int):
@@ -2434,6 +2491,73 @@ async def archive_admin_messages_task():
             logger.exception("Ошибка задачи архивации")
         await asyncio.sleep(ADMIN_ARCHIVE_CHECK_HOURS * 3600)
 
+
+def _application_time_from_row(app_row: dict | None) -> datetime | None:
+    if not isinstance(app_row, dict):
+        return None
+    raw = (
+        app_row.get("updated_at")
+        or app_row.get("last_apply_at")
+        or app_row.get("created_at")
+    )
+    dt = _parse_ts(str(raw or ""))
+    if not dt:
+        return None
+    if dt.tzinfo is None:
+        return dt.replace(tzinfo=timezone.utc)
+    return dt
+
+
+async def auto_request_info_task():
+    delay = timedelta(minutes=AUTO_REQUEST_INFO_DELAY_MINUTES)
+    while True:
+        try:
+            pending_apps = list_applications("pending")
+            now = datetime.now(timezone.utc)
+            for app_row in pending_apps:
+                try:
+                    user_id = int(app_row.get("user_id") or 0)
+                except Exception:
+                    continue
+                if user_id <= 0:
+                    continue
+                data = get_form_data(user_id) or {}
+                if detect_application_stage(data) != APPLICATION_STAGE_QUICK:
+                    continue
+                if str(data.get(AUTO_REQUEST_INFO_FLAG_KEY) or "").strip():
+                    continue
+                created_at = _application_time_from_row(app_row)
+                if not created_at:
+                    app_meta = get_application(user_id) or {}
+                    created_at = _application_time_from_row(app_meta)
+                if not created_at or now - created_at < delay:
+                    continue
+
+                user_lang = submission_lang_for_user(user_id, data)
+                app_meta = get_application(user_id) or {}
+                source = str(app_meta.get("source") or "").strip().lower()
+                channel_url = stage2_channel_link(user_lang) if source == "site" else None
+                try:
+                    await send_or_edit_user_text(
+                        user_id,
+                        auto_request_info_text(user_lang),
+                        reply_markup=main_menu(user_lang, channel_url=channel_url),
+                    )
+                    data[AUTO_REQUEST_INFO_FLAG_KEY] = datetime.now(timezone.utc).isoformat()
+                    set_form_data(user_id, data)
+                    logger.info("AUTO_REQUEST_INFO_SENT user_id=%s", user_id)
+                except TelegramForbiddenError:
+                    data[AUTO_REQUEST_INFO_FLAG_KEY] = datetime.now(timezone.utc).isoformat()
+                    set_form_data(user_id, data)
+                    logger.warning("AUTO_REQUEST_INFO_FORBIDDEN user_id=%s", user_id)
+                except Exception:
+                    logger.exception("Ошибка авто-запроса уточнения для user_id=%s", user_id)
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Ошибка фоновой задачи auto_request_info_task")
+        await asyncio.sleep(AUTO_REQUEST_INFO_CHECK_SECONDS)
+
 async def ensure_admin_menu_posted():
     try:
         try:
@@ -2744,15 +2868,18 @@ async def _render_admin_list_message(
     user_id: int,
     item_status: str,
     total: int,
-    show_full: bool = False,
+    show_full: bool | None = None,
 ):
     data = get_form_data(user_id) or {}
+    is_full_stage = detect_application_stage(data) == APPLICATION_STAGE_FULL
+    effective_show_full = is_full_stage if show_full is None else bool(show_full)
+    allow_request_info = not is_full_stage
     contact_url = contact_url_for_user(user_id, data)
     label = _admin_list_label(filter_key)
     header = _build_admin_list_header(label, offset, total)
     body = (
         build_admin_full_text(data, user_id, item_status)
-        if show_full
+        if effective_show_full
         else build_admin_brief_text(data, user_id, item_status)
     )
     photo_id = data.get("photo_face") or data.get("photo_full")
@@ -2766,7 +2893,8 @@ async def _render_admin_list_message(
             total,
             ADMIN_LIST_LIMIT,
             contact_url=contact_url,
-            show_full=show_full,
+            show_full=effective_show_full,
+            allow_request_info=allow_request_info,
         ),
         photo_id,
     )
@@ -2777,7 +2905,7 @@ async def send_admin_list(
     filter_key: str,
     offset: int = 0,
     preferred_user_id: int | None = None,
-    show_full: bool = False,
+    show_full: bool | None = None,
 ):
     await safe_call_answer(call)
     try:
@@ -5553,6 +5681,9 @@ async def admin_send_model_message(message: Message, state: FSMContext):
             from_chat_id=message.chat.id,
             message_id=message.message_id,
         )
+        form_data = get_form_data(uid) or {}
+        form_data[AUTO_REQUEST_INFO_FLAG_KEY] = datetime.now(timezone.utc).isoformat()
+        set_form_data(uid, form_data)
         await delete_message_silent(message)
         await state.clear()
         counts = get_status_counts()
@@ -5611,6 +5742,9 @@ async def admin_request_info(call: CallbackQuery, state: FSMContext):
                 view_offset = 0
 
         form_data = get_form_data(uid) or {}
+        if detect_application_stage(form_data) == APPLICATION_STAGE_FULL:
+            await safe_call_answer(call, "Для полной анкеты уточнение не требуется", show_alert=True)
+            return
         candidate_name = str(form_data.get("name") or f"ID {uid}")
         await state.set_state(ApplicationStates.admin_request_info_message)
         await state.update_data(
@@ -5753,16 +5887,27 @@ async def admin_photos(call: CallbackQuery):
             return
         uid = int(call.data.split(":", 1)[1])
         data = get_form_data(uid) or {}
+        is_full_stage = detect_application_stage(data) == APPLICATION_STAGE_FULL
         contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") or data.get("photo_full")
         if not photo_id:
             await safe_call_answer(call, "Фото не найдено", show_alert=False)
             return
         status = get_status(uid) or "pending"
-        text = build_admin_full_text(data, uid, status)
+        text = build_admin_full_text(data, uid, status) if is_full_stage else build_admin_brief_text(data, uid, status)
         await update_admin_view_message(
             text,
-            admin_list_view_keyboard(uid, status, "all", 0, 1, ADMIN_LIST_LIMIT, contact_url=contact_url),
+            admin_list_view_keyboard(
+                uid,
+                status,
+                "all",
+                0,
+                1,
+                ADMIN_LIST_LIMIT,
+                contact_url=contact_url,
+                show_full=is_full_stage,
+                allow_request_info=not is_full_stage,
+            ),
             photo_id
         )
         await safe_call_answer(call)
@@ -6107,8 +6252,13 @@ async def admin_view_photo(call: CallbackQuery):
         filter_key = parts[3]
         offset = int(parts[4])
         mode = parts[5] if len(parts) > 5 else "brief"
-        show_full = str(mode).strip().lower() == "full"
         data = get_form_data(uid) or {}
+        is_full_stage = detect_application_stage(data) == APPLICATION_STAGE_FULL
+        if len(parts) > 5:
+            show_full = str(mode).strip().lower() == "full"
+        else:
+            # Backward compatibility for old buttons without mode in callback.
+            show_full = is_full_stage
         contact_url = contact_url_for_user(uid, data)
         photo_id = data.get("photo_face") if photo_type == "face" else data.get("photo_full")
         if not photo_id:
@@ -6148,6 +6298,7 @@ async def admin_view_photo(call: CallbackQuery):
                 ADMIN_LIST_LIMIT,
                 contact_url=contact_url,
                 show_full=show_full,
+                allow_request_info=not is_full_stage,
             ),
             photo_id
         )
@@ -6724,6 +6875,7 @@ async def main():
     tasks = [
         asyncio.create_task(daily_stats_task(), name="daily_stats_task"),
         asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"),
+        asyncio.create_task(auto_request_info_task(), name="auto_request_info_task"),
     ]
     try:
         try:

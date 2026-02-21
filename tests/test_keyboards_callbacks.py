@@ -34,6 +34,24 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
             "admin_card:123:full:pending:5",
         )
 
+    def test_pending_view_keyboard_can_disable_request_info(self):
+        markup = admin_list_view_keyboard(
+            user_id=123,
+            status="pending",
+            filter_key="stage_full",
+            offset=0,
+            total=1,
+            limit=1,
+            allow_request_info=False,
+        )
+        callbacks = [
+            button.callback_data
+            for row in markup.inline_keyboard
+            for button in row
+            if button.callback_data
+        ]
+        self.assertFalse(any(value.startswith("admin_request_info:") for value in callbacks))
+
     def test_accepted_keyboards_have_send_model_action(self):
         item_markup = admin_list_item_keyboard(user_id=321, status="accepted")
         self.assertEqual(_row_callback_data(item_markup, 1, 0), "admin_send_model:321")

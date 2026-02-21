@@ -279,13 +279,13 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
         ],
         [
             InlineKeyboardButton(text=f"✅ Решённые ({reviewed})", callback_data="admin_menu:reviewed"),
-            InlineKeyboardButton(text="📣 Посты", callback_data="admin_menu:posts"),
         ],
         [
-            InlineKeyboardButton(text="🌐 Источник", callback_data="admin_menu:sources"),
+            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post"),
+            InlineKeyboardButton(text="📣 Выложенные посты", callback_data="admin_menu:posts"),
+        ],
+        [
             InlineKeyboardButton(text="⚙️ Сервис", callback_data="admin_menu:cat_service"),
-        ],
-        [
             InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
         ]
     ])
@@ -500,6 +500,7 @@ def admin_list_view_keyboard(
     limit: int,
     contact_url: str | None = None,
     show_full: bool = False,
+    allow_request_info: bool = True,
 ):
     contact = contact_url or f"tg://user?id={user_id}"
     current_mode = "full" if show_full else "brief"
@@ -509,12 +510,13 @@ def admin_list_view_keyboard(
             InlineKeyboardButton(text="✅ Принять", callback_data=f"admin_accept:{user_id}:view:{filter_key}:{offset}"),
             InlineKeyboardButton(text="❌ Отклонить", callback_data=f"admin_reject:{user_id}:view:{filter_key}:{offset}"),
         ])
-        rows.append([
-            InlineKeyboardButton(
-                text="📝 Запросить уточнение",
-                callback_data=f"admin_request_info:{user_id}:view:{filter_key}:{offset}"
-            )
-        ])
+        if allow_request_info:
+            rows.append([
+                InlineKeyboardButton(
+                    text="📝 Запросить уточнение",
+                    callback_data=f"admin_request_info:{user_id}:view:{filter_key}:{offset}"
+                )
+            ])
     elif status == "accepted":
         rows.append([
             InlineKeyboardButton(text="✅ Принято", callback_data=f"admin_status:{user_id}:accepted")
