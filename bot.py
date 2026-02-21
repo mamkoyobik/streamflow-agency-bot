@@ -1828,6 +1828,28 @@ async def sync_anonymous_create_post_state(enabled: bool):
         logger.exception("Не удалось синхронизировать состояние create_post для анонимного админа")
 
 
+async def sync_anonymous_admin_state(
+    chat_id: int | None,
+    target_state: ApplicationStates | str | None,
+    data: dict | None = None,
+):
+    try:
+        target_chat_id = int(chat_id or current_admin_chat_id())
+        anon_ctx = dp.fsm.get_context(
+            bot=bot,
+            chat_id=target_chat_id,
+            user_id=ANONYMOUS_ADMIN_BOT_ID,
+        )
+        if not target_state:
+            await anon_ctx.clear()
+            return
+        await anon_ctx.set_state(target_state)
+        if data is not None:
+            await anon_ctx.set_data(dict(data))
+    except Exception:
+        logger.exception("Не удалось синхронизировать состояние админ-флоу для анонимного админа")
+
+
 def fit_caption(text: str) -> str:
     if len(text) <= TELEGRAM_CAPTION_LIMIT:
         return text
@@ -5792,20 +5814,27 @@ async def admin_send_model(call: CallbackQuery, state: FSMContext):
         form_data = get_form_data(uid) or {}
         candidate_name = str(form_data.get("name") or f"ID {uid}")
 
+        flow_payload = {
+            "send_model_uid": uid,
+            "send_model_view": view_mode,
+            "send_model_filter": view_filter,
+            "send_model_offset": view_offset,
+        }
         await state.set_state(ApplicationStates.admin_send_model_message)
-        await state.update_data(
-            send_model_uid=uid,
-            send_model_view=view_mode,
-            send_model_filter=view_filter,
-            send_model_offset=view_offset,
+        await state.update_data(**flow_payload)
+        await sync_anonymous_admin_state(
+            call.message.chat.id if call.message else None,
+            ApplicationStates.admin_send_model_message,
+            flow_payload,
         )
-        await update_admin_menu_message(
+        await update_admin_view_message(
             "📨 <b>Отправка сообщения модели</b>\n\n"
             f"Кандидат: <b>{html.escape(candidate_name)}</b>\n\n"
             "Отправь одним сообщением уникальный текст для этой модели.\n"
             "Можно вставить Zoom-ссылку.\n\n"
             "Сообщение уйдёт в личку пользователю от бота.",
             admin_send_model_keyboard(),
+            None,
         )
     except Exception:
         logger.exception("Ошибка в admin_send_model")
@@ -5819,6 +5848,7 @@ async def admin_send_model_cancel(call: CallbackQuery, state: FSMContext):
             await safe_call_answer(call, "Недостаточно прав", show_alert=True)
             return
         await state.clear()
+        await sync_anonymous_admin_state(call.message.chat.id if call.message else None, None)
         await post_admin_menu()
         await safe_call_answer(call, "Отменено")
     except Exception:
@@ -5832,9 +5862,10 @@ async def admin_send_model_non_text(message: Message):
         await delete_message_silent(message)
         return
     await delete_message_silent(message)
-    await update_admin_menu_message(
+    await update_admin_view_message(
         "⚠️ Отправь текстовым сообщением.\n\nМожно вставить ссылку Zoom.",
         admin_send_model_keyboard(),
+        None,
     )
 
 
@@ -5860,12 +5891,14 @@ async def admin_send_model_message(message: Message, state: FSMContext):
             uid = 0
         if uid <= 0:
             await state.clear()
+            await sync_anonymous_admin_state(message.chat.id, None)
             await delete_message_silent(message)
             await post_admin_menu()
             return
 
         if (get_status(uid) or "pending") != "accepted":
             await state.clear()
+            await sync_anonymous_admin_state(message.chat.id, None)
             await delete_message_silent(message)
             counts = get_status_counts()
             stage_counts = get_application_stage_counts()
@@ -5885,6 +5918,7 @@ async def admin_send_model_message(message: Message, state: FSMContext):
         set_form_data(uid, form_data)
         await delete_message_silent(message)
         await state.clear()
+        await sync_anonymous_admin_state(message.chat.id, None)
         counts = get_status_counts()
         stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
@@ -5898,16 +5932,18 @@ async def admin_send_model_message(message: Message, state: FSMContext):
             "Пользователь %s заблокировал бота или не открыл диалог",
             uid_raw if uid_raw is not None else "unknown",
         )
-        await update_admin_menu_message(
+        await update_admin_view_message(
             "⚠️ Не удалось доставить сообщение.\n"
             "Пользователь не открыл чат с ботом или заблокировал бота.",
             admin_send_model_keyboard(),
+            None,
         )
     except Exception:
         logger.exception("Ошибка в admin_send_model_message")
-        await update_admin_menu_message(
+        await update_admin_view_message(
             "⚠️ Ошибка отправки. Попробуй отправить текст ещё раз.",
             admin_send_model_keyboard(),
+            None,
         )
 
 
