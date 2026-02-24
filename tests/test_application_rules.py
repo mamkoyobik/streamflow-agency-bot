@@ -36,8 +36,14 @@ class ApplicationRulesTests(unittest.TestCase):
     def test_phone_normalization_and_validation(self):
         self.assertEqual(normalize_phone("8 (999) 111-22-33"), "+79991112233")
         self.assertEqual(normalize_phone("0044 7307 810222"), "+447307810222")
+        self.assertEqual(normalize_phone("+380 (99) 807-49-28"), "+380998074928")
+        self.assertEqual(normalize_phone("+351.912.345.678"), "+351912345678")
+        self.assertEqual(normalize_phone("+89991112233"), "+89991112233")
         self.assertTrue(is_valid_phone("+447307810222"))
+        self.assertTrue(is_valid_phone("+299123456"))
         self.assertFalse(is_valid_phone("123"))
+        self.assertFalse(is_valid_phone("+1234567"))
+        self.assertFalse(is_valid_phone("12+34"))
 
     def test_birthdate_normalization(self):
         self.assertEqual(normalize_birthdate("2000-01-31"), "31.01.2000")

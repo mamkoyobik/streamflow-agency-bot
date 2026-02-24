@@ -191,7 +191,7 @@ const I18N = {
     'form.contactTelegram': 'Telegram',
     'form.contactWhatsapp': 'WhatsApp',
     'form.contactPlaceholderTelegram': '@username',
-    'form.contactPlaceholderWhatsapp': '+7 900 000 00 00',
+    'form.contactPlaceholderWhatsapp': '+44 7307 810222',
     'form.q6': '6️⃣ Устройства:',
     'form.q6Placeholder': 'Например: смартфон, ноутбук',
     'form.q7': '7️⃣ Модель устройства:',
@@ -217,14 +217,14 @@ const I18N = {
     'footer.rights': '© Streamflow. Все права защищены.',
     'validation.name': 'Введите имя полностью.',
     'validation.city': 'Укажи страну.',
-    'validation.phone': 'Введите телефон в формате +7 900 000 00 00.',
+    'validation.phone': 'Введите телефон в международном формате, например: +44 7307 810222.',
     'validation.age': 'Укажи дату рождения в формате 01.01.2000 (только 18+).',
     'validation.yesNo': 'Ответь «да» или «нет».',
     'validation.devices': 'Уточни, какие устройства есть.',
     'validation.deviceModel': 'Напиши модель устройства.',
     'validation.workTime': 'Укажи количество часов цифрами.',
     'validation.telegram': 'Укажи Telegram в формате @username.',
-    'validation.whatsapp': 'Укажи WhatsApp в формате +7 900 000 00 00.',
+    'validation.whatsapp': 'Укажи WhatsApp в международном формате, например: +44 7307 810222.',
     'validation.experience': 'Напиши, есть ли опыт.',
     'validation.photoFace': 'Загрузи фото анфас.',
     'validation.photoFull': 'Загрузи фото в полный рост.',
@@ -357,14 +357,14 @@ const I18N = {
     'footer.rights': '© Streamflow. All rights reserved.',
     'validation.name': 'Enter full name.',
     'validation.city': 'Enter your country.',
-    'validation.phone': 'Enter phone like +1 555 123 4567.',
+    'validation.phone': 'Enter phone in international format, for example: +44 7307 810222.',
     'validation.age': 'Birth date format: 01.01.2000 (18+ only).',
     'validation.yesNo': 'Answer "yes" or "no".',
     'validation.devices': 'Specify available devices.',
     'validation.deviceModel': 'Enter your device model.',
     'validation.workTime': 'Enter work hours using digits.',
     'validation.telegram': 'Enter Telegram as @username.',
-    'validation.whatsapp': 'Enter WhatsApp in international format, example: +1 555 123 4567.',
+    'validation.whatsapp': 'Enter WhatsApp in international format, for example: +44 7307 810222.',
     'validation.experience': 'Tell us if you have experience.',
     'validation.photoFace': 'Upload front-face photo.',
     'validation.photoFull': 'Upload full-body photo.',
@@ -497,14 +497,14 @@ const I18N = {
     'footer.rights': '© Streamflow. Todos os direitos reservados.',
     'validation.name': 'Digite o nome completo.',
     'validation.city': 'Informe o país.',
-    'validation.phone': 'Digite telefone no formato +55 11 99999 9999.',
+    'validation.phone': 'Digite o telefone no formato internacional, por exemplo: +351 912 345 678.',
     'validation.age': 'Data no formato 01.01.2000 (somente 18+).',
     'validation.yesNo': 'Responda "sim" ou "não".',
     'validation.devices': 'Informe quais dispositivos você tem.',
     'validation.deviceModel': 'Informe o modelo do dispositivo.',
     'validation.workTime': 'Informe as horas com números.',
     'validation.telegram': 'Informe o Telegram no formato @username.',
-    'validation.whatsapp': 'Informe o WhatsApp no formato internacional, ex.: +55 11 99999 9999.',
+    'validation.whatsapp': 'Informe o WhatsApp no formato internacional, ex.: +351 912 345 678.',
     'validation.experience': 'Escreva se você tem experiência.',
     'validation.photoFace': 'Envie a foto frontal.',
     'validation.photoFull': 'Envie a foto de corpo inteiro.',
@@ -1962,18 +1962,22 @@ function normalizeTelegram(value) {
 }
 
 function normalizePhone(value) {
-  const raw = (value || '').replace(/[()\s-]+/g, '');
+  const raw = (value || '').replace(/[^\d+]/g, '');
   if (!raw) return null;
+  if ((raw.match(/\+/g) || []).length > 1) return null;
+  if (raw.includes('+') && !raw.startsWith('+')) return null;
   let digits = '';
+  let localWithoutPrefix = false;
   if (raw.startsWith('+')) {
     digits = raw.slice(1);
   } else if (raw.startsWith('00')) {
     digits = raw.slice(2);
   } else {
     digits = raw;
+    localWithoutPrefix = true;
   }
   if (!/^\d+$/.test(digits)) return null;
-  if (digits.length === 11 && digits.startsWith('8')) {
+  if (localWithoutPrefix && digits.length === 11 && digits.startsWith('8')) {
     digits = `7${digits.slice(1)}`;
   }
   if (!digits) return null;
@@ -1984,7 +1988,7 @@ function isValidPhone(value) {
   const normalized = normalizePhone(value);
   if (!normalized) return false;
   const digits = normalized.replace(/\D/g, '');
-  return digits.length >= 10 && digits.length <= 15;
+  return digits.length >= 8 && digits.length <= 15;
 }
 
 function normalizeYesNo(value) {

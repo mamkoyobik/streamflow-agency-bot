@@ -57,22 +57,22 @@ def normalize_user_text_input(value: str | None, max_len: int) -> tuple[str, boo
 
 
 def normalize_phone(text: str) -> str | None:
-    value = re.sub(r"[()\s\-]+", "", str(text or "").strip())
+    value = re.sub(r"[^\d+]", "", str(text or "").strip())
     if not value:
+        return None
+    if value.count("+") > 1:
+        return None
+    if "+" in value and not value.startswith("+"):
         return None
     if value.startswith("+"):
         digits = value[1:]
         if not digits.isdigit():
             return None
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
         return f"+{digits}"
     if value.startswith("00"):
         digits = value[2:]
         if not digits.isdigit():
             return None
-        if len(digits) == 11 and digits.startswith("8"):
-            digits = "7" + digits[1:]
         return f"+{digits}"
     if value.isdigit():
         digits = value
@@ -87,7 +87,7 @@ def is_valid_phone(text: str) -> bool:
     if not normalized:
         return False
     digits = re.sub(r"\D", "", normalized)
-    return 10 <= len(digits) <= 15
+    return 8 <= len(digits) <= 15
 
 
 def normalize_birthdate(text: str) -> str | None:
