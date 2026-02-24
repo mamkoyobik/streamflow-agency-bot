@@ -55,6 +55,20 @@ class WebServerWhatsAppTests(unittest.TestCase):
             web_server.infobip_send_whatsapp_interactive_buttons = original_buttons
             web_server.infobip_send_whatsapp_interactive_list = original_list
 
+    def test_main_menu_buttons_include_about(self):
+        _body, buttons = web_server._wa_menu_buttons_config("en", "menu")
+        button_ids = [item.get("id") for item in buttons]
+        self.assertIn("menu_apply", button_ids)
+        self.assertIn("menu_portfolio", button_ids)
+        self.assertIn("menu_about", button_ids)
+
+    def test_more_menu_buttons_include_manager_channel_language(self):
+        _body, buttons = web_server._wa_menu_buttons_config("en", "menu_more")
+        button_ids = [item.get("id") for item in buttons]
+        self.assertIn("menu_manager", button_ids)
+        self.assertIn("menu_channel", button_ids)
+        self.assertIn("menu_language", button_ids)
+
     def test_menu_action_returns_compact_content_and_keeps_menu_step(self):
         phone = "+10000000002"
         web_server._save_wa_flow(
@@ -165,7 +179,7 @@ class WebServerWhatsAppTests(unittest.TestCase):
         self.assertTrue(handled)
         self.assertIn("portfolio", (reply or "").lower())
         flow = web_server._load_wa_flow(phone)
-        self.assertEqual(flow.get("step"), "portfolio_menu")
+        self.assertEqual(flow.get("step"), "portfolio_view")
 
     def test_portfolio_cases_open_gallery(self):
         phone = "+10000000002"
@@ -182,7 +196,7 @@ class WebServerWhatsAppTests(unittest.TestCase):
             }
         )
         self.assertTrue(handled)
-        self.assertIn("/assets/portfolio/", reply or "")
+        self.assertIn("frame", (reply or "").lower())
         flow = web_server._load_wa_flow(phone)
         self.assertEqual(flow.get("step"), "portfolio_view")
         payload = flow.get("data") if isinstance(flow.get("data"), dict) else {}
@@ -216,10 +230,12 @@ class WebServerWhatsAppTests(unittest.TestCase):
             ok = web_server.send_wa_interactive_controls(phone)
             self.assertTrue(ok)
             self.assertEqual(captured.get("to"), phone)
-            self.assertIn("/assets/portfolio/", captured.get("body", ""))
+            self.assertIn("frame", captured.get("body", "").lower())
             button_ids = [item.get("id") for item in captured.get("buttons", [])]
-            self.assertIn("portfolio_back", button_ids)
+            self.assertIn("menu", button_ids)
+            self.assertTrue({"portfolio_next", "portfolio_prev"} & set(button_ids))
             self.assertIn("header_media_url", captured.get("kwargs", {}))
+            self.assertIn("/assets/", captured.get("kwargs", {}).get("header_media_url", ""))
         finally:
             web_server.INFOBIP_INTERACTIVE_ENABLED = original_flag
             web_server.infobip_send_whatsapp_interactive_buttons = original_buttons
@@ -242,6 +258,25 @@ class WebServerWhatsAppTests(unittest.TestCase):
         self.assertIn("remote", (reply or "").lower())
         flow = web_server._load_wa_flow(phone)
         self.assertEqual(flow.get("step"), "about_menu")
+
+    def test_about_menu_more_opens_more_panel(self):
+        phone = "+10000000002"
+        web_server._save_wa_flow(
+            phone,
+            {"mode": "quick", "step": "about_menu", "lang": "en", "data": {}},
+        )
+        handled, reply = web_server.handle_whatsapp_application_message(
+            {
+                "from": phone,
+                "type": "INTERACTIVE",
+                "text": "menu_more",
+                "media_url": "",
+            }
+        )
+        self.assertTrue(handled)
+        self.assertIn("channel", (reply or "").lower())
+        flow = web_server._load_wa_flow(phone)
+        self.assertEqual(flow.get("step"), "menu_more")
 
 
 if __name__ == "__main__":
