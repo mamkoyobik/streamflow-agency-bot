@@ -35,10 +35,11 @@ class WebServerWhatsAppTests(unittest.TestCase):
         try:
             web_server.INFOBIP_INTERACTIVE_ENABLED = True
 
-            def fake_buttons(to_phone, body_text, buttons):
+            def fake_buttons(to_phone, body_text, buttons, **kwargs):
                 captured["to"] = to_phone
                 captured["body"] = body_text
                 captured["buttons"] = buttons
+                captured["kwargs"] = kwargs
                 return True
 
             web_server.infobip_send_whatsapp_interactive_buttons = fake_buttons
@@ -128,10 +129,11 @@ class WebServerWhatsAppTests(unittest.TestCase):
         try:
             web_server.INFOBIP_INTERACTIVE_ENABLED = True
 
-            def fake_buttons(to_phone, body_text, buttons):
+            def fake_buttons(to_phone, body_text, buttons, **kwargs):
                 captured["to"] = to_phone
                 captured["body"] = body_text
                 captured["buttons"] = buttons
+                captured["kwargs"] = kwargs
                 return True
 
             web_server.infobip_send_whatsapp_interactive_buttons = fake_buttons
@@ -145,6 +147,101 @@ class WebServerWhatsAppTests(unittest.TestCase):
         finally:
             web_server.INFOBIP_INTERACTIVE_ENABLED = original_flag
             web_server.infobip_send_whatsapp_interactive_buttons = original_buttons
+
+    def test_portfolio_menu_transition(self):
+        phone = "+10000000002"
+        web_server._save_wa_flow(
+            phone,
+            {"mode": "quick", "step": "menu", "lang": "en", "data": {}},
+        )
+        handled, reply = web_server.handle_whatsapp_application_message(
+            {
+                "from": phone,
+                "type": "INTERACTIVE",
+                "text": "menu_portfolio",
+                "media_url": "",
+            }
+        )
+        self.assertTrue(handled)
+        self.assertIn("portfolio", (reply or "").lower())
+        flow = web_server._load_wa_flow(phone)
+        self.assertEqual(flow.get("step"), "portfolio_menu")
+
+    def test_portfolio_cases_open_gallery(self):
+        phone = "+10000000002"
+        web_server._save_wa_flow(
+            phone,
+            {"mode": "quick", "step": "portfolio_menu", "lang": "en", "data": {}},
+        )
+        handled, reply = web_server.handle_whatsapp_application_message(
+            {
+                "from": phone,
+                "type": "INTERACTIVE",
+                "text": "menu_portfolio_cases",
+                "media_url": "",
+            }
+        )
+        self.assertTrue(handled)
+        self.assertIn("/assets/portfolio/", reply or "")
+        flow = web_server._load_wa_flow(phone)
+        self.assertEqual(flow.get("step"), "portfolio_view")
+        payload = flow.get("data") if isinstance(flow.get("data"), dict) else {}
+        self.assertEqual(payload.get("portfolio_kind"), "cases")
+
+    def test_interactive_portfolio_view_has_nav_and_media_header(self):
+        phone = "+10000000002"
+        web_server._save_wa_flow(
+            phone,
+            {
+                "mode": "quick",
+                "step": "portfolio_view",
+                "lang": "en",
+                "data": {"portfolio_kind": "cases", "portfolio_index": 0},
+            },
+        )
+        captured: dict = {}
+        original_flag = web_server.INFOBIP_INTERACTIVE_ENABLED
+        original_buttons = web_server.infobip_send_whatsapp_interactive_buttons
+        try:
+            web_server.INFOBIP_INTERACTIVE_ENABLED = True
+
+            def fake_buttons(to_phone, body_text, buttons, **kwargs):
+                captured["to"] = to_phone
+                captured["body"] = body_text
+                captured["buttons"] = buttons
+                captured["kwargs"] = kwargs
+                return True
+
+            web_server.infobip_send_whatsapp_interactive_buttons = fake_buttons
+            ok = web_server.send_wa_interactive_controls(phone)
+            self.assertTrue(ok)
+            self.assertEqual(captured.get("to"), phone)
+            self.assertIn("/assets/portfolio/", captured.get("body", ""))
+            button_ids = [item.get("id") for item in captured.get("buttons", [])]
+            self.assertIn("portfolio_back", button_ids)
+            self.assertIn("header_media_url", captured.get("kwargs", {}))
+        finally:
+            web_server.INFOBIP_INTERACTIVE_ENABLED = original_flag
+            web_server.infobip_send_whatsapp_interactive_buttons = original_buttons
+
+    def test_about_menu_shows_section_text(self):
+        phone = "+10000000002"
+        web_server._save_wa_flow(
+            phone,
+            {"mode": "quick", "step": "about_menu", "lang": "en", "data": {}},
+        )
+        handled, reply = web_server.handle_whatsapp_application_message(
+            {
+                "from": phone,
+                "type": "INTERACTIVE",
+                "text": "menu_about_work",
+                "media_url": "",
+            }
+        )
+        self.assertTrue(handled)
+        self.assertIn("remote", (reply or "").lower())
+        flow = web_server._load_wa_flow(phone)
+        self.assertEqual(flow.get("step"), "about_menu")
 
 
 if __name__ == "__main__":

@@ -245,13 +245,33 @@ WA_TEXTS = {
             "Выбери язык: RU / EN / PT / ES"
         ),
         "invalid_lang": "Выбери язык: RU / EN / PT / ES",
-        "menu": "📌 Главное меню. Выбери действие кнопкой ниже.",
+        "menu": "📌 Главное меню. Выбери, что открыть:",
         "menu_invalid": "Не понял команду. Нажми кнопку ниже.",
         "menu_more": "📌 Дополнительно. Выбери действие.",
         "menu_more_invalid": "Не понял команду. Нажми кнопку ниже.",
+        "about_menu": "ℹ️ О работе. Выбери раздел:",
+        "portfolio_menu": "📁 Портфолио моделей. Выбери раздел:",
         "about": (
             "Streamflow — модельное стрим-агентство.\n"
             "Удалённый формат, поддержка, обучение и понятные правила старта."
+        ),
+        "about_work": (
+            "👩‍💻 Формат работы\n\n"
+            "• удалённо, из дома\n"
+            "• без 18+ контента\n"
+            "• гибкий график\n"
+            "• поддержка на каждом этапе"
+        ),
+        "about_platforms": (
+            "🛠 Площадки и запуск\n\n"
+            "• помогаем с настройкой\n"
+            "• объясняем рабочую механику\n"
+            "• даём понятный план старта"
+        ),
+        "about_income": (
+            "💸 Доход и рост\n\n"
+            "Доход зависит от графика, дисциплины и стабильности.\n"
+            "Показываем рабочие кейсы и даём рекомендации по росту."
         ),
         "ask_name": "Как тебя зовут? Напиши имя:",
         "invalid_name": "Имя слишком короткое. Напиши, пожалуйста, имя ещё раз:",
@@ -287,13 +307,33 @@ WA_TEXTS = {
             "Choose language: RU / EN / PT / ES"
         ),
         "invalid_lang": "Choose language: RU / EN / PT / ES",
-        "menu": "📌 Main menu. Choose an action below.",
+        "menu": "📌 Main menu. Choose what to open:",
         "menu_invalid": "Unknown command. Tap a button below.",
         "menu_more": "📌 More options. Choose an action below.",
         "menu_more_invalid": "Unknown command. Tap a button below.",
+        "about_menu": "ℹ️ About work. Choose a section:",
+        "portfolio_menu": "📁 Model portfolio. Choose a section:",
         "about": (
             "Streamflow is a model streaming agency.\n"
             "Remote format, support, training and clear onboarding rules."
+        ),
+        "about_work": (
+            "👩‍💻 Work format\n\n"
+            "• fully remote\n"
+            "• no 18+ content\n"
+            "• flexible schedule\n"
+            "• full team support"
+        ),
+        "about_platforms": (
+            "🛠 Platforms and setup\n\n"
+            "• we help with setup\n"
+            "• clear onboarding steps\n"
+            "• practical launch guidance"
+        ),
+        "about_income": (
+            "💸 Income and growth\n\n"
+            "Income depends on schedule, consistency and discipline.\n"
+            "We share real cases and growth recommendations."
         ),
         "ask_name": "What is your name?",
         "invalid_name": "Name is too short. Please enter it again:",
@@ -329,13 +369,33 @@ WA_TEXTS = {
             "Escolha o idioma: RU / EN / PT / ES"
         ),
         "invalid_lang": "Escolha o idioma: RU / EN / PT / ES",
-        "menu": "📌 Menu principal. Escolha uma ação abaixo.",
+        "menu": "📌 Menu principal. Escolha o que abrir:",
         "menu_invalid": "Comando inválido. Toque em um botão abaixo.",
         "menu_more": "📌 Mais opções. Escolha uma ação abaixo.",
         "menu_more_invalid": "Comando inválido. Toque em um botão abaixo.",
+        "about_menu": "ℹ️ Sobre o trabalho. Escolha uma seção:",
+        "portfolio_menu": "📁 Portfólio de modelos. Escolha uma seção:",
         "about": (
             "A Streamflow é uma agência de modelos para streaming.\n"
             "Formato remoto, suporte, treinamento e regras claras de início."
+        ),
+        "about_work": (
+            "👩‍💻 Formato de trabalho\n\n"
+            "• totalmente remoto\n"
+            "• sem conteúdo 18+\n"
+            "• horário flexível\n"
+            "• suporte da equipe"
+        ),
+        "about_platforms": (
+            "🛠 Plataformas e setup\n\n"
+            "• ajudamos na configuração\n"
+            "• passo a passo claro\n"
+            "• orientação prática de início"
+        ),
+        "about_income": (
+            "💸 Renda e crescimento\n\n"
+            "A renda depende de rotina, consistência e disciplina.\n"
+            "Mostramos casos reais e recomendações de crescimento."
         ),
         "ask_name": "Qual é o seu nome?",
         "invalid_name": "Nome muito curto. Envie novamente:",
@@ -371,13 +431,33 @@ WA_TEXTS = {
             "Elige idioma: RU / EN / PT / ES"
         ),
         "invalid_lang": "Elige idioma: RU / EN / PT / ES",
-        "menu": "📌 Menú principal. Elige una opción abajo.",
+        "menu": "📌 Menú principal. Elige qué abrir:",
         "menu_invalid": "Comando no reconocido. Pulsa un botón abajo.",
         "menu_more": "📌 Más opciones. Elige una opción abajo.",
         "menu_more_invalid": "Comando no reconocido. Pulsa un botón abajo.",
+        "about_menu": "ℹ️ Sobre el trabajo. Elige una sección:",
+        "portfolio_menu": "📁 Portafolio de modelos. Elige una sección:",
         "about": (
             "Streamflow es una agencia de modelos para streaming.\n"
             "Formato remoto, soporte, formación y reglas claras de inicio."
+        ),
+        "about_work": (
+            "👩‍💻 Formato de trabajo\n\n"
+            "• totalmente remoto\n"
+            "• sin contenido 18+\n"
+            "• horario flexible\n"
+            "• soporte del equipo"
+        ),
+        "about_platforms": (
+            "🛠 Plataformas y configuración\n\n"
+            "• ayudamos con la configuración\n"
+            "• pasos claros de inicio\n"
+            "• guía práctica de lanzamiento"
+        ),
+        "about_income": (
+            "💸 Ingresos y crecimiento\n\n"
+            "Los ingresos dependen del horario, constancia y disciplina.\n"
+            "Mostramos casos reales y recomendaciones de crecimiento."
         ),
         "ask_name": "¿Cómo te llamas?",
         "invalid_name": "Nombre demasiado corto. Escríbelo otra vez:",
@@ -432,7 +512,18 @@ WA_MENU_ALIASES = {
     "apply": {"1", "apply", "заявка", "подать", "candidatura", "solicitud", "menu_apply"},
     "site": {"2", "site", "website", "сайт", "menu_site"},
     "portfolio": {"3", "portfolio", "портфолио", "portafolio", "portfólio", "menu_portfolio"},
+    "portfolio_cases": {"portfolio_cases", "menu_portfolio_cases", "кейсы", "cases", "casos"},
+    "portfolio_reviews": {"portfolio_reviews", "menu_portfolio_reviews", "отзывы", "reviews", "reseñas", "avaliacoes"},
+    "portfolio_videos": {"portfolio_videos", "menu_portfolio_videos", "стримы", "streams", "videos", "vídeos"},
+    "portfolio_pdf": {"portfolio_pdf", "menu_portfolio_pdf", "pdf", "портфолио pdf"},
+    "portfolio_next": {"portfolio_next", "next", "далее", "seguinte", "siguiente"},
+    "portfolio_prev": {"portfolio_prev", "prev", "назад", "voltar", "atras"},
+    "portfolio_back": {"portfolio_back", "menu_portfolio_back", "к разделам", "sections", "seções", "secciones"},
     "about": {"4", "about", "о работе", "sobre", "sobre o trabalho", "menu_about"},
+    "about_work": {"about_work", "menu_about_work", "формат работы", "work format", "formato de trabalho"},
+    "about_platforms": {"about_platforms", "menu_about_platforms", "платформы", "platforms", "plataformas"},
+    "about_income": {"about_income", "menu_about_income", "доход", "income", "renda", "ingresos"},
+    "about_back": {"about_back", "menu_about_back", "в меню", "to menu", "voltar ao menu", "volver al menú"},
     "manager": {"5", "manager", "админ", "менеджер", "gerente", "menu_manager"},
     "channel": {"6", "channel", "канал", "canal", "menu_channel"},
     "language": {"7", "lang", "language", "язык", "idioma", "menu_language"},
@@ -1061,8 +1152,10 @@ def _wa_manager_link() -> str | None:
 
 def _wa_menu_text_for_step(lang: str, step: str) -> str:
     active_step = str(step or "menu").strip().lower()
-    if active_step == "menu_more":
-        return wa_t(lang, "menu_more")
+    if active_step == "about_menu":
+        return wa_t(lang, "about_menu")
+    if active_step == "portfolio_menu":
+        return wa_t(lang, "portfolio_menu")
     return wa_t(lang, "menu")
 
 
@@ -1070,17 +1163,14 @@ def _wa_menu_response(lang: str, menu_key: str, step: str = "menu") -> str:
     site_link = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
     channel_link = (CHANNEL_LINK or "https://t.me/streamflowagency").strip()
     manager_link = _wa_manager_link()
-    if menu_key == "more":
-        return _wa_menu_text_for_step(lang, "menu_more")
     if menu_key == "menu":
         return _wa_menu_text_for_step(lang, "menu")
     if menu_key == "site":
         return f"🌐 {site_link}"
     if menu_key == "portfolio":
-        portfolio_link = f"{site_link}/#portfolio" if site_link else "https://streamflowagency.com/#portfolio"
-        return f"📁 {portfolio_link}"
+        return _wa_menu_text_for_step(lang, "portfolio_menu")
     if menu_key == "about":
-        return wa_t(lang, "about")
+        return _wa_menu_text_for_step(lang, "about_menu")
     if menu_key == "manager":
         if manager_link:
             return f"💬 {manager_link}"
@@ -1088,6 +1178,117 @@ def _wa_menu_response(lang: str, menu_key: str, step: str = "menu") -> str:
     if menu_key == "channel":
         return f"📣 {channel_link}"
     return _wa_menu_text_for_step(lang, step)
+
+
+def _wa_media_sort_key(path: Path) -> tuple[int, str]:
+    match = re.search(r"(\d+)(?!.*\d)", path.stem)
+    order = int(match.group(1)) if match else 10_000
+    return order, path.name.lower()
+
+
+def _site_asset_url(path: str) -> str:
+    site = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
+    suffix = f"/{path.lstrip('/')}"
+    return f"{site}{suffix}"
+
+
+def _wa_portfolio_sources() -> dict[str, dict]:
+    return {
+        "cases": {
+            "glob": "assets/portfolio/*.jpg",
+            "media_type": "IMAGE",
+            "title": {
+                "ru": "Кейсы моделей",
+                "en": "Model cases",
+                "pt": "Casos de modelos",
+                "es": "Casos de modelos",
+            },
+        },
+        "reviews": {
+            "glob": "assets/reviews/review-*.jpg",
+            "media_type": "IMAGE",
+            "title": {
+                "ru": "Отзывы моделей",
+                "en": "Model reviews",
+                "pt": "Avaliações de modelos",
+                "es": "Reseñas de modelos",
+            },
+        },
+        "streams": {
+            "glob": "assets/videos/stream-*.mp4",
+            "media_type": "VIDEO",
+            "title": {
+                "ru": "Примеры стримов",
+                "en": "Stream samples",
+                "pt": "Exemplos de stream",
+                "es": "Ejemplos de stream",
+            },
+        },
+    }
+
+
+def _wa_portfolio_items(kind: str) -> list[dict]:
+    source = _wa_portfolio_sources().get(kind) or _wa_portfolio_sources()["cases"]
+    files = sorted(WEB_DIR.glob(source["glob"]), key=_wa_media_sort_key)
+    items: list[dict] = []
+    for file_path in files:
+        rel = file_path.relative_to(WEB_DIR).as_posix()
+        items.append(
+            {
+                "kind": kind,
+                "title": source["title"],
+                "media_type": source["media_type"],
+                "url": _site_asset_url(rel),
+            }
+        )
+    return items
+
+
+def _wa_portfolio_caption(lang: str, item: dict, index: int, total: int) -> str:
+    locale = normalize_site_lang(lang)
+    titles = item.get("title") if isinstance(item.get("title"), dict) else {}
+    title = str(titles.get(locale) or titles.get("ru") or "Portfolio")
+    hint_by_lang = {
+        "ru": "Листай кнопками ниже ⬇️",
+        "en": "Browse with the buttons below ⬇️",
+        "pt": "Navegue com os botões abaixo ⬇️",
+        "es": "Navega con los botones de abajo ⬇️",
+    }
+    hint = hint_by_lang.get(locale, hint_by_lang["ru"])
+    media_url = str(item.get("url") or "")
+    return f"📁 {title}\n{index + 1}/{max(total, 1)}\n\n{hint}\n{media_url}".strip()
+
+
+def _wa_portfolio_buttons(lang: str, index: int, total: int) -> list[dict]:
+    locale = normalize_site_lang(lang)
+    prev_title = {"ru": "⬅️ Назад", "en": "⬅️ Back", "pt": "⬅️ Voltar", "es": "⬅️ Atrás"}
+    next_title = {"ru": "Вперёд ➡️", "en": "Next ➡️", "pt": "Avançar ➡️", "es": "Siguiente ➡️"}
+    menu_title = {"ru": "📁 Разделы", "en": "📁 Sections", "pt": "📁 Seções", "es": "📁 Secciones"}
+    buttons: list[dict] = []
+    if total > 1:
+        if index > 0:
+            buttons.append({"id": "portfolio_prev", "title": prev_title.get(locale, prev_title["ru"])})
+        if index < total - 1 and len(buttons) < 2:
+            buttons.append({"id": "portfolio_next", "title": next_title.get(locale, next_title["ru"])})
+    buttons.append({"id": "portfolio_back", "title": menu_title.get(locale, menu_title["ru"])})
+    return buttons[:3]
+
+
+def _wa_portfolio_item_from_flow(flow: dict | None) -> tuple[dict | None, int, int, str]:
+    data = flow.get("data") if isinstance(flow, dict) and isinstance(flow.get("data"), dict) else {}
+    kind = str(data.get("portfolio_kind") or "cases").strip().lower()
+    items = _wa_portfolio_items(kind)
+    if not items:
+        return None, 0, 0, kind
+    try:
+        index = int(data.get("portfolio_index") or 0)
+    except Exception:
+        index = 0
+    if index < 0:
+        index = 0
+    if index >= len(items):
+        index = len(items) - 1
+    return items[index], index, len(items), kind
 
 
 def _is_wa_reset_command(text: str | None) -> bool:
@@ -1285,7 +1486,7 @@ def _wa_menu_image_url() -> str:
     if WA_MENU_IMAGE_URL:
         return WA_MENU_IMAGE_URL
     site = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
-    return f"{site}/assets/favicon.png"
+    return f"{site}/assets/wa-menu.jpg"
 
 
 def infobip_send_whatsapp_image(to_phone: str | None, image_url: str, caption: str | None = None) -> bool:
@@ -1387,6 +1588,9 @@ def infobip_send_whatsapp_interactive_buttons(
     to_phone: str | None,
     body_text: str,
     buttons: list[dict],
+    *,
+    header_media_url: str | None = None,
+    header_media_type: str | None = None,
 ) -> bool:
     to_e164 = _wa_phone_e164(to_phone)
     if not to_e164:
@@ -1406,41 +1610,55 @@ def infobip_send_whatsapp_interactive_buttons(
     if not normalized_buttons:
         return False
 
-    payload = {
-        "from": INFOBIP_WHATSAPP_SENDER,
-        "to": to_e164,
-        "content": {
-            "body": {"text": body_text.strip()},
-            "action": {
-                "buttons": normalized_buttons,
-            },
-        },
-    }
+    normalized_header_url = clean_text(header_media_url or "", max_len=MAX_URL_VALUE_LEN)
+    normalized_header_type = (header_media_type or "").strip().upper()
+    if normalized_header_type not in {"IMAGE", "VIDEO", "DOCUMENT"}:
+        normalized_header_type = "IMAGE"
 
-    req = urllib.request.Request(
-        f"{INFOBIP_BASE_URL}/whatsapp/1/message/interactive/buttons",
-        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
-        headers={
-            "Authorization": f"App {INFOBIP_API_KEY}",
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-        method="POST",
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=20, context=get_ssl_context()) as resp:
-            resp.read()
-        return True
-    except urllib.error.HTTPError as err:
+    def _send(include_header: bool) -> bool:
+        payload = {
+            "from": INFOBIP_WHATSAPP_SENDER,
+            "to": to_e164,
+            "content": {
+                "body": {"text": body_text.strip()},
+                "action": {
+                    "buttons": normalized_buttons,
+                },
+            },
+        }
+        if include_header and normalized_header_url:
+            payload["content"]["header"] = {
+                "type": normalized_header_type,
+                "mediaUrl": normalized_header_url,
+            }
+        req = urllib.request.Request(
+            f"{INFOBIP_BASE_URL}/whatsapp/1/message/interactive/buttons",
+            data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+            headers={
+                "Authorization": f"App {INFOBIP_API_KEY}",
+                "Content-Type": "application/json",
+                "Accept": "application/json",
+            },
+            method="POST",
+        )
         try:
-            details = err.read().decode("utf-8", errors="replace")
-        except Exception:
-            details = ""
-        print(f"Infobip interactive buttons failed HTTP {err.code}: {details}")
-        return False
-    except Exception as err:
-        print("Infobip interactive buttons failed:", err)
-        return False
+            with urllib.request.urlopen(req, timeout=20, context=get_ssl_context()) as resp:
+                resp.read()
+            return True
+        except urllib.error.HTTPError as err:
+            try:
+                details = err.read().decode("utf-8", errors="replace")
+            except Exception:
+                details = ""
+            print(f"Infobip interactive buttons failed HTTP {err.code}: {details}")
+            return False
+        except Exception as err:
+            print("Infobip interactive buttons failed:", err)
+            return False
+
+    if normalized_header_url and _send(include_header=True):
+        return True
+    return _send(include_header=False)
 
 
 def _wa_language_list_sections() -> list[dict]:
@@ -1460,12 +1678,11 @@ def _wa_language_list_sections() -> list[dict]:
 def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
     locale = normalize_site_lang(lang)
     if locale == "en":
-        body = "Choose an action from the menu below."
+        body = "Main menu. Choose an action:"
         action = "Open menu"
         section = "Main menu"
         rows = [
             {"id": "menu_apply", "title": "Apply", "description": "Start application"},
-            {"id": "menu_site", "title": "Website", "description": "Open website"},
             {"id": "menu_portfolio", "title": "Portfolio", "description": "View portfolio"},
             {"id": "menu_about", "title": "About work", "description": "How it works"},
             {"id": "menu_manager", "title": "Manager", "description": "Contact manager"},
@@ -1473,12 +1690,11 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_language", "title": "Change language", "description": "Switch language"},
         ]
     elif locale == "pt":
-        body = "Escolha uma opção no menu abaixo."
+        body = "Menu principal. Escolha uma ação:"
         action = "Abrir menu"
         section = "Menu principal"
         rows = [
             {"id": "menu_apply", "title": "Enviar candidatura", "description": "Iniciar candidatura"},
-            {"id": "menu_site", "title": "Site", "description": "Abrir site"},
             {"id": "menu_portfolio", "title": "Portfólio", "description": "Ver portfólio"},
             {"id": "menu_about", "title": "Sobre o trabalho", "description": "Como funciona"},
             {"id": "menu_manager", "title": "Gerente", "description": "Falar com o gerente"},
@@ -1486,12 +1702,11 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_language", "title": "Trocar idioma", "description": "Mudar idioma"},
         ]
     elif locale == "es":
-        body = "Elige una opción del menú."
+        body = "Menú principal. Elige una acción:"
         action = "Abrir menú"
         section = "Menú principal"
         rows = [
             {"id": "menu_apply", "title": "Enviar solicitud", "description": "Empezar solicitud"},
-            {"id": "menu_site", "title": "Sitio web", "description": "Abrir sitio"},
             {"id": "menu_portfolio", "title": "Portafolio", "description": "Ver portafolio"},
             {"id": "menu_about", "title": "Sobre el trabajo", "description": "Cómo funciona"},
             {"id": "menu_manager", "title": "Manager", "description": "Contactar al manager"},
@@ -1499,12 +1714,11 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
             {"id": "menu_language", "title": "Cambiar idioma", "description": "Cambiar idioma"},
         ]
     else:
-        body = "Выбери пункт ниже."
+        body = "Главное меню. Выбери действие:"
         action = "Открыть меню"
         section = "Главное меню"
         rows = [
             {"id": "menu_apply", "title": "Подать заявку", "description": "Начать анкету"},
-            {"id": "menu_site", "title": "Сайт", "description": "Открыть сайт"},
             {"id": "menu_portfolio", "title": "Портфолио", "description": "Посмотреть портфолио"},
             {"id": "menu_about", "title": "О работе", "description": "Как всё устроено"},
             {"id": "menu_manager", "title": "Менеджер", "description": "Связаться с менеджером"},
@@ -1515,59 +1729,144 @@ def _wa_menu_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
     return body, action, section, rows
 
 
+def _wa_about_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
+    locale = normalize_site_lang(lang)
+    if locale == "en":
+        return (
+            wa_t(locale, "about_menu"),
+            "Sections",
+            "About work",
+            [
+                {"id": "menu_about_work", "title": "Work format", "description": "Remote workflow"},
+                {"id": "menu_about_platforms", "title": "Platforms", "description": "Setup and launch"},
+                {"id": "menu_about_income", "title": "Income", "description": "Growth and earnings"},
+                {"id": "menu_channel", "title": "Channel", "description": "Telegram channel"},
+                {"id": "menu_manager", "title": "Manager", "description": "Contact manager"},
+                {"id": "menu_about_back", "title": "Back to menu", "description": "Main menu"},
+            ],
+        )
+    if locale == "pt":
+        return (
+            wa_t(locale, "about_menu"),
+            "Seções",
+            "Sobre o trabalho",
+            [
+                {"id": "menu_about_work", "title": "Formato", "description": "Fluxo remoto"},
+                {"id": "menu_about_platforms", "title": "Plataformas", "description": "Setup e início"},
+                {"id": "menu_about_income", "title": "Renda", "description": "Crescimento e ganhos"},
+                {"id": "menu_channel", "title": "Canal", "description": "Canal no Telegram"},
+                {"id": "menu_manager", "title": "Gerente", "description": "Falar com gerente"},
+                {"id": "menu_about_back", "title": "Voltar ao menu", "description": "Menu principal"},
+            ],
+        )
+    if locale == "es":
+        return (
+            wa_t(locale, "about_menu"),
+            "Secciones",
+            "Sobre el trabajo",
+            [
+                {"id": "menu_about_work", "title": "Formato", "description": "Flujo remoto"},
+                {"id": "menu_about_platforms", "title": "Plataformas", "description": "Setup y lanzamiento"},
+                {"id": "menu_about_income", "title": "Ingresos", "description": "Crecimiento y ganancias"},
+                {"id": "menu_channel", "title": "Canal", "description": "Canal de Telegram"},
+                {"id": "menu_manager", "title": "Manager", "description": "Contactar manager"},
+                {"id": "menu_about_back", "title": "Volver al menú", "description": "Menú principal"},
+            ],
+        )
+    return (
+        wa_t("ru", "about_menu"),
+        "Разделы",
+        "О работе",
+        [
+            {"id": "menu_about_work", "title": "Формат работы", "description": "Как устроена работа"},
+            {"id": "menu_about_platforms", "title": "Площадки", "description": "Настройка и запуск"},
+            {"id": "menu_about_income", "title": "Доход", "description": "Рост и заработок"},
+            {"id": "menu_channel", "title": "Канал", "description": "Telegram канал"},
+            {"id": "menu_manager", "title": "Менеджер", "description": "Связь с менеджером"},
+            {"id": "menu_about_back", "title": "В меню", "description": "Главное меню"},
+        ],
+    )
+
+
+def _wa_portfolio_list_config(lang: str) -> tuple[str, str, str, list[dict]]:
+    locale = normalize_site_lang(lang)
+    if locale == "en":
+        return (
+            wa_t(locale, "portfolio_menu"),
+            "Sections",
+            "Portfolio",
+            [
+                {"id": "menu_portfolio_cases", "title": "Model cases", "description": "Portfolio photos"},
+                {"id": "menu_portfolio_reviews", "title": "Model reviews", "description": "Review screenshots"},
+                {"id": "menu_portfolio_videos", "title": "Stream samples", "description": "Stream clips"},
+                {"id": "menu_portfolio_pdf", "title": "Portfolio PDF", "description": "Open PDF"},
+                {"id": "menu_portfolio_back", "title": "Back to menu", "description": "Main menu"},
+            ],
+        )
+    if locale == "pt":
+        return (
+            wa_t(locale, "portfolio_menu"),
+            "Seções",
+            "Portfólio",
+            [
+                {"id": "menu_portfolio_cases", "title": "Casos", "description": "Fotos do portfólio"},
+                {"id": "menu_portfolio_reviews", "title": "Avaliações", "description": "Reviews de modelos"},
+                {"id": "menu_portfolio_videos", "title": "Streams", "description": "Clipes de stream"},
+                {"id": "menu_portfolio_pdf", "title": "PDF", "description": "Abrir PDF"},
+                {"id": "menu_portfolio_back", "title": "Voltar ao menu", "description": "Menu principal"},
+            ],
+        )
+    if locale == "es":
+        return (
+            wa_t(locale, "portfolio_menu"),
+            "Secciones",
+            "Portafolio",
+            [
+                {"id": "menu_portfolio_cases", "title": "Casos", "description": "Fotos del portafolio"},
+                {"id": "menu_portfolio_reviews", "title": "Reseñas", "description": "Reviews de modelos"},
+                {"id": "menu_portfolio_videos", "title": "Streams", "description": "Clips de stream"},
+                {"id": "menu_portfolio_pdf", "title": "PDF", "description": "Abrir PDF"},
+                {"id": "menu_portfolio_back", "title": "Volver al menú", "description": "Menú principal"},
+            ],
+        )
+    return (
+        wa_t("ru", "portfolio_menu"),
+        "Разделы",
+        "Портфолио",
+        [
+            {"id": "menu_portfolio_cases", "title": "Кейсы моделей", "description": "Фото портфолио"},
+            {"id": "menu_portfolio_reviews", "title": "Отзывы моделей", "description": "Скриншоты отзывов"},
+            {"id": "menu_portfolio_videos", "title": "Примеры стримов", "description": "Клипы стримов"},
+            {"id": "menu_portfolio_pdf", "title": "PDF портфолио", "description": "Открыть PDF"},
+            {"id": "menu_portfolio_back", "title": "В меню", "description": "Главное меню"},
+        ],
+    )
+
+
 def _wa_menu_buttons_config(lang: str, step: str) -> tuple[str, list[dict]]:
     locale = normalize_site_lang(lang)
-    active_step = str(step or "menu").strip().lower()
-
     if locale == "en":
-        if active_step == "menu_more":
-            return wa_t(locale, "menu_more"), [
-                {"id": "menu_manager", "title": "Manager"},
-                {"id": "menu_channel", "title": "Channel"},
-                {"id": "menu_language", "title": "Language"},
-            ]
         return wa_t(locale, "menu"), [
             {"id": "menu_apply", "title": "Apply"},
             {"id": "menu_portfolio", "title": "Portfolio"},
-            {"id": "menu_more", "title": "More"},
+            {"id": "menu_about", "title": "About work"},
         ]
-
     if locale == "pt":
-        if active_step == "menu_more":
-            return wa_t(locale, "menu_more"), [
-                {"id": "menu_manager", "title": "Gerente"},
-                {"id": "menu_channel", "title": "Canal"},
-                {"id": "menu_language", "title": "Idioma"},
-            ]
         return wa_t(locale, "menu"), [
             {"id": "menu_apply", "title": "Candidatura"},
             {"id": "menu_portfolio", "title": "Portfólio"},
-            {"id": "menu_more", "title": "Mais"},
+            {"id": "menu_about", "title": "Sobre o trabalho"},
         ]
-
     if locale == "es":
-        if active_step == "menu_more":
-            return wa_t(locale, "menu_more"), [
-                {"id": "menu_manager", "title": "Manager"},
-                {"id": "menu_channel", "title": "Canal"},
-                {"id": "menu_language", "title": "Idioma"},
-            ]
         return wa_t(locale, "menu"), [
             {"id": "menu_apply", "title": "Solicitud"},
             {"id": "menu_portfolio", "title": "Portafolio"},
-            {"id": "menu_more", "title": "Más"},
-        ]
-
-    if active_step == "menu_more":
-        return wa_t("ru", "menu_more"), [
-            {"id": "menu_manager", "title": "Менеджер"},
-            {"id": "menu_channel", "title": "Канал"},
-            {"id": "menu_language", "title": "Язык"},
+            {"id": "menu_about", "title": "Sobre el trabajo"},
         ]
     return wa_t("ru", "menu"), [
         {"id": "menu_apply", "title": "Заявка"},
         {"id": "menu_portfolio", "title": "Портфолио"},
-        {"id": "menu_more", "title": "Ещё"},
+        {"id": "menu_about", "title": "О работе"},
     ]
 
 
@@ -1600,11 +1899,17 @@ def send_wa_interactive_controls(to_phone: str | None, body_override: str | None
         )
 
     if step in {"menu", "menu_more"}:
-        body, buttons = _wa_menu_buttons_config(lang, step)
+        body, buttons = _wa_menu_buttons_config(lang, "menu")
         custom_body = clean_text(body_override or "", max_len=900)
         if custom_body:
             body = custom_body
-        if infobip_send_whatsapp_interactive_buttons(to_phone, body, buttons):
+        if infobip_send_whatsapp_interactive_buttons(
+            to_phone,
+            body,
+            buttons,
+            header_media_url=_wa_menu_image_url(),
+            header_media_type="IMAGE",
+        ):
             return True
         body_list, action, section, rows = _wa_menu_list_config(lang)
         if custom_body:
@@ -1614,6 +1919,49 @@ def send_wa_interactive_controls(to_phone: str | None, body_override: str | None
             body_list,
             action,
             [{"title": section, "rows": rows}],
+        )
+
+    if step == "about_menu":
+        body, action, section, rows = _wa_about_list_config(lang)
+        custom_body = clean_text(body_override or "", max_len=900)
+        if custom_body:
+            body = custom_body
+        return infobip_send_whatsapp_interactive_list(
+            to_phone,
+            body,
+            action,
+            [{"title": section, "rows": rows}],
+        )
+
+    if step == "portfolio_menu":
+        body, action, section, rows = _wa_portfolio_list_config(lang)
+        custom_body = clean_text(body_override or "", max_len=900)
+        if custom_body:
+            body = custom_body
+        return infobip_send_whatsapp_interactive_list(
+            to_phone,
+            body,
+            action,
+            [{"title": section, "rows": rows}],
+        )
+
+    if step == "portfolio_view":
+        item, index, total, _ = _wa_portfolio_item_from_flow(flow)
+        if not item:
+            return False
+        body = _wa_portfolio_caption(lang, item, index, total)
+        custom_body = clean_text(body_override or "", max_len=900)
+        if custom_body:
+            body = custom_body
+        header_media_url = clean_text(str(item.get("url") or ""), max_len=MAX_URL_VALUE_LEN)
+        header_media_type = str(item.get("media_type") or "IMAGE").strip().upper()
+        buttons = _wa_portfolio_buttons(lang, index, total)
+        return infobip_send_whatsapp_interactive_buttons(
+            to_phone,
+            body,
+            buttons,
+            header_media_url=header_media_url,
+            header_media_type=header_media_type,
         )
 
     if step == "living":
@@ -1875,29 +2223,35 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                 "mode": "quick",
                 "step": "menu",
                 "lang": next_lang,
-                "data": {"menu_logo_once": True},
+                "data": {},
             },
         )
         return True, _wa_menu_text_for_step(next_lang, "menu")
 
     if step == "done":
         menu_key = _parse_wa_menu_choice(text)
-        if menu_key == "menu":
+        if menu_key in {None, "menu", "more", "about_back", "portfolio_back"}:
             _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
             return True, _wa_menu_text_for_step(lang, "menu")
         if menu_key == "language":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
             return True, wa_t(lang, "choose_lang")
-        if menu_key == "more":
-            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu_more", "lang": lang, "data": {}})
-            return True, _wa_menu_text_for_step(lang, "menu_more")
         if menu_key == "apply":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": lang, "data": {}})
             return True, wa_t(lang, "ask_name")
-        if menu_key:
+        if menu_key == "portfolio":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "portfolio_menu")
+        if menu_key == "about":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "about_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "about_menu")
+        if menu_key == "manager":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
-            return True, _wa_menu_response(lang, menu_key, step="menu")
-        _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {"menu_logo_once": True}})
+            return True, _wa_menu_response(lang, "manager", step="menu")
+        if menu_key == "channel":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, _wa_menu_response(lang, "channel", step="menu")
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
         return True, _wa_menu_text_for_step(lang, "menu")
 
     if mode == "site_stage2":
@@ -2008,7 +2362,6 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                     "data": {
                         "last_user_id": user_id,
                         "submitted_at": datetime.now(timezone.utc).isoformat(),
-                        "menu_logo_once": True,
                     },
                 },
             )
@@ -2027,22 +2380,163 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
     if step in {"menu", "menu_more"}:
         menu_key = _parse_wa_menu_choice(text)
         if not menu_key:
-            return True, wa_t(lang, "menu_more_invalid" if step == "menu_more" else "menu_invalid")
+            return True, wa_t(lang, "menu_invalid")
         if menu_key == "menu":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
             return True, _wa_menu_text_for_step(lang, "menu")
         if menu_key == "language":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
             return True, wa_t(lang, "choose_lang")
-        if menu_key == "more":
-            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu_more", "lang": lang, "data": {}})
-            return True, _wa_menu_text_for_step(lang, "menu_more")
         if menu_key == "apply":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": lang, "data": {}})
             return True, wa_t(lang, "ask_name")
-        next_step = "menu"
-        _save_wa_flow(from_phone, {"mode": "quick", "step": next_step, "lang": lang, "data": {}})
-        return True, _wa_menu_response(lang, menu_key, step=next_step)
+        if menu_key == "portfolio":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "portfolio_menu")
+        if menu_key == "about":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "about_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "about_menu")
+        if menu_key in {"manager", "channel", "site"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, _wa_menu_response(lang, menu_key, step="menu")
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+        return True, _wa_menu_text_for_step(lang, "menu")
+
+    if step == "about_menu":
+        menu_key = _parse_wa_menu_choice(text)
+        if not menu_key:
+            return True, wa_t(lang, "about_menu")
+        if menu_key in {"about_back", "menu", "more"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "menu")
+        if menu_key == "language":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
+            return True, wa_t(lang, "choose_lang")
+        if menu_key in {"manager", "channel"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "about_menu", "lang": lang, "data": {}})
+            return True, _wa_menu_response(lang, menu_key, step="about_menu")
+        if menu_key in {"about_work", "about_platforms", "about_income"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "about_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, menu_key)
+        if menu_key == "portfolio":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "portfolio_menu")
+        if menu_key == "apply":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": lang, "data": {}})
+            return True, wa_t(lang, "ask_name")
+        return True, wa_t(lang, "about_menu")
+
+    if step == "portfolio_menu":
+        menu_key = _parse_wa_menu_choice(text)
+        if not menu_key:
+            return True, wa_t(lang, "portfolio_menu")
+        if menu_key in {"portfolio_back", "menu", "more"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "menu")
+        if menu_key == "portfolio_pdf":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, _site_asset_url("assets/portfolio.pdf")
+
+        kind_map = {
+            "portfolio_cases": "cases",
+            "portfolio_reviews": "reviews",
+            "portfolio_videos": "streams",
+        }
+        target_kind = kind_map.get(menu_key)
+        if not target_kind:
+            return True, wa_t(lang, "portfolio_menu")
+        items = _wa_portfolio_items(target_kind)
+        if not items:
+            return True, wa_t(lang, "portfolio_menu")
+        first_item = items[0]
+        first_caption = _wa_portfolio_caption(lang, first_item, 0, len(items))
+        _save_wa_flow(
+            from_phone,
+            {
+                "mode": "quick",
+                "step": "portfolio_view",
+                "lang": lang,
+                "data": {
+                    "portfolio_kind": target_kind,
+                    "portfolio_index": 0,
+                },
+            },
+        )
+        return True, first_caption
+
+    if step == "portfolio_view":
+        menu_key = _parse_wa_menu_choice(text)
+        current_item, current_index, total_items, current_kind = _wa_portfolio_item_from_flow(flow)
+        if not current_item:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "portfolio_menu")
+        if not menu_key:
+            return True, _wa_portfolio_caption(lang, current_item, current_index, total_items)
+        if menu_key in {"portfolio_back", "menu", "about_back"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "portfolio_menu")
+        if menu_key == "portfolio_next":
+            next_index = min(current_index + 1, max(total_items - 1, 0))
+            items = _wa_portfolio_items(current_kind)
+            if not items:
+                _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+                return True, wa_t(lang, "portfolio_menu")
+            item = items[next_index]
+            _save_wa_flow(
+                from_phone,
+                {
+                    "mode": "quick",
+                    "step": "portfolio_view",
+                    "lang": lang,
+                    "data": {"portfolio_kind": current_kind, "portfolio_index": next_index},
+                },
+            )
+            return True, _wa_portfolio_caption(lang, item, next_index, total_items)
+        if menu_key == "portfolio_prev":
+            prev_index = max(current_index - 1, 0)
+            items = _wa_portfolio_items(current_kind)
+            if not items:
+                _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+                return True, wa_t(lang, "portfolio_menu")
+            item = items[prev_index]
+            _save_wa_flow(
+                from_phone,
+                {
+                    "mode": "quick",
+                    "step": "portfolio_view",
+                    "lang": lang,
+                    "data": {"portfolio_kind": current_kind, "portfolio_index": prev_index},
+                },
+            )
+            return True, _wa_portfolio_caption(lang, item, prev_index, total_items)
+        if menu_key in {"portfolio_cases", "portfolio_reviews", "portfolio_videos"}:
+            remap = {
+                "portfolio_cases": "cases",
+                "portfolio_reviews": "reviews",
+                "portfolio_videos": "streams",
+            }
+            target_kind = remap[menu_key]
+            items = _wa_portfolio_items(target_kind)
+            if not items:
+                return True, wa_t(lang, "portfolio_menu")
+            item = items[0]
+            _save_wa_flow(
+                from_phone,
+                {
+                    "mode": "quick",
+                    "step": "portfolio_view",
+                    "lang": lang,
+                    "data": {"portfolio_kind": target_kind, "portfolio_index": 0},
+                },
+            )
+            return True, _wa_portfolio_caption(lang, item, 0, len(items))
+        if menu_key == "portfolio_pdf":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "portfolio_menu", "lang": lang, "data": {}})
+            return True, _site_asset_url("assets/portfolio.pdf")
+        if menu_key in {"about", "about_work", "about_platforms", "about_income"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "about_menu", "lang": lang, "data": {}})
+            return True, wa_t(lang, "about_menu")
+        return True, _wa_portfolio_caption(lang, current_item, current_index, total_items)
 
     if step == "name":
         value = clean_text(text, max_len=MAX_NAME_LEN)
@@ -2180,7 +2674,6 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                 "data": {
                     "last_user_id": user_id,
                     "submitted_at": datetime.now(timezone.utc).isoformat(),
-                    "menu_logo_once": True,
                 },
             },
         )
@@ -2743,19 +3236,21 @@ class Handler(SimpleHTTPRequestHandler):
                         target_phone = message.get("from")
                         post_flow = _load_wa_flow(target_phone)
                         post_step = str((post_flow or {}).get("step") or "").strip().lower()
-                        expect_interactive = post_step in {"lang", "menu", "menu_more", "living"}
+                        expect_interactive = post_step in {
+                            "lang",
+                            "menu",
+                            "menu_more",
+                            "about_menu",
+                            "portfolio_menu",
+                            "portfolio_view",
+                            "living",
+                        }
                         reply_sent = False
 
                         if expect_interactive:
                             interactive_body = None
-                            if post_step in {"menu", "menu_more", "living"} and reply:
+                            if post_step in {"menu", "menu_more", "about_menu", "portfolio_menu", "portfolio_view", "living"} and reply:
                                 interactive_body = reply
-                            if post_step in {"menu", "menu_more"} and pre_step not in {"menu", "menu_more"}:
-                                menu_image_url = _wa_menu_image_url()
-                                try:
-                                    infobip_send_whatsapp_image(target_phone, menu_image_url)
-                                except Exception as err:
-                                    print("Failed to send whatsapp menu image:", err)
                             try:
                                 if send_wa_interactive_controls(target_phone, body_override=interactive_body):
                                     bot_replies += 1
