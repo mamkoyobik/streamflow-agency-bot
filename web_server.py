@@ -245,14 +245,10 @@ WA_TEXTS = {
             "Выбери язык: RU / EN / PT / ES"
         ),
         "invalid_lang": "Выбери язык: RU / EN / PT / ES",
-        "menu": (
-            "📌 Главное меню.\n"
-            "Нажми кнопку ниже.\n"
-            "Если кнопки не видны, напиши: заявка, портфолио, менеджер, канал, язык, сайт."
-        ),
-        "menu_invalid": "Не понял пункт. Нажми кнопку ниже или напиши: заявка, портфолио, менеджер, канал, язык, сайт.",
-        "menu_more": "📌 Дополнительное меню. Нажми кнопку ниже.",
-        "menu_more_invalid": "Не понял пункт. Нажми кнопку ниже или напиши: менеджер, канал, язык, сайт.",
+        "menu": "📌 Главное меню. Выбери действие кнопкой ниже.",
+        "menu_invalid": "Не понял команду. Нажми кнопку ниже.",
+        "menu_more": "📌 Дополнительно. Выбери действие.",
+        "menu_more_invalid": "Не понял команду. Нажми кнопку ниже.",
         "about": (
             "Streamflow — модельное стрим-агентство.\n"
             "Удалённый формат, поддержка, обучение и понятные правила старта."
@@ -291,14 +287,10 @@ WA_TEXTS = {
             "Choose language: RU / EN / PT / ES"
         ),
         "invalid_lang": "Choose language: RU / EN / PT / ES",
-        "menu": (
-            "📌 Main menu.\n"
-            "Tap a button below.\n"
-            "If buttons are hidden, type: apply, portfolio, manager, channel, language, site."
-        ),
-        "menu_invalid": "Unknown menu item. Tap a button below or type: apply, portfolio, manager, channel, language, site.",
-        "menu_more": "📌 Extra menu. Tap a button below.",
-        "menu_more_invalid": "Unknown menu item. Tap a button below or type: manager, channel, language, site.",
+        "menu": "📌 Main menu. Choose an action below.",
+        "menu_invalid": "Unknown command. Tap a button below.",
+        "menu_more": "📌 More options. Choose an action below.",
+        "menu_more_invalid": "Unknown command. Tap a button below.",
         "about": (
             "Streamflow is a model streaming agency.\n"
             "Remote format, support, training and clear onboarding rules."
@@ -337,14 +329,10 @@ WA_TEXTS = {
             "Escolha o idioma: RU / EN / PT / ES"
         ),
         "invalid_lang": "Escolha o idioma: RU / EN / PT / ES",
-        "menu": (
-            "📌 Menu principal.\n"
-            "Toque em um botão abaixo.\n"
-            "Se os botões não aparecerem, digite: candidatura, portfólio, gerente, canal, idioma, site."
-        ),
-        "menu_invalid": "Opção inválida. Toque em um botão abaixo ou digite: candidatura, portfólio, gerente, canal, idioma, site.",
-        "menu_more": "📌 Menu extra. Toque em um botão abaixo.",
-        "menu_more_invalid": "Opção inválida. Toque em um botão abaixo ou digite: gerente, canal, idioma, site.",
+        "menu": "📌 Menu principal. Escolha uma ação abaixo.",
+        "menu_invalid": "Comando inválido. Toque em um botão abaixo.",
+        "menu_more": "📌 Mais opções. Escolha uma ação abaixo.",
+        "menu_more_invalid": "Comando inválido. Toque em um botão abaixo.",
         "about": (
             "A Streamflow é uma agência de modelos para streaming.\n"
             "Formato remoto, suporte, treinamento e regras claras de início."
@@ -383,14 +371,10 @@ WA_TEXTS = {
             "Elige idioma: RU / EN / PT / ES"
         ),
         "invalid_lang": "Elige idioma: RU / EN / PT / ES",
-        "menu": (
-            "📌 Menú principal.\n"
-            "Pulsa un botón abajo.\n"
-            "Si no aparecen, escribe: solicitud, portafolio, manager, canal, idioma, sitio."
-        ),
-        "menu_invalid": "No entendí la opción. Pulsa un botón abajo o escribe: solicitud, portafolio, manager, canal, idioma, sitio.",
-        "menu_more": "📌 Menú extra. Pulsa un botón abajo.",
-        "menu_more_invalid": "No entendí la opción. Pulsa un botón abajo o escribe: manager, canal, idioma, sitio.",
+        "menu": "📌 Menú principal. Elige una opción abajo.",
+        "menu_invalid": "Comando no reconocido. Pulsa un botón abajo.",
+        "menu_more": "📌 Más opciones. Elige una opción abajo.",
+        "menu_more_invalid": "Comando no reconocido. Pulsa un botón abajo.",
         "about": (
             "Streamflow es una agencia de modelos para streaming.\n"
             "Formato remoto, soporte, formación y reglas claras de inicio."
@@ -444,6 +428,7 @@ WA_RESET_COMMANDS = {
 }
 
 WA_MENU_ALIASES = {
+    "menu": {"menu", "меню", "main menu", "главное меню", "menu_main"},
     "apply": {"1", "apply", "заявка", "подать", "candidatura", "solicitud", "menu_apply"},
     "site": {"2", "site", "website", "сайт", "menu_site"},
     "portfolio": {"3", "portfolio", "портфолио", "portafolio", "portfólio", "menu_portfolio"},
@@ -452,6 +437,29 @@ WA_MENU_ALIASES = {
     "channel": {"6", "channel", "канал", "canal", "menu_channel"},
     "language": {"7", "lang", "language", "язык", "idioma", "menu_language"},
     "more": {"more", "ещё", "еще", "mais", "más", "mas", "menu_more"},
+}
+
+WA_YES_ALIASES = {
+    "yes",
+    "y",
+    "да",
+    "1",
+    "true",
+    "si",
+    "sí",
+    "sim",
+    "yn_yes",
+}
+
+WA_NO_ALIASES = {
+    "no",
+    "n",
+    "нет",
+    "0",
+    "false",
+    "nao",
+    "não",
+    "yn_no",
 }
 
 
@@ -498,6 +506,7 @@ SITE_URL = SITE_URL.rstrip("/")
 CANONICAL_HOST = (urllib.parse.urlparse(SITE_URL).netloc or "").split(":", 1)[0].lower()
 PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
+WA_MANAGER_PHONE = (os.getenv("WA_MANAGER_PHONE", "+380998074928") or "+380998074928").strip()
 
 def site_lead_setting_key(token: str) -> str:
     return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
@@ -1050,51 +1059,57 @@ def _parse_wa_menu_choice(text: str | None) -> str | None:
 
 
 def _wa_manager_link() -> str | None:
-    username = (PUBLIC_MANAGER_USERNAME or "").strip().lstrip("@")
-    if not username:
+    digits = _wa_digits(WA_MANAGER_PHONE)
+    if len(digits) < 8:
         return None
-    return f"https://t.me/{username}"
+    return f"https://wa.me/{digits}"
 
 
 def _wa_menu_text_for_step(lang: str, step: str) -> str:
     active_step = str(step or "menu").strip().lower()
     if active_step == "menu_more":
-        base = wa_t(lang, "menu_more")
-    else:
-        base = wa_t(lang, "menu")
-    lines = [base]
-    site_link = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
-    if site_link:
-        lines.append(f"\n🌐 {site_link}")
-    return "\n".join(lines)
+        return wa_t(lang, "menu_more")
+    return wa_t(lang, "menu")
 
 
 def _wa_menu_response(lang: str, menu_key: str, step: str = "menu") -> str:
     site_link = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
     channel_link = (CHANNEL_LINK or "https://t.me/streamflowagency").strip()
     manager_link = _wa_manager_link()
-    menu_tail = _wa_menu_text_for_step(lang, step)
     if menu_key == "more":
-        return menu_tail
+        return _wa_menu_text_for_step(lang, "menu_more")
+    if menu_key == "menu":
+        return _wa_menu_text_for_step(lang, "menu")
     if menu_key == "site":
-        return f"🌐 {site_link}\n\n{menu_tail}"
+        return f"🌐 {site_link}"
     if menu_key == "portfolio":
         portfolio_link = f"{site_link}/#portfolio" if site_link else "https://streamflowagency.com/#portfolio"
-        return f"📁 {portfolio_link}\n\n{menu_tail}"
+        return f"📁 {portfolio_link}"
     if menu_key == "about":
-        return f"{wa_t(lang, 'about')}\n\n{menu_tail}"
+        return wa_t(lang, "about")
     if menu_key == "manager":
         if manager_link:
-            return f"💬 {manager_link}\n\n{menu_tail}"
-        return menu_tail
+            return f"💬 {manager_link}"
+        return _wa_menu_text_for_step(lang, "menu")
     if menu_key == "channel":
-        return f"📣 {channel_link}\n\n{menu_tail}"
-    return menu_tail
+        return f"📣 {channel_link}"
+    return _wa_menu_text_for_step(lang, step)
 
 
 def _is_wa_reset_command(text: str | None) -> bool:
     raw = (text or "").strip().lower()
     return raw in WA_RESET_COMMANDS
+
+
+def _parse_wa_yes_no_choice(text: str | None, lang: str) -> str | None:
+    raw = clean_text(text or "", max_len=32).lower()
+    if not raw:
+        return None
+    if raw in WA_YES_ALIASES:
+        return "Да"
+    if raw in WA_NO_ALIASES:
+        return "Нет"
+    return normalize_yes_no(raw, lang=lang)
 
 
 def _build_admin_whatsapp_application_text(data: dict, user_id: int, submitted_at: str) -> str:
@@ -1526,7 +1541,18 @@ def _wa_menu_buttons_config(lang: str, step: str) -> tuple[str, list[dict]]:
     ]
 
 
-def send_wa_interactive_controls(to_phone: str | None) -> bool:
+def _wa_yes_no_buttons(lang: str) -> list[dict]:
+    locale = normalize_site_lang(lang)
+    if locale == "en":
+        return [{"id": "yn_yes", "title": "Yes"}, {"id": "yn_no", "title": "No"}]
+    if locale == "pt":
+        return [{"id": "yn_yes", "title": "Sim"}, {"id": "yn_no", "title": "Nao"}]
+    if locale == "es":
+        return [{"id": "yn_yes", "title": "Si"}, {"id": "yn_no", "title": "No"}]
+    return [{"id": "yn_yes", "title": "Да"}, {"id": "yn_no", "title": "Нет"}]
+
+
+def send_wa_interactive_controls(to_phone: str | None, body_override: str | None = None) -> bool:
     if not INFOBIP_INTERACTIVE_ENABLED:
         return False
     flow = _load_wa_flow(to_phone)
@@ -1545,9 +1571,14 @@ def send_wa_interactive_controls(to_phone: str | None) -> bool:
 
     if step in {"menu", "menu_more"}:
         body, buttons = _wa_menu_buttons_config(lang, step)
+        custom_body = clean_text(body_override or "", max_len=900)
+        if custom_body:
+            body = custom_body
         if infobip_send_whatsapp_interactive_buttons(to_phone, body, buttons):
             return True
         body_list, action, section, rows = _wa_menu_list_config(lang)
+        if custom_body:
+            body_list = custom_body
         return infobip_send_whatsapp_interactive_list(
             to_phone,
             body_list,
@@ -1555,36 +1586,14 @@ def send_wa_interactive_controls(to_phone: str | None) -> bool:
             [{"title": section, "rows": rows}],
         )
 
-    return False
+    if step == "living":
+        mode = str(flow.get("mode") or "quick").strip().lower()
+        body = _wa_stage2_text(lang, "living") if mode == "site_stage2" else wa_t(lang, "ask_living")
+        custom_body = clean_text(body_override or "", max_len=900)
+        if custom_body:
+            body = custom_body
+        return infobip_send_whatsapp_interactive_buttons(to_phone, body, _wa_yes_no_buttons(lang))
 
-
-def _is_wa_menu_only_reply(flow: dict | None, reply: str | None) -> bool:
-    if not isinstance(flow, dict):
-        return False
-    body = (reply or "").strip()
-    if not body:
-        return False
-    lang = normalize_site_lang(flow.get("lang"))
-    step = str(flow.get("step") or "").strip().lower()
-    if step == "lang":
-        candidates = {
-            wa_t(lang, "choose_lang").strip(),
-            wa_t(lang, "invalid_lang").strip(),
-            wa_t("ru", "choose_lang").strip(),
-            wa_t("ru", "invalid_lang").strip(),
-        }
-        return body in candidates
-    if step in {"menu", "menu_more"}:
-        invalid_key = "menu_more_invalid" if step == "menu_more" else "menu_invalid"
-        candidates = {
-            _wa_menu_text_for_step(lang, step).strip(),
-            wa_t(lang, "menu").strip(),
-            wa_t(lang, "menu_more").strip(),
-            wa_t(lang, "menu_invalid").strip(),
-            wa_t(lang, "menu_more_invalid").strip(),
-            wa_t(lang, invalid_key).strip(),
-        }
-        return any(candidate and candidate in body for candidate in candidates)
     return False
 
 
@@ -1833,6 +1842,9 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         if mode == "site_stage2":
             return True, _wa_stage2_text(lang, "done")
         menu_key = _parse_wa_menu_choice(text)
+        if menu_key == "menu":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, _wa_menu_text_for_step(lang, "menu")
         if menu_key == "language":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
             return True, wa_t(lang, "choose_lang")
@@ -1849,7 +1861,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
 
     if mode == "site_stage2":
         if step == "living":
-            living = normalize_yes_no(text, lang=lang)
+            living = _parse_wa_yes_no_choice(text, lang)
             if not living:
                 return True, _wa_stage2_text(lang, "living_invalid")
             data["living"] = living
@@ -1971,6 +1983,9 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         menu_key = _parse_wa_menu_choice(text)
         if not menu_key:
             return True, wa_t(lang, "menu_more_invalid" if step == "menu_more" else "menu_invalid")
+        if menu_key == "menu":
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
+            return True, _wa_menu_text_for_step(lang, "menu")
         if menu_key == "language":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": lang, "data": {}})
             return True, wa_t(lang, "choose_lang")
@@ -1980,7 +1995,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         if menu_key == "apply":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "name", "lang": lang, "data": {}})
             return True, wa_t(lang, "ask_name")
-        next_step = "menu_more" if step == "menu_more" else "menu"
+        next_step = "menu"
         _save_wa_flow(from_phone, {"mode": "quick", "step": next_step, "lang": lang, "data": {}})
         return True, _wa_menu_response(lang, menu_key, step=next_step)
 
@@ -2054,7 +2069,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         return True, wa_t(lang, "ask_living")
 
     if step == "living":
-        living = normalize_yes_no(text, lang=lang)
+        living = _parse_wa_yes_no_choice(text, lang)
         if not living:
             return True, wa_t(lang, "invalid_living")
         data["living"] = living
@@ -2675,13 +2690,15 @@ class Handler(SimpleHTTPRequestHandler):
                         target_phone = message.get("from")
                         post_flow = _load_wa_flow(target_phone)
                         post_step = str((post_flow or {}).get("step") or "").strip().lower()
-                        expect_interactive = post_step in {"lang", "menu"}
+                        expect_interactive = post_step in {"lang", "menu", "menu_more", "living"}
                         reply_sent = False
 
-                        # One inbound -> one outbound: avoid duplicate text+interactive messages.
-                        if _is_wa_menu_only_reply(post_flow, reply):
+                        if expect_interactive:
+                            interactive_body = None
+                            if post_step in {"menu", "menu_more", "living"} and reply:
+                                interactive_body = reply
                             try:
-                                if send_wa_interactive_controls(target_phone):
+                                if send_wa_interactive_controls(target_phone, body_override=interactive_body):
                                     bot_replies += 1
                                     reply_sent = True
                             except Exception as err:
@@ -2703,18 +2720,9 @@ class Handler(SimpleHTTPRequestHandler):
                             else:
                                 errors += 1
 
-                        if not reply_sent and not reply:
-                            interactive_sent = False
-                            try:
-                                if send_wa_interactive_controls(target_phone):
-                                    interactive_sent = True
-                                    bot_replies += 1
-                            except Exception as err:
-                                errors += 1
-                                print("Failed to send whatsapp interactive controls:", err)
-                            # For silent steps we mark as processed. For lang/menu we require outbound delivery.
-                            mark_seen = interactive_sent or not expect_interactive
-                        elif reply_sent:
+                        if reply_sent:
+                            mark_seen = True
+                        elif not reply and not expect_interactive:
                             mark_seen = True
                     else:
                         mark_seen = True
