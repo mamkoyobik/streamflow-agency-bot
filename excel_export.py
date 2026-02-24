@@ -88,7 +88,17 @@ def _format_submit_time(ts: str | None) -> str:
 def _format_source(value: str | None) -> str:
     if not value:
         return ""
-    return "Сайт" if value.lower() == "site" else "Бот"
+    normalized = str(value).strip().lower()
+    mapping = {
+        "site_tg": "Сайт + Telegram бот",
+        "site_whatsapp": "Сайт + WhatsApp",
+        "telegram_bot": "Telegram бот",
+        "whatsapp_bot": "WhatsApp бот",
+        "site": "Сайт + Telegram бот",
+        "bot": "Telegram бот",
+        "whatsapp": "WhatsApp бот",
+    }
+    return mapping.get(normalized, "Не определён")
 
 def append_application_row(data: dict[str, Any], user_id: int, status: str):
     app = get_application(user_id) or {}

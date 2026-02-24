@@ -707,7 +707,8 @@ def is_quick_application(data: dict | None) -> bool:
 def is_site_quick_application(app: dict | None, data: dict | None) -> bool:
     if not isinstance(app, dict):
         return False
-    return app.get("source") == "site" and is_quick_application(data)
+    source = normalize_source_value(app.get("source"), data if isinstance(data, dict) else None)
+    return source in {SOURCE_SITE_TG, SOURCE_SITE_WHATSAPP} and is_quick_application(data)
 
 def build_ack(user_id: int | None = None) -> str:
     lang = lang_for(user_id) if user_id is not None else "ru"
@@ -2218,25 +2219,85 @@ async def send_status_message(message: Message, status: str | None):
         except Exception:
             await message.answer(line)
 
+SOURCE_SITE_TG = "site_tg"
+SOURCE_SITE_WHATSAPP = "site_whatsapp"
+SOURCE_TELEGRAM_BOT = "telegram_bot"
+SOURCE_WHATSAPP_BOT = "whatsapp_bot"
+SOURCE_UNKNOWN = "unknown"
+
+
+def normalize_source_value(source: str | None, data: dict | None = None) -> str:
+    raw = str(source or "").strip().lower()
+    preferred = str((data or {}).get("preferred_contact") or "").strip().lower()
+    if raw in {SOURCE_SITE_TG, "site_telegram", "site+telegram", "site+tgbot"}:
+        return SOURCE_SITE_TG
+    if raw in {SOURCE_SITE_WHATSAPP, "site_wa", "site+whatsapp", "site+wa"}:
+        return SOURCE_SITE_WHATSAPP
+    if raw in {SOURCE_TELEGRAM_BOT, "tg_bot", "bot"}:
+        return SOURCE_TELEGRAM_BOT
+    if raw in {SOURCE_WHATSAPP_BOT, "wa_bot", "whatsapp"}:
+        return SOURCE_WHATSAPP_BOT
+    if raw == "site":
+        return SOURCE_SITE_WHATSAPP if preferred == "whatsapp" else SOURCE_SITE_TG
+    return SOURCE_UNKNOWN
+
+
 def source_label_for_user(user_id: int) -> str:
-    source = get_source(user_id)
-    if source == "site":
-        return "Сайт"
-    if source == "bot":
-        return "Бот"
-    return "Бот"
+    payload = get_form_data(user_id) or {}
+    source = normalize_source_value(get_source(user_id), payload)
+    labels = {
+        SOURCE_SITE_TG: "Сайт + Telegram бот",
+        SOURCE_SITE_WHATSAPP: "Сайт + WhatsApp",
+        SOURCE_TELEGRAM_BOT: "Telegram бот",
+        SOURCE_WHATSAPP_BOT: "WhatsApp бот",
+        SOURCE_UNKNOWN: "Не определён",
+    }
+    return labels.get(source, labels[SOURCE_UNKNOWN])
+
+
+def _whatsapp_contact_url(data: dict | None) -> str | None:
+    payload = data or {}
+    candidates = [
+        payload.get("whatsapp"),
+        payload.get("wa_phone"),
+        payload.get("phone"),
+    ]
+    telegram_value = str(payload.get("telegram") or "").strip()
+    if telegram_value.lower().startswith("wa:"):
+        candidates.append(telegram_value.split(":", 1)[1])
+    for candidate in candidates:
+        normalized = normalize_phone(str(candidate or ""))
+        if not normalized:
+            continue
+        digits = "".join(ch for ch in normalized if ch.isdigit())
+        if len(digits) >= 8:
+            return f"https://wa.me/{digits}"
+    return None
+
 
 def contact_url_for_user(user_id: int, data: dict | None) -> str:
-    source = get_source(user_id)
-    if source == "site":
-        raw = (data or {}).get("telegram", "") or ""
+    payload = data or {}
+    source = normalize_source_value(get_source(user_id), payload)
+    if source in {SOURCE_SITE_WHATSAPP, SOURCE_WHATSAPP_BOT}:
+        wa_url = _whatsapp_contact_url(payload)
+        if wa_url:
+            return wa_url
+    raw = str(payload.get("telegram") or "").strip()
+    if raw and not raw.lower().startswith("wa:"):
         username = raw.lstrip("@").strip()
         if username:
             return f"https://t.me/{username}"
-    return f"tg://user?id={user_id}"
+    if user_id > 0:
+        return f"tg://user?id={user_id}"
+    wa_url = _whatsapp_contact_url(payload)
+    if wa_url:
+        return wa_url
+    return "https://t.me/streamflowmanager"
+
 
 def is_site_source(user_id: int) -> bool:
-    return get_source(user_id) == "site"
+    payload = get_form_data(user_id) or {}
+    return normalize_source_value(get_source(user_id), payload) in {SOURCE_SITE_TG, SOURCE_SITE_WHATSAPP}
 
 
 def lang_for(user_id: int) -> str:
@@ -2495,8 +2556,10 @@ def build_admin_stats_text() -> str:
         f"2️⃣ Полная заявка: {stage_counts.get('full', 0)}\n"
         f"Конверсия в полную заявку: {pct(stage_counts.get('full', 0), total_stage)}\n\n"
         "🧭 <b>Источники</b>\n"
-        f"Сайт: {source_counts.get('site', 0)}\n"
-        f"Бот: {source_counts.get('bot', 0)}\n"
+        f"Сайт + Telegram бот: {source_counts.get(SOURCE_SITE_TG, 0)}\n"
+        f"Сайт + WhatsApp: {source_counts.get(SOURCE_SITE_WHATSAPP, 0)}\n"
+        f"Telegram бот: {source_counts.get(SOURCE_TELEGRAM_BOT, 0)}\n"
+        f"WhatsApp бот: {source_counts.get(SOURCE_WHATSAPP_BOT, 0)}\n"
         f"Не определён: {source_counts.get('unknown', 0)}\n\n"
         "✅ <b>Качество обработки</b>\n"
         f"Аппрув среди обработанных: {pct(counts['accepted'], reviewed)}"
@@ -2607,8 +2670,8 @@ async def auto_request_info_task():
 
                 user_lang = submission_lang_for_user(user_id, data)
                 app_meta = get_application(user_id) or {}
-                source = str(app_meta.get("source") or "").strip().lower()
-                channel_url = stage2_channel_link(user_lang) if source == "site" else None
+                source = normalize_source_value(app_meta.get("source"), data)
+                channel_url = stage2_channel_link(user_lang) if source in {SOURCE_SITE_TG, SOURCE_SITE_WHATSAPP} else None
                 try:
                     await send_or_edit_user_text(
                         user_id,
@@ -3019,7 +3082,7 @@ def _admin_list_label(filter_key: str | None) -> str:
         "stage_quick": "Прошли только первый этап",
         "stage_full": "Полностью заполненные заявки",
         "src_site": "Источник: сайт",
-        "src_bot": "Источник: бот",
+        "src_bot": "Источник: боты",
         "src_unknown": "Источник: не определён",
         None: "Все заявки",
     }.get(filter_key, "Все заявки")
@@ -3045,8 +3108,15 @@ def _list_apps_by_filter(filter_key: str) -> list[dict]:
         expected = {"src_site": "site", "src_bot": "bot", "src_unknown": "unknown"}[filter_key]
         filtered: list[dict] = []
         for app in apps:
-            source = (get_source(int(app.get("user_id") or 0)) or "").strip().lower()
-            source_key = source if source in {"site", "bot"} else "unknown"
+            uid = int(app.get("user_id") or 0)
+            payload = get_form_data(uid) or {}
+            source = normalize_source_value(get_source(uid), payload)
+            if source in {SOURCE_SITE_TG, SOURCE_SITE_WHATSAPP}:
+                source_key = "site"
+            elif source in {SOURCE_TELEGRAM_BOT, SOURCE_WHATSAPP_BOT}:
+                source_key = "bot"
+            else:
+                source_key = "unknown"
             if source_key == expected:
                 filtered.append(app)
         return filtered
@@ -3085,16 +3155,12 @@ async def _render_admin_list_message(
 ):
     data = get_form_data(user_id) or {}
     is_full_stage = detect_application_stage(data) == APPLICATION_STAGE_FULL
-    effective_show_full = is_full_stage if show_full is None else bool(show_full)
+    effective_show_full = True
     allow_request_info = not is_full_stage
     contact_url = contact_url_for_user(user_id, data)
     label = _admin_list_label(filter_key)
     header = _build_admin_list_header(label, offset, total)
-    body = (
-        build_admin_full_text(data, user_id, item_status)
-        if effective_show_full
-        else build_admin_brief_text(data, user_id, item_status)
-    )
+    body = build_admin_full_text(data, user_id, item_status)
     photo_id = await _preferred_admin_photo(user_id, data)
     await update_admin_view_message(
         f"{header}{body}",
@@ -3984,7 +4050,7 @@ async def start_application(message: Message, state: FSMContext, user_id: int | 
             set_last_state(target_user_id, None)
             return False
     set_status(target_user_id, "new")
-    set_source(target_user_id, "bot")
+    set_source(target_user_id, SOURCE_TELEGRAM_BOT)
     set_last_state(target_user_id, ApplicationStates.name.state)
     return True
 
@@ -4117,7 +4183,7 @@ async def bootstrap_site_stage2_start(
     await state.update_data(**payload)
     set_form_data(message.from_user.id, payload)
     set_status(message.from_user.id, "new")
-    set_source(message.from_user.id, "site")
+    set_source(message.from_user.id, SOURCE_SITE_TG)
     await state.set_state(ApplicationStates.stage2_gate)
     set_last_state(message.from_user.id, ApplicationStates.stage2_gate.state)
     menu_caption = f"{t(lang, 'menu_caption')}\n\n{stage2_text(lang, 'menu_recommendation')}"
@@ -5650,8 +5716,20 @@ async def preview_confirm(call: CallbackQuery, state: FSMContext):
 
         await gentle_typing(call.message.chat.id)
 
-        current_source = get_source(user.id)
-        set_source(user.id, "site" if current_source == "site" else "bot")
+        current_source = normalize_source_value(get_source(user.id), data)
+        preferred = str((data or {}).get("preferred_contact") or "").strip().lower()
+        if current_source == SOURCE_UNKNOWN:
+            if preferred == "whatsapp":
+                resolved_source = SOURCE_SITE_WHATSAPP
+            elif preferred == "telegram":
+                resolved_source = SOURCE_SITE_TG
+            else:
+                resolved_source = SOURCE_TELEGRAM_BOT
+        elif current_source == SOURCE_SITE_TG and preferred == "whatsapp":
+            resolved_source = SOURCE_SITE_WHATSAPP
+        else:
+            resolved_source = current_source
+        set_source(user.id, resolved_source)
         set_status(user.id, "pending")
         set_last_apply_at(user.id)
         if append_application_row:
@@ -6360,7 +6438,7 @@ async def admin_card_toggle(call: CallbackQuery):
         _, uid_raw, mode, filter_key, offset_raw = call.data.split(":", 4)
         uid = int(uid_raw)
         offset = int(offset_raw)
-        show_full = str(mode).strip().lower() == "full"
+        show_full = True
         await send_admin_list(
             call,
             filter_key=filter_key,
@@ -6403,7 +6481,7 @@ async def admin_photos(call: CallbackQuery):
             await safe_call_answer(call, "Фото не найдено", show_alert=False)
             return
         status = get_status(uid) or "pending"
-        text = build_admin_full_text(data, uid, status) if is_full_stage else build_admin_brief_text(data, uid, status)
+        text = build_admin_full_text(data, uid, status)
         await update_admin_view_message(
             text,
             admin_list_view_keyboard(
@@ -6414,7 +6492,7 @@ async def admin_photos(call: CallbackQuery):
                 1,
                 ADMIN_LIST_LIMIT,
                 contact_url=contact_url,
-                show_full=is_full_stage,
+                show_full=True,
                 allow_request_info=not is_full_stage,
             ),
             photo_id
@@ -6766,14 +6844,10 @@ async def admin_view_photo(call: CallbackQuery):
         photo_type = parts[2]
         filter_key = parts[3]
         offset = int(parts[4])
-        mode = parts[5] if len(parts) > 5 else "brief"
         data = get_form_data(uid) or {}
         is_full_stage = detect_application_stage(data) == APPLICATION_STAGE_FULL
-        if len(parts) > 5:
-            show_full = str(mode).strip().lower() == "full"
-        else:
-            # Backward compatibility for old buttons without mode in callback.
-            show_full = is_full_stage
+        # Always show full card in admin list.
+        show_full = True
         contact_url = contact_url_for_user(uid, data)
         photo_key = "photo_face" if photo_type == "face" else "photo_full"
         photo_id = await _ensure_admin_photo_ref(uid, data, photo_key)
@@ -6792,11 +6866,7 @@ async def admin_view_photo(call: CallbackQuery):
             offset = total - 1
         page = offset // ADMIN_LIST_LIMIT + 1
         pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
-        body = (
-            build_admin_full_text(data, uid, status)
-            if show_full
-            else build_admin_brief_text(data, uid, status)
-        )
+        body = build_admin_full_text(data, uid, status)
         text = (
             f"🗂 <b>{label}</b>\n\n"
             f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"

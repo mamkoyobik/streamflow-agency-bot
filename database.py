@@ -652,7 +652,9 @@ def find_recent_site_lead_by_phone(phone: str | None, max_scan: int = 300) -> di
     with DB_LOCK:
         _execute(
             "SELECT user_id, data_json, updated_at FROM applications "
-            "WHERE status = 'pending' AND source = 'site' AND data_json IS NOT NULL "
+            "WHERE status = 'pending' "
+            "AND source IN ('site', 'site_tg', 'site_whatsapp') "
+            "AND data_json IS NOT NULL "
             "ORDER BY updated_at DESC "
             "LIMIT ?",
             (int(max_scan),)
@@ -807,7 +809,14 @@ def get_application_stage_counts(statuses: tuple[str, ...] | None = None) -> dic
 def get_source_counts(statuses: tuple[str, ...] | None = None) -> dict:
     status_filter = statuses or ("pending", "accepted", "rejected")
     if not status_filter:
-        return {"site": 0, "bot": 0, "unknown": 0, "total": 0}
+        return {
+            "site_tg": 0,
+            "site_whatsapp": 0,
+            "telegram_bot": 0,
+            "whatsapp_bot": 0,
+            "unknown": 0,
+            "total": 0,
+        }
 
     placeholders = ",".join("?" for _ in status_filter)
     query = (
@@ -819,16 +828,36 @@ def get_source_counts(statuses: tuple[str, ...] | None = None) -> dict:
         _execute(query, tuple(status_filter))
         rows = cursor.fetchall()
 
-    counts = {"site": 0, "bot": 0, "unknown": 0, "total": 0}
+    counts = {
+        "site_tg": 0,
+        "site_whatsapp": 0,
+        "telegram_bot": 0,
+        "whatsapp_bot": 0,
+        "unknown": 0,
+        "total": 0,
+    }
     for source, count in rows:
         normalized = str(source or "").strip().lower()
-        if normalized == "site":
-            counts["site"] += int(count or 0)
-        elif normalized == "bot":
-            counts["bot"] += int(count or 0)
+        amount = int(count or 0)
+        if normalized in {"site_tg", "site_telegram", "site+telegram"}:
+            counts["site_tg"] += amount
+        elif normalized in {"site_whatsapp", "site_wa", "site+whatsapp"}:
+            counts["site_whatsapp"] += amount
+        elif normalized == "site":
+            counts["site_tg"] += amount
+        elif normalized in {"telegram_bot", "tg_bot", "bot"}:
+            counts["telegram_bot"] += amount
+        elif normalized in {"whatsapp_bot", "wa_bot", "whatsapp"}:
+            counts["whatsapp_bot"] += amount
         else:
-            counts["unknown"] += int(count or 0)
-    counts["total"] = counts["site"] + counts["bot"] + counts["unknown"]
+            counts["unknown"] += amount
+    counts["total"] = (
+        counts["site_tg"]
+        + counts["site_whatsapp"]
+        + counts["telegram_bot"]
+        + counts["whatsapp_bot"]
+        + counts["unknown"]
+    )
     return counts
 
 

@@ -87,6 +87,35 @@ class WebServerWhatsAppTests(unittest.TestCase):
         self.assertEqual(web_server._parse_wa_yes_no_choice("yn_yes", "en"), "Да")
         self.assertEqual(web_server._parse_wa_yes_no_choice("yn_no", "en"), "Нет")
 
+    def test_whatsapp_link_has_no_stage2_key(self):
+        original_sender = web_server.INFOBIP_WHATSAPP_SENDER
+        try:
+            web_server.INFOBIP_WHATSAPP_SENDER = "447860089369"
+            link = web_server.build_whatsapp_stage2_link("abcdef123456", "en")
+            self.assertEqual(link, "https://wa.me/447860089369")
+            self.assertNotIn("text=", link)
+        finally:
+            web_server.INFOBIP_WHATSAPP_SENDER = original_sender
+
+    def test_start_after_done_returns_menu(self):
+        phone = "+10000000002"
+        web_server._save_wa_flow(
+            phone,
+            {"mode": "site_stage2", "step": "done", "lang": "en", "data": {}},
+        )
+        handled, reply = web_server.handle_whatsapp_application_message(
+            {
+                "from": phone,
+                "type": "TEXT",
+                "text": "start",
+                "media_url": "",
+            }
+        )
+        self.assertTrue(handled)
+        self.assertEqual(reply, web_server._wa_menu_text_for_step("en", "menu"))
+        flow = web_server._load_wa_flow(phone)
+        self.assertEqual(flow.get("step"), "menu")
+
     def test_interactive_living_uses_yes_no_buttons(self):
         phone = "+10000000002"
         web_server._save_wa_flow(

@@ -27,11 +27,7 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
         self.assertEqual(_row_callback_data(markup, 1, 0), "admin_request_info:123:view:pending:5")
         self.assertEqual(
             _row_callback_data(markup, 2, 0),
-            "admin_view_photo:123:face:pending:5:brief",
-        )
-        self.assertEqual(
-            _row_callback_data(markup, 4, 0),
-            "admin_card:123:full:pending:5",
+            "admin_view_photo:123:face:pending:5",
         )
 
     def test_pending_view_keyboard_can_disable_request_info(self):
@@ -66,7 +62,7 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
         )
         self.assertEqual(_row_callback_data(view_markup, 1, 0), "admin_send_model:321:view:accepted:2")
 
-    def test_view_keyboard_full_mode_preserves_photo_mode(self):
+    def test_view_keyboard_full_mode_keeps_photo_callbacks(self):
         markup = admin_list_view_keyboard(
             user_id=777,
             status="rejected",
@@ -78,11 +74,7 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
         )
         self.assertEqual(
             _row_callback_data(markup, 1, 0),
-            "admin_view_photo:777:face:reviewed:1:full",
-        )
-        self.assertEqual(
-            _row_callback_data(markup, 3, 0),
-            "admin_card:777:brief:reviewed:1",
+            "admin_view_photo:777:face:reviewed:1",
         )
 
 

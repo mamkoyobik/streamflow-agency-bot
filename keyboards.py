@@ -516,7 +516,6 @@ def admin_list_view_keyboard(
     allow_request_info: bool = True,
 ):
     contact = contact_url or f"tg://user?id={user_id}"
-    current_mode = "full" if show_full else "brief"
     rows = []
     if status == "pending":
         rows.append([
@@ -548,20 +547,15 @@ def admin_list_view_keyboard(
     rows.append([
         InlineKeyboardButton(
             text="📷 Анфас",
-            callback_data=f"admin_view_photo:{user_id}:face:{filter_key}:{offset}:{current_mode}",
+            callback_data=f"admin_view_photo:{user_id}:face:{filter_key}:{offset}",
         ),
         InlineKeyboardButton(
             text="🧍 Профиль",
-            callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}:{current_mode}",
+            callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}",
         )
     ])
     rows.append([
         InlineKeyboardButton(text="💬 Написать кандидату", url=contact)
-    ])
-    details_mode = "brief" if show_full else "full"
-    details_text = "🧾 Кратко" if show_full else "📄 Подробнее"
-    rows.append([
-        InlineKeyboardButton(text=details_text, callback_data=f"admin_card:{user_id}:{details_mode}:{filter_key}:{offset}")
     ])
 
     prev_offset = offset - limit

@@ -107,10 +107,10 @@ INFOBIP_FORWARD_TO_ADMIN = _env_flag("INFOBIP_FORWARD_TO_ADMIN", False)
 INFOBIP_RELAY_MODE = _env_flag("INFOBIP_RELAY_MODE", False)
 INFOBIP_BOT_ENABLED = _env_flag("INFOBIP_BOT_ENABLED", True)
 INFOBIP_INTERACTIVE_ENABLED = _env_flag("INFOBIP_INTERACTIVE_ENABLED", True)
-WHATSAPP_STAGE2_PREFILL = _env_flag("WHATSAPP_STAGE2_PREFILL", True)
 INFOBIP_API_KEY = (os.getenv("INFOBIP_API_KEY", "") or "").strip()
 INFOBIP_BASE_URL = (os.getenv("INFOBIP_BASE_URL", "") or "").strip().rstrip("/")
 INFOBIP_WHATSAPP_SENDER = (os.getenv("INFOBIP_WHATSAPP_SENDER", "") or "").strip()
+WA_MENU_IMAGE_URL = (os.getenv("WA_MENU_IMAGE_URL", "") or "").strip()
 WHATSAPP_FLOW_PREFIX = "wa_flow:"
 
 print(
@@ -567,13 +567,7 @@ def build_whatsapp_stage2_link(token: str, lang: str | None = None) -> str | Non
     base = build_whatsapp_base_link()
     if not base:
         return None
-    if not token:
-        return base
-    if not WHATSAPP_STAGE2_PREFILL:
-        return base
-    locale = normalize_site_lang(lang)
-    command = f"s2_{token}_{locale}"
-    return f"{base}?text={urllib.parse.quote(command, safe='')}"
+    return base
 try:
     from excel_export import append_application_row
 except Exception:
@@ -1214,13 +1208,11 @@ def _send_application_to_admin_from_whatsapp(
     data: dict,
     user_id: int,
     wa_phone: str | None,
-    source: str = "whatsapp",
+    source: str = "whatsapp_bot",
     status: str = "pending",
 ) -> None:
     if not BOT_TOKEN or not ADMIN_GROUP_ID:
         return
-    submitted_at = format_submit_time(datetime.now(timezone.utc).isoformat())
-    text = _build_admin_whatsapp_application_text(data, user_id, submitted_at)
     photo_refs_changed = False
     for field, filename in (
         ("photo_face", f"wa_face_{abs(user_id)}.jpg"),
@@ -1242,24 +1234,12 @@ def _send_application_to_admin_from_whatsapp(
             save_web_application(user_id, data, source=source, status=status)
         except Exception as err:
             print("Failed to persist Telegram photo file_id for WhatsApp application:", err)
-    payload = {
-        "chat_id": str(ADMIN_GROUP_ID),
-        "text": text,
-        "parse_mode": "HTML",
-        "disable_web_page_preview": "true",
-        "reply_markup": json.dumps(_build_admin_whatsapp_keyboard(user_id, wa_phone), ensure_ascii=False),
-    }
+    # Полная карточка больше не отправляется отдельным сообщением в админ-чат.
+    # Уведомление и просмотр выполняются через общее админ-меню.
     try:
-        result = telegram_request("sendMessage", payload)
-        message_id = (
-            result.get("result", {}).get("message_id")
-            if isinstance(result, dict)
-            else None
-        )
-        if message_id:
-            set_admin_message_id(user_id, int(message_id))
-    except Exception as err:
-        print("Failed to send whatsapp application card to admin:", err)
+        set_admin_message_id(user_id, None)
+    except Exception:
+        pass
 
 
 def infobip_send_whatsapp_text(to_phone: str | None, text: str) -> bool:
@@ -1298,6 +1278,56 @@ def infobip_send_whatsapp_text(to_phone: str | None, text: str) -> bool:
         return False
     except Exception as err:
         print("Infobip send failed:", err)
+        return False
+
+
+def _wa_menu_image_url() -> str:
+    if WA_MENU_IMAGE_URL:
+        return WA_MENU_IMAGE_URL
+    site = (SITE_URL or "https://streamflowagency.com").strip().rstrip("/")
+    return f"{site}/assets/favicon.png"
+
+
+def infobip_send_whatsapp_image(to_phone: str | None, image_url: str, caption: str | None = None) -> bool:
+    to_e164 = _wa_phone_e164(to_phone)
+    media_url = clean_text(image_url, max_len=MAX_URL_VALUE_LEN)
+    if not to_e164 or not media_url:
+        return False
+    if not INFOBIP_API_KEY or not INFOBIP_BASE_URL or not INFOBIP_WHATSAPP_SENDER:
+        return False
+    payload = {
+        "from": INFOBIP_WHATSAPP_SENDER,
+        "to": to_e164,
+        "content": {
+            "mediaUrl": media_url,
+        },
+    }
+    caption_value = clean_text(caption or "", max_len=500)
+    if caption_value:
+        payload["content"]["caption"] = caption_value
+    req = urllib.request.Request(
+        f"{INFOBIP_BASE_URL}/whatsapp/1/message/image",
+        data=json.dumps(payload, ensure_ascii=False).encode("utf-8"),
+        headers={
+            "Authorization": f"App {INFOBIP_API_KEY}",
+            "Content-Type": "application/json",
+            "Accept": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20, context=get_ssl_context()) as resp:
+            resp.read()
+        return True
+    except urllib.error.HTTPError as err:
+        try:
+            details = err.read().decode("utf-8", errors="replace")
+        except Exception:
+            details = ""
+        print(f"Infobip image send failed HTTP {err.code}: {details}")
+        return False
+    except Exception as err:
+        print("Infobip image send failed:", err)
         return False
 
 
@@ -1665,7 +1695,7 @@ def _build_site_stage2_flow(
             "step": "living",
             "lang": chosen_lang,
             "user_id": user_id,
-            "source": "site",
+            "source": "site_whatsapp",
             "data": stage_data,
         },
     )
@@ -1831,16 +1861,26 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
         return True, wa_t("ru", "choose_lang")
 
-    if mode != "site_stage2" and _is_wa_reset_command(text):
+    if _is_wa_reset_command(text):
         resumed_reply = _resume_site_stage2_from_phone(from_phone, message.get("profile_name"))
         if resumed_reply:
             return True, resumed_reply
-        _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
-        return True, wa_t("ru", "choose_lang")
+        if step in {"", "lang"}:
+            _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
+            return True, wa_t("ru", "choose_lang")
+        next_lang = normalize_site_lang(lang or "ru")
+        _save_wa_flow(
+            from_phone,
+            {
+                "mode": "quick",
+                "step": "menu",
+                "lang": next_lang,
+                "data": {"menu_logo_once": True},
+            },
+        )
+        return True, _wa_menu_text_for_step(next_lang, "menu")
 
     if step == "done":
-        if mode == "site_stage2":
-            return True, _wa_stage2_text(lang, "done")
         menu_key = _parse_wa_menu_choice(text)
         if menu_key == "menu":
             _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
@@ -1857,7 +1897,8 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         if menu_key:
             _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
             return True, _wa_menu_response(lang, menu_key, step="menu")
-        return True, f"{wa_t(lang, 'already')}\n\n{_wa_menu_text_for_step(lang, 'menu')}"
+        _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {"menu_logo_once": True}})
+        return True, _wa_menu_text_for_step(lang, "menu")
 
     if mode == "site_stage2":
         if step == "living":
@@ -1936,7 +1977,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                 return True, _wa_stage2_text(lang, "expired")
 
             try:
-                save_web_application(user_id, data, source="site", status="pending")
+                save_web_application(user_id, data, source="site_whatsapp", status="pending")
             except Exception as err:
                 print("Failed to save site->whatsapp application:", err)
                 return True, msg(lang, "db_error")
@@ -1947,7 +1988,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
                 except Exception as err:
                     print("Excel error (site->whatsapp):", err)
             try:
-                _send_application_to_admin_from_whatsapp(data, user_id, from_phone, source="site", status="pending")
+                _send_application_to_admin_from_whatsapp(data, user_id, from_phone, source="site_whatsapp", status="pending")
             except Exception as err:
                 print("Failed to send site->whatsapp application to admin:", err)
             try:
@@ -1959,15 +2000,19 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             _save_wa_flow(
                 from_phone,
                 {
-                    "mode": "site_stage2",
-                    "step": "done",
+                    "mode": "quick",
+                    "step": "menu",
                     "lang": lang,
                     "user_id": user_id,
-                    "source": "site",
-                    "data": {"last_user_id": user_id, "submitted_at": datetime.now(timezone.utc).isoformat()},
+                    "source": "site_whatsapp",
+                    "data": {
+                        "last_user_id": user_id,
+                        "submitted_at": datetime.now(timezone.utc).isoformat(),
+                        "menu_logo_once": True,
+                    },
                 },
             )
-            return True, _wa_stage2_text(lang, "done")
+            return True, f"{_wa_stage2_text(lang, 'done')}\n\n{_wa_menu_text_for_step(lang, 'menu')}"
 
         _save_wa_flow(from_phone, {"mode": "quick", "step": "lang", "lang": "ru", "data": {}})
         return True, wa_t("ru", "choose_lang")
@@ -2105,7 +2150,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, wa_t(lang, "invalid_phone")
 
         try:
-            save_web_application(user_id, data, source="whatsapp", status="pending")
+            save_web_application(user_id, data, source="whatsapp_bot", status="pending")
         except Exception as err:
             print("Failed to save whatsapp application:", err)
             return True, msg(lang, "db_error")
@@ -2116,7 +2161,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             except Exception as err:
                 print("Excel error (whatsapp):", err)
         try:
-            _send_application_to_admin_from_whatsapp(data, user_id, from_phone, source="whatsapp", status="pending")
+            _send_application_to_admin_from_whatsapp(data, user_id, from_phone, source="whatsapp_bot", status="pending")
         except Exception as err:
             print("Failed to send whatsapp application card to admin:", err)
         try:
@@ -2129,9 +2174,14 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             from_phone,
             {
                 "mode": "quick",
-                "step": "done",
+                "step": "menu",
                 "lang": lang,
-                "data": {"last_user_id": user_id, "submitted_at": datetime.now(timezone.utc).isoformat()},
+                "source": "whatsapp_bot",
+                "data": {
+                    "last_user_id": user_id,
+                    "submitted_at": datetime.now(timezone.utc).isoformat(),
+                    "menu_logo_once": True,
+                },
             },
         )
         return True, f"{wa_t(lang, 'saved')}\n\n{_wa_menu_text_for_step(lang, 'menu')}"
@@ -2608,10 +2658,11 @@ class Handler(SimpleHTTPRequestHandler):
             "site_lead_token": lead_token,
             "site_pending_user_id": user_id,
         }
+        site_source = "site_whatsapp" if preferred_contact == "whatsapp" else "site_tg"
 
         try:
             save_site_lead_payload(lead_token, payload)
-            save_web_application(user_id, payload, source="site", status="pending")
+            save_web_application(user_id, payload, source=site_source, status="pending")
             if append_application_row:
                 try:
                     append_application_row(payload, user_id, "pending")
@@ -2684,6 +2735,8 @@ class Handler(SimpleHTTPRequestHandler):
                 mark_seen = False
                 handled = False
                 reply = None
+                pre_flow = _load_wa_flow(message.get("from"))
+                pre_step = str((pre_flow or {}).get("step") or "").strip().lower()
                 try:
                     handled, reply = handle_whatsapp_application_message(message)
                     if handled:
@@ -2697,6 +2750,12 @@ class Handler(SimpleHTTPRequestHandler):
                             interactive_body = None
                             if post_step in {"menu", "menu_more", "living"} and reply:
                                 interactive_body = reply
+                            if post_step in {"menu", "menu_more"} and pre_step not in {"menu", "menu_more"}:
+                                menu_image_url = _wa_menu_image_url()
+                                try:
+                                    infobip_send_whatsapp_image(target_phone, menu_image_url)
+                                except Exception as err:
+                                    print("Failed to send whatsapp menu image:", err)
                             try:
                                 if send_wa_interactive_controls(target_phone, body_override=interactive_body):
                                     bot_replies += 1
