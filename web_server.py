@@ -2898,7 +2898,7 @@ def submission_country(data: dict) -> str:
 
 PROJECT_LABELS = {
     PROJECT_STREAMFLOW: "Streamflow Agency",
-    PROJECT_STARFLOW: "Starflow Corp",
+    PROJECT_STARFLOW: "Starflow Inc.",
 }
 
 

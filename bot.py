@@ -2160,7 +2160,7 @@ def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str
         "Быстрые разделы:\n"
         "• 🆕 Новые\n"
         "• 1️⃣ Управление проектом Streamflow Agency\n"
-        "• 2️⃣ Управление проектом Starflow Corp\n"
+        "• 2️⃣ Управление проектом Starflow Inc.\n"
         "• 1️⃣ Этап 1\n"
         "• 2️⃣ Этап 2\n"
         "• ✅ Решённые\n"
@@ -2234,7 +2234,7 @@ PROJECT_STREAMFLOW = "streamflow_agency"
 PROJECT_STARFLOW = "starflow_corp"
 PROJECT_LABELS = {
     PROJECT_STREAMFLOW: "Streamflow Agency",
-    PROJECT_STARFLOW: "Starflow Corp",
+    PROJECT_STARFLOW: "Starflow Inc.",
 }
 
 
@@ -3128,7 +3128,7 @@ def _admin_list_label(filter_key: str | None) -> str:
         "src_bot": "Источник: боты",
         "src_unknown": "Источник: не определён",
         "project_streamflow": "Проект: Streamflow Agency",
-        "project_starflow": "Проект: Starflow Corp",
+        "project_starflow": "Проект: Starflow Inc.",
         None: "Все заявки",
     }.get(filter_key, "Все заявки")
 

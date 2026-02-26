@@ -294,7 +294,7 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
         ],
         [
             InlineKeyboardButton(
-                text="2️⃣ Управление проектом Starflow Corp",
+                text="2️⃣ Управление проектом Starflow Inc.",
                 callback_data="admin_menu:project_starflow",
             ),
         ],
@@ -349,7 +349,7 @@ def admin_menu_applications_keyboard(counts: dict | None = None, stage_counts: d
         ],
         [
             InlineKeyboardButton(
-                text="2️⃣ Управление проектом Starflow Corp",
+                text="2️⃣ Управление проектом Starflow Inc.",
                 callback_data="admin_menu:project_starflow",
             ),
         ],

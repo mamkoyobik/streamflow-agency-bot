@@ -37,13 +37,13 @@ class WebServerProjectTests(unittest.TestCase):
         original_star_site = web_server.STARFLOW_SITE_URL
         try:
             web_server.SITE_URL = "https://streamflowagency.com"
-            web_server.STARFLOW_SITE_URL = "https://starflowcorp.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowinc.com"
             self.assertEqual(
-                web_server.infer_project_from_host("starflowcorp.com"),
+                web_server.infer_project_from_host("starflowinc.com"),
                 web_server.PROJECT_STARFLOW,
             )
             self.assertEqual(
-                web_server.infer_project_from_host("www.starflowcorp.com"),
+                web_server.infer_project_from_host("www.starflowinc.com"),
                 web_server.PROJECT_STARFLOW,
             )
             self.assertEqual(
@@ -63,9 +63,9 @@ class WebServerProjectTests(unittest.TestCase):
         original_star_site = web_server.STARFLOW_SITE_URL
         try:
             web_server.SITE_URL = "https://streamflowagency.com"
-            web_server.STARFLOW_SITE_URL = "https://starflowcorp.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowinc.com"
             self.assertEqual(web_server.homepage_path_for_host("streamflowagency.com"), "/index.html")
-            self.assertEqual(web_server.homepage_path_for_host("starflowcorp.com"), "/starflow.html")
+            self.assertEqual(web_server.homepage_path_for_host("starflowinc.com"), "/starflow.html")
             self.assertEqual(web_server.homepage_path_for_host(""), "/index.html")
         finally:
             web_server.SITE_URL = original_site
@@ -76,9 +76,9 @@ class WebServerProjectTests(unittest.TestCase):
         original_star_site = web_server.STARFLOW_SITE_URL
         try:
             web_server.SITE_URL = "https://streamflowagency.com"
-            web_server.STARFLOW_SITE_URL = "https://starflowcorp.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowinc.com"
             self.assertEqual(
-                web_server.resolve_project("streamflow", host="starflowcorp.com"),
+                web_server.resolve_project("streamflow", host="starflowinc.com"),
                 web_server.PROJECT_STREAMFLOW,
             )
             self.assertEqual(
@@ -86,7 +86,7 @@ class WebServerProjectTests(unittest.TestCase):
                 web_server.PROJECT_STARFLOW,
             )
             self.assertEqual(
-                web_server.resolve_project("", host="starflowcorp.com"),
+                web_server.resolve_project("", host="starflowinc.com"),
                 web_server.PROJECT_STARFLOW,
             )
             self.assertEqual(
