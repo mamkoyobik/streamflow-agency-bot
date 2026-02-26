@@ -20,14 +20,37 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-03">
+  <link rel="stylesheet" href="starflow.css?v=20260226-04">
 </head>
-<body data-page="starflow">
+<body data-page="starflow" class="is-loading">
   <canvas id="star-canvas" aria-hidden="true"></canvas>
   <div class="backdrop-noise" aria-hidden="true"></div>
   <div class="backdrop-orb orb-a" aria-hidden="true"></div>
   <div class="backdrop-orb orb-b" aria-hidden="true"></div>
   <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
+
+  <div class="site-loader" id="site-loader" role="status" aria-live="polite">
+    <div class="site-loader-card">
+      <div class="site-loader-ring" aria-hidden="true"></div>
+      <p class="site-loader-brand">Starflow Inc.</p>
+      <p class="site-loader-text">Loading interface...</p>
+    </div>
+  </div>
+
+  <div class="lang-gate" id="lang-gate" hidden>
+    <div class="lang-gate-backdrop" data-lang-close></div>
+    <div class="lang-gate-card">
+      <p class="lang-gate-eyebrow">Starflow Inc.</p>
+      <h2 data-i18n="langGate.title">Choose language</h2>
+      <p data-i18n="langGate.subtitle">Select your language to continue</p>
+      <div class="lang-gate-options">
+        <button type="button" class="lang-gate-btn" data-lang-choice="ru">RU - Русский</button>
+        <button type="button" class="lang-gate-btn" data-lang-choice="en">EN - English</button>
+        <button type="button" class="lang-gate-btn" data-lang-choice="pt">PT - Português</button>
+        <button type="button" class="lang-gate-btn" data-lang-choice="es">ES - Español</button>
+      </div>
+    </div>
+  </div>
 
   <header class="site-header">
     <div class="inner">
@@ -46,6 +69,7 @@
 
       <div class="header-tools">
         <select id="lang-select" aria-label="Language">
+          <option value="ru">RU</option>
           <option value="en">EN</option>
           <option value="pt">PT</option>
           <option value="es">ES</option>
@@ -211,23 +235,107 @@
           <h2 data-i18n="faq.title">Common objections</h2>
         </div>
 
-        <div class="faq-grid">
-          <article class="faq-card reveal" data-reveal-delay="60">
-            <h3 data-i18n="faq.exp.q">I have no experience</h3>
-            <p data-i18n="faq.exp.a">We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.</p>
-            <ul>
-              <li data-i18n="faq.exp.l1">What experience do you have (social, outreach, ads)?</li>
-              <li data-i18n="faq.exp.l2">Are you ready to learn from our materials?</li>
-              <li data-i18n="faq.exp.l3">How much time can you dedicate?</li>
-            </ul>
+        <div class="faq-accordion">
+          <article class="faq-item is-open reveal" data-reveal-delay="40" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="true" data-faq-toggle>
+              <span data-i18n="faq.exp.q">I have no experience</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel-wrap" data-faq-panel>
+              <div class="faq-panel">
+                <p data-i18n="faq.exp.a">We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.</p>
+                <p class="faq-subtitle" data-i18n="faq.exp.follow">Clarify with partner:</p>
+                <ul>
+                  <li data-i18n="faq.exp.l1">What experience do you have (social, outreach, ads)?</li>
+                  <li data-i18n="faq.exp.l2">Are you ready to learn from our materials?</li>
+                  <li data-i18n="faq.exp.l3">How much time can you dedicate?</li>
+                </ul>
+              </div>
+            </div>
           </article>
-          <article class="faq-card reveal" data-reveal-delay="120">
-            <h3 data-i18n="faq.mlm.q">Is this MLM / pyramid?</h3>
-            <p data-i18n="faq.mlm.a">No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.</p>
-            <ul>
-              <li data-i18n="faq.mlm.l1">MLM: pay to join + build multi-level hierarchy.</li>
-              <li data-i18n="faq.mlm.l2">Here: zero investment, one level, payment for result.</li>
-            </ul>
+
+          <article class="faq-item reveal" data-reveal-delay="80" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+              <span data-i18n="faq.mlm.q">Is this MLM / pyramid?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel-wrap" data-faq-panel>
+              <div class="faq-panel">
+                <p data-i18n="faq.mlm.a">No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.</p>
+                <p class="faq-subtitle" data-i18n="faq.mlm.follow">Difference:</p>
+                <ul>
+                  <li data-i18n="faq.mlm.l1">MLM: pay to join + build multi-level hierarchy.</li>
+                  <li data-i18n="faq.mlm.l2">Here: zero investment, one level, payment for result.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="faq-item reveal" data-reveal-delay="120" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+              <span data-i18n="faq.team.q">Do I need a big team?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel-wrap" data-faq-panel>
+              <div class="faq-panel">
+                <p data-i18n="faq.team.a">No. Team size does not matter. A 50-person team and one freelancer are both valid formats.</p>
+                <ul>
+                  <li data-i18n="faq.team.l1">Key requirement: ability to attract people.</li>
+                  <li data-i18n="faq.team.l2">Performance matters, not headcount.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="faq-item reveal" data-reveal-delay="160" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+              <span data-i18n="faq.sources.q">Which traffic sources are allowed?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel-wrap" data-faq-panel>
+              <div class="faq-panel">
+                <p data-i18n="faq.sources.a">Any source is allowed if it brings qualified candidates to interviews.</p>
+                <ul>
+                  <li data-i18n="faq.sources.l1">Target ads, job boards, mailing lists, DM, cold outreach.</li>
+                  <li data-i18n="faq.sources.l2">Method is flexible, final interview quality is the KPI.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="faq-item reveal" data-reveal-delay="200" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+              <span data-i18n="faq.pay.q">How do payout and support work?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel-wrap" data-faq-panel>
+              <div class="faq-panel">
+                <p data-i18n="faq.pay.a">You get paid under CPA model for successful interviews, and we give operational support from day one.</p>
+                <ul>
+                  <li data-i18n="faq.pay.l1">$20-40 per successful interview.</li>
+                  <li data-i18n="faq.pay.l2">Payouts every Sunday in USDT.</li>
+                  <li data-i18n="faq.pay.l3">No limits on volume.</li>
+                  <li data-i18n="faq.pay.l4">CRM, scripts and materials are provided.</li>
+                </ul>
+              </div>
+            </div>
+          </article>
+
+          <article class="faq-item reveal" data-reveal-delay="240" data-faq-item>
+            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+              <span data-i18n="faq.geo.q">What GEO and candidate types do you need?</span>
+              <span class="faq-chevron" aria-hidden="true"></span>
+            </button>
+            <div class="faq-panel-wrap" data-faq-panel>
+              <div class="faq-panel">
+                <p data-i18n="faq.geo.a">We operate with clear candidate profiles and regional focus.</p>
+                <ul>
+                  <li data-i18n="faq.geo.l1">Female candidates 18-27 for streamer roles.</li>
+                  <li data-i18n="faq.geo.l2">Male candidates 18-30 for moderation roles.</li>
+                  <li data-i18n="faq.geo.l3">Models: Europe + LatAm. Operators: Europe + LatAm + Asia.</li>
+                </ul>
+              </div>
+            </div>
           </article>
         </div>
       </div>
@@ -238,11 +346,11 @@
         <div class="apply-copy reveal" data-reveal-delay="0">
           <p class="eyebrow" data-i18n="apply.overline">Application</p>
           <h2 data-i18n="apply.title">Start as a partner</h2>
-          <p>Fill the short form and continue directly in messenger.</p>
+          <p data-i18n="apply.copy">Fill the short form and continue directly in messenger.</p>
           <ul class="apply-hints">
-            <li>No bureaucracy</li>
-            <li>Direct manager contact</li>
-            <li>Fast launch with scripts</li>
+            <li data-i18n="apply.hint1">No bureaucracy</li>
+            <li data-i18n="apply.hint2">Direct manager contact</li>
+            <li data-i18n="apply.hint3">Fast launch with scripts</li>
           </ul>
         </div>
 
@@ -304,6 +412,6 @@
     </div>
   </footer>
 
-  <script src="starflow.js?v=20260226-03" defer></script>
+  <script src="starflow.js?v=20260226-04" defer></script>
 </body>
 </html>

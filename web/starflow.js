@@ -2,12 +2,123 @@
   'use strict';
 
   const LANG_STORAGE_KEY = 'starflow_lang_v2';
-  const SUPPORTED_LANGS = ['en', 'pt', 'es'];
-  const DEFAULT_LANG = 'en';
+  const SUPPORTED_LANGS = ['ru', 'en', 'pt', 'es'];
+  const DEFAULT_LANG = 'ru';
   const PROJECT_KEY = 'starflow_corp';
 
   const I18N = {
+    ru: {
+      'langGate.title': 'Выберите язык',
+      'langGate.subtitle': 'Выберите язык интерфейса перед началом работы',
+      'nav.partners': 'Типы партнёров',
+      'nav.terms': 'Условия',
+      'nav.flow': 'Партнёрский флоу',
+      'nav.faq': 'FAQ',
+      'nav.apply': 'Заявка',
+      'cta.telegram': 'Telegram',
+      'cta.apply': 'Оставить заявку',
+      'hero.overline': 'Партнёрская сеть для стриминговых компаний',
+      'hero.title': 'Приводи людей.<br>Остальное закрываем мы.',
+      'hero.lead': 'Арбитражные команды, колл-центры, агентства и соло-фрилансеры. Размер команды не важен. Важен только ваш результат в привлечении кандидатов.',
+      'hero.signal': 'Активный оффер',
+      'hero.signalMeta': 'Выплаты каждое воскресенье в USDT',
+      'kpi.years': 'лет в трафике',
+      'kpi.max': 'максимум CPA за интервью',
+      'kpi.weekly': 'цикл выплат',
+      'partners.overline': 'Кого ищем',
+      'partners.title': 'Портрет партнёра',
+      'partners.arb.title': 'Арбитражная команда',
+      'partners.arb.text': 'Умеют работать с креативами, воронками, конверсией и оптимизацией.',
+      'partners.call.title': 'Колл-центр',
+      'partners.call.text': 'Есть операторы на звонках весь день. Нужен только оффер и скрипт.',
+      'partners.agency.title': 'Маркетинговое агентство',
+      'partners.agency.text': 'Процессы лидогенерации уже выстроены и работают.',
+      'partners.solo.title': 'Соло-фрилансер',
+      'partners.solo.text': 'Самостоятельно запускает рекламу/аутрич и дает результат.',
+      'partners.notice1': 'Формат не важен: команда из 50 человек или один специалист с ноутбуком.',
+      'partners.notice2': 'Важно одно: вы умеете привлекать людей.',
+      'terms.overline': 'Детали оффера',
+      'terms.title': 'Как работает это предложение',
+      'terms.whatWeDo.title': 'Что делаем мы',
+      'terms.whatWeDo.text': 'Ищем девушек 18-27 на позиции стримерш и парней 18-30 на позиции модераторов. Компании платят нам за квалифицированные интервью.',
+      'terms.partnerDoes.title': 'Что делает партнёр',
+      'terms.partnerDoes.text': 'Вы приводите кандидатов на интервью любым источником: таргет, объявления, DM, рассылки, job boards, холодный outreach.',
+      'terms.conditions.title': 'Условия',
+      'terms.conditions.cpa': 'CPA модель: $20-40 за каждое успешное интервью',
+      'terms.conditions.payout': 'Выплаты каждое воскресенье в USDT',
+      'terms.conditions.limit': 'Без лимитов: больше кандидатов - больше доход',
+      'terms.conditions.assets': 'Даём CRM, скрипты и материалы',
+      'terms.geo.title': 'GEO',
+      'terms.geo.text': 'Модели: Европа, LatAm. Операторы: Европа, LatAm, Азия.',
+      'flow.overline': 'Партнёрский флоу',
+      'flow.title': 'От трафика до выплаты',
+      'flow.step1': 'Запускаете трафик из любого источника.',
+      'flow.step2': 'Кандидаты доходят до этапа интервью.',
+      'flow.step3': 'Квалифицированные интервью фиксируются в CRM.',
+      'flow.step4': 'Получаете еженедельную выплату в USDT.',
+      'faq.title': 'Частые вопросы',
+      'faq.exp.q': 'У меня нет опыта',
+      'faq.exp.a': 'Мы даём CRM и скрипты. Если умеете находить людей, разберётесь. Метод не важен, важен результат.',
+      'faq.exp.follow': 'Уточните у партнёра:',
+      'faq.exp.l1': 'Какой у вас опыт (соцсети, outreach, реклама)?',
+      'faq.exp.l2': 'Готовы учиться по нашим материалам?',
+      'faq.exp.l3': 'Сколько времени готовы уделять?',
+      'faq.mlm.q': 'Это MLM / пирамида?',
+      'faq.mlm.a': 'Нет. Вход бесплатный. Нет многоуровневой структуры. Вы приводите кандидатов, они проходят интервью, вы получаете оплату.',
+      'faq.mlm.follow': 'Разница:',
+      'faq.mlm.l1': 'MLM: оплата за вход + построение уровней.',
+      'faq.mlm.l2': 'Здесь: ноль вложений, один уровень, оплата за результат.',
+      'faq.team.q': 'Нужна большая команда?',
+      'faq.team.a': 'Нет. Размер команды не важен: подойдёт как агентство из 50 человек, так и один специалист.',
+      'faq.team.l1': 'Ключевое требование: умеете привлекать людей.',
+      'faq.team.l2': 'Важен результат, а не количество людей в штате.',
+      'faq.sources.q': 'Какие источники трафика разрешены?',
+      'faq.sources.a': 'Любые, если приводят квалифицированных кандидатов на интервью.',
+      'faq.sources.l1': 'Таргет, job boards, рассылки, DM, холодный outreach.',
+      'faq.sources.l2': 'Метод не ограничен, KPI - качество и доходимость до интервью.',
+      'faq.pay.q': 'Как устроены выплаты и поддержка?',
+      'faq.pay.a': 'Вы получаете оплату по CPA за успешные интервью, а мы даём операционную поддержку с первого дня.',
+      'faq.pay.l1': '$20-40 за каждое успешное интервью.',
+      'faq.pay.l2': 'Выплаты каждое воскресенье в USDT.',
+      'faq.pay.l3': 'Без лимитов по объёму.',
+      'faq.pay.l4': 'Предоставляем CRM, скрипты и материалы.',
+      'faq.geo.q': 'Какие GEO и типы кандидатов нужны?',
+      'faq.geo.a': 'Работаем по чётким возрастным и региональным профилям.',
+      'faq.geo.l1': 'Девушки 18-27 для стримерских ролей.',
+      'faq.geo.l2': 'Парни 18-30 для ролей модерации.',
+      'faq.geo.l3': 'Модели: Европа и LatAm. Операторы: Европа, LatAm и Азия.',
+      'apply.overline': 'Заявка',
+      'apply.title': 'Старт как партнёр',
+      'apply.copy': 'Заполните короткую форму и продолжите в удобном мессенджере.',
+      'apply.hint1': 'Без бюрократии',
+      'apply.hint2': 'Прямой контакт с менеджером',
+      'apply.hint3': 'Быстрый запуск со скриптами',
+      'form.name': 'ФИО',
+      'form.contact': 'Контактные данные',
+      'form.contactPlaceholderTelegram': '@username',
+      'form.contactPlaceholderWhatsapp': '+7 900 000 00 00',
+      'form.email': 'Email для регистрации',
+      'form.birth': 'Дата рождения',
+      'form.phone': 'Номер телефона',
+      'form.submit': 'Отправить заявку',
+      'form.next': 'Продолжить в мессенджере',
+      'form.telegram': 'Открыть Telegram',
+      'form.whatsapp': 'Открыть WhatsApp',
+      'msg.sending': 'Отправляем заявку...',
+      'msg.success': 'Заявка успешно отправлена.',
+      'msg.required': 'Заполните все обязательные поля.',
+      'msg.name': 'Введите корректное ФИО.',
+      'msg.email': 'Введите корректный email.',
+      'msg.phone': 'Телефон должен быть в международном формате.',
+      'msg.birth': 'Формат даты: ДД.ММ.ГГГГ и возраст 18+.',
+      'msg.telegram': 'Формат Telegram: @username',
+      'msg.whatsapp': 'WhatsApp должен быть в международном формате.',
+      'msg.error': 'Не удалось отправить заявку. Попробуйте ещё раз.',
+      'msg.nextMissing': 'Ссылки пока не настроены. Свяжитесь с менеджером в Telegram.',
+    },
     en: {
+      'langGate.title': 'Choose language',
+      'langGate.subtitle': 'Select interface language before you continue',
       'nav.partners': 'Partner Types',
       'nav.terms': 'Terms',
       'nav.flow': 'Partner Flow',
@@ -57,15 +168,40 @@
       'faq.title': 'Common objections',
       'faq.exp.q': 'I have no experience',
       'faq.exp.a': 'We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.',
+      'faq.exp.follow': 'Clarify with partner:',
       'faq.exp.l1': 'What experience do you have (social, outreach, ads)?',
       'faq.exp.l2': 'Are you ready to learn from our materials?',
       'faq.exp.l3': 'How much time can you dedicate?',
       'faq.mlm.q': 'Is this MLM / pyramid?',
       'faq.mlm.a': 'No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.',
+      'faq.mlm.follow': 'Difference:',
       'faq.mlm.l1': 'MLM: pay to join + build multi-level hierarchy.',
       'faq.mlm.l2': 'Here: zero investment, one level, payment for result.',
+      'faq.team.q': 'Do I need a big team?',
+      'faq.team.a': 'No. Team size does not matter. A 50-person team and one freelancer are both valid formats.',
+      'faq.team.l1': 'Key requirement: ability to attract people.',
+      'faq.team.l2': 'Performance matters, not headcount.',
+      'faq.sources.q': 'Which traffic sources are allowed?',
+      'faq.sources.a': 'Any source is allowed if it brings qualified candidates to interviews.',
+      'faq.sources.l1': 'Target ads, job boards, mailing lists, DM, cold outreach.',
+      'faq.sources.l2': 'Method is flexible, final interview quality is the KPI.',
+      'faq.pay.q': 'How do payout and support work?',
+      'faq.pay.a': 'You get paid under CPA model for successful interviews, and we give operational support from day one.',
+      'faq.pay.l1': '$20-40 per successful interview.',
+      'faq.pay.l2': 'Payouts every Sunday in USDT.',
+      'faq.pay.l3': 'No limits on volume.',
+      'faq.pay.l4': 'CRM, scripts and materials are provided.',
+      'faq.geo.q': 'What GEO and candidate types do you need?',
+      'faq.geo.a': 'We operate with clear candidate profiles and regional focus.',
+      'faq.geo.l1': 'Female candidates 18-27 for streamer roles.',
+      'faq.geo.l2': 'Male candidates 18-30 for moderation roles.',
+      'faq.geo.l3': 'Models: Europe + LatAm. Operators: Europe + LatAm + Asia.',
       'apply.overline': 'Application',
       'apply.title': 'Start as a partner',
+      'apply.copy': 'Fill the short form and continue directly in messenger.',
+      'apply.hint1': 'No bureaucracy',
+      'apply.hint2': 'Direct manager contact',
+      'apply.hint3': 'Fast launch with scripts',
       'form.name': 'Full name',
       'form.contact': 'Contact details',
       'form.contactPlaceholderTelegram': '@username',
@@ -90,6 +226,8 @@
       'msg.nextMissing': 'Links are not configured yet. Contact manager in Telegram.',
     },
     pt: {
+      'langGate.title': 'Escolha o idioma',
+      'langGate.subtitle': 'Escolha o idioma da interface para continuar',
       'nav.partners': 'Tipos de Parceiro',
       'nav.terms': 'Condições',
       'nav.flow': 'Fluxo do Parceiro',
@@ -139,15 +277,40 @@
       'faq.title': 'Objeções comuns',
       'faq.exp.q': 'Não tenho experiência',
       'faq.exp.a': 'Nós fornecemos CRM e scripts. Se você sabe encontrar pessoas, vai conseguir. O método não importa, o resultado sim.',
+      'faq.exp.follow': 'Alinhe com o partner:',
       'faq.exp.l1': 'Qual experiência você já tem (social, outreach, ads)?',
       'faq.exp.l2': 'Está pronto para aprender com nossos materiais?',
       'faq.exp.l3': 'Quanto tempo pode dedicar?',
       'faq.mlm.q': 'Isso é MLM / pirâmide?',
       'faq.mlm.a': 'Não. Você não paga para entrar. Não há estrutura multinível. Você traz candidatos, eles passam entrevista, você recebe.',
+      'faq.mlm.follow': 'Diferença:',
       'faq.mlm.l1': 'MLM: paga entrada + constrói níveis.',
       'faq.mlm.l2': 'Aqui: zero investimento, um nível, pagamento por resultado.',
+      'faq.team.q': 'Preciso de uma equipe grande?',
+      'faq.team.a': 'Não. O tamanho da equipe não importa. Vale time de 50 pessoas ou freelancer solo.',
+      'faq.team.l1': 'Requisito principal: saber atrair pessoas.',
+      'faq.team.l2': 'Importa o resultado, não o headcount.',
+      'faq.sources.q': 'Quais fontes de tráfego são permitidas?',
+      'faq.sources.a': 'Qualquer fonte é permitida se trouxer candidatos qualificados para entrevista.',
+      'faq.sources.l1': 'Anúncios, job boards, listas, DM, outreach frio.',
+      'faq.sources.l2': 'O método é flexível; KPI é qualidade da entrevista.',
+      'faq.pay.q': 'Como funcionam pagamento e suporte?',
+      'faq.pay.a': 'Você recebe no modelo CPA por entrevista aprovada e recebe suporte operacional desde o início.',
+      'faq.pay.l1': '$20-40 por entrevista bem-sucedida.',
+      'faq.pay.l2': 'Pagamentos todo domingo em USDT.',
+      'faq.pay.l3': 'Sem limite de volume.',
+      'faq.pay.l4': 'Fornecemos CRM, scripts e materiais.',
+      'faq.geo.q': 'Quais GEOs e perfis de candidatos vocês precisam?',
+      'faq.geo.a': 'Trabalhamos com perfis claros de idade e região.',
+      'faq.geo.l1': 'Mulheres 18-27 para funções de streamer.',
+      'faq.geo.l2': 'Homens 18-30 para funções de moderação.',
+      'faq.geo.l3': 'Modelos: Europa + LatAm. Operadores: Europa + LatAm + Ásia.',
       'apply.overline': 'Aplicação',
       'apply.title': 'Comece como parceiro',
+      'apply.copy': 'Preencha o formulário curto e continue no mensageiro.',
+      'apply.hint1': 'Sem burocracia',
+      'apply.hint2': 'Contato direto com gerente',
+      'apply.hint3': 'Lançamento rápido com scripts',
       'form.name': 'Nome completo',
       'form.contact': 'Dados de contato',
       'form.contactPlaceholderTelegram': '@usuario',
@@ -172,6 +335,8 @@
       'msg.nextMissing': 'Links ainda não configurados. Fale com o manager no Telegram.',
     },
     es: {
+      'langGate.title': 'Elige idioma',
+      'langGate.subtitle': 'Elige el idioma de la interfaz para continuar',
       'nav.partners': 'Tipos de Partner',
       'nav.terms': 'Condiciones',
       'nav.flow': 'Flujo del Partner',
@@ -221,15 +386,40 @@
       'faq.title': 'Objeciones comunes',
       'faq.exp.q': 'No tengo experiencia',
       'faq.exp.a': 'Damos CRM y scripts. Si sabes llegar a la gente, lo resolverás. El método no importa, importa el resultado.',
+      'faq.exp.follow': 'Aclarar con el partner:',
       'faq.exp.l1': '¿Qué experiencia tienes (social, outreach, ads)?',
       'faq.exp.l2': '¿Listo para aprender con nuestros materiales?',
       'faq.exp.l3': '¿Cuánto tiempo puedes dedicar?',
       'faq.mlm.q': '¿Es MLM / pirámide?',
       'faq.mlm.a': 'No. No pagas para entrar. No hay estructura multinivel. Traes candidatos, pasan entrevistas, cobras.',
+      'faq.mlm.follow': 'Diferencia:',
       'faq.mlm.l1': 'MLM: pagas entrada + construyes niveles.',
       'faq.mlm.l2': 'Aquí: cero inversión, un nivel, pago por resultado.',
+      'faq.team.q': '¿Necesito un equipo grande?',
+      'faq.team.a': 'No. El tamaño del equipo no importa. Sirve un equipo grande o un freelancer solo.',
+      'faq.team.l1': 'Requisito clave: saber atraer personas.',
+      'faq.team.l2': 'Importa el resultado, no el tamaño del equipo.',
+      'faq.sources.q': '¿Qué fuentes de tráfico están permitidas?',
+      'faq.sources.a': 'Cualquier fuente sirve si trae candidatos calificados a entrevistas.',
+      'faq.sources.l1': 'Ads, job boards, mailing, DM, outreach en frío.',
+      'faq.sources.l2': 'El método es flexible; el KPI es la calidad de entrevista.',
+      'faq.pay.q': '¿Cómo funcionan pagos y soporte?',
+      'faq.pay.a': 'Cobras en modelo CPA por entrevistas exitosas y te damos soporte operativo desde el día uno.',
+      'faq.pay.l1': '$20-40 por entrevista exitosa.',
+      'faq.pay.l2': 'Pagos cada domingo en USDT.',
+      'faq.pay.l3': 'Sin límites de volumen.',
+      'faq.pay.l4': 'Damos CRM, scripts y materiales.',
+      'faq.geo.q': '¿Qué GEO y perfiles de candidatos necesitan?',
+      'faq.geo.a': 'Trabajamos con perfiles definidos por edad y región.',
+      'faq.geo.l1': 'Mujeres 18-27 para roles de streamer.',
+      'faq.geo.l2': 'Hombres 18-30 para roles de moderación.',
+      'faq.geo.l3': 'Modelos: Europa + LatAm. Operadores: Europa + LatAm + Asia.',
       'apply.overline': 'Aplicación',
       'apply.title': 'Empieza como partner',
+      'apply.copy': 'Completa el formulario corto y continúa en mensajería.',
+      'apply.hint1': 'Sin burocracia',
+      'apply.hint2': 'Contacto directo con manager',
+      'apply.hint3': 'Lanzamiento rápido con scripts',
       'form.name': 'Nombre completo',
       'form.contact': 'Datos de contacto',
       'form.contactPlaceholderTelegram': '@usuario',
@@ -255,8 +445,10 @@
     },
   };
 
+  const storedLang = getStoredLang();
   const state = {
-    lang: getInitialLang(),
+    lang: storedLang || DEFAULT_LANG,
+    hasStoredLang: Boolean(storedLang),
     config: {
       telegram_link: 'https://t.me/starflowcorp',
       bot_link: null,
@@ -271,6 +463,10 @@
     birth: document.getElementById('birthdate'),
     phone: document.getElementById('phone'),
     lang: document.getElementById('lang-select'),
+    loader: document.getElementById('site-loader'),
+    langGate: document.getElementById('lang-gate'),
+    langGateChoices: document.querySelectorAll('[data-lang-choice]'),
+    langGateClose: document.querySelectorAll('[data-lang-close]'),
     preferred: document.getElementById('preferred-contact'),
     contactValue: document.getElementById('contact-value'),
     nextBox: document.getElementById('next-actions'),
@@ -278,7 +474,7 @@
     nextWhatsapp: document.getElementById('next-whatsapp'),
   };
 
-  function getInitialLang() {
+  function getStoredLang() {
     try {
       const stored = localStorage.getItem(LANG_STORAGE_KEY);
       if (SUPPORTED_LANGS.includes(stored)) {
@@ -287,7 +483,7 @@
     } catch (err) {
       // ignore
     }
-    return DEFAULT_LANG;
+    return null;
   }
 
   function persistLang(lang) {
@@ -304,6 +500,9 @@
 
   function applyI18n() {
     document.documentElement.lang = state.lang;
+    if (dom.lang) {
+      dom.lang.value = state.lang;
+    }
 
     document.querySelectorAll('[data-i18n]').forEach((node) => {
       const key = node.getAttribute('data-i18n');
@@ -328,6 +527,83 @@
     }
 
     updateContactPlaceholder();
+  }
+
+  function setLanguage(lang, persist = true) {
+    const next = SUPPORTED_LANGS.includes(lang) ? lang : DEFAULT_LANG;
+    state.lang = next;
+    if (persist) {
+      persistLang(next);
+      state.hasStoredLang = true;
+    }
+    applyI18n();
+  }
+
+  function openLangGate() {
+    if (!dom.langGate) {
+      return;
+    }
+    dom.langGate.hidden = false;
+    document.body.classList.add('lang-gate-open');
+  }
+
+  function closeLangGate() {
+    if (!dom.langGate) {
+      return;
+    }
+    dom.langGate.hidden = true;
+    document.body.classList.remove('lang-gate-open');
+  }
+
+  function initLanguageGate() {
+    if (!dom.langGate) {
+      return;
+    }
+    dom.langGateChoices.forEach((button) => {
+      button.addEventListener('click', () => {
+        const lang = button.getAttribute('data-lang-choice') || DEFAULT_LANG;
+        setLanguage(lang, true);
+        closeLangGate();
+      });
+    });
+    dom.langGateClose.forEach((node) => {
+      node.addEventListener('click', () => {
+        closeLangGate();
+      });
+    });
+
+    if (!state.hasStoredLang) {
+      openLangGate();
+    }
+  }
+
+  function initLoader() {
+    if (!dom.loader) {
+      document.body.classList.remove('is-loading');
+      return;
+    }
+    const startedAt = performance.now();
+    let hidden = false;
+
+    const hide = () => {
+      if (hidden) {
+        return;
+      }
+      hidden = true;
+      const elapsed = performance.now() - startedAt;
+      const wait = Math.max(0, 900 - elapsed);
+      window.setTimeout(() => {
+        document.body.classList.remove('is-loading');
+        document.body.classList.add('is-ready');
+      }, wait);
+    };
+
+    if (document.readyState === 'complete') {
+      hide();
+    } else {
+      window.addEventListener('load', hide, { once: true });
+      window.setTimeout(hide, 2600);
+    }
   }
 
   function updateContactPlaceholder() {
@@ -480,6 +756,51 @@
     );
 
     nodes.forEach((node) => observer.observe(node));
+  }
+
+  function initFaqAccordion() {
+    const items = Array.from(document.querySelectorAll('[data-faq-item]'));
+    if (!items.length) {
+      return;
+    }
+
+    function setOpen(item, open) {
+      item.classList.toggle('is-open', open);
+      const trigger = item.querySelector('[data-faq-toggle]');
+      const panel = item.querySelector('[data-faq-panel]');
+      if (trigger) {
+        trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      }
+      if (panel) {
+        panel.setAttribute('aria-hidden', open ? 'false' : 'true');
+      }
+    }
+
+    let hasOpen = false;
+    items.forEach((item, index) => {
+      const shouldOpen = item.classList.contains('is-open') && !hasOpen;
+      if (shouldOpen) {
+        hasOpen = true;
+      }
+      setOpen(item, shouldOpen || (!hasOpen && index === 0));
+      if (!hasOpen && index === 0) {
+        hasOpen = true;
+      }
+    });
+
+    items.forEach((item) => {
+      const trigger = item.querySelector('[data-faq-toggle]');
+      if (!trigger) {
+        return;
+      }
+      trigger.addEventListener('click', () => {
+        const isOpen = item.classList.contains('is-open');
+        items.forEach((entry) => setOpen(entry, false));
+        if (!isOpen) {
+          setOpen(item, true);
+        }
+      });
+    });
   }
 
   function bindTilt() {
@@ -638,7 +959,7 @@
         if (star.y > h + 5) star.y = -5;
 
         ctx.beginPath();
-        ctx.fillStyle = `rgba(170, 205, 255, ${0.25 + star.z * 0.55})`;
+        ctx.fillStyle = `rgba(255, 186, 133, ${0.24 + star.z * 0.54})`;
         ctx.arc(star.x, star.y, star.r * star.z, 0, Math.PI * 2);
         ctx.fill();
       }
@@ -754,12 +1075,8 @@
 
   function bindEvents() {
     if (dom.lang) {
-      dom.lang.value = state.lang;
       dom.lang.addEventListener('change', () => {
-        const value = SUPPORTED_LANGS.includes(dom.lang.value) ? dom.lang.value : DEFAULT_LANG;
-        state.lang = value;
-        persistLang(value);
-        applyI18n();
+        setLanguage(dom.lang.value, true);
       });
     }
 
@@ -786,12 +1103,15 @@
       yearNode.textContent = String(new Date().getFullYear());
     }
 
+    initLoader();
     applyI18n();
     bindEvents();
+    initLanguageGate();
     revealOnScroll();
     bindTilt();
     initCursorGlow();
     initHeroParallax();
+    initFaqAccordion();
     animateCounters();
     initStarfield();
     loadConfig();
