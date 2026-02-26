@@ -1238,16 +1238,11 @@
     bindEvents();
     initLanguageGate();
     revealOnScroll();
-    bindTilt();
-    initCursorGlow();
-    initHeroParallax();
     initFaqAccordion();
     animateCounters();
     initScrollProgress();
     initHeroBars();
-    initHeroLabParallax();
     initTimelineFocus();
-    initMagneticTargets();
     loadConfig();
   }
 

@@ -6,7 +6,7 @@
   <title>Starflow Inc. - Partner Network</title>
   <meta name="description" content="Starflow Inc. partner network for streaming companies. CPA offer with weekly USDT payouts.">
   <meta name="robots" content="index,follow">
-  <meta name="theme-color" content="#130d09">
+  <meta name="theme-color" content="#111012">
   <link rel="canonical" href="https://starflowinc.com/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Starflow Inc. - Partner Network">
@@ -20,22 +20,18 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-08">
+  <link rel="stylesheet" href="starflow.css?v=20260226-10">
 </head>
 <body data-page="starflow" class="is-loading">
   <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
-  <div class="backdrop-layer backdrop-mesh" aria-hidden="true"></div>
-  <div class="backdrop-layer backdrop-grid" aria-hidden="true"></div>
-  <div class="backdrop-layer backdrop-glow" aria-hidden="true"></div>
+  <div class="backdrop backdrop-radial" aria-hidden="true"></div>
+  <div class="backdrop backdrop-grid" aria-hidden="true"></div>
   <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 
   <div class="site-loader" id="site-loader" role="status" aria-live="polite">
     <div class="site-loader-card">
-      <div class="loader-brandline" aria-hidden="true">
-        <span></span><span></span><span></span>
-      </div>
       <p class="site-loader-brand">Starflow Inc.</p>
-      <p class="site-loader-text">Preparing control panel...</p>
+      <p class="site-loader-text">Loading platform...</p>
     </div>
   </div>
 
@@ -84,7 +80,7 @@
 
   <main id="top">
     <section class="section hero">
-      <div class="inner hero-grid">
+      <div class="inner hero-layout">
         <div class="hero-copy reveal" data-reveal-delay="0">
           <p class="eyebrow" data-i18n="hero.overline">Partner Network For Streaming Companies</p>
           <h1 data-i18n="hero.title">Bring people.<br>We handle the rest.</h1>
@@ -105,13 +101,10 @@
           </div>
         </div>
 
-        <div class="hero-stage reveal" data-reveal-delay="120" data-hero-lab>
-          <div class="stage-video-shell" aria-hidden="true">
-            <video class="stage-video" autoplay loop muted playsinline preload="metadata">
-              <source src="assets/videos/stream-1.mp4" type="video/mp4">
-            </video>
-            <div class="stage-video-overlay"></div>
-            <div class="stage-scan"></div>
+        <div class="hero-stage reveal" data-reveal-delay="80" data-hero-lab>
+          <div class="hero-stage-head">
+            <p data-i18n="hero.signal">Live Offer Signal</p>
+            <strong>STARFLOW CORP</strong>
           </div>
 
           <div class="signal-card">
@@ -144,37 +137,21 @@
             </div>
           </div>
 
-          <div class="mini-stat mini-stat-a">
-            <strong data-i18n="hero.cardA.title">Weekly execution</strong>
-            <span data-i18n="hero.cardA.text">Payout cycle every Sunday in USDT.</span>
+          <div class="stage-grid-cards">
+            <article class="mini-stat mini-stat-a">
+              <strong data-i18n="hero.cardA.title">Weekly execution</strong>
+              <span data-i18n="hero.cardA.text">Payout cycle every Sunday in USDT.</span>
+            </article>
+            <article class="mini-stat mini-stat-b">
+              <strong data-i18n="hero.cardB.title">Any source works</strong>
+              <span data-i18n="hero.cardB.text">DM, outreach, boards, ads - result is KPI.</span>
+            </article>
           </div>
-
-          <div class="mini-stat mini-stat-b">
-            <strong data-i18n="hero.cardB.title">Any source works</strong>
-            <span data-i18n="hero.cardB.text">DM, outreach, boards, ads - result is KPI.</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="hero-marquee" aria-hidden="true">
-        <div class="hero-marquee-track">
-          <span data-i18n="hero.line1">Target Ads</span>
-          <span data-i18n="hero.line2">Job Boards</span>
-          <span data-i18n="hero.line3">Mailing Lists</span>
-          <span data-i18n="hero.line4">Cold Outreach</span>
-          <span data-i18n="hero.line5">Direct DM</span>
-          <span data-i18n="hero.line6">No Source Limits</span>
-          <span data-i18n="hero.line1">Target Ads</span>
-          <span data-i18n="hero.line2">Job Boards</span>
-          <span data-i18n="hero.line3">Mailing Lists</span>
-          <span data-i18n="hero.line4">Cold Outreach</span>
-          <span data-i18n="hero.line5">Direct DM</span>
-          <span data-i18n="hero.line6">No Source Limits</span>
         </div>
       </div>
     </section>
 
-    <section class="section metrics metrics-band reveal" data-reveal-delay="0">
+    <section class="section metrics reveal" data-reveal-delay="0">
       <div class="inner metrics-grid">
         <article>
           <p class="metric-num"><span data-count="5">0</span>+</p>
@@ -191,7 +168,7 @@
       </div>
     </section>
 
-    <section class="section section-partners" id="partners">
+    <section class="section section-card" id="partners">
       <div class="inner">
         <div class="section-head reveal" data-reveal-delay="0">
           <p class="eyebrow" data-i18n="partners.overline">Who We Need</p>
@@ -200,35 +177,35 @@
 
         <div class="partner-grid">
           <article class="partner-card reveal tilt" data-reveal-delay="40" data-tilt>
-            <span class="partner-index" aria-hidden="true">01</span>
+            <span class="partner-no">01</span>
             <h3 data-i18n="partners.arb.title">Arbitrage Team</h3>
             <p data-i18n="partners.arb.text">Already knows creatives, funnels, conversion and optimization.</p>
           </article>
-          <article class="partner-card reveal tilt" data-reveal-delay="90" data-tilt>
-            <span class="partner-index" aria-hidden="true">02</span>
+          <article class="partner-card reveal tilt" data-reveal-delay="80" data-tilt>
+            <span class="partner-no">02</span>
             <h3 data-i18n="partners.call.title">Call-Center</h3>
             <p data-i18n="partners.call.text">Has managers on calls all day. Needs only offer + script.</p>
           </article>
-          <article class="partner-card reveal tilt" data-reveal-delay="140" data-tilt>
-            <span class="partner-index" aria-hidden="true">03</span>
+          <article class="partner-card reveal tilt" data-reveal-delay="120" data-tilt>
+            <span class="partner-no">03</span>
             <h3 data-i18n="partners.agency.title">Marketing Agency</h3>
             <p data-i18n="partners.agency.text">Leadgen processes are already built and running.</p>
           </article>
-          <article class="partner-card reveal tilt" data-reveal-delay="190" data-tilt>
-            <span class="partner-index" aria-hidden="true">04</span>
+          <article class="partner-card reveal tilt" data-reveal-delay="160" data-tilt>
+            <span class="partner-no">04</span>
             <h3 data-i18n="partners.solo.title">Solo Freelancer</h3>
             <p data-i18n="partners.solo.text">Runs ads/outreach independently and ships results.</p>
           </article>
         </div>
 
-        <div class="notice reveal" data-reveal-delay="240">
+        <div class="notice reveal" data-reveal-delay="210">
           <p data-i18n="partners.notice1">Format does not matter: 50 people team or one person with a laptop.</p>
           <p data-i18n="partners.notice2">Only one thing matters: you can attract people.</p>
         </div>
       </div>
     </section>
 
-    <section class="section section-terms" id="terms">
+    <section class="section" id="terms">
       <div class="inner">
         <div class="section-head reveal" data-reveal-delay="0">
           <p class="eyebrow" data-i18n="terms.overline">Offer Details</p>
@@ -236,7 +213,7 @@
         </div>
 
         <div class="terms-layout">
-          <article class="glass glass-wide reveal" data-reveal-delay="40">
+          <article class="glass reveal" data-reveal-delay="40">
             <h3 data-i18n="terms.whatWeDo.title">What we do</h3>
             <p data-i18n="terms.whatWeDo.text">We find female candidates 18-27 for streamer positions and male candidates 18-30 for moderation roles. Streaming companies pay us for qualified interviews.</p>
           </article>
@@ -258,17 +235,10 @@
             <p data-i18n="terms.geo.text">Models: Europe, LatAm. Operators: Europe, LatAm, Asia.</p>
           </article>
         </div>
-
-        <div class="ticker" aria-hidden="true">
-          <div class="ticker-track">
-            <span>CPA</span><span>USDT</span><span>CRM</span><span>SCRIPTS</span><span>WEEKLY PAYOUTS</span><span>NO LIMITS</span><span>ANY SOURCE</span>
-            <span>CPA</span><span>USDT</span><span>CRM</span><span>SCRIPTS</span><span>WEEKLY PAYOUTS</span><span>NO LIMITS</span><span>ANY SOURCE</span>
-          </div>
-        </div>
       </div>
     </section>
 
-    <section class="section section-flow" id="flow">
+    <section class="section section-card" id="flow">
       <div class="inner">
         <div class="section-head reveal" data-reveal-delay="0">
           <p class="eyebrow" data-i18n="flow.overline">Partner Flow</p>
@@ -284,7 +254,7 @@
       </div>
     </section>
 
-    <section class="section section-faq" id="faq">
+    <section class="section" id="faq">
       <div class="inner">
         <div class="section-head reveal" data-reveal-delay="0">
           <p class="eyebrow">FAQ</p>
@@ -397,8 +367,19 @@
       </div>
     </section>
 
-    <section class="section apply section-apply" id="apply">
+    <section class="section apply section-card" id="apply">
       <div class="inner apply-layout">
+        <div class="apply-copy reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="apply.overline">Application</p>
+          <h2 data-i18n="apply.title">Start as a partner</h2>
+          <p data-i18n="apply.copy">Fill the short form and continue directly in messenger.</p>
+          <ul class="apply-hints">
+            <li data-i18n="apply.hint1">No bureaucracy</li>
+            <li data-i18n="apply.hint2">Direct manager contact</li>
+            <li data-i18n="apply.hint3">Fast launch with scripts</li>
+          </ul>
+        </div>
+
         <form id="apply-form" class="apply-form reveal" data-reveal-delay="80" novalidate>
           <input type="hidden" name="project" value="starflow_corp">
           <input type="hidden" name="site_lang" value="en">
@@ -446,17 +427,6 @@
             </div>
           </div>
         </form>
-
-        <div class="apply-copy reveal" data-reveal-delay="0">
-          <p class="eyebrow" data-i18n="apply.overline">Application</p>
-          <h2 data-i18n="apply.title">Start as a partner</h2>
-          <p data-i18n="apply.copy">Fill the short form and continue directly in messenger.</p>
-          <ul class="apply-hints">
-            <li data-i18n="apply.hint1">No bureaucracy</li>
-            <li data-i18n="apply.hint2">Direct manager contact</li>
-            <li data-i18n="apply.hint3">Fast launch with scripts</li>
-          </ul>
-        </div>
       </div>
     </section>
   </main>
@@ -468,6 +438,6 @@
     </div>
   </footer>
 
-  <script src="starflow.js?v=20260226-08" defer></script>
+  <script src="starflow.js?v=20260226-10" defer></script>
 </body>
 </html>
