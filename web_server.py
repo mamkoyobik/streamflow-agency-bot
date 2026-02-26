@@ -58,6 +58,7 @@ MAX_BIRTHDATE_LEN = SHARED_FORM_AGE_MAX_LEN
 MAX_DEVICE_LEN = SHARED_FORM_DEVICE_MODEL_MAX_LEN
 MAX_CONTACT_VALUE_LEN = max(SHARED_FORM_TELEGRAM_MAX_LEN, SHARED_FORM_PHONE_MAX_LEN)
 MAX_COUNTRY_LEN = 80
+MAX_EMAIL_LEN = 160
 MAX_WORK_TIME_LEN = SHARED_FORM_WORK_TIME_MAX_LEN
 MAX_EXPERIENCE_LEN = SHARED_FORM_EXPERIENCE_MAX_LEN
 MAX_WA_TEXT_LEN = SHARED_FORM_WA_TEXT_MAX_LEN
@@ -66,6 +67,9 @@ ADMIN_MENU_SETTING_KEY = "admin_menu_message_id"
 ADMIN_NOTIFY_SETTING_KEY = "admin_notify_message_id"
 SUPPORTED_SITE_LANGS = {"ru", "en", "pt", "es"}
 SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
+PROJECT_STREAMFLOW = "streamflow_agency"
+PROJECT_STARFLOW = "starflow_corp"
+SUPPORTED_PROJECTS = {PROJECT_STREAMFLOW, PROJECT_STARFLOW}
 
 
 def load_env_file(path: Path) -> None:
@@ -136,6 +140,7 @@ FIELD_ERRORS = {
         "work_time": "🤍 Напиши, пожалуйста, количество часов цифрами (например: 6):",
         "telegram": "🤍 Укажи, пожалуйста, Telegram в формате @username:",
         "whatsapp": "🤍 Укажи, пожалуйста, WhatsApp в международном формате, например: +44 7307 810222:",
+        "email": "🤍 Укажи корректный email, например name@example.com:",
         "experience": "🤍 Напиши, пожалуйста, есть ли опыт:",
         "photo_face": "🤍 Здесь нужно отправить ФОТО АНФАС.",
         "photo_full": "🤍 Здесь нужно отправить ФОТО В ПОЛНЫЙ РОСТ.",
@@ -151,6 +156,7 @@ FIELD_ERRORS = {
         "work_time": "Please enter work hours as a number (example: 6).",
         "telegram": "Please enter Telegram as @username.",
         "whatsapp": "Please enter WhatsApp in international format, example: +1 555 123 4567",
+        "email": "Please enter a valid email, for example: name@example.com.",
         "experience": "Please tell us about your experience.",
         "photo_face": "Please upload a front-face photo.",
         "photo_full": "Please upload a full-body photo.",
@@ -166,6 +172,7 @@ FIELD_ERRORS = {
         "work_time": "Informe as horas com número (ex.: 6).",
         "telegram": "Informe o Telegram no formato @username.",
         "whatsapp": "Informe o WhatsApp no formato internacional, ex.: +55 11 99999 9999",
+        "email": "Informe um email válido, por exemplo: nome@exemplo.com.",
         "experience": "Informe se você tem experiência.",
         "photo_face": "Envie a foto frontal.",
         "photo_full": "Envie a foto de corpo inteiro.",
@@ -181,6 +188,7 @@ FIELD_ERRORS = {
         "work_time": "Indica horas con número (ej.: 6).",
         "telegram": "Indica Telegram en formato @username.",
         "whatsapp": "Indica WhatsApp en formato internacional, ejemplo: +34 600 000 000",
+        "email": "Indica un email válido, por ejemplo: nombre@ejemplo.com.",
         "experience": "Indica si tienes experiencia.",
         "photo_face": "Sube una foto frontal.",
         "photo_full": "Sube una foto de cuerpo completo.",
@@ -708,6 +716,50 @@ CANONICAL_HOST = (urllib.parse.urlparse(SITE_URL).netloc or "").split(":", 1)[0]
 PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
 WA_MANAGER_PHONE = (os.getenv("WA_MANAGER_PHONE", "+380998074928") or "+380998074928").strip()
+STARFLOW_BOT_USERNAME = (os.getenv("STARFLOW_BOT_USERNAME", "") or "").strip()
+STARFLOW_BOT_LINK = (os.getenv("STARFLOW_BOT_LINK", "") or "").strip()
+STARFLOW_CHANNEL_LINK = (os.getenv("STARFLOW_CHANNEL_LINK", "") or "").strip()
+STARFLOW_SITE_URL = (os.getenv("STARFLOW_SITE_URL", "") or "").strip().rstrip("/")
+
+
+def normalize_project(value: str | None) -> str:
+    raw = (value or "").strip().lower()
+    if raw in {PROJECT_STREAMFLOW, "streamflow", "streamflow_agency"}:
+        return PROJECT_STREAMFLOW
+    if raw in {PROJECT_STARFLOW, "starflow", "starflow_corp"}:
+        return PROJECT_STARFLOW
+    return PROJECT_STREAMFLOW
+
+
+def project_bot_username(project: str) -> str:
+    normalized = normalize_project(project)
+    if normalized == PROJECT_STARFLOW and STARFLOW_BOT_USERNAME:
+        return STARFLOW_BOT_USERNAME
+    return BOT_USERNAME
+
+
+def project_bot_public_link(project: str) -> str | None:
+    normalized = normalize_project(project)
+    if normalized == PROJECT_STARFLOW and STARFLOW_BOT_LINK:
+        return STARFLOW_BOT_LINK
+    username = project_bot_username(project).strip().lstrip("@")
+    if not username:
+        return None
+    return f"https://t.me/{username}"
+
+
+def project_channel_link(project: str) -> str:
+    normalized = normalize_project(project)
+    if normalized == PROJECT_STARFLOW and STARFLOW_CHANNEL_LINK:
+        return STARFLOW_CHANNEL_LINK
+    return CHANNEL_LINK
+
+
+def project_site_url(project: str) -> str:
+    normalized = normalize_project(project)
+    if normalized == PROJECT_STARFLOW and STARFLOW_SITE_URL:
+        return STARFLOW_SITE_URL
+    return SITE_URL
 
 def site_lead_setting_key(token: str) -> str:
     return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
@@ -751,8 +803,8 @@ def consume_site_lead_payload(token: str) -> dict | None:
     set_setting(site_lead_setting_key(token), None)
     return payload
 
-def build_bot_stage2_link(token: str, lang: str | None = None) -> str | None:
-    username = (BOT_USERNAME or "").strip().lstrip("@")
+def build_bot_stage2_link(token: str, lang: str | None = None, project: str = PROJECT_STREAMFLOW) -> str | None:
+    username = project_bot_username(project).strip().lstrip("@")
     if not username:
         return None
     locale = normalize_site_lang(lang)
@@ -900,6 +952,13 @@ def normalize_yes_no(text: str, lang: str | None = None) -> str | None:
 
 def normalize_telegram(text: str) -> str | None:
     return shared_normalize_telegram(text)
+
+
+def is_valid_email(value: str) -> bool:
+    raw = (value or "").strip()
+    if not raw or len(raw) > MAX_EMAIL_LEN:
+        return False
+    return re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]{2,}", raw, flags=re.IGNORECASE) is not None
 
 
 def _safe(value: str | None) -> str:
@@ -2761,6 +2820,17 @@ def submission_country(data: dict) -> str:
         return by_phone
     return "—"
 
+
+PROJECT_LABELS = {
+    PROJECT_STREAMFLOW: "Streamflow Agency",
+    PROJECT_STARFLOW: "Starflow Corp",
+}
+
+
+def project_label(value: str | None) -> str:
+    return PROJECT_LABELS.get(normalize_project(value), PROJECT_LABELS[PROJECT_STREAMFLOW])
+
+
 def build_admin_full_text(data: dict, web_id: str, submitted_at: str, source_label: str = "Сайт") -> str:
     status_label = STATUS_LABELS.get("pending", "🟡 На рассмотрении")
     device_value = _safe(data.get("device_model") or data.get("devices"))
@@ -2776,6 +2846,8 @@ def build_admin_full_text(data: dict, web_id: str, submitted_at: str, source_lab
         f"⏱ Время работы: {_safe(data.get('work_time'))}\n"
         f"💼 Опыт: {_safe(data.get('experience'))}\n"
         f"💬 Telegram: {_safe(data.get('telegram'))}\n"
+        f"📧 Email: {_safe(data.get('email'))}\n"
+        f"🏷 Проект: {_safe(project_label(str(data.get('project') or '')))}\n"
         f"🆔 ID: {_safe(web_id)}\n"
         f"🧭 Источник: {_safe(source_label)}\n"
         f"🕒 Время подачи: {submitted_at}\n\n"
@@ -3054,6 +3126,8 @@ class Handler(SimpleHTTPRequestHandler):
             return self.handle_config()
         if parsed.path == "/":
             self.path = "/index.html"
+        elif parsed.path in {"/starflow", "/starflow/"}:
+            self.path = "/starflow.html"
         return super().do_GET()
 
     def do_POST(self):
@@ -3067,15 +3141,20 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_error(404)
 
     def handle_config(self):
+        parsed = urllib.parse.urlparse(self.path)
+        query = urllib.parse.parse_qs(parsed.query or "")
+        project = normalize_project((query.get("project") or [PROJECT_STREAMFLOW])[0])
         admin_username = ADMIN_USERNAME.lstrip("@")
-        bot_username = BOT_USERNAME.strip().lstrip("@")
-        bot_link = f"https://t.me/{bot_username}" if bot_username else None
+        bot_link = project_bot_public_link(project)
         wa_link = build_whatsapp_base_link()
+        channel_link = project_channel_link(project)
+        site_url = project_site_url(project)
         payload = {
-            "telegram_link": CHANNEL_LINK or (f"https://t.me/{admin_username}" if admin_username else None),
+            "telegram_link": channel_link or (f"https://t.me/{admin_username}" if admin_username else None),
             "bot_link": bot_link,
             "whatsapp_link": wa_link,
-            "site_url": SITE_URL,
+            "site_url": site_url,
+            "project": project,
         }
         self.send_json(payload)
 
@@ -3118,6 +3197,8 @@ class Handler(SimpleHTTPRequestHandler):
                 return None, False
             return raw, True
 
+        project = normalize_project(fields.get("project"))
+
         name, ok = get_limited("name", MAX_NAME_LEN, "name")
         if not ok or name is None:
             return
@@ -3137,12 +3218,6 @@ class Handler(SimpleHTTPRequestHandler):
         if not is_valid_birthdate(age_raw):
             return error(field_error(site_lang, "age"), field="age")
         age = normalize_birthdate(age_raw) or age_raw
-
-        device_model, ok = get_limited("device_model", MAX_DEVICE_LEN, "device_model")
-        if not ok or device_model is None:
-            return
-        if len(device_model) < 2:
-            return error(field_error(site_lang, "device_model"), field="device_model")
 
         preferred_contact_raw = clean_text(fields.get("preferred_contact") or "", max_len=16).lower()
         preferred_contact = "whatsapp" if preferred_contact_raw in {"whatsapp", "wa"} else "telegram"
@@ -3183,22 +3258,38 @@ class Handler(SimpleHTTPRequestHandler):
                 or ""
             )
 
-        user_id = -int(time.time_ns())
-        lead_token = uuid.uuid4().hex[:24]
-        payload = {
+        payload: dict[str, object] = {
             "name": name,
             "lang": site_lang,
             "phone": phone,
             "age": age,
-            "device_model": device_model,
             "telegram": telegram or "",
             "whatsapp": whatsapp or "",
             "preferred_contact": preferred_contact,
             "country": country,
+            "project": project,
             "application_stage": "quick",
-            "site_lead_token": lead_token,
-            "site_pending_user_id": user_id,
         }
+
+        if project == PROJECT_STARFLOW:
+            email, ok = get_limited("email", MAX_EMAIL_LEN, "email")
+            if not ok or email is None:
+                return
+            if not is_valid_email(email):
+                return error(field_error(site_lang, "email"), field="email")
+            payload["email"] = email
+        else:
+            device_model, ok = get_limited("device_model", MAX_DEVICE_LEN, "device_model")
+            if not ok or device_model is None:
+                return
+            if len(device_model) < 2:
+                return error(field_error(site_lang, "device_model"), field="device_model")
+            payload["device_model"] = device_model
+
+        user_id = -int(time.time_ns())
+        lead_token = uuid.uuid4().hex[:24]
+        payload["site_lead_token"] = lead_token
+        payload["site_pending_user_id"] = user_id
         site_source = "site_whatsapp" if preferred_contact == "whatsapp" else "site_tg"
 
         try:
@@ -3216,7 +3307,7 @@ class Handler(SimpleHTTPRequestHandler):
         notify_admin_new_application()
         update_admin_menu_message()
 
-        tg_link = build_bot_stage2_link(lead_token, site_lang)
+        tg_link = build_bot_stage2_link(lead_token, site_lang, project=project) or project_bot_public_link(project)
         wa_link = build_whatsapp_stage2_link(lead_token, site_lang)
         if preferred_contact == "whatsapp" and wa_link:
             preferred_link = wa_link
@@ -3226,6 +3317,7 @@ class Handler(SimpleHTTPRequestHandler):
             {
                 "ok": True,
                 "message": msg(site_lang, "success"),
+                "project": project,
                 "bot_link": preferred_link,
                 "telegram_bot_link": tg_link,
                 "whatsapp_bot_link": wa_link,

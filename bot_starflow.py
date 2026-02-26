@@ -11,6 +11,19 @@ import urllib.parse
 import urllib.request
 from datetime import datetime, timedelta, timezone
 
+# Starflow bot uses isolated project identity while sharing the same DB/admin stream.
+os.environ.setdefault("PROJECT_KEY", "starflow_corp")
+if (os.getenv("STARFLOW_BOT_TOKEN") or "").strip():
+    os.environ["BOT_TOKEN"] = (os.getenv("STARFLOW_BOT_TOKEN") or "").strip()
+if (os.getenv("STARFLOW_BOT_USERNAME") or "").strip():
+    os.environ["BOT_USERNAME"] = (os.getenv("STARFLOW_BOT_USERNAME") or "").strip()
+if (os.getenv("STARFLOW_CHANNEL_LINK") or "").strip():
+    os.environ["CHANNEL_LINK"] = (os.getenv("STARFLOW_CHANNEL_LINK") or "").strip()
+if (os.getenv("STARFLOW_SITE_URL") or "").strip():
+    os.environ["SITE_URL"] = (os.getenv("STARFLOW_SITE_URL") or "").strip()
+if (os.getenv("STARFLOW_ADMIN_GROUP_ID") or "").strip():
+    os.environ["ADMIN_GROUP_ID"] = (os.getenv("STARFLOW_ADMIN_GROUP_ID") or "").strip()
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
@@ -47,6 +60,7 @@ from config import (
 )
 from states import ApplicationStates
 from keyboards import *
+import keyboards as shared_keyboards
 from database import (
     set_status,
     get_status,
@@ -93,7 +107,7 @@ except Exception:
     rebuild_excel_from_db = None
     logging.getLogger(__name__).warning("Excel export недоступен (нет openpyxl?)")
 from utils import edit_or_send
-from texts import (
+from texts_starflow import (
     STATUS_LABELS,
     t,
     normalize_lang,
@@ -138,6 +152,9 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
+STARFLOW_ENABLE_ADMIN_JOBS = (
+    (os.getenv("STARFLOW_ENABLE_ADMIN_JOBS") or "").strip().lower() in {"1", "true", "yes", "on"}
+)
 
 # ================= BOT =================
 
@@ -194,8 +211,10 @@ async def on_join_request(req: ChatJoinRequest):
         user_id = req.from_user.id
         await bot.approve_chat_join_request(chat_id, user_id)
 
-        channel_lang = "ru"
+        channel_lang = STARFLOW_DEFAULT_LANG
         for lang_code, configured_chat_id in CHANNEL_ID_BY_LANG.items():
+            if lang_code not in STARFLOW_USER_LANGS:
+                continue
             if configured_chat_id is not None and chat_id == configured_chat_id:
                 channel_lang = lang_code
                 break
@@ -242,7 +261,7 @@ async def on_join_request(req: ChatJoinRequest):
             "es": "🤍 Tu solicitud para entrar al canal privado fue aprobada.\n\nPulsa /start ✨",
             "ru": "🤍 Ты подала заявку в закрытый канал\n\nНажми /start ✨",
         }
-        invite_message = invite_by_lang.get(channel_lang, invite_by_lang["ru"])
+        invite_message = invite_by_lang.get(channel_lang, invite_by_lang[STARFLOW_DEFAULT_LANG])
         await bot.send_message(
             user_id,
             invite_message
@@ -501,7 +520,7 @@ def localize_yes_no_value(value: str | None, lang: str | None) -> str | None:
     else:
         return value
     locale = normalize_lang(lang)
-    return YES_NO_BY_LANG.get(locale, YES_NO_BY_LANG["ru"]).get(key, value)
+    return YES_NO_BY_LANG.get(locale, YES_NO_BY_LANG["en"]).get(key, value)
 
 
 def normalize_yes_no(text: str, lang: str | None = None) -> str | None:
@@ -557,6 +576,13 @@ def is_admin_chat(chat_id: int | None) -> bool:
 def normalize_telegram(text: str) -> str | None:
     return normalize_telegram_shared(text)
 
+
+def is_valid_email(text: str) -> bool:
+    raw = (text or "").strip()
+    if not raw or len(raw) > FORM_EMAIL_MAX_LEN:
+        return False
+    return re.fullmatch(r"[^@\s]+@[^@\s]+\.[^@\s]{2,}", raw, flags=re.IGNORECASE) is not None
+
 def extract_start_payload(text: str | None) -> str:
     raw = (text or "").strip()
     if not raw:
@@ -577,7 +603,7 @@ def extract_site_lead_start_data(start_payload: str | None) -> tuple[str | None,
         return None, None
     token = match.group(1)
     lang = (match.group(2) or "").strip().lower()
-    if lang not in {"ru", "en", "pt", "es"}:
+    if lang not in STARFLOW_USER_LANGS:
         lang = None
     return token, lang
 
@@ -632,12 +658,9 @@ FORM_DATA_FIELDS = {
     "email",
     "living",
     "devices",
-    "device_model",
     "work_time",
     "telegram",
     "experience",
-    "photo_face",
-    "photo_full",
     "lang",
     "project",
     "application_stage",
@@ -648,16 +671,14 @@ OPTIONAL_FORM_DATA_FIELDS = {
     "email",
     "lang",
     "project",
-    "devices",
-    "photo_face",
-    "photo_full",
     "site_lead_token",
 }
 REQUIRED_PREVIEW_FIELDS = {
     "name",
     "phone",
     "age",
-    "device_model",
+    "email",
+    "devices",
     "telegram",
     "city",
     "work_time",
@@ -675,14 +696,12 @@ STATE_TO_FIELD = {
     ApplicationStates.city: "city",
     ApplicationStates.phone: "phone",
     ApplicationStates.age: "age",
+    ApplicationStates.headphones: "email",
     ApplicationStates.living: "living",
     ApplicationStates.devices: "devices",
-    ApplicationStates.device_model: "device_model",
     ApplicationStates.work_time: "work_time",
     ApplicationStates.telegram: "telegram",
     ApplicationStates.experience: "experience",
-    ApplicationStates.photo_face: "photo_face",
-    ApplicationStates.photo_full: "photo_full",
 }
 
 def _has_value(data: dict | None, key: str) -> bool:
@@ -715,7 +734,7 @@ def is_site_quick_application(app: dict | None, data: dict | None) -> bool:
     return source in {SOURCE_SITE_TG, SOURCE_SITE_WHATSAPP} and is_quick_application(data)
 
 def build_ack(user_id: int | None = None) -> str:
-    lang = lang_for(user_id) if user_id is not None else "ru"
+    lang = lang_for(user_id) if user_id is not None else STARFLOW_DEFAULT_LANG
     lines = support_lines(lang)
     return f"{t(lang, 'ack_text')}\n{random.choice(lines)}"
 
@@ -726,7 +745,7 @@ async def gentle_typing(chat_id: int, duration: float | None = None):
         return
     await asyncio.sleep(duration or random.uniform(0.4, 0.8))
 
-def build_status_line(status: str | None, lang: str = "ru") -> str | None:
+def build_status_line(status: str | None, lang: str = "en") -> str | None:
     if not status or status == "new":
         return None
     label = status_label(status, lang)
@@ -737,7 +756,7 @@ def build_status_line(status: str | None, lang: str = "ru") -> str | None:
 def build_menu_caption_with_status(
     status: str,
     base_caption: str,
-    lang: str = "ru",
+    lang: str = "en",
     intro: str | None = None,
     tail: str | None = None
 ) -> str:
@@ -786,12 +805,12 @@ PORTFOLIO_PLAYER_SPECS = (
     {
         "kind": "photo",
         "file": "media/review1.jpg",
-        "title": {"ru": "Отзывы моделей", "en": "Model reviews", "pt": "Avaliações de modelos", "es": "Reseñas de modelos"},
+        "title": {"ru": "Отзывы партнёров", "en": "Partner reviews", "pt": "Avaliações de parceiros", "es": "Reseñas de partners"},
     },
     {
         "kind": "photo",
         "file": "media/review2.jpg",
-        "title": {"ru": "Отзывы моделей", "en": "Model reviews", "pt": "Avaliações de modelos", "es": "Reseñas de modelos"},
+        "title": {"ru": "Отзывы партнёров", "en": "Partner reviews", "pt": "Avaliações de parceiros", "es": "Reseñas de partners"},
     },
     {
         "kind": "video",
@@ -818,6 +837,7 @@ FORM_TELEGRAM_MAX_LEN = SHARED_FORM_TELEGRAM_MAX_LEN
 FORM_EXPERIENCE_MAX_LEN = SHARED_FORM_EXPERIENCE_MAX_LEN
 FORM_YES_NO_MAX_LEN = SHARED_FORM_YES_NO_MAX_LEN
 FORM_DEVICES_MAX_LEN = SHARED_FORM_DEVICES_MAX_LEN
+FORM_EMAIL_MAX_LEN = 160
 DAILY_STATS_HOUR = 10
 DAILY_STATS_MINUTE = 0
 ADMIN_ARCHIVE_DAYS = 7
@@ -862,8 +882,78 @@ MEDIA_CONTENT_TYPES = {"photo", "video", "document", "animation"}
 GENERIC_MARKER_RE = re.compile(r"\[\[(?:CE\d+|E\d+[SE]|LK\d+)\]\]")
 CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
-PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
+PUBLIC_MANAGER_HANDLE = (os.getenv("STARFLOW_PUBLIC_MANAGER_HANDLE") or "@starflowmanager").strip()
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
+STARFLOW_DEFAULT_LANG = "en"
+STARFLOW_USER_LANGS = ("en", "pt", "es")
+
+# Rebind shared keyboards to Starflow translations.
+shared_keyboards.t = t
+shared_keyboards.field_title = field_title
+
+
+def preview_keyboard(lang: str = STARFLOW_DEFAULT_LANG):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "btn_edit_data"), callback_data="preview_edit")],
+            [InlineKeyboardButton(text=t(lang, "btn_send"), callback_data="preview_confirm")],
+            [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")],
+        ]
+    )
+
+
+def preview_edit_menu(lang: str = STARFLOW_DEFAULT_LANG):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=field_title("name", lang), callback_data="edit:name")],
+            [InlineKeyboardButton(text=field_title("phone", lang), callback_data="edit:phone")],
+            [InlineKeyboardButton(text=field_title("age", lang), callback_data="edit:age")],
+            [InlineKeyboardButton(text=field_title("email", lang), callback_data="edit:email")],
+            [InlineKeyboardButton(text=field_title("telegram", lang), callback_data="edit:telegram")],
+            [InlineKeyboardButton(text=field_title("city", lang), callback_data="edit:city")],
+            [InlineKeyboardButton(text=field_title("work_time", lang), callback_data="edit:work_time")],
+            [InlineKeyboardButton(text=field_title("experience", lang), callback_data="edit:experience")],
+            [InlineKeyboardButton(text=field_title("living", lang), callback_data="edit:living")],
+            [InlineKeyboardButton(text=field_title("devices", lang), callback_data="edit:devices")],
+            [InlineKeyboardButton(text=t(lang, "btn_back"), callback_data="preview_back")],
+        ]
+    )
+
+
+def portfolio_menu(lang: str = STARFLOW_DEFAULT_LANG):
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text=t(lang, "portfolio_menu_reviews"), callback_data="portfolio_reviews")],
+            [InlineKeyboardButton(text=t(lang, "portfolio_menu_videos"), callback_data="portfolio_videos")],
+            [InlineKeyboardButton(text=t(lang, "portfolio_menu_pdf"), callback_data="portfolio_pdf")],
+            [InlineKeyboardButton(text=t(lang, "menu_home"), callback_data="main_menu")],
+        ]
+    )
+
+
+def language_keyboard(current_lang: str = STARFLOW_DEFAULT_LANG, include_home: bool = True):
+    def lang_label(code: str, title: str) -> str:
+        return f"✅ {title}" if code == current_lang else title
+
+    rows = [[
+        InlineKeyboardButton(text=lang_label("en", "English"), callback_data="set_lang:en"),
+        InlineKeyboardButton(text=lang_label("pt", "Português"), callback_data="set_lang:pt"),
+        InlineKeyboardButton(text=lang_label("es", "Español"), callback_data="set_lang:es"),
+    ]]
+    if include_home:
+        rows.append([InlineKeyboardButton(text=t(current_lang, "menu_home"), callback_data="main_menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
+
+
+def admin_accepted_keyboard(user_id: int, contact_url: str | None = None):
+    contact = contact_url or f"tg://user?id={user_id}"
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="✅ Принято", callback_data=f"admin_status:{user_id}:accepted")],
+            [InlineKeyboardButton(text="📨 Отправить сообщение партнёру", callback_data=f"admin_send_model:{user_id}")],
+            [InlineKeyboardButton(text="💬 Написать кандидату", url=contact)],
+        ]
+    )
 
 
 def _parse_admin_allowed_ids() -> set[int]:
@@ -917,32 +1007,31 @@ LOCKED_ENTITY_TYPES = {
 STAGE2_BRIDGE_TEXTS = {
     "ru": {
         "gate": (
-            "📣 Перед продолжением зайди в канал Streamflow.\n\n"
-            "Как устроена работа:\n"
-            "• удалённо, из дома\n"
-            "• без 18+ контента\n"
-            "• даём понятный старт и сопровождение\n"
-            "• отвечаем по графику, выплатам и процессу\n\n"
-            "Дальше выбери удобный формат:\n"
-            "• быстро пройти всё в боте и подать заявку без переписок\n"
-            "• или написать менеджеру и записаться через него"
+            "📣 Перед продолжением подпишись на канал Starflow.\n\n"
+            "Как работает партнёрка:\n"
+            "• ты привлекаешь кандидатов на собеседования\n"
+            "• источник трафика любой\n"
+            "• CPA $20-40 за успешное собеседование\n"
+            "• выплаты каждое воскресенье в USDT\n\n"
+            "Дальше выбери формат:\n"
+            "• пройти всё в боте\n"
+            "• или написать менеджеру"
         ),
         "step1": (
             "✅ Предзаявка сохранена.\n\n"
-            "Ты уже в системе, и мы видим твой контакт.\n"
-            "Сейчас коротко покажу, как всё происходит дальше."
+            "Ты уже в системе, контакт получен.\n"
+            "Сейчас коротко покажу следующий шаг."
         ),
         "step2": (
-            "Как всё проходит:\n"
-            "• получаешь понятный старт\n"
-            "• двигаемся по шагам с поддержкой\n"
-            "• выходим на стабильный результат\n\n"
-            "Остался обязательный финальный блок (около 2 минут).\n"
-            "Без него мы не сможем запустить старт."
+            "Что дальше:\n"
+            "• заполняешь финальный блок\n"
+            "• фиксируем твой профиль партнёра\n"
+            "• даём доступ к CRM и материалам\n\n"
+            "Остался обязательный блок (около 2 минут)."
         ),
         "autostart": (
             "✅ Отлично, короткая часть заполнена.\n"
-            "Сразу переходим к финальному блоку, чтобы запустить старт без задержек."
+            "Переходим к финальному блоку, чтобы запустить партнёрский старт."
         ),
         "next": "Что дальше",
         "start": "Продолжить этап 2 (обязательно)",
@@ -950,46 +1039,45 @@ STAGE2_BRIDGE_TEXTS = {
         "menu_recommendation": (
             "✅ Первая часть анкеты принята мгновенно и автоматически.\n\n"
             "Чтобы быстрее понять формат, открой пункты:\n"
-            "• 📁 Портфолио моделей\n"
-            "• ℹ️ Подробнее о работе\n"
+            "• 📁 Материалы партнёра\n"
+            "• ℹ️ Об оффере\n"
             "• 📣 Наш канал\n\n"
-            "После этого нажми «🌸 Стать моделью» и продолжим.\n"
+            "После этого нажми «🤝 Стать партнёром» и продолжим.\n"
             "Если останутся вопросы — пиши менеджеру."
         ),
         "channel": "📣 Открыть канал",
         "continue_bot": "✅ Подать заявку через бота",
         "wait_gate": "Выбери один из вариантов ниже 👇",
         "wait": "Нажми кнопку, чтобы продолжить этап 2 👇",
-        "expired": "Ссылка из сайта устарела. Нажми «Стать моделью» и заполни короткий этап заново.",
+        "expired": "Ссылка из сайта устарела. Нажми «Стать партнёром» и заполни короткий этап заново.",
     },
     "en": {
         "gate": (
-            "📣 Before continuing, open the Streamflow channel.\n\n"
-            "How this work format looks:\n"
-            "• fully remote, from home\n"
-            "• no 18+ content\n"
-            "• clear onboarding and support\n"
-            "• transparent schedule, payouts and workflow\n\n"
+            "📣 Before continuing, open the Starflow channel.\n\n"
+            "How the partner offer works:\n"
+            "• you bring candidates to interviews\n"
+            "• any traffic source is allowed\n"
+            "• CPA $20-40 per successful interview\n"
+            "• payouts every Sunday in USDT\n\n"
             "Now choose your path:\n"
-            "• complete everything in the bot and submit without extra chats\n"
-            "• or message the manager and apply through them"
+            "• complete everything in the bot\n"
+            "• or message the manager"
         ),
         "step1": (
             "✅ Pre-application saved.\n\n"
-            "You are already in the system, and we have your contact.\n"
-            "Now I’ll quickly explain what happens next."
+            "You are already in the system and we have your contact.\n"
+            "Now I will quickly explain the next step."
         ),
         "step2": (
-            "How it works:\n"
-            "• clear onboarding\n"
-            "• step-by-step support\n"
-            "• focus on stable results\n\n"
-            "One required final block is left (about 2 minutes).\n"
-            "Without it, we can’t launch your start."
+            "What happens next:\n"
+            "• complete the final block\n"
+            "• we lock your partner profile\n"
+            "• we give you CRM and materials\n\n"
+            "One required final block is left (about 2 minutes)."
         ),
         "autostart": (
             "✅ Great, the short part is done.\n"
-            "Let’s move straight to the final required block to launch your start faster."
+            "Let’s move to the final required block to launch your partner flow."
         ),
         "next": "What’s next",
         "start": "Continue Step 2 (required)",
@@ -997,46 +1085,45 @@ STAGE2_BRIDGE_TEXTS = {
         "menu_recommendation": (
             "✅ The first part of your application was accepted instantly and automatically.\n\n"
             "To understand the format better, open these sections:\n"
-            "• 📁 Model portfolio\n"
-            "• ℹ️ About the work\n"
+            "• 📁 Partner materials\n"
+            "• ℹ️ About the offer\n"
             "• 📣 Our channel\n\n"
-            "Then tap “🌸 Become a model” to continue.\n"
+            "Then tap “🤝 Become a partner” to continue.\n"
             "If you have questions, message the manager."
         ),
         "channel": "📣 Open channel",
         "continue_bot": "✅ Apply through bot",
         "wait_gate": "Choose one option below 👇",
         "wait": "Tap the button to continue Step 2 👇",
-        "expired": "Your website link has expired. Tap “Become a model” and submit the short step again.",
+        "expired": "Your website link has expired. Tap “Become a partner” and submit the short step again.",
     },
     "pt": {
         "gate": (
-            "📣 Antes de continuar, abra o canal Streamflow.\n\n"
-            "Como funciona o trabalho:\n"
-            "• remoto, de casa\n"
-            "• sem conteúdo 18+\n"
-            "• início claro com suporte\n"
-            "• regras transparentes de rotina, pagamento e processo\n\n"
+            "📣 Antes de continuar, abra o canal Starflow.\n\n"
+            "Como funciona a parceria:\n"
+            "• você traz candidatos para entrevistas\n"
+            "• qualquer fonte de tráfego é válida\n"
+            "• CPA de $20-40 por entrevista concluída\n"
+            "• pagamentos todo domingo em USDT\n\n"
             "Agora escolha o caminho:\n"
-            "• concluir tudo no bot e enviar sem perder tempo em chats\n"
-            "• ou falar com o gerente e se cadastrar por ele"
+            "• concluir tudo no bot\n"
+            "• ou falar com o gerente"
         ),
         "step1": (
             "✅ Pré-cadastro salvo.\n\n"
             "Você já está no sistema e já temos seu contato.\n"
-            "Agora eu te explico rapidamente o próximo passo."
+            "Agora explico rapidamente o próximo passo."
         ),
         "step2": (
-            "Como funciona:\n"
-            "• início claro\n"
-            "• suporte passo a passo\n"
-            "• foco em resultado estável\n\n"
-            "Falta um bloco final obrigatório (cerca de 2 minutos).\n"
-            "Sem isso, não conseguimos iniciar seu começo."
+            "Próximos passos:\n"
+            "• preencher o bloco final\n"
+            "• confirmar seu perfil de parceiro\n"
+            "• liberar CRM e materiais\n\n"
+            "Falta um bloco final obrigatório (cerca de 2 minutos)."
         ),
         "autostart": (
             "✅ Perfeito, a parte curta já está pronta.\n"
-            "Vamos direto para o bloco final obrigatório para acelerar seu início."
+            "Vamos para o bloco final obrigatório para iniciar seu fluxo de parceria."
         ),
         "next": "Próximo passo",
         "start": "Continuar Etapa 2 (obrigatória)",
@@ -1044,29 +1131,29 @@ STAGE2_BRIDGE_TEXTS = {
         "menu_recommendation": (
             "✅ A primeira parte do cadastro foi aceita de forma instantânea e automática.\n\n"
             "Para entender melhor o formato, abra as seções:\n"
-            "• 📁 Portfólio de modelos\n"
-            "• ℹ️ Sobre o trabalho\n"
+            "• 📁 Materiais do parceiro\n"
+            "• ℹ️ Sobre a oferta\n"
             "• 📣 Nosso canal\n\n"
-            "Depois toque em “🌸 Tornar-se modelo” para continuar.\n"
+            "Depois toque em “🤝 Tornar-se parceiro” para continuar.\n"
             "Se tiver dúvidas, fale com o gerente."
         ),
         "channel": "📣 Abrir canal",
         "continue_bot": "✅ Enviar pelo bot",
         "wait_gate": "Escolha uma opção abaixo 👇",
         "wait": "Toque no botão para continuar a Etapa 2 👇",
-        "expired": "Seu link do site expirou. Toque em “Become a model” e preencha a etapa curta novamente.",
+        "expired": "Seu link do site expirou. Toque em “Tornar-se parceiro” e preencha a etapa curta novamente.",
     },
     "es": {
         "gate": (
-            "📣 Antes de continuar, abre el canal de Streamflow.\n\n"
-            "Cómo es el trabajo:\n"
-            "• remoto, desde casa\n"
-            "• sin contenido 18+\n"
-            "• inicio claro con acompañamiento\n"
-            "• reglas transparentes sobre horario, pagos y proceso\n\n"
+            "📣 Antes de continuar, abre el canal de Starflow.\n\n"
+            "Cómo funciona la alianza:\n"
+            "• traes candidatos a entrevistas\n"
+            "• cualquier fuente de tráfico es válida\n"
+            "• CPA de $20-40 por entrevista exitosa\n"
+            "• pagos cada domingo en USDT\n\n"
             "Ahora elige tu camino:\n"
-            "• completar todo en el bot y enviar sin perder tiempo en chats\n"
-            "• o escribir al manager y registrarte por su vía"
+            "• completar todo en el bot\n"
+            "• o escribir al manager"
         ),
         "step1": (
             "✅ Pre-solicitud guardada.\n\n"
@@ -1074,16 +1161,15 @@ STAGE2_BRIDGE_TEXTS = {
             "Ahora te explico rápido el siguiente paso."
         ),
         "step2": (
-            "Cómo funciona:\n"
-            "• inicio claro\n"
-            "• acompañamiento paso a paso\n"
-            "• enfoque en resultados estables\n\n"
-            "Queda un bloque final obligatorio (unos 2 minutos).\n"
-            "Sin eso no podemos activar tu inicio."
+            "Siguiente paso:\n"
+            "• completar el bloque final\n"
+            "• fijar tu perfil de partner\n"
+            "• entregar CRM y materiales\n\n"
+            "Queda un bloque final obligatorio (unos 2 minutos)."
         ),
         "autostart": (
             "✅ Perfecto, la parte corta ya está lista.\n"
-            "Vamos directo al bloque final obligatorio para activar tu inicio más rápido."
+            "Vamos directo al bloque final obligatorio para activar tu flujo de partner."
         ),
         "next": "Qué sigue",
         "start": "Continuar Etapa 2 (obligatoria)",
@@ -1091,24 +1177,24 @@ STAGE2_BRIDGE_TEXTS = {
         "menu_recommendation": (
             "✅ La primera parte de tu solicitud fue aceptada al instante y de forma automática.\n\n"
             "Para conocer mejor el formato, abre estas secciones:\n"
-            "• 📁 Portafolio de modelos\n"
-            "• ℹ️ Sobre el trabajo\n"
+            "• 📁 Materiales del partner\n"
+            "• ℹ️ Sobre la oferta\n"
             "• 📣 Nuestro canal\n\n"
-            "Después pulsa “🌸 Ser modelo” para continuar.\n"
+            "Después pulsa “🤝 Ser partner” para continuar.\n"
             "Si tienes preguntas, escribe al manager."
         ),
         "channel": "📣 Abrir canal",
         "continue_bot": "✅ Enviar por el bot",
         "wait_gate": "Elige una opción abajo 👇",
         "wait": "Pulsa el botón para continuar la Etapa 2 👇",
-        "expired": "Tu enlace del sitio venció. Pulsa “Become a model” y completa de nuevo la etapa corta.",
+        "expired": "Tu enlace del sitio venció. Pulsa “Ser partner” y completa de nuevo la etapa corta.",
     },
 }
 
 def stage2_text(lang: str, key: str) -> str:
     locale = normalize_lang(lang)
-    return STAGE2_BRIDGE_TEXTS.get(locale, STAGE2_BRIDGE_TEXTS["ru"]).get(
-        key, STAGE2_BRIDGE_TEXTS["ru"][key]
+    return STAGE2_BRIDGE_TEXTS.get(locale, STAGE2_BRIDGE_TEXTS[STARFLOW_DEFAULT_LANG]).get(
+        key, STAGE2_BRIDGE_TEXTS[STARFLOW_DEFAULT_LANG][key]
     )
 
 
@@ -1136,7 +1222,7 @@ def auto_request_info_text(lang: str) -> str:
             "Todos los datos son confidenciales."
         ),
     }
-    return mapping.get(locale, mapping["ru"])
+    return mapping.get(locale, mapping[STARFLOW_DEFAULT_LANG])
 
 def manager_contact_url() -> str | None:
     manager_username = PUBLIC_MANAGER_USERNAME or ADMIN_USERNAME.lstrip("@").strip()
@@ -1193,7 +1279,7 @@ def _first_nonempty_env(*names: str) -> str:
             return raw
     return ""
 
-DEFAULT_CHANNEL_PUBLIC_LINK = "https://t.me/streamflowagency"
+DEFAULT_CHANNEL_PUBLIC_LINK = (os.getenv("STARFLOW_CHANNEL_LINK") or "https://t.me/starflowcorp").strip()
 CHANNEL_PUBLIC_LINK = _safe_http_url(
     _first_nonempty_env("CHANNEL_LINK", "CHANNEL_PUBLIC_LINK")
     or DEFAULT_CHANNEL_PUBLIC_LINK
@@ -2328,7 +2414,10 @@ def contact_url_for_user(user_id: int, data: dict | None) -> str:
     wa_url = _whatsapp_contact_url(payload)
     if wa_url:
         return wa_url
-    return "https://t.me/streamflowmanager"
+    fallback_username = PUBLIC_MANAGER_HANDLE.lstrip("@").strip()
+    if fallback_username:
+        return f"https://t.me/{fallback_username}"
+    return "https://t.me"
 
 
 def is_site_source(user_id: int) -> bool:
@@ -2338,10 +2427,10 @@ def is_site_source(user_id: int) -> bool:
 
 def lang_for(user_id: int) -> str:
     try:
-        return get_user_language(user_id)
+        return normalize_lang(get_user_language(user_id))
     except Exception:
-        logger.exception("Не удалось получить язык пользователя user_id=%s, fallback=ru", user_id)
-        return "ru"
+        logger.exception("Не удалось получить язык пользователя user_id=%s, fallback=%s", user_id, STARFLOW_DEFAULT_LANG)
+        return STARFLOW_DEFAULT_LANG
 
 
 def has_lang_for(user_id: int) -> bool:
@@ -2353,6 +2442,9 @@ def has_lang_for(user_id: int) -> bool:
 
 
 def set_lang_for(user_id: int, language: str) -> None:
+    language = normalize_lang(language)
+    if language not in LANGUAGE_NAMES:
+        language = STARFLOW_DEFAULT_LANG
     try:
         set_user_language(user_id, language)
     except Exception:
@@ -2488,7 +2580,8 @@ def build_admin_summary(
         f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
         f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
         f"🧩 Этап анкеты: {_safe_text(application_stage_label(data))}\n"
-        f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
+        f"📚 Готов учиться по материалам: {_safe_text(data.get('living', '—'))}\n"
+        f"📣 Источники трафика: {_safe_text(data.get('devices', '—'))}\n"
         f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
         f"📧 Email: {_safe_text(data.get('email', '—'))}\n"
         f"🏷 Проект: {project_label_for_user(user_id, data)}\n"
@@ -2504,21 +2597,20 @@ def build_admin_summary(
 def build_admin_full_text(data: dict, user_id: int, status: str) -> str:
     status_label = STATUS_LABELS.get(status, status)
     submit_time = submit_time_label_for_user(user_id)
-    device_value = _safe_text(data.get("device_model") or data.get("devices") or "—")
     return (
-        "📋 <b>Полная анкета</b>\n\n"
+        "📋 <b>Полная заявка партнёра</b>\n\n"
         f"👤 Имя: {_safe_text(data.get('name', '—'))}\n"
         f"📅 Дата рождения: {_safe_text(data.get('age', '—'))}\n"
         f"🌍 Город и страна: {_safe_text(data.get('city', '—'))}\n"
         f"🏳️ Страна подачи: {_safe_text(submission_country(data))}\n"
         f"🧩 Этап анкеты: {_safe_text(application_stage_label(data))}\n"
         f"📞 Телефон: {_safe_text(data.get('phone', '—'))}\n"
-        f"🏠 Помещение без посторонних: {_safe_text(data.get('living', '—'))}\n"
-        f"📱 Устройство для работы: {device_value}\n"
+        f"📧 Email: {_safe_text(data.get('email', '—'))}\n"
+        f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
+        f"📚 Готов учиться по материалам: {_safe_text(data.get('living', '—'))}\n"
+        f"📣 Источники трафика: {_safe_text(data.get('devices', '—'))}\n"
         f"⏱ Время работы: {_safe_text(data.get('work_time', '—'))}\n"
         f"💼 Опыт: {_safe_text(data.get('experience', '—'))}\n"
-        f"💬 Telegram: {_safe_text(data.get('telegram', '—'))}\n"
-        f"📧 Email: {_safe_text(data.get('email', '—'))}\n"
         f"🏷 Проект: {project_label_for_user(user_id, data)}\n"
         f"🆔 ID: {user_id}\n"
         f"🧭 Источник: {source_label_for_user(user_id)}\n\n"
@@ -3553,7 +3645,7 @@ async def send_menu(
 async def ensure_language_selected(user_id: int, allow_home_button: bool = False, force_prompt: bool = False) -> bool:
     if has_lang_for(user_id) and not force_prompt:
         return True
-    current_lang = lang_for(user_id) if has_lang_for(user_id) else "ru"
+    current_lang = lang_for(user_id) if has_lang_for(user_id) else STARFLOW_DEFAULT_LANG
     await send_or_edit_user_text(
         user_id,
         t(current_lang, "language_menu_title"),
@@ -3874,7 +3966,7 @@ def _portfolio_player_text(lang: str, key: str) -> str:
             "empty": "⚠️ El portafolio no está disponible ahora.",
         },
     }
-    return values.get(locale, values["ru"]).get(key, values["ru"][key])
+    return values.get(locale, values[STARFLOW_DEFAULT_LANG]).get(key, values[STARFLOW_DEFAULT_LANG][key])
 
 
 def load_portfolio_player_items() -> list[dict]:
@@ -3915,7 +4007,7 @@ def portfolio_start_index(items: list[dict], kind: str | None = None) -> int:
 def portfolio_player_caption(lang: str, item: dict, index: int, total: int) -> str:
     locale = normalize_lang(lang)
     titles = item.get("title") or {}
-    title = str(titles.get(locale) or titles.get("ru") or "Portfolio")
+    title = str(titles.get(locale) or titles.get(STARFLOW_DEFAULT_LANG) or "Portfolio")
     dots = portfolio_slide_dots(index, total)
     dots_line = f"\n{dots}" if dots else ""
     return f"📁 <b>{html.escape(title)}</b>\n{index + 1}/{total}{dots_line}\n\n{_portfolio_player_text(locale, 'hint')}"
@@ -4212,7 +4304,7 @@ async def bootstrap_site_stage2_start(
                 logger.exception("Не удалось отправить fallback-сообщение об истечении site-токена")
         return True
 
-    lang = normalize_lang(str(lead.get("lang") or start_lang or "ru"))
+    lang = normalize_lang(str(lead.get("lang") or start_lang or STARFLOW_DEFAULT_LANG))
     set_lang_for(message.from_user.id, lang)
     await state.clear()
     clear_form_data(message.from_user.id)
@@ -4231,7 +4323,6 @@ async def bootstrap_site_stage2_start(
         "phone": str(lead.get("phone") or "").strip(),
         "age": str(lead.get("age") or "").strip(),
         "email": str(lead.get("email") or "").strip(),
-        "device_model": str(lead.get("device_model") or "").strip(),
         "telegram": str(lead.get("telegram") or "").strip(),
         "whatsapp": str(lead.get("whatsapp") or "").strip(),
         "country": str(lead.get("country") or "").strip() or None,
@@ -4274,7 +4365,7 @@ async def bootstrap_site_stage2_start(
 async def start(message: Message, state: FSMContext):
     try:
         if message.chat.type != "private":
-            await message.answer(t("ru", "start_private_only"))
+            await message.answer(t(STARFLOW_DEFAULT_LANG, "start_private_only"))
             return
         await delete_user_message(message)
         logger.info(
@@ -4356,7 +4447,7 @@ async def start(message: Message, state: FSMContext):
     except Exception:
         logger.exception("Ошибка в /start")
         try:
-            await message.answer(t("ru", "temp_error_retry"))
+            await message.answer(t(STARFLOW_DEFAULT_LANG, "temp_error_retry"))
         except Exception:
             pass
 
@@ -4371,7 +4462,7 @@ async def start_text_alias(message: Message, state: FSMContext):
 @dp.callback_query(F.data == "main_menu")
 async def main_menu_handler(call: CallbackQuery, state: FSMContext):
     if not call.message or call.message.chat.type != "private":
-        await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+        await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
         return
     await safe_call_answer(call)
     await state.clear()
@@ -4403,7 +4494,7 @@ async def main_menu_handler(call: CallbackQuery, state: FSMContext):
 @dp.message(F.text == "/language")
 async def language_command(message: Message):
     if message.chat.type != "private":
-        await message.answer(t("ru", "start_private_only"))
+        await message.answer(t(STARFLOW_DEFAULT_LANG, "start_private_only"))
         return
     lang = lang_for(message.from_user.id)
     await send_or_edit_user_text(
@@ -4416,7 +4507,7 @@ async def language_command(message: Message):
 @dp.callback_query(F.data == "language_menu")
 async def language_menu_handler(call: CallbackQuery):
     if not call.message or call.message.chat.type != "private":
-        await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+        await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
         return
     lang = lang_for(call.from_user.id)
     await send_or_edit_user_text(
@@ -4431,12 +4522,12 @@ async def language_menu_handler(call: CallbackQuery):
 async def set_language_handler(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         lang_code = call.data.split(":", 1)[1].strip().lower()
         if lang_code not in LANGUAGE_NAMES:
-            lang_code = "ru"
+            lang_code = STARFLOW_DEFAULT_LANG
         set_lang_for(call.from_user.id, lang_code)
         lang = lang_for(call.from_user.id)
         app = get_application(call.from_user.id)
@@ -4469,14 +4560,15 @@ async def set_language_handler(call: CallbackQuery, state: FSMContext):
         await clear_user_flow_message(call.from_user.id)
     except Exception:
         logger.exception("Ошибка выбора языка")
-        await safe_call_answer(call, t("ru", "temp_error_retry"), show_alert=True)
+        await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "temp_error_retry"), show_alert=True)
+        
 # ================= APPLY =================
 
 @dp.callback_query(F.data == "apply")
 async def apply(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         lang = lang_for(call.from_user.id)
@@ -4557,7 +4649,7 @@ async def apply(call: CallbackQuery, state: FSMContext):
 async def apply_restart(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         lang = lang_for(call.from_user.id)
@@ -4583,7 +4675,7 @@ async def apply_restart(call: CallbackQuery, state: FSMContext):
 async def form_continue(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         lang = lang_for(call.from_user.id)
@@ -4680,7 +4772,7 @@ async def form_continue(call: CallbackQuery, state: FSMContext):
 async def form_restart(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         lang = lang_for(call.from_user.id)
@@ -4696,7 +4788,7 @@ async def form_restart(call: CallbackQuery, state: FSMContext):
 async def stage2_intro_next(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         await enter_stage2_intro(call.from_user.id, state, start_from_step2=True)
@@ -4708,7 +4800,7 @@ async def stage2_intro_next(call: CallbackQuery, state: FSMContext):
 async def stage2_gate_continue(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         await start_stage2_questions(call.from_user.id, state)
@@ -4720,7 +4812,7 @@ async def stage2_gate_continue(call: CallbackQuery, state: FSMContext):
 async def stage2_start(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
-            await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            await safe_call_answer(call, t(STARFLOW_DEFAULT_LANG, "open_private_prompt"), show_alert=True)
             return
         await safe_call_answer(call)
         await start_stage2_questions(call.from_user.id, state)
@@ -4874,7 +4966,7 @@ async def step_age(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.device_model,
+        ApplicationStates.headphones,
         note=note
     )
 
@@ -4905,7 +4997,7 @@ async def step_living(m: Message, state: FSMContext):
     await send_next_question(
         m,
         state,
-        ApplicationStates.photo_face,
+        ApplicationStates.devices,
         note=note,
     )
 
@@ -4929,16 +5021,13 @@ async def step_devices(m: Message, state: FSMContext):
         )
         return
     await update_form_field(state, m.from_user.id, devices=devices)
-    await send_next_question(
-        m,
-        state,
-        ApplicationStates.device_model
-    )
+    await send_or_edit_user_text(m.from_user.id, build_ack(m.from_user.id))
+    await show_preview(m, state)
 
 @dp.message(StateFilter(ApplicationStates.device_model), F.text)
 async def step_device_model(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
-    device_model, too_long = normalize_user_text_input(m.text, FORM_DEVICE_MODEL_MAX_LEN)
+    value, too_long = normalize_user_text_input(m.text, FORM_DEVICE_MODEL_MAX_LEN)
     await delete_user_message(m)
     if too_long:
         await send_or_edit_user_text(
@@ -4947,18 +5036,13 @@ async def step_device_model(m: Message, state: FSMContext):
             reply_markup=form_keyboard(lang),
         )
         return
-    if len(device_model) < 2:
-        await send_or_edit_user_text(
-            m.from_user.id,
-            t(lang, "field_device_model_short"),
-            reply_markup=form_keyboard(lang)
-        )
-        return
-    await update_form_field(state, m.from_user.id, device_model=device_model)
+    # Legacy compatibility: old users may return to deprecated state.
+    if len(value) >= 2:
+        await update_form_field(state, m.from_user.id, devices=value)
     await send_next_question(
         m,
         state,
-        ApplicationStates.telegram
+        ApplicationStates.headphones
     )
 
 @dp.message(StateFilter(ApplicationStates.work_time), F.text)
@@ -4987,10 +5071,26 @@ async def step_work_time(m: Message, state: FSMContext):
         ApplicationStates.experience
     )
 
-@dp.message(StateFilter(ApplicationStates.headphones))
+@dp.message(StateFilter(ApplicationStates.headphones), F.text)
 async def step_headphones(m: Message, state: FSMContext):
-    # Compatibility handler for users stuck on an old questionnaire step.
+    lang = lang_for(m.from_user.id)
+    email, too_long = normalize_user_text_input(m.text, FORM_EMAIL_MAX_LEN)
     await delete_user_message(m)
+    if too_long:
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_too_long", max=FORM_EMAIL_MAX_LEN),
+            reply_markup=form_keyboard(lang),
+        )
+        return
+    if not is_valid_email(email):
+        await send_or_edit_user_text(
+            m.from_user.id,
+            t(lang, "field_email_invalid"),
+            reply_markup=form_keyboard(lang)
+        )
+        return
+    await update_form_field(state, m.from_user.id, email=email.strip().lower())
     await send_next_question(
         m,
         state,
@@ -5062,54 +5162,51 @@ async def step_exp(m: Message, state: FSMContext):
 
 @dp.message(StateFilter(ApplicationStates.photo_face), F.photo)
 async def step_face(m: Message, state: FSMContext):
-    await update_form_field(state, m.from_user.id, photo_face=m.photo[-1].file_id)
+    lang = lang_for(m.from_user.id)
     await delete_user_message(m)
+    await send_or_edit_user_text(
+        m.from_user.id,
+        t(lang, "photo_step_removed"),
+        reply_markup=form_keyboard(lang)
+    )
     await send_next_question(
         m,
         state,
-        ApplicationStates.photo_full
+        ApplicationStates.devices
     )
 
 @dp.message(StateFilter(ApplicationStates.photo_full), F.photo)
 async def step_full(m: Message, state: FSMContext):
-    await update_form_field(state, m.from_user.id, photo_full=m.photo[-1].file_id)
+    lang = lang_for(m.from_user.id)
     await delete_user_message(m)
-    await send_or_edit_user_text(m.from_user.id, build_ack(m.from_user.id))
+    await send_or_edit_user_text(m.from_user.id, t(lang, "photo_step_removed"))
     await show_preview(m, state)
 
 @dp.message(StateFilter(ApplicationStates.photo_face), ~F.photo)
-async def reject_non_photo_face(m: Message):
+async def reject_non_photo_face(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
     await delete_user_message(m)
-    await send_or_edit_user_text(
-        m.from_user.id,
-        t(lang, "photo_face_required"),
-        reply_markup=form_keyboard(lang)
-    )
+    await send_next_question(m, state, ApplicationStates.devices, note=t(lang, "photo_step_removed"))
 
 @dp.message(StateFilter(ApplicationStates.photo_full), ~F.photo)
-async def reject_non_photo_full(m: Message):
+async def reject_non_photo_full(m: Message, state: FSMContext):
     lang = lang_for(m.from_user.id)
     await delete_user_message(m)
-    await send_or_edit_user_text(
-        m.from_user.id,
-        t(lang, "photo_full_required"),
-        reply_markup=form_keyboard(lang)
-    )
+    await send_or_edit_user_text(m.from_user.id, t(lang, "photo_step_removed"))
+    await show_preview(m, state)
 # ================= FORM CONSTANTS =================
 
 FORM_ORDER = [
     ApplicationStates.name,
     ApplicationStates.phone,
     ApplicationStates.age,
-    ApplicationStates.device_model,
+    ApplicationStates.headphones,
     ApplicationStates.telegram,
     ApplicationStates.city,
     ApplicationStates.work_time,
     ApplicationStates.experience,
     ApplicationStates.living,
-    ApplicationStates.photo_face,
-    ApplicationStates.photo_full,
+    ApplicationStates.devices,
 ]
 
 TOTAL_STEPS = len(FORM_ORDER)
@@ -5147,6 +5244,7 @@ TEXT_STATES = (
     ApplicationStates.city,
     ApplicationStates.phone,
     ApplicationStates.age,
+    ApplicationStates.headphones,
     ApplicationStates.living,
     ApplicationStates.devices,
     ApplicationStates.device_model,
@@ -5459,6 +5557,11 @@ async def save_edited_value(m: Message, state: FSMContext):
         return
     if field == "age":
         value = normalize_birthdate(value) or value
+    if field == "email":
+        if not is_valid_email(value):
+            await send_or_edit_user_text(m.from_user.id, t(lang, "field_email_invalid"))
+            return
+        value = value.strip().lower()
     if field == "living":
         normalized = normalize_yes_no(value, lang=lang)
         if not normalized:
@@ -5467,9 +5570,6 @@ async def save_edited_value(m: Message, state: FSMContext):
         value = normalized
     if field == "devices" and len(value) < 2:
         await send_or_edit_user_text(m.from_user.id, t(lang, "field_devices_short"))
-        return
-    if field == "device_model" and len(value) < 2:
-        await send_or_edit_user_text(m.from_user.id, t(lang, "field_device_model_short"))
         return
     if field == "work_time" and not has_any_digit(value):
         await send_or_edit_user_text(m.from_user.id, t(lang, "field_work_time_invalid"))
@@ -5503,15 +5603,7 @@ async def save_edited_value(m: Message, state: FSMContext):
 async def preview_edit_photo(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
-        await edit_or_send(
-            call,
-            "📷 <b>Какое фото хочешь заменить?</b>" if lang == "ru" else (
-                "📷 <b>Which photo do you want to replace?</b>"
-                if lang == "en"
-                else ("📷 <b>Qual foto você quer trocar?</b>" if lang == "pt" else "📷 <b>¿Qué foto quieres reemplazar?</b>")
-            ),
-            reply_markup=preview_edit_photo_menu(lang)
-        )
+        await safe_call_answer(call, t(lang, "photo_edit_disabled"), show_alert=False)
     except Exception:
         logger.exception("Ошибка в preview_edit_photo")
         await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
@@ -5519,33 +5611,9 @@ async def preview_edit_photo(call: CallbackQuery):
 @dp.callback_query(F.data.startswith("edit_photo:"))
 async def edit_photo(call: CallbackQuery, state: FSMContext):
     try:
-        if ":" not in call.data:
-            await safe_call_answer(call, "Некорректная команда", show_alert=False)
-            return
-        photo_type = call.data.split(":", 1)[1]
-
-        await state.update_data(edit_photo=photo_type)
-
         lang = lang_for(call.from_user.id)
-        text = (
-            "📷 <b>Замена фото</b>\n\n"
-            "Отправь новое фото:\n"
-            "• чёткое\n"
-            "• без фильтров\n"
-            "• хорошее освещение\n\n"
-            "⬅️ Если передумала — нажми «Отмена»"
-        ) if lang == "ru" else (
-            "📷 <b>Photo replacement</b>\n\nSend a new photo.\n⬅️ If you changed your mind, press Cancel."
-            if lang == "en"
-            else ("📷 <b>Troca de foto</b>\n\nEnvie uma nova foto.\n⬅️ Se mudou de ideia, pressione Cancelar." if lang == "pt" else "📷 <b>Reemplazo de foto</b>\n\nEnvía una foto nueva.\n⬅️ Si cambiaste de idea, pulsa Cancelar.")
-        )
-
-        await send_or_edit_user_text(
-            call.from_user.id,
-            text,
-            reply_markup=cancel_keyboard(lang)
-        )
-        await safe_call_answer(call)
+        await state.update_data(edit_photo=None)
+        await safe_call_answer(call, t(lang, "photo_edit_disabled"), show_alert=False)
     except Exception:
         logger.exception("Ошибка в edit_photo")
         await safe_call_answer(call, "Не удалось открыть замену фото", show_alert=False)
@@ -5583,48 +5651,9 @@ def _merge_preview_payload(user_id: int, state_data: dict | None) -> dict:
 @dp.callback_query(StateFilter(ApplicationStates.preview), F.data.startswith("preview_photo:"))
 async def preview_photo(call: CallbackQuery, state: FSMContext):
     try:
-        if ":" not in (call.data or ""):
-            await safe_call_answer(call, "Некорректная команда", show_alert=False)
-            return
-        _, photo_type = str(call.data).split(":", 1)
-        if photo_type not in {"face", "full"}:
-            await safe_call_answer(call, "Некорректный тип фото", show_alert=False)
-            return
-
-        user_id = call.from_user.id
-        lang = lang_for(user_id)
-        data = _merge_preview_payload(user_id, await state.get_data())
-        photo_key = "photo_face" if photo_type == "face" else "photo_full"
-        photo_ref = str(data.get(photo_key) or "").strip()
-
-        if not photo_ref:
-            miss_text = (
-                "Сначала загрузи это фото через «Изменить фото»."
-                if lang == "ru"
-                else (
-                    "Please upload this photo first via “Edit photo”."
-                    if lang == "en"
-                    else (
-                        "Primeiro envie esta foto em “Editar foto”."
-                        if lang == "pt"
-                        else "Primero sube esta foto en “Editar foto”."
-                    )
-                )
-            )
-            await safe_call_answer(call, miss_text, show_alert=False)
-            return
-
-        await state.update_data(preview_photo_mode=photo_type)
-        if not call.message:
-            await safe_call_answer(call)
-            return
-        await show_preview(
-            call.message,
-            state,
-            user_id=user_id,
-            show_loading=False,
-        )
-        await safe_call_answer(call)
+        lang = lang_for(call.from_user.id)
+        await state.update_data(preview_photo_mode=None, edit_photo=None)
+        await safe_call_answer(call, t(lang, "photo_edit_disabled"), show_alert=False)
     except Exception:
         logger.exception("Ошибка в preview_photo")
         lang = lang_for(call.from_user.id)
@@ -5704,35 +5733,19 @@ async def show_preview(
         city=_safe_text(data.get("city", "—")),
         age=_safe_text(data.get("age", "—")),
         phone=_safe_text(data.get("phone", "—")),
+        email=_safe_text(data.get("email", "—")),
         living=_safe_text(data.get("living", "—")),
         devices=_safe_text(data.get("devices", "—")),
-        device_model=_safe_text(data.get("device_model", "—")),
         work_time=_safe_text(data.get("work_time", "—")),
         experience=_safe_text(data.get("experience", "—")),
         telegram=_safe_text(data.get("telegram", "—")),
         status=status_caption,
     )
-    preferred_mode = str(data.get("preview_photo_mode") or "").strip().lower()
-    face_photo = str(data.get("photo_face") or "").strip()
-    full_photo = str(data.get("photo_full") or "").strip()
-    if preferred_mode == "full":
-        preview_photo_ref = full_photo or face_photo
-        actual_mode = "full" if full_photo else ("face" if face_photo else "")
-    else:
-        preview_photo_ref = face_photo or full_photo
-        actual_mode = "face" if face_photo else ("full" if full_photo else "")
-    if actual_mode:
-        await state.update_data(preview_photo_mode=actual_mode)
-    media_for_preview: str | FSInputFile
-    if preview_photo_ref:
-        media_for_preview = preview_photo_ref
-    else:
-        media_for_preview = FSInputFile("media/menu.jpg")
+    await state.update_data(preview_photo_mode=None, edit_photo=None)
     await state.set_state(ApplicationStates.preview)
     set_last_state(target_user_id, ApplicationStates.preview.state)
-    await send_or_edit_user_preview(
+    await send_or_edit_user_text(
         target_user_id,
-        media_for_preview,
         text,
         reply_markup=preview_keyboard(lang),
     )
@@ -5887,7 +5900,7 @@ async def admin_accept(call: CallbackQuery):
                 channel_url = stage2_channel_link(user_lang) if site_stage2 else None
             else:
                 form_data = {}
-                user_lang = "ru"
+                user_lang = STARFLOW_DEFAULT_LANG
                 channel_url = None
             caption = build_menu_caption_with_status(
                 "accepted",
@@ -6224,9 +6237,9 @@ async def admin_send_model(call: CallbackQuery, state: FSMContext):
             flow_payload,
         )
         await update_admin_view_message(
-            "📨 <b>Отправка сообщения модели</b>\n\n"
+            "📨 <b>Отправка сообщения партнёру</b>\n\n"
             f"Кандидат: <b>{html.escape(candidate_name)}</b>\n\n"
-            "Отправь одним сообщением уникальный текст для этой модели.\n"
+            "Отправь одним сообщением уникальный текст для этого партнёра.\n"
             "Можно вставить Zoom-ссылку.\n\n"
             "Сообщение уйдёт в личку пользователю от бота.",
             admin_send_model_keyboard(),
@@ -6274,7 +6287,7 @@ async def admin_send_model_message(message: Message, state: FSMContext):
         if message.text and message.text.strip().startswith("/"):
             await delete_message_silent(message)
             await update_admin_menu_message(
-                "⚠️ Отправь именно текст для модели, а не команду.\n\nМожно вставить Zoom-ссылку.",
+                "⚠️ Отправь именно текст для партнёра, а не команду.\n\nМожно вставить Zoom-ссылку.",
                 admin_send_model_keyboard(),
             )
             return
@@ -6318,7 +6331,7 @@ async def admin_send_model_message(message: Message, state: FSMContext):
         counts = get_status_counts()
         stage_counts = get_application_stage_counts()
         await update_admin_menu_message(
-            f"✅ Сообщение отправлено модели (ID: {uid}).",
+            f"✅ Сообщение отправлено партнёру (ID: {uid}).",
             admin_menu_keyboard(counts, stage_counts),
         )
     except TelegramForbiddenError:
@@ -7317,15 +7330,11 @@ async def admin_reset_db_cancel(call: CallbackQuery):
 async def portfolio_reviews(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
-        if not call.message:
-            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
-            return
-        items = load_portfolio_player_items()
-        start_index = portfolio_start_index(items, "photo")
-        await show_portfolio_player(
+        await clear_portfolio_media(call.from_user.id)
+        await send_or_edit_user_text(
             call.from_user.id,
-            lang,
-            start_index,
+            t(lang, "portfolio_faq_text"),
+            reply_markup=portfolio_menu(lang),
         )
         await safe_call_answer(call)
     except Exception:
@@ -7336,38 +7345,23 @@ async def portfolio_reviews(call: CallbackQuery):
 async def portfolio_streams(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
-        if not call.message:
-            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
-            return
-        items = load_portfolio_player_items()
-        start_index = portfolio_start_index(items, "video")
-        await show_portfolio_player(
+        await clear_portfolio_media(call.from_user.id)
+        await send_or_edit_user_text(
             call.from_user.id,
-            lang,
-            start_index,
+            t(lang, "portfolio_script_text"),
+            reply_markup=portfolio_menu(lang),
         )
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_streams")
-        await safe_call_answer(call, t(lang_for(call.from_user.id), "video_send_error"), show_alert=False)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
 
 
 @dp.callback_query(F.data.startswith("portfolio_nav:"))
 async def portfolio_nav(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
-        if not call.message:
-            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
-            return
-        _, raw_index = call.data.split(":", 1)
-        index = int(raw_index)
-        await show_portfolio_player(
-            call.from_user.id,
-            lang,
-            index,
-            source_message=call.message,
-        )
-        await safe_call_answer(call)
+        await safe_call_answer(call, t(lang, "portfolio_nav_disabled"), show_alert=False)
     except Exception:
         logger.exception("Ошибка навигации портфолио")
         await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
@@ -7377,20 +7371,7 @@ async def portfolio_nav(call: CallbackQuery):
 async def portfolio_jump(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
-        if not call.message:
-            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
-            return
-        _, raw_kind = call.data.split(":", 1)
-        kind = raw_kind.strip().lower()
-        items = load_portfolio_player_items()
-        target_index = portfolio_start_index(items, kind)
-        await show_portfolio_player(
-            call.from_user.id,
-            lang,
-            target_index,
-            source_message=call.message,
-        )
-        await safe_call_answer(call)
+        await safe_call_answer(call, t(lang, "portfolio_nav_disabled"), show_alert=False)
     except Exception:
         logger.exception("Ошибка переключения секции портфолио")
         await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
@@ -7399,26 +7380,16 @@ async def portfolio_jump(call: CallbackQuery):
 async def portfolio_pdf(call: CallbackQuery):
     try:
         lang = lang_for(call.from_user.id)
-        if not call.message:
-            await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
-            return
         await clear_portfolio_media(call.from_user.id)
-        base_dir = Path(__file__).resolve().parent
-        candidates = [
-            base_dir / "media" / "portfolio.pdf",
-            base_dir / "web" / "assets" / "portfolio.pdf",
-        ]
-        pdf_path = next((p for p in candidates if p.exists()), None)
-        if not pdf_path:
-            raise FileNotFoundError("portfolio.pdf не найден ни в media, ни в web/assets")
-        msg = await call.message.answer_document(
-            FSInputFile(str(pdf_path))
+        await send_or_edit_user_text(
+            call.from_user.id,
+            t(lang, "portfolio_materials_text"),
+            reply_markup=portfolio_menu(lang),
         )
-        track_portfolio_media(call.from_user.id, [msg.message_id])
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_pdf")
-        await safe_call_answer(call, t(lang_for(call.from_user.id), "pdf_send_error"), show_alert=False)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
 
 # ================= ADMIN STATS =================
 
@@ -7542,12 +7513,16 @@ async def main():
         cleanup_old_form_data()
     except Exception:
         logger.exception("Ошибка очистки старых данных")
-    await ensure_admin_menu_posted()
-    tasks = [
-        asyncio.create_task(daily_stats_task(), name="daily_stats_task"),
-        asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"),
-        asyncio.create_task(auto_request_info_task(), name="auto_request_info_task"),
-    ]
+    if STARFLOW_ENABLE_ADMIN_JOBS:
+        await ensure_admin_menu_posted()
+        tasks = [
+            asyncio.create_task(daily_stats_task(), name="daily_stats_task"),
+            asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"),
+            asyncio.create_task(auto_request_info_task(), name="auto_request_info_task"),
+        ]
+    else:
+        logger.info("STARFLOW_ENABLE_ADMIN_JOBS=false: фоновые админ-джобы отключены")
+        tasks = []
     try:
         try:
             await bot.delete_webhook(drop_pending_updates=False)

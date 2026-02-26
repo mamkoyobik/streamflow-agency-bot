@@ -1,0 +1,60 @@
+:root {
+  --starflow-accent: #1fd3c2;
+  --starflow-accent-2: #3ee7a3;
+}
+
+body[data-page="starflow"] .btn-primary {
+  background: linear-gradient(120deg, var(--starflow-accent), var(--starflow-accent-2));
+  color: #031014;
+}
+
+body[data-page="starflow"] .hero::after {
+  opacity: 0.45;
+  background:
+    radial-gradient(circle at 14% 12%, rgba(31, 211, 194, 0.36), transparent 52%),
+    radial-gradient(circle at 85% 16%, rgba(62, 231, 163, 0.28), transparent 49%),
+    radial-gradient(circle at 46% 88%, rgba(31, 211, 194, 0.2), transparent 52%);
+}
+
+body[data-page="starflow"] .trust-item strong,
+body[data-page="starflow"] .offer-title,
+body[data-page="starflow"] .steps-content h3,
+body[data-page="starflow"] .faq-item h3 {
+  color: #e7fbf7;
+}
+
+body[data-page="starflow"] .income-amount {
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
+}
+
+.faq-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 1.2rem;
+}
+
+.faq-item {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  background: rgba(18, 20, 24, 0.64);
+  border-radius: 20px;
+  padding: 1.2rem;
+}
+
+.faq-item p {
+  margin: 0.5rem 0 0;
+  color: rgba(233, 236, 242, 0.9);
+}
+
+.faq-list {
+  margin: 0.8rem 0 0;
+  padding-left: 1.1rem;
+  color: rgba(233, 236, 242, 0.86);
+  display: grid;
+  gap: 0.45rem;
+}
+
+@media (max-width: 760px) {
+  .faq-item {
+    padding: 1rem;
+  }
+}

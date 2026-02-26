@@ -1,6 +1,6 @@
 import unittest
 
-from keyboards import admin_list_item_keyboard, admin_list_view_keyboard
+from keyboards import admin_list_item_keyboard, admin_list_view_keyboard, admin_menu_keyboard
 
 
 def _row_callback_data(markup, row: int, col: int) -> str:
@@ -76,6 +76,17 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
             _row_callback_data(markup, 1, 0),
             "admin_view_photo:777:face:reviewed:1",
         )
+
+    def test_admin_menu_has_project_filters(self):
+        markup = admin_menu_keyboard({"pending": 1, "accepted": 0, "rejected": 0, "total": 1}, {"quick": 1, "full": 0})
+        callbacks = [
+            button.callback_data
+            for row in markup.inline_keyboard
+            for button in row
+            if button.callback_data
+        ]
+        self.assertIn("admin_menu:project_streamflow", callbacks)
+        self.assertIn("admin_menu:project_starflow", callbacks)
 
 
 if __name__ == "__main__":

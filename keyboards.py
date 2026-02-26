@@ -287,6 +287,18 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
             InlineKeyboardButton(text=f"🆕 Новые ({pending})", callback_data="admin_menu:pending"),
         ],
         [
+            InlineKeyboardButton(
+                text="1️⃣ Управление проектом Streamflow Agency",
+                callback_data="admin_menu:project_streamflow",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="2️⃣ Управление проектом Starflow Corp",
+                callback_data="admin_menu:project_starflow",
+            ),
+        ],
+        [
             InlineKeyboardButton(text=f"1️⃣ Этап 1 ({stage_quick})", callback_data="admin_menu:stage_quick"),
             InlineKeyboardButton(text=f"2️⃣ Этап 2 ({stage_full})", callback_data="admin_menu:stage_full"),
         ],
@@ -328,6 +340,18 @@ def admin_menu_applications_keyboard(counts: dict | None = None, stage_counts: d
         [
             InlineKeyboardButton(text=f"⏳ Ожидают ({pending})", callback_data="admin_menu:pending"),
             InlineKeyboardButton(text=f"📚 Все ({total})", callback_data="admin_menu:all"),
+        ],
+        [
+            InlineKeyboardButton(
+                text="1️⃣ Управление проектом Streamflow Agency",
+                callback_data="admin_menu:project_streamflow",
+            ),
+        ],
+        [
+            InlineKeyboardButton(
+                text="2️⃣ Управление проектом Starflow Corp",
+                callback_data="admin_menu:project_starflow",
+            ),
         ],
         [
             InlineKeyboardButton(text=f"✅ Принятые ({accepted})", callback_data="admin_menu:accepted"),
