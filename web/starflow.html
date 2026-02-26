@@ -6,7 +6,7 @@
   <title>Starflow Inc. - Partner Network</title>
   <meta name="description" content="Starflow Inc. partner network for streaming companies. CPA offer with weekly USDT payouts.">
   <meta name="robots" content="index,follow">
-  <meta name="theme-color" content="#070b16">
+  <meta name="theme-color" content="#050910">
   <link rel="canonical" href="https://starflowinc.com/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Starflow Inc. - Partner Network">
@@ -20,21 +20,22 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-05">
+  <link rel="stylesheet" href="starflow.css?v=20260226-07">
 </head>
 <body data-page="starflow" class="is-loading">
   <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
-  <div class="backdrop-noise" aria-hidden="true"></div>
-  <div class="backdrop-grid" aria-hidden="true"></div>
-  <div class="backdrop-orb orb-a" aria-hidden="true"></div>
-  <div class="backdrop-orb orb-b" aria-hidden="true"></div>
+  <div class="backdrop-layer backdrop-mesh" aria-hidden="true"></div>
+  <div class="backdrop-layer backdrop-grid" aria-hidden="true"></div>
+  <div class="backdrop-layer backdrop-glow" aria-hidden="true"></div>
   <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 
   <div class="site-loader" id="site-loader" role="status" aria-live="polite">
     <div class="site-loader-card">
-      <div class="site-loader-ring" aria-hidden="true"></div>
+      <div class="loader-brandline" aria-hidden="true">
+        <span></span><span></span><span></span>
+      </div>
       <p class="site-loader-brand">Starflow Inc.</p>
-      <p class="site-loader-text">Loading interface...</p>
+      <p class="site-loader-text">Preparing control panel...</p>
     </div>
   </div>
 
@@ -43,7 +44,7 @@
     <div class="lang-gate-card">
       <p class="lang-gate-eyebrow">Starflow Inc.</p>
       <h2 data-i18n="langGate.title">Choose language</h2>
-      <p data-i18n="langGate.subtitle">Select your language to continue</p>
+      <p data-i18n="langGate.subtitle">Select interface language before you continue</p>
       <div class="lang-gate-options">
         <button type="button" class="lang-gate-btn" data-lang-choice="ru">RU - Русский</button>
         <button type="button" class="lang-gate-btn" data-lang-choice="en">EN - English</button>
@@ -56,7 +57,7 @@
   <header class="site-header">
     <div class="inner">
       <a class="brand" href="#top" aria-label="Starflow Inc.">
-        <span class="brand-signal"></span>
+        <span class="brand-dot"></span>
         <span class="brand-text">Starflow Inc.</span>
       </a>
 
@@ -82,7 +83,7 @@
   </header>
 
   <main id="top">
-    <section class="hero section">
+    <section class="section hero">
       <div class="inner hero-grid">
         <div class="hero-copy reveal" data-reveal-delay="0">
           <p class="eyebrow" data-i18n="hero.overline">Partner Network For Streaming Companies</p>
@@ -95,20 +96,29 @@
           </div>
 
           <div class="source-ribbon" aria-label="Sources">
-            <span>Target Ads</span>
-            <span>Job Boards</span>
-            <span>Cold Outreach</span>
-            <span>Mailing</span>
-            <span>DM</span>
+            <span data-i18n="hero.line1">Target Ads</span>
+            <span data-i18n="hero.line2">Job Boards</span>
+            <span data-i18n="hero.line3">Mailing Lists</span>
+            <span data-i18n="hero.line4">Cold Outreach</span>
+            <span data-i18n="hero.line5">Direct DM</span>
+            <span data-i18n="hero.line6">No Source Limits</span>
           </div>
         </div>
 
         <div class="hero-stage reveal" data-reveal-delay="120" data-hero-lab>
-          <div class="hero-stage-grid" aria-hidden="true"></div>
-          <div class="signal-card tilt">
+          <div class="stage-video-shell" aria-hidden="true">
+            <video class="stage-video" autoplay loop muted playsinline preload="metadata">
+              <source src="assets/videos/stream-1.mp4" type="video/mp4">
+            </video>
+            <div class="stage-video-overlay"></div>
+            <div class="stage-scan"></div>
+          </div>
+
+          <div class="signal-card">
             <p class="signal-tag" data-i18n="hero.signal">Live Offer Signal</p>
             <p class="signal-value">CPA $20-40</p>
             <p class="signal-meta" data-i18n="hero.signalMeta">Weekly payouts in USDT</p>
+
             <div class="lab-bars">
               <div class="lab-bar" data-bar="84">
                 <div class="lab-bar-head">
@@ -133,16 +143,19 @@
               </div>
             </div>
           </div>
-          <div class="mini-stat mini-stat-a tilt">
+
+          <div class="mini-stat mini-stat-a">
             <strong data-i18n="hero.cardA.title">Weekly execution</strong>
             <span data-i18n="hero.cardA.text">Payout cycle every Sunday in USDT.</span>
           </div>
-          <div class="mini-stat mini-stat-b tilt">
+
+          <div class="mini-stat mini-stat-b">
             <strong data-i18n="hero.cardB.title">Any source works</strong>
             <span data-i18n="hero.cardB.text">DM, outreach, boards, ads - result is KPI.</span>
           </div>
         </div>
       </div>
+
       <div class="hero-marquee" aria-hidden="true">
         <div class="hero-marquee-track">
           <span data-i18n="hero.line1">Target Ads</span>
@@ -186,25 +199,25 @@
         </div>
 
         <div class="partner-grid">
-          <article class="partner-card reveal tilt" data-reveal-delay="50" data-tilt>
+          <article class="partner-card reveal tilt" data-reveal-delay="40" data-tilt>
             <h3 data-i18n="partners.arb.title">Arbitrage Team</h3>
             <p data-i18n="partners.arb.text">Already knows creatives, funnels, conversion and optimization.</p>
           </article>
-          <article class="partner-card reveal tilt" data-reveal-delay="100" data-tilt>
+          <article class="partner-card reveal tilt" data-reveal-delay="90" data-tilt>
             <h3 data-i18n="partners.call.title">Call-Center</h3>
             <p data-i18n="partners.call.text">Has managers on calls all day. Needs only offer + script.</p>
           </article>
-          <article class="partner-card reveal tilt" data-reveal-delay="150" data-tilt>
+          <article class="partner-card reveal tilt" data-reveal-delay="140" data-tilt>
             <h3 data-i18n="partners.agency.title">Marketing Agency</h3>
             <p data-i18n="partners.agency.text">Leadgen processes are already built and running.</p>
           </article>
-          <article class="partner-card reveal tilt" data-reveal-delay="200" data-tilt>
+          <article class="partner-card reveal tilt" data-reveal-delay="190" data-tilt>
             <h3 data-i18n="partners.solo.title">Solo Freelancer</h3>
             <p data-i18n="partners.solo.text">Runs ads/outreach independently and ships results.</p>
           </article>
         </div>
 
-        <div class="notice reveal" data-reveal-delay="250">
+        <div class="notice reveal" data-reveal-delay="240">
           <p data-i18n="partners.notice1">Format does not matter: 50 people team or one person with a laptop.</p>
           <p data-i18n="partners.notice2">Only one thing matters: you can attract people.</p>
         </div>
@@ -244,8 +257,8 @@
 
         <div class="ticker" aria-hidden="true">
           <div class="ticker-track">
-            <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
-            <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
+            <span>CPA</span><span>USDT</span><span>CRM</span><span>SCRIPTS</span><span>WEEKLY PAYOUTS</span><span>NO LIMITS</span><span>ANY SOURCE</span>
+            <span>CPA</span><span>USDT</span><span>CRM</span><span>SCRIPTS</span><span>WEEKLY PAYOUTS</span><span>NO LIMITS</span><span>ANY SOURCE</span>
           </div>
         </div>
       </div>
@@ -451,6 +464,6 @@
     </div>
   </footer>
 
-  <script src="starflow.js?v=20260226-05" defer></script>
+  <script src="starflow.js?v=20260226-07" defer></script>
 </body>
 </html>
