@@ -7,6 +7,8 @@
   <meta name="description" content="Starflow Inc. partner network for streaming companies. CPA offer with weekly USDT payouts.">
   <meta name="robots" content="index,follow">
   <meta name="theme-color" content="#111012">
+  <meta name="color-scheme" content="dark">
+  <meta name="format-detection" content="telephone=no,address=no,email=no">
   <link rel="canonical" href="https://starflowinc.com/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Starflow Inc. - Partner Network">
@@ -16,13 +18,27 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Starflow Inc. - Partner Network">
   <meta name="twitter:description" content="CPA $20-40 per successful interview. Weekly payouts in USDT.">
+  <meta property="og:image" content="https://starflowinc.com/assets/logo.jpg">
+  <meta name="twitter:image" content="https://starflowinc.com/assets/logo.jpg">
   <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-10">
+  <link rel="stylesheet" href="starflow.css?v=20260226-11">
+  <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Organization",
+      "name": "Starflow Inc.",
+      "url": "https://starflowinc.com/",
+      "sameAs": ["https://t.me/starflowcorp"],
+      "description": "Partner network for streaming recruitment with CPA payouts for approved interviews."
+    }
+  </script>
 </head>
 <body data-page="starflow" class="is-loading">
+  <a class="skip-link" href="#main-content" data-i18n="a11y.skip">Skip to main content</a>
+  <span id="top" aria-hidden="true"></span>
   <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
   <div class="backdrop backdrop-radial" aria-hidden="true"></div>
   <div class="backdrop backdrop-grid" aria-hidden="true"></div>
@@ -78,7 +94,7 @@
     </div>
   </header>
 
-  <main id="top">
+  <main id="main-content">
     <section class="section hero">
       <div class="inner hero-layout">
         <div class="hero-copy reveal" data-reveal-delay="0">
@@ -165,6 +181,46 @@
           <p class="metric-num"><span data-count="7">0</span>d</p>
           <p class="metric-label" data-i18n="kpi.weekly">payout cycle</p>
         </article>
+      </div>
+    </section>
+
+    <section class="section section-card" id="calculator">
+      <div class="inner">
+        <div class="section-head reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="calc.overline">Income planning</p>
+          <h2 data-i18n="calc.title">Estimate your weekly payout</h2>
+        </div>
+
+        <div class="calc-layout reveal" data-reveal-delay="60">
+          <div class="calc-controls">
+            <label>
+              <span data-i18n="calc.interviews">Approved interviews per week</span>
+              <input id="calc-interviews" type="range" min="5" max="300" step="5" value="45">
+            </label>
+            <p class="calc-read">
+              <strong id="calc-interviews-value">45</strong>
+              <span data-i18n="calc.interviewsUnit">interviews / week</span>
+            </p>
+
+            <label>
+              <span data-i18n="calc.cpa">CPA per interview (USD)</span>
+              <input id="calc-cpa" type="range" min="20" max="40" step="1" value="30">
+            </label>
+            <p class="calc-read"><strong id="calc-cpa-value">$30</strong></p>
+          </div>
+
+          <div class="calc-results">
+            <article>
+              <p data-i18n="calc.weekly">Estimated weekly payout</p>
+              <strong id="calc-weekly">$1,350</strong>
+            </article>
+            <article>
+              <p data-i18n="calc.monthly">Estimated monthly payout (x4)</p>
+              <strong id="calc-monthly">$5,400</strong>
+            </article>
+            <p class="calc-note" data-i18n="calc.note">Planning estimate. Final payout depends on approved interviews in CRM.</p>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -263,11 +319,11 @@
 
         <div class="faq-accordion">
           <article class="faq-item is-open reveal" data-reveal-delay="40" data-faq-item>
-            <button class="faq-trigger" type="button" aria-expanded="true" data-faq-toggle>
+            <button id="faq-trigger-1" class="faq-trigger" type="button" aria-expanded="true" aria-controls="faq-panel-1" data-faq-toggle>
               <span data-i18n="faq.exp.q">I have no experience</span>
               <span class="faq-chevron" aria-hidden="true"></span>
             </button>
-            <div class="faq-panel-wrap" data-faq-panel>
+            <div id="faq-panel-1" class="faq-panel-wrap" role="region" aria-labelledby="faq-trigger-1" data-faq-panel>
               <div class="faq-panel">
                 <p data-i18n="faq.exp.a">We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.</p>
                 <p class="faq-subtitle" data-i18n="faq.exp.follow">Clarify with partner:</p>
@@ -281,11 +337,11 @@
           </article>
 
           <article class="faq-item reveal" data-reveal-delay="80" data-faq-item>
-            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+            <button id="faq-trigger-2" class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-2" data-faq-toggle>
               <span data-i18n="faq.mlm.q">Is this MLM / pyramid?</span>
               <span class="faq-chevron" aria-hidden="true"></span>
             </button>
-            <div class="faq-panel-wrap" data-faq-panel>
+            <div id="faq-panel-2" class="faq-panel-wrap" role="region" aria-labelledby="faq-trigger-2" data-faq-panel>
               <div class="faq-panel">
                 <p data-i18n="faq.mlm.a">No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.</p>
                 <p class="faq-subtitle" data-i18n="faq.mlm.follow">Difference:</p>
@@ -298,11 +354,11 @@
           </article>
 
           <article class="faq-item reveal" data-reveal-delay="120" data-faq-item>
-            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+            <button id="faq-trigger-3" class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-3" data-faq-toggle>
               <span data-i18n="faq.team.q">Do I need a big team?</span>
               <span class="faq-chevron" aria-hidden="true"></span>
             </button>
-            <div class="faq-panel-wrap" data-faq-panel>
+            <div id="faq-panel-3" class="faq-panel-wrap" role="region" aria-labelledby="faq-trigger-3" data-faq-panel>
               <div class="faq-panel">
                 <p data-i18n="faq.team.a">No. Team size does not matter. A 50-person team and one freelancer are both valid formats.</p>
                 <ul>
@@ -314,11 +370,11 @@
           </article>
 
           <article class="faq-item reveal" data-reveal-delay="160" data-faq-item>
-            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+            <button id="faq-trigger-4" class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-4" data-faq-toggle>
               <span data-i18n="faq.sources.q">Which traffic sources are allowed?</span>
               <span class="faq-chevron" aria-hidden="true"></span>
             </button>
-            <div class="faq-panel-wrap" data-faq-panel>
+            <div id="faq-panel-4" class="faq-panel-wrap" role="region" aria-labelledby="faq-trigger-4" data-faq-panel>
               <div class="faq-panel">
                 <p data-i18n="faq.sources.a">Any source is allowed if it brings qualified candidates to interviews.</p>
                 <ul>
@@ -330,11 +386,11 @@
           </article>
 
           <article class="faq-item reveal" data-reveal-delay="200" data-faq-item>
-            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+            <button id="faq-trigger-5" class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-5" data-faq-toggle>
               <span data-i18n="faq.pay.q">How do payout and support work?</span>
               <span class="faq-chevron" aria-hidden="true"></span>
             </button>
-            <div class="faq-panel-wrap" data-faq-panel>
+            <div id="faq-panel-5" class="faq-panel-wrap" role="region" aria-labelledby="faq-trigger-5" data-faq-panel>
               <div class="faq-panel">
                 <p data-i18n="faq.pay.a">You get paid under CPA model for successful interviews, and we give operational support from day one.</p>
                 <ul>
@@ -348,11 +404,11 @@
           </article>
 
           <article class="faq-item reveal" data-reveal-delay="240" data-faq-item>
-            <button class="faq-trigger" type="button" aria-expanded="false" data-faq-toggle>
+            <button id="faq-trigger-6" class="faq-trigger" type="button" aria-expanded="false" aria-controls="faq-panel-6" data-faq-toggle>
               <span data-i18n="faq.geo.q">What GEO and candidate types do you need?</span>
               <span class="faq-chevron" aria-hidden="true"></span>
             </button>
-            <div class="faq-panel-wrap" data-faq-panel>
+            <div id="faq-panel-6" class="faq-panel-wrap" role="region" aria-labelledby="faq-trigger-6" data-faq-panel>
               <div class="faq-panel">
                 <p data-i18n="faq.geo.a">We operate with clear candidate profiles and regional focus.</p>
                 <ul>
@@ -438,6 +494,11 @@
     </div>
   </footer>
 
-  <script src="starflow.js?v=20260226-10" defer></script>
+  <div class="mobile-cta" aria-label="Quick actions">
+    <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+    <a class="btn solid" href="#apply" data-i18n="cta.apply">Become Partner</a>
+  </div>
+
+  <script src="starflow.js?v=20260226-11" defer></script>
 </body>
 </html>

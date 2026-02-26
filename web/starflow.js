@@ -17,6 +17,7 @@
       'nav.apply': 'Анкета',
       'cta.telegram': 'Telegram',
       'cta.apply': 'Стать партнёром',
+      'a11y.skip': 'Перейти к основному содержанию',
       'hero.overline': 'Партнёрская сеть по найму для стриминговых компаний',
       'hero.title': 'Приводите кандидатов.<br>Получайте оплату за интервью.',
       'hero.lead': 'Вы привлекаете людей на собеседования любым способом. Мы даём оффер, CRM, скрипты, валидацию и еженедельные выплаты в USDT.',
@@ -38,6 +39,14 @@
       'kpi.years': 'лет работы с трафиком',
       'kpi.max': 'за подтверждённое интервью',
       'kpi.weekly': 'день еженедельной выплаты',
+      'calc.overline': 'Планирование дохода',
+      'calc.title': 'Оцените потенциальную выплату',
+      'calc.interviews': 'Подтверждённых интервью в неделю',
+      'calc.interviewsUnit': 'интервью / неделя',
+      'calc.cpa': 'CPA за интервью (USD)',
+      'calc.weekly': 'Прогноз выплаты за неделю',
+      'calc.monthly': 'Прогноз выплаты за месяц (x4)',
+      'calc.note': 'Это ориентировочный расчёт. Финальная сумма зависит от подтверждённых интервью в CRM.',
       'partners.overline': 'Кто нам подходит',
       'partners.title': 'Портрет партнёра',
       'partners.arb.title': 'Арбитражная команда',
@@ -139,6 +148,7 @@
       'nav.apply': 'Form',
       'cta.telegram': 'Telegram',
       'cta.apply': 'Become Partner',
+      'a11y.skip': 'Skip to main content',
       'hero.overline': 'Partner network for streaming recruitment',
       'hero.title': 'Bring candidates.<br>Get paid per interview.',
       'hero.lead': 'You drive people to interviews using any source. We provide offer, CRM, scripts, validation and weekly USDT payouts.',
@@ -160,6 +170,14 @@
       'kpi.years': 'years in traffic',
       'kpi.max': 'per approved interview',
       'kpi.weekly': 'weekly payout day',
+      'calc.overline': 'Income planning',
+      'calc.title': 'Estimate your potential payout',
+      'calc.interviews': 'Approved interviews per week',
+      'calc.interviewsUnit': 'interviews / week',
+      'calc.cpa': 'CPA per interview (USD)',
+      'calc.weekly': 'Estimated weekly payout',
+      'calc.monthly': 'Estimated monthly payout (x4)',
+      'calc.note': 'Planning estimate only. Final payout depends on approved interviews in CRM.',
       'partners.overline': 'Who we work with',
       'partners.title': 'Partner profile',
       'partners.arb.title': 'Arbitrage Team',
@@ -261,6 +279,7 @@
       'nav.apply': 'Aplicar',
       'cta.telegram': 'Telegram',
       'cta.apply': 'Aplicar',
+      'a11y.skip': 'Ir para o conteúdo principal',
       'hero.overline': 'Rede de Parceiros para Empresas de Streaming',
       'hero.title': 'Traga pessoas.<br>Nos cuidamos do resto.',
       'hero.lead': 'Mídia buyers, call-centers, agências e freelancers solo. Tamanho da equipe não importa. O que importa é sua capacidade de atrair candidatos.',
@@ -282,6 +301,14 @@
       'kpi.years': 'anos com tráfego',
       'kpi.max': 'CPA máximo por entrevista',
       'kpi.weekly': 'ciclo de pagamento',
+      'calc.overline': 'Planejamento de receita',
+      'calc.title': 'Estime seu pagamento potencial',
+      'calc.interviews': 'Entrevistas aprovadas por semana',
+      'calc.interviewsUnit': 'entrevistas / semana',
+      'calc.cpa': 'CPA por entrevista (USD)',
+      'calc.weekly': 'Pagamento estimado semanal',
+      'calc.monthly': 'Pagamento estimado mensal (x4)',
+      'calc.note': 'Estimativa para planejamento. O valor final depende das entrevistas aprovadas no CRM.',
       'partners.overline': 'Quem Procuramos',
       'partners.title': 'Perfil do parceiro',
       'partners.arb.title': 'Equipe de Arbitragem',
@@ -383,6 +410,7 @@
       'nav.apply': 'Aplicar',
       'cta.telegram': 'Telegram',
       'cta.apply': 'Aplicar',
+      'a11y.skip': 'Saltar al contenido principal',
       'hero.overline': 'Red de Partners para Empresas de Streaming',
       'hero.title': 'Trae gente.<br>Nosotros hacemos el resto.',
       'hero.lead': 'Media buyers, call-centers, agencias y freelancers. El tamaño del equipo no importa. Lo único importante es atraer candidatos.',
@@ -404,6 +432,14 @@
       'kpi.years': 'años en tráfico',
       'kpi.max': 'CPA máximo por entrevista',
       'kpi.weekly': 'ciclo de pago',
+      'calc.overline': 'Planificación de ingresos',
+      'calc.title': 'Calcula tu pago potencial',
+      'calc.interviews': 'Entrevistas aprobadas por semana',
+      'calc.interviewsUnit': 'entrevistas / semana',
+      'calc.cpa': 'CPA por entrevista (USD)',
+      'calc.weekly': 'Pago semanal estimado',
+      'calc.monthly': 'Pago mensual estimado (x4)',
+      'calc.note': 'Estimación para planificación. El pago final depende de entrevistas aprobadas en CRM.',
       'partners.overline': 'A quién buscamos',
       'partners.title': 'Perfil de partner',
       'partners.arb.title': 'Equipo de Arbitraje',
@@ -501,6 +537,7 @@
   const state = {
     lang: storedLang || DEFAULT_LANG,
     hasStoredLang: Boolean(storedLang),
+    calcUpdate: null,
     config: {
       telegram_link: 'https://t.me/starflowcorp',
       bot_link: null,
@@ -528,6 +565,12 @@
     heroLab: document.querySelector('[data-hero-lab]'),
     sourceChips: document.querySelectorAll('.source-ribbon span'),
     timelineItems: document.querySelectorAll('.timeline li'),
+    calcInterviews: document.getElementById('calc-interviews'),
+    calcCpa: document.getElementById('calc-cpa'),
+    calcInterviewsValue: document.getElementById('calc-interviews-value'),
+    calcCpaValue: document.getElementById('calc-cpa-value'),
+    calcWeekly: document.getElementById('calc-weekly'),
+    calcMonthly: document.getElementById('calc-monthly'),
   };
 
   function getStoredLang() {
@@ -583,6 +626,9 @@
     }
 
     updateContactPlaceholder();
+    if (typeof state.calcUpdate === 'function') {
+      state.calcUpdate();
+    }
   }
 
   function setLanguage(lang, persist = true) {
@@ -1033,6 +1079,46 @@
     observer.observe(hero);
   }
 
+  function initEarningsCalculator() {
+    if (!dom.calcInterviews || !dom.calcCpa || !dom.calcWeekly || !dom.calcMonthly) {
+      return;
+    }
+
+    const localeMap = {
+      ru: 'ru-RU',
+      en: 'en-US',
+      pt: 'pt-BR',
+      es: 'es-ES',
+    };
+
+    const update = () => {
+      const interviews = Number(dom.calcInterviews.value || '0');
+      const cpa = Number(dom.calcCpa.value || '0');
+      const weekly = interviews * cpa;
+      const monthly = weekly * 4;
+      const locale = localeMap[state.lang] || 'en-US';
+      const formatter = new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0,
+      });
+
+      if (dom.calcInterviewsValue) {
+        dom.calcInterviewsValue.textContent = String(interviews);
+      }
+      if (dom.calcCpaValue) {
+        dom.calcCpaValue.textContent = formatter.format(cpa);
+      }
+      dom.calcWeekly.textContent = formatter.format(weekly);
+      dom.calcMonthly.textContent = formatter.format(monthly);
+    };
+
+    dom.calcInterviews.addEventListener('input', update);
+    dom.calcCpa.addEventListener('input', update);
+    state.calcUpdate = update;
+    update();
+  }
+
   function initHeroLabParallax() {
     const lab = dom.heroLab;
     if (!lab || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -1242,6 +1328,7 @@
     animateCounters();
     initScrollProgress();
     initHeroBars();
+    initEarningsCalculator();
     initTimelineFocus();
     loadConfig();
   }
