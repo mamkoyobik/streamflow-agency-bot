@@ -1757,6 +1757,18 @@ async def is_group_member(chat_id: int, user_id: int | None) -> bool:
     return member.status not in {"left", "kicked"}
 
 
+def stage2_required_channel_id(lang: str) -> int | None:
+    chat_id = CHANNEL_ID_BY_LANG.get(normalize_lang(lang))
+    return chat_id if isinstance(chat_id, int) else None
+
+
+async def can_continue_stage2_gate(user_id: int, lang: str) -> bool:
+    chat_id = stage2_required_channel_id(lang)
+    if chat_id is None:
+        return True
+    return await is_group_member(chat_id, user_id)
+
+
 def is_anonymous_admin_post(message: Message) -> bool:
     sender_chat = getattr(message, "sender_chat", None)
     return bool(sender_chat and sender_chat.id == message.chat.id)
@@ -4709,6 +4721,15 @@ async def stage2_gate_continue(call: CallbackQuery, state: FSMContext):
     try:
         if not call.message or call.message.chat.type != "private":
             await safe_call_answer(call, t("ru", "open_private_prompt"), show_alert=True)
+            return
+        lang = lang_for(call.from_user.id)
+        if not await can_continue_stage2_gate(call.from_user.id, lang):
+            await safe_call_answer(call, stage2_text(lang, "wait_gate"), show_alert=True)
+            await send_or_edit_user_text(
+                call.from_user.id,
+                stage2_text(lang, "gate"),
+                reply_markup=stage2_gate_keyboard(lang),
+            )
             return
         await safe_call_answer(call)
         await start_stage2_questions(call.from_user.id, state)

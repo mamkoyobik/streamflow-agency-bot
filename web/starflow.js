@@ -92,6 +92,36 @@ function safeStorageSet(storage, key, value) {
   }
 }
 
+function escapeHtml(raw) {
+  return String(raw || '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function setSafeTextWithBreaks(element, value) {
+  if (!element) return;
+  const escaped = escapeHtml(value);
+  element.innerHTML = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+}
+
+function setStatusMessage(element, primaryText, secondaryText = '') {
+  if (!element) return;
+  const first = String(primaryText || '').trim();
+  const second = String(secondaryText || '').trim();
+  if (!second) {
+    element.textContent = first;
+    return;
+  }
+  element.textContent = '';
+  element.append(document.createTextNode(first));
+  element.append(document.createElement('br'));
+  element.append(document.createElement('br'));
+  element.append(document.createTextNode(second));
+}
+
 const I18N = {
   ru: {
     'brand.name': 'Streamflow',
@@ -940,7 +970,7 @@ function applySiteTranslations(lang) {
     const key = element.getAttribute('data-i18n');
     const value = siteText(key, CURRENT_SITE_LANG);
     if (!value) return;
-    element.innerHTML = value;
+    setSafeTextWithBreaks(element, value);
   });
   document.querySelectorAll('[data-i18n-placeholder]').forEach((element) => {
     const key = element.getAttribute('data-i18n-placeholder');
@@ -1968,11 +1998,29 @@ async function sendApplication(formData, elements, options = {}) {
     if (!href || href === '#') return '';
     return href;
   };
-  const defaultTelegramHref = normalizeNextHref(
-    formNextTelegramLink ? formNextTelegramLink.getAttribute('href') || '' : ''
+  const normalizeMessengerHref = (value, messenger) => {
+    const href = normalizeNextHref(value);
+    if (!href) return '';
+    try {
+      const parsed = new URL(href, window.location.origin);
+      if (parsed.protocol !== 'https:') return '';
+      const host = parsed.hostname.toLowerCase();
+      const isTelegram = host === 't.me' || host === 'telegram.me';
+      const isWhatsapp = host === 'wa.me' || host === 'api.whatsapp.com';
+      if (messenger === 'telegram' && !isTelegram) return '';
+      if (messenger === 'whatsapp' && !isWhatsapp) return '';
+      return parsed.href;
+    } catch (err) {
+      return '';
+    }
+  };
+  const defaultTelegramHref = normalizeMessengerHref(
+    formNextTelegramLink ? formNextTelegramLink.getAttribute('href') || '' : '',
+    'telegram'
   );
-  const defaultWhatsappHref = normalizeNextHref(
-    formNextWhatsappLink ? formNextWhatsappLink.getAttribute('href') || '' : ''
+  const defaultWhatsappHref = normalizeMessengerHref(
+    formNextWhatsappLink ? formNextWhatsappLink.getAttribute('href') || '' : '',
+    'whatsapp'
   );
   if (formStatus) {
     formStatus.textContent = pendingMessage;
@@ -2002,7 +2050,7 @@ async function sendApplication(formData, elements, options = {}) {
       trackMetrikaGoal('application_submit_success', { lang: CURRENT_SITE_LANG });
       if (formStatus) {
         formStatus.classList.add('is-success');
-        formStatus.innerHTML = payload.message || siteText('form.success');
+        setStatusMessage(formStatus, payload.message || siteText('form.success'));
       }
       if (resetForm && form) {
         form.reset();
@@ -2014,18 +2062,17 @@ async function sendApplication(formData, elements, options = {}) {
           .trim()
           .toLowerCase();
         const preferredContact = preferredRaw === 'whatsapp' ? 'whatsapp' : 'telegram';
-        const botLink = String(payload.bot_link || '').trim();
-        const botLinkIsTelegram = /^https?:\/\/t\.me\//i.test(botLink);
-        const botLinkIsWhatsapp = /^https?:\/\/wa\.me\//i.test(botLink);
+        const botLinkTelegram = normalizeMessengerHref(payload.bot_link, 'telegram');
+        const botLinkWhatsapp = normalizeMessengerHref(payload.bot_link, 'whatsapp');
         const telegramLink =
-          payload.telegram_bot_link ||
-          nextLinks.telegram ||
-          (preferredContact === 'telegram' && botLinkIsTelegram ? botLink : '') ||
+          normalizeMessengerHref(payload.telegram_bot_link, 'telegram') ||
+          normalizeMessengerHref(nextLinks.telegram, 'telegram') ||
+          (preferredContact === 'telegram' ? botLinkTelegram : '') ||
           defaultTelegramHref;
         const whatsappLink =
-          payload.whatsapp_bot_link ||
-          nextLinks.whatsapp ||
-          (preferredContact === 'whatsapp' && botLinkIsWhatsapp ? botLink : '') ||
+          normalizeMessengerHref(payload.whatsapp_bot_link, 'whatsapp') ||
+          normalizeMessengerHref(nextLinks.whatsapp, 'whatsapp') ||
+          (preferredContact === 'whatsapp' ? botLinkWhatsapp : '') ||
           defaultWhatsappHref;
         let hasAnyNextLink = false;
         let selectedButtonShown = false;
@@ -2084,9 +2131,13 @@ async function sendApplication(formData, elements, options = {}) {
           formNext.classList.remove('hidden');
           if (formStatus) {
             if (hasAnyNextLink) {
-              formStatus.innerHTML = payload.message || siteText('form.success');
+              setStatusMessage(formStatus, payload.message || siteText('form.success'));
             } else {
-              formStatus.innerHTML = `${payload.message || siteText('form.success')}<br><br>${siteText('form.nextUnavailable')}`;
+              setStatusMessage(
+                formStatus,
+                payload.message || siteText('form.success'),
+                siteText('form.nextUnavailable')
+              );
             }
           }
         } else {
@@ -2125,7 +2176,7 @@ async function sendApplication(formData, elements, options = {}) {
           formStatus.classList.remove('is-error');
         } else {
           formStatus.classList.add('is-error');
-          formStatus.innerHTML = payload.message || siteText('form.sendError');
+          setStatusMessage(formStatus, payload.message || siteText('form.sendError'));
         }
       }
     }

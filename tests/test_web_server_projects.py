@@ -1,6 +1,25 @@
 import unittest
+from email.message import Message
 
 import web_server
+
+
+class _DummyHandler:
+    def __init__(self, headers: dict[str, str] | None = None, path: str = "/api/infobip/webhook"):
+        message = Message()
+        base_headers = {"Host": "streamflowagency.com"}
+        if headers:
+            base_headers.update(headers)
+        for key, value in base_headers.items():
+            message[key] = value
+        self.headers = message
+        self.path = path
+
+    def _request_host(self) -> str:
+        return web_server.Handler._request_host(self)
+
+    def _request_origin_host(self) -> str:
+        return web_server.Handler._request_origin_host(self)
 
 
 class WebServerProjectTests(unittest.TestCase):
@@ -116,6 +135,66 @@ class WebServerProjectTests(unittest.TestCase):
         self.assertTrue(web_server.is_internal_proxy_host("internal.railway.internal"))
         self.assertTrue(web_server.is_internal_proxy_host("tqmax4l.up.railway.app"))
         self.assertFalse(web_server.is_internal_proxy_host("streamflowagency.com"))
+
+    def test_extract_authorization_secret(self):
+        self.assertEqual(web_server._extract_authorization_secret("Bearer abc123"), "abc123")
+        self.assertEqual(web_server._extract_authorization_secret("Token qwerty"), "qwerty")
+        self.assertEqual(web_server._extract_authorization_secret("raw-secret"), "raw-secret")
+
+    def test_infobip_webhook_secret_candidates_collect_header_and_query(self):
+        handler = _DummyHandler(
+            headers={
+                "X-Webhook-Secret": "header-secret",
+                "Authorization": "Bearer auth-secret",
+            },
+            path="/api/infobip/webhook?secret=query-secret",
+        )
+        candidates = web_server._infobip_webhook_secret_candidates(handler)
+        self.assertIn("header-secret", candidates)
+        self.assertIn("auth-secret", candidates)
+        self.assertIn("query-secret", candidates)
+
+    def test_is_infobip_webhook_authorized_true_when_secret_matches(self):
+        original = web_server.INFOBIP_WEBHOOK_SECRET
+        try:
+            web_server.INFOBIP_WEBHOOK_SECRET = "expected-secret"
+            handler = _DummyHandler(headers={"X-Infobip-Secret": "expected-secret"})
+            self.assertTrue(web_server._is_infobip_webhook_authorized(handler))
+        finally:
+            web_server.INFOBIP_WEBHOOK_SECRET = original
+
+    def test_is_infobip_webhook_authorized_false_when_secret_missing(self):
+        original = web_server.INFOBIP_WEBHOOK_SECRET
+        try:
+            web_server.INFOBIP_WEBHOOK_SECRET = ""
+            handler = _DummyHandler(headers={"X-Infobip-Secret": "expected-secret"})
+            self.assertFalse(web_server._is_infobip_webhook_authorized(handler))
+        finally:
+            web_server.INFOBIP_WEBHOOK_SECRET = original
+
+    def test_allowed_site_origin_accepts_public_hosts(self):
+        original_site = web_server.SITE_URL
+        original_star_site = web_server.STARFLOW_SITE_URL
+        try:
+            web_server.SITE_URL = "https://streamflowagency.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowinc.com"
+            handler = _DummyHandler(headers={"Origin": "https://streamflowagency.com"})
+            self.assertTrue(web_server.Handler._is_allowed_site_origin(handler))
+        finally:
+            web_server.SITE_URL = original_site
+            web_server.STARFLOW_SITE_URL = original_star_site
+
+    def test_allowed_site_origin_rejects_foreign_host(self):
+        original_site = web_server.SITE_URL
+        original_star_site = web_server.STARFLOW_SITE_URL
+        try:
+            web_server.SITE_URL = "https://streamflowagency.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowinc.com"
+            handler = _DummyHandler(headers={"Origin": "https://evil.example"})
+            self.assertFalse(web_server.Handler._is_allowed_site_origin(handler))
+        finally:
+            web_server.SITE_URL = original_site
+            web_server.STARFLOW_SITE_URL = original_star_site
 
 
 if __name__ == "__main__":

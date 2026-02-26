@@ -5,6 +5,7 @@ import re
 import ssl
 import uuid
 import hashlib
+import hmac
 from functools import lru_cache
 import urllib.parse
 import urllib.request
@@ -114,6 +115,7 @@ INFOBIP_INTERACTIVE_ENABLED = _env_flag("INFOBIP_INTERACTIVE_ENABLED", True)
 INFOBIP_API_KEY = (os.getenv("INFOBIP_API_KEY", "") or "").strip()
 INFOBIP_BASE_URL = (os.getenv("INFOBIP_BASE_URL", "") or "").strip().rstrip("/")
 INFOBIP_WHATSAPP_SENDER = (os.getenv("INFOBIP_WHATSAPP_SENDER", "") or "").strip()
+INFOBIP_WEBHOOK_SECRET = (os.getenv("INFOBIP_WEBHOOK_SECRET", "") or "").strip()
 WA_MENU_IMAGE_URL = (os.getenv("WA_MENU_IMAGE_URL", "") or "").strip()
 WHATSAPP_FLOW_PREFIX = "wa_flow:"
 
@@ -123,6 +125,7 @@ print(
         "bot_enabled": INFOBIP_BOT_ENABLED,
         "interactive_enabled": INFOBIP_INTERACTIVE_ENABLED,
         "has_api_key": bool(INFOBIP_API_KEY),
+        "has_webhook_secret": bool(INFOBIP_WEBHOOK_SECRET),
         "base_url": INFOBIP_BASE_URL or "",
         "sender": INFOBIP_WHATSAPP_SENDER or "",
     },
@@ -3150,6 +3153,46 @@ def parse_multipart(body: bytes, content_type: str):
     return fields, files
 
 
+def _extract_authorization_secret(value: str | None) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return ""
+    if " " not in raw:
+        return raw
+    scheme, token = raw.split(" ", 1)
+    if scheme.strip().lower() in {"bearer", "token", "app"}:
+        return token.strip()
+    return raw
+
+
+def _infobip_webhook_secret_candidates(handler: SimpleHTTPRequestHandler) -> list[str]:
+    candidates: list[str] = []
+    for header_name in ("X-Webhook-Secret", "X-Infobip-Secret", "X-Infobip-Webhook-Secret"):
+        value = (handler.headers.get(header_name) or "").strip()
+        if value:
+            candidates.append(value)
+    auth_secret = _extract_authorization_secret(handler.headers.get("Authorization"))
+    if auth_secret:
+        candidates.append(auth_secret)
+    parsed = urllib.parse.urlparse(handler.path)
+    query = urllib.parse.parse_qs(parsed.query or "", keep_blank_values=True)
+    for key in ("secret", "webhook_secret", "token"):
+        value = str((query.get(key) or [""])[0]).strip()
+        if value:
+            candidates.append(value)
+    return candidates
+
+
+def _is_infobip_webhook_authorized(handler: SimpleHTTPRequestHandler) -> bool:
+    expected = INFOBIP_WEBHOOK_SECRET
+    if not expected:
+        return False
+    for candidate in _infobip_webhook_secret_candidates(handler):
+        if hmac.compare_digest(candidate, expected):
+            return True
+    return False
+
+
 class Handler(SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, directory=str(WEB_DIR), **kwargs)
@@ -3163,7 +3206,11 @@ class Handler(SimpleHTTPRequestHandler):
 
     def end_headers(self):
         self.send_header("X-Content-Type-Options", "nosniff")
-        self.send_header("X-Frame-Options", "SAMEORIGIN")
+        self.send_header("X-Frame-Options", "DENY")
+        self.send_header(
+            "Content-Security-Policy",
+            "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
+        )
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         proto = (self.headers.get("X-Forwarded-Proto") or "").strip().lower()
         if proto == "https":
@@ -3189,6 +3236,31 @@ class Handler(SimpleHTTPRequestHandler):
             self.headers.get("Host"),
             self.headers.get("X-Forwarded-Host"),
         )
+
+    def _request_origin_host(self) -> str:
+        for header_name in ("Origin", "Referer"):
+            raw = (self.headers.get(header_name) or "").strip()
+            if not raw:
+                continue
+            try:
+                parsed = urllib.parse.urlparse(raw)
+            except Exception:
+                continue
+            host = normalize_host(parsed.netloc)
+            if host:
+                return host
+        return ""
+
+    def _is_allowed_site_origin(self) -> bool:
+        origin_host = self._request_origin_host()
+        if not origin_host:
+            return True
+        allowed_hosts = set(canonical_public_hosts())
+        allowed_hosts.update({"127.0.0.1", "localhost", "0.0.0.0"})
+        request_host = self._request_host()
+        if request_host in allowed_hosts or is_internal_proxy_host(request_host):
+            allowed_hosts.update(_host_aliases(request_host))
+        return origin_host in allowed_hosts
 
     def _should_redirect_to_canonical(self) -> bool:
         allowed_hosts = canonical_public_hosts()
@@ -3259,6 +3331,8 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_json(payload)
 
     def handle_apply(self):
+        if not self._is_allowed_site_origin():
+            return self.send_json({"ok": False, "message": "forbidden"}, status=403)
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
@@ -3430,6 +3504,11 @@ class Handler(SimpleHTTPRequestHandler):
         )
 
     def handle_infobip_webhook(self):
+        if not INFOBIP_WEBHOOK_SECRET:
+            print("Infobip webhook auth error: INFOBIP_WEBHOOK_SECRET is not configured")
+            return self.send_json({"ok": False, "message": "webhook auth misconfigured"}, status=503)
+        if not _is_infobip_webhook_authorized(self):
+            return self.send_json({"ok": False, "message": "unauthorized"}, status=401)
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
