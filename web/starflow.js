@@ -467,6 +467,10 @@
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
+            const delay = Number(entry.target.getAttribute('data-reveal-delay') || '0');
+            if (delay > 0) {
+              entry.target.style.transitionDelay = `${delay}ms`;
+            }
             entry.target.classList.add('visible');
             observer.unobserve(entry.target);
           }
@@ -479,6 +483,9 @@
   }
 
   function bindTilt() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
     const cards = document.querySelectorAll('[data-tilt]');
     cards.forEach((card) => {
       card.addEventListener('pointermove', (event) => {
@@ -492,6 +499,61 @@
       card.addEventListener('pointerleave', () => {
         card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg)';
       });
+    });
+  }
+
+  function initCursorGlow() {
+    const glow = document.getElementById('cursor-glow');
+    if (!glow || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    let frameRequested = false;
+    let targetX = window.innerWidth * 0.5;
+    let targetY = window.innerHeight * 0.45;
+
+    function apply() {
+      frameRequested = false;
+      const x = Math.max(0, Math.min(window.innerWidth, targetX));
+      const y = Math.max(0, Math.min(window.innerHeight, targetY));
+      document.documentElement.style.setProperty('--mx', `${x}px`);
+      document.documentElement.style.setProperty('--my', `${y}px`);
+    }
+
+    function onMove(event) {
+      targetX = event.clientX;
+      targetY = event.clientY;
+      if (!frameRequested) {
+        frameRequested = true;
+        requestAnimationFrame(apply);
+      }
+    }
+
+    window.addEventListener('pointermove', onMove, { passive: true });
+    apply();
+  }
+
+  function initHeroParallax() {
+    const stage = document.querySelector('.hero-stage');
+    if (!stage || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    const copy = document.querySelector('.hero-copy');
+
+    stage.addEventListener('pointermove', (event) => {
+      const rect = stage.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      stage.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${y * -4}deg)`;
+      if (copy) {
+        copy.style.transform = `translate3d(${x * 8}px, ${y * 8}px, 0)`;
+      }
+    });
+
+    stage.addEventListener('pointerleave', () => {
+      stage.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
+      if (copy) {
+        copy.style.transform = 'translate3d(0,0,0)';
+      }
     });
   }
 
@@ -728,6 +790,8 @@
     bindEvents();
     revealOnScroll();
     bindTilt();
+    initCursorGlow();
+    initHeroParallax();
     animateCounters();
     initStarfield();
     loadConfig();

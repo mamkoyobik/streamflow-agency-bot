@@ -6,263 +6,304 @@
   <title>Starflow Inc. - Partner Network</title>
   <meta name="description" content="Starflow Inc. partner network for streaming companies. CPA offer with weekly USDT payouts.">
   <meta name="robots" content="index,follow">
-  <meta name="theme-color" content="#070a16">
+  <meta name="theme-color" content="#070b16">
   <link rel="canonical" href="https://starflowinc.com/">
   <meta property="og:type" content="website">
   <meta property="og:title" content="Starflow Inc. - Partner Network">
-  <meta property="og:description" content="CPA $20-40 per successful interview. Weekly USDT payouts.">
+  <meta property="og:description" content="CPA $20-40 per successful interview. Weekly payouts in USDT.">
   <meta property="og:url" content="https://starflowinc.com/">
   <meta property="og:site_name" content="Starflow Inc.">
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Starflow Inc. - Partner Network">
-  <meta name="twitter:description" content="CPA $20-40 per successful interview. Weekly USDT payouts.">
+  <meta name="twitter:description" content="CPA $20-40 per successful interview. Weekly payouts in USDT.">
   <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-02">
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="starflow.css?v=20260226-03">
 </head>
 <body data-page="starflow">
   <canvas id="star-canvas" aria-hidden="true"></canvas>
-  <div class="noise" aria-hidden="true"></div>
-  <div class="aurora aurora-a" aria-hidden="true"></div>
-  <div class="aurora aurora-b" aria-hidden="true"></div>
+  <div class="backdrop-noise" aria-hidden="true"></div>
+  <div class="backdrop-orb orb-a" aria-hidden="true"></div>
+  <div class="backdrop-orb orb-b" aria-hidden="true"></div>
+  <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
 
-  <header class="topbar">
-    <a class="brand" href="#top" aria-label="Starflow Inc.">
-      <span class="brand-dot"></span>
-      <span class="brand-name">Starflow Inc.</span>
-    </a>
-    <nav class="topnav" aria-label="Main navigation">
-      <a href="#partners" data-i18n="nav.partners">Partner Types</a>
-      <a href="#terms" data-i18n="nav.terms">Terms</a>
-      <a href="#flow" data-i18n="nav.flow">Partner Flow</a>
-      <a href="#faq" data-i18n="nav.faq">FAQ</a>
-      <a href="#apply" data-i18n="nav.apply">Apply</a>
-    </nav>
-    <div class="topbar-actions">
-      <select id="lang-select" aria-label="Language">
-        <option value="en">EN</option>
-        <option value="pt">PT</option>
-        <option value="es">ES</option>
-      </select>
-      <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
-      <a class="btn solid" href="#apply" data-i18n="cta.apply">Apply</a>
+  <header class="site-header">
+    <div class="inner">
+      <a class="brand" href="#top" aria-label="Starflow Inc.">
+        <span class="brand-signal"></span>
+        <span class="brand-text">Starflow Inc.</span>
+      </a>
+
+      <nav class="site-nav" aria-label="Main navigation">
+        <a href="#partners" data-i18n="nav.partners">Partner Types</a>
+        <a href="#terms" data-i18n="nav.terms">Terms</a>
+        <a href="#flow" data-i18n="nav.flow">Partner Flow</a>
+        <a href="#faq" data-i18n="nav.faq">FAQ</a>
+        <a href="#apply" data-i18n="nav.apply">Apply</a>
+      </nav>
+
+      <div class="header-tools">
+        <select id="lang-select" aria-label="Language">
+          <option value="en">EN</option>
+          <option value="pt">PT</option>
+          <option value="es">ES</option>
+        </select>
+        <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+        <a class="btn solid" href="#apply" data-i18n="cta.apply">Apply</a>
+      </div>
     </div>
   </header>
 
   <main id="top">
     <section class="hero section">
-      <div class="hero-copy reveal">
-        <p class="overline" data-i18n="hero.overline">Partner Network For Streaming Companies</p>
-        <h1 data-i18n="hero.title">Bring people.<br>We handle the rest.</h1>
-        <p class="lead" data-i18n="hero.lead">Media buyers, call-centers, agencies, solo freelancers. Team size does not matter. The only thing that matters is your ability to attract candidates.</p>
-        <div class="hero-cta">
-          <a class="btn solid" href="#apply" data-i18n="cta.apply">Apply</a>
-          <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
-        </div>
-      </div>
+      <div class="inner hero-grid">
+        <div class="hero-copy reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="hero.overline">Partner Network For Streaming Companies</p>
+          <h1 data-i18n="hero.title">Bring people.<br>We handle the rest.</h1>
+          <p class="hero-lead" data-i18n="hero.lead">Media buyers, call-centers, agencies, solo freelancers. Team size does not matter. The only thing that matters is your ability to attract candidates.</p>
 
-      <div class="hero-orbit reveal">
-        <div class="ring ring-a"></div>
-        <div class="ring ring-b"></div>
-        <div class="ring ring-c"></div>
-        <div class="core-card tilt" data-tilt>
-          <p class="core-label" data-i18n="hero.signal">Live Offer Signal</p>
-          <p class="core-value">CPA $20-40</p>
-          <p class="core-meta" data-i18n="hero.signalMeta">Weekly payouts in USDT</p>
-          <div class="pulse-line"></div>
+          <div class="hero-actions">
+            <a class="btn solid" href="#apply" data-i18n="cta.apply">Apply</a>
+            <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+          </div>
+
+          <div class="source-ribbon" aria-label="Sources">
+            <span>Target Ads</span>
+            <span>Job Boards</span>
+            <span>Cold Outreach</span>
+            <span>Mailing</span>
+            <span>DM</span>
+          </div>
+        </div>
+
+        <div class="hero-stage reveal" data-reveal-delay="120">
+          <div class="stage-grid"></div>
+          <div class="signal-card tilt" data-tilt>
+            <p class="signal-tag" data-i18n="hero.signal">Live Offer Signal</p>
+            <p class="signal-value">CPA $20-40</p>
+            <p class="signal-meta" data-i18n="hero.signalMeta">Weekly payouts in USDT</p>
+            <div class="signal-wave" aria-hidden="true"></div>
+          </div>
+          <div class="mini-stat mini-stat-a">
+            <strong>5+</strong>
+            <span data-i18n="kpi.years">years in traffic</span>
+          </div>
+          <div class="mini-stat mini-stat-b">
+            <strong>7d</strong>
+            <span data-i18n="kpi.weekly">payout cycle</span>
+          </div>
         </div>
       </div>
     </section>
 
-    <section class="kpi section reveal">
-      <article>
-        <span class="kpi-value" data-count="5">0</span>
-        <span class="kpi-suffix">+</span>
-        <p data-i18n="kpi.years">years in traffic</p>
-      </article>
-      <article>
-        <span class="kpi-value" data-count="40">0</span>
-        <span class="kpi-suffix">$</span>
-        <p data-i18n="kpi.max">max CPA per interview</p>
-      </article>
-      <article>
-        <span class="kpi-value" data-count="7">0</span>
-        <span class="kpi-suffix">d</span>
-        <p data-i18n="kpi.weekly">payout cycle</p>
-      </article>
+    <section class="section metrics reveal" data-reveal-delay="0">
+      <div class="inner metrics-grid">
+        <article>
+          <p class="metric-num"><span data-count="5">0</span>+</p>
+          <p class="metric-label" data-i18n="kpi.years">years in traffic</p>
+        </article>
+        <article>
+          <p class="metric-num">$<span data-count="40">0</span></p>
+          <p class="metric-label" data-i18n="kpi.max">max CPA per interview</p>
+        </article>
+        <article>
+          <p class="metric-num"><span data-count="7">0</span>d</p>
+          <p class="metric-label" data-i18n="kpi.weekly">payout cycle</p>
+        </article>
+      </div>
     </section>
 
     <section class="section" id="partners">
-      <div class="section-head reveal">
-        <p class="overline" data-i18n="partners.overline">Who We Need</p>
-        <h2 data-i18n="partners.title">Partner profile</h2>
-      </div>
+      <div class="inner">
+        <div class="section-head reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="partners.overline">Who We Need</p>
+          <h2 data-i18n="partners.title">Partner profile</h2>
+        </div>
 
-      <div class="partner-grid">
-        <article class="partner-card reveal tilt" data-tilt>
-          <h3 data-i18n="partners.arb.title">Arbitrage Team</h3>
-          <p data-i18n="partners.arb.text">Already knows creatives, funnels, conversion and optimization.</p>
-        </article>
-        <article class="partner-card reveal tilt" data-tilt>
-          <h3 data-i18n="partners.call.title">Call-Center</h3>
-          <p data-i18n="partners.call.text">Has managers on calls all day. Needs only offer + script.</p>
-        </article>
-        <article class="partner-card reveal tilt" data-tilt>
-          <h3 data-i18n="partners.agency.title">Marketing Agency</h3>
-          <p data-i18n="partners.agency.text">Leadgen processes are already built and running.</p>
-        </article>
-        <article class="partner-card reveal tilt" data-tilt>
-          <h3 data-i18n="partners.solo.title">Solo Freelancer</h3>
-          <p data-i18n="partners.solo.text">Runs ads/outreach independently and ships results.</p>
-        </article>
-      </div>
+        <div class="partner-grid">
+          <article class="partner-card reveal tilt" data-reveal-delay="50" data-tilt>
+            <h3 data-i18n="partners.arb.title">Arbitrage Team</h3>
+            <p data-i18n="partners.arb.text">Already knows creatives, funnels, conversion and optimization.</p>
+          </article>
+          <article class="partner-card reveal tilt" data-reveal-delay="100" data-tilt>
+            <h3 data-i18n="partners.call.title">Call-Center</h3>
+            <p data-i18n="partners.call.text">Has managers on calls all day. Needs only offer + script.</p>
+          </article>
+          <article class="partner-card reveal tilt" data-reveal-delay="150" data-tilt>
+            <h3 data-i18n="partners.agency.title">Marketing Agency</h3>
+            <p data-i18n="partners.agency.text">Leadgen processes are already built and running.</p>
+          </article>
+          <article class="partner-card reveal tilt" data-reveal-delay="200" data-tilt>
+            <h3 data-i18n="partners.solo.title">Solo Freelancer</h3>
+            <p data-i18n="partners.solo.text">Runs ads/outreach independently and ships results.</p>
+          </article>
+        </div>
 
-      <div class="notice reveal">
-        <p data-i18n="partners.notice1">Format does not matter: 50 people team or one person with a laptop.</p>
-        <p data-i18n="partners.notice2">Only one thing matters: you can attract people.</p>
+        <div class="notice reveal" data-reveal-delay="250">
+          <p data-i18n="partners.notice1">Format does not matter: 50 people team or one person with a laptop.</p>
+          <p data-i18n="partners.notice2">Only one thing matters: you can attract people.</p>
+        </div>
       </div>
     </section>
 
     <section class="section" id="terms">
-      <div class="section-head reveal">
-        <p class="overline" data-i18n="terms.overline">Offer Details</p>
-        <h2 data-i18n="terms.title">How this offer works</h2>
-      </div>
+      <div class="inner">
+        <div class="section-head reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="terms.overline">Offer Details</p>
+          <h2 data-i18n="terms.title">How this offer works</h2>
+        </div>
 
-      <div class="terms-layout">
-        <article class="glass reveal">
-          <h3 data-i18n="terms.whatWeDo.title">What we do</h3>
-          <p data-i18n="terms.whatWeDo.text">We find female candidates 18-27 for streamer positions and male candidates 18-30 for moderation roles. Streaming companies pay us for qualified interviews.</p>
-        </article>
-        <article class="glass reveal">
-          <h3 data-i18n="terms.partnerDoes.title">What partner does</h3>
-          <p data-i18n="terms.partnerDoes.text">You drive candidates to interviews by any source: ads, broadcasts, DM, mailing lists, job boards, cold outreach.</p>
-        </article>
-        <article class="glass reveal">
-          <h3 data-i18n="terms.conditions.title">Conditions</h3>
-          <ul>
-            <li data-i18n="terms.conditions.cpa">CPA model: $20-40 per successful interview</li>
-            <li data-i18n="terms.conditions.payout">Payouts every Sunday in USDT</li>
-            <li data-i18n="terms.conditions.limit">No limits: bring more, earn more</li>
-            <li data-i18n="terms.conditions.assets">We provide CRM, scripts and materials</li>
-          </ul>
-        </article>
-        <article class="glass reveal">
-          <h3 data-i18n="terms.geo.title">GEO</h3>
-          <p data-i18n="terms.geo.text">Models: Europe, LatAm. Operators: Europe, LatAm, Asia.</p>
-        </article>
-      </div>
+        <div class="terms-layout">
+          <article class="glass reveal" data-reveal-delay="40">
+            <h3 data-i18n="terms.whatWeDo.title">What we do</h3>
+            <p data-i18n="terms.whatWeDo.text">We find female candidates 18-27 for streamer positions and male candidates 18-30 for moderation roles. Streaming companies pay us for qualified interviews.</p>
+          </article>
+          <article class="glass reveal" data-reveal-delay="80">
+            <h3 data-i18n="terms.partnerDoes.title">What partner does</h3>
+            <p data-i18n="terms.partnerDoes.text">You drive candidates to interviews by any source: ads, broadcasts, DM, mailing lists, job boards, cold outreach.</p>
+          </article>
+          <article class="glass reveal" data-reveal-delay="120">
+            <h3 data-i18n="terms.conditions.title">Conditions</h3>
+            <ul>
+              <li data-i18n="terms.conditions.cpa">CPA model: $20-40 per successful interview</li>
+              <li data-i18n="terms.conditions.payout">Payouts every Sunday in USDT</li>
+              <li data-i18n="terms.conditions.limit">No limits: bring more, earn more</li>
+              <li data-i18n="terms.conditions.assets">We provide CRM, scripts and materials</li>
+            </ul>
+          </article>
+          <article class="glass reveal" data-reveal-delay="160">
+            <h3 data-i18n="terms.geo.title">GEO</h3>
+            <p data-i18n="terms.geo.text">Models: Europe, LatAm. Operators: Europe, LatAm, Asia.</p>
+          </article>
+        </div>
 
-      <div class="marquee" aria-hidden="true">
-        <div class="marquee-track">
-          <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
-          <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
+        <div class="ticker" aria-hidden="true">
+          <div class="ticker-track">
+            <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
+            <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
+          </div>
         </div>
       </div>
     </section>
 
     <section class="section" id="flow">
-      <div class="section-head reveal">
-        <p class="overline" data-i18n="flow.overline">Partner Flow</p>
-        <h2 data-i18n="flow.title">From traffic to payout</h2>
+      <div class="inner">
+        <div class="section-head reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="flow.overline">Partner Flow</p>
+          <h2 data-i18n="flow.title">From traffic to payout</h2>
+        </div>
+
+        <ol class="timeline">
+          <li class="reveal" data-reveal-delay="40"><span>01</span><p data-i18n="flow.step1">You launch traffic from any source.</p></li>
+          <li class="reveal" data-reveal-delay="80"><span>02</span><p data-i18n="flow.step2">Candidates reach interview stage.</p></li>
+          <li class="reveal" data-reveal-delay="120"><span>03</span><p data-i18n="flow.step3">Qualified interviews are counted in CRM.</p></li>
+          <li class="reveal" data-reveal-delay="160"><span>04</span><p data-i18n="flow.step4">You receive weekly payout in USDT.</p></li>
+        </ol>
       </div>
-      <ol class="timeline">
-        <li class="reveal"><span>01</span><p data-i18n="flow.step1">You launch traffic from any source.</p></li>
-        <li class="reveal"><span>02</span><p data-i18n="flow.step2">Candidates reach interview stage.</p></li>
-        <li class="reveal"><span>03</span><p data-i18n="flow.step3">Qualified interviews are counted in CRM.</p></li>
-        <li class="reveal"><span>04</span><p data-i18n="flow.step4">You receive weekly payout in USDT.</p></li>
-      </ol>
     </section>
 
     <section class="section" id="faq">
-      <div class="section-head reveal">
-        <p class="overline">FAQ</p>
-        <h2 data-i18n="faq.title">Common objections</h2>
-      </div>
-      <div class="faq-grid">
-        <article class="faq-card reveal">
-          <h3 data-i18n="faq.exp.q">I have no experience</h3>
-          <p data-i18n="faq.exp.a">We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.</p>
-          <ul>
-            <li data-i18n="faq.exp.l1">What experience do you have (social, outreach, ads)?</li>
-            <li data-i18n="faq.exp.l2">Are you ready to learn from our materials?</li>
-            <li data-i18n="faq.exp.l3">How much time can you dedicate?</li>
-          </ul>
-        </article>
-        <article class="faq-card reveal">
-          <h3 data-i18n="faq.mlm.q">Is this MLM / pyramid?</h3>
-          <p data-i18n="faq.mlm.a">No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.</p>
-          <ul>
-            <li data-i18n="faq.mlm.l1">MLM: pay to join + build multi-level hierarchy.</li>
-            <li data-i18n="faq.mlm.l2">Here: zero investment, one level, payment for result.</li>
-          </ul>
-        </article>
+      <div class="inner">
+        <div class="section-head reveal" data-reveal-delay="0">
+          <p class="eyebrow">FAQ</p>
+          <h2 data-i18n="faq.title">Common objections</h2>
+        </div>
+
+        <div class="faq-grid">
+          <article class="faq-card reveal" data-reveal-delay="60">
+            <h3 data-i18n="faq.exp.q">I have no experience</h3>
+            <p data-i18n="faq.exp.a">We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.</p>
+            <ul>
+              <li data-i18n="faq.exp.l1">What experience do you have (social, outreach, ads)?</li>
+              <li data-i18n="faq.exp.l2">Are you ready to learn from our materials?</li>
+              <li data-i18n="faq.exp.l3">How much time can you dedicate?</li>
+            </ul>
+          </article>
+          <article class="faq-card reveal" data-reveal-delay="120">
+            <h3 data-i18n="faq.mlm.q">Is this MLM / pyramid?</h3>
+            <p data-i18n="faq.mlm.a">No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.</p>
+            <ul>
+              <li data-i18n="faq.mlm.l1">MLM: pay to join + build multi-level hierarchy.</li>
+              <li data-i18n="faq.mlm.l2">Here: zero investment, one level, payment for result.</li>
+            </ul>
+          </article>
+        </div>
       </div>
     </section>
 
     <section class="section apply" id="apply">
-      <div class="section-head reveal">
-        <p class="overline" data-i18n="apply.overline">Application</p>
-        <h2 data-i18n="apply.title">Start as a partner</h2>
-      </div>
-
-      <form id="apply-form" class="apply-form reveal" novalidate>
-        <input type="hidden" name="project" value="starflow_corp">
-        <input type="hidden" name="site_lang" value="en">
-
-        <label>
-          <span data-i18n="form.name">Full name</span>
-          <input type="text" name="name" autocomplete="name" required>
-        </label>
-
-        <label>
-          <span data-i18n="form.contact">Contact details</span>
-          <div class="inline-controls">
-            <select name="preferred_contact" id="preferred-contact">
-              <option value="telegram">Telegram</option>
-              <option value="whatsapp">WhatsApp</option>
-            </select>
-            <input type="text" name="contact_value" id="contact-value" required data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
-          </div>
-        </label>
-
-        <label>
-          <span data-i18n="form.email">Email for registration</span>
-          <input type="email" name="email" autocomplete="email" required>
-        </label>
-
-        <label>
-          <span data-i18n="form.birth">Date of birth</span>
-          <input type="text" name="age" id="birthdate" inputmode="numeric" maxlength="10" placeholder="DD.MM.YYYY" required>
-        </label>
-
-        <label>
-          <span data-i18n="form.phone">Phone number</span>
-          <input type="tel" name="phone" id="phone" autocomplete="tel" placeholder="+34 600 000 000" required>
-        </label>
-
-        <button type="submit" class="btn solid" id="submit-btn" data-i18n="form.submit">Send application</button>
-
-        <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
-
-        <div class="next-actions" id="next-actions" hidden>
-          <p data-i18n="form.next">Continue in messenger</p>
-          <div class="next-links">
-            <a id="next-telegram" class="btn ghost" target="_blank" rel="noopener" data-i18n="form.telegram">Open Telegram</a>
-            <a id="next-whatsapp" class="btn ghost" target="_blank" rel="noopener" data-i18n="form.whatsapp">Open WhatsApp</a>
-          </div>
+      <div class="inner apply-layout">
+        <div class="apply-copy reveal" data-reveal-delay="0">
+          <p class="eyebrow" data-i18n="apply.overline">Application</p>
+          <h2 data-i18n="apply.title">Start as a partner</h2>
+          <p>Fill the short form and continue directly in messenger.</p>
+          <ul class="apply-hints">
+            <li>No bureaucracy</li>
+            <li>Direct manager contact</li>
+            <li>Fast launch with scripts</li>
+          </ul>
         </div>
-      </form>
+
+        <form id="apply-form" class="apply-form reveal" data-reveal-delay="80" novalidate>
+          <input type="hidden" name="project" value="starflow_corp">
+          <input type="hidden" name="site_lang" value="en">
+
+          <label>
+            <span data-i18n="form.name">Full name</span>
+            <input type="text" name="name" autocomplete="name" required>
+          </label>
+
+          <label>
+            <span data-i18n="form.contact">Contact details</span>
+            <div class="inline-controls">
+              <select name="preferred_contact" id="preferred-contact">
+                <option value="telegram">Telegram</option>
+                <option value="whatsapp">WhatsApp</option>
+              </select>
+              <input type="text" name="contact_value" id="contact-value" required data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
+            </div>
+          </label>
+
+          <label>
+            <span data-i18n="form.email">Email for registration</span>
+            <input type="email" name="email" autocomplete="email" required>
+          </label>
+
+          <label>
+            <span data-i18n="form.birth">Date of birth</span>
+            <input type="text" name="age" id="birthdate" inputmode="numeric" maxlength="10" placeholder="DD.MM.YYYY" required>
+          </label>
+
+          <label>
+            <span data-i18n="form.phone">Phone number</span>
+            <input type="tel" name="phone" id="phone" autocomplete="tel" placeholder="+34 600 000 000" required>
+          </label>
+
+          <button type="submit" class="btn solid" id="submit-btn" data-i18n="form.submit">Send application</button>
+
+          <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+
+          <div class="next-actions" id="next-actions" hidden>
+            <p data-i18n="form.next">Continue in messenger</p>
+            <div class="next-links">
+              <a id="next-telegram" class="btn ghost" target="_blank" rel="noopener" data-i18n="form.telegram">Open Telegram</a>
+              <a id="next-whatsapp" class="btn ghost" target="_blank" rel="noopener" data-i18n="form.whatsapp">Open WhatsApp</a>
+            </div>
+          </div>
+        </form>
+      </div>
     </section>
   </main>
 
-  <footer class="footer">
-    <p>© <span id="year"></span> Starflow Inc.</p>
-    <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram</a>
+  <footer class="site-footer">
+    <div class="inner footer-inner">
+      <p>© <span id="year"></span> Starflow Inc.</p>
+      <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram</a>
+    </div>
   </footer>
 
-  <script src="starflow.js?v=20260226-02" defer></script>
+  <script src="starflow.js?v=20260226-03" defer></script>
 </body>
 </html>
