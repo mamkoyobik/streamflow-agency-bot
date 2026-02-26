@@ -1,487 +1,268 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <!-- Yandex.Metrika counter -->
-  <script type="text/javascript">
-      (function(m,e,t,r,i,k,a){
-          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
-          m[i].l=1*new Date();
-          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
-          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a);
-      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106823371', 'ym');
-
-      ym(106823371, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
-  </script>
-  <!-- /Yandex.Metrika counter -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Starflow Inc. — Partner Network for Streaming Companies</title>
-  <meta name="description" content="Starflow Inc. CPA offer for media buyers, call-centers, agencies and freelancers. Weekly USDT payouts.">
+  <title>Starflow Inc. - Partner Network</title>
+  <meta name="description" content="Starflow Inc. partner network for streaming companies. CPA offer with weekly USDT payouts.">
   <meta name="robots" content="index,follow">
-  <meta name="format-detection" content="telephone=no,address=no,email=no">
-  <meta name="theme-color" content="#0f0b12">
-  <link rel="canonical" href="https://streamflowagency.com/starflow.html">
-  <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
-  <link rel="apple-touch-icon" href="assets/favicon.png?v=2">
-  <link rel="manifest" href="assets/site.webmanifest">
+  <meta name="theme-color" content="#070a16">
+  <link rel="canonical" href="https://starflowinc.com/">
   <meta property="og:type" content="website">
-  <meta property="og:title" content="Starflow Inc. — Partner Network for Streaming Companies">
-  <meta property="og:description" content="CPA $20-40 per successful interview. Weekly payouts in USDT.">
-  <meta property="og:url" content="https://streamflowagency.com/starflow.html">
+  <meta property="og:title" content="Starflow Inc. - Partner Network">
+  <meta property="og:description" content="CPA $20-40 per successful interview. Weekly USDT payouts.">
+  <meta property="og:url" content="https://starflowinc.com/">
   <meta property="og:site_name" content="Starflow Inc.">
-  <meta property="og:image" content="https://streamflowagency.com/assets/logo.jpg">
-  <meta property="og:image:alt" content="Starflow Inc. logo">
-  <meta property="og:locale" content="en_US">
   <meta name="twitter:card" content="summary_large_image">
-  <meta name="twitter:title" content="Starflow Inc. — Partner Network for Streaming Companies">
-  <meta name="twitter:description" content="CPA $20-40 per successful interview. Weekly payouts in USDT.">
-  <meta name="twitter:image" content="https://streamflowagency.com/assets/logo.jpg">
+  <meta name="twitter:title" content="Starflow Inc. - Partner Network">
+  <meta name="twitter:description" content="CPA $20-40 per successful interview. Weekly USDT payouts.">
+  <link rel="icon" type="image/png" href="assets/favicon.png?v=2">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260210-02">
-  <link rel="stylesheet" href="starflow.css?v=20260226-01">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="starflow.css?v=20260226-02">
 </head>
-<body class="preload lang-locked" data-page="starflow">
-  <noscript><div><img src="https://mc.yandex.ru/watch/106823371" style="position:absolute; left:-9999px;" alt=""></div></noscript>
-  <div class="grain"></div>
-  <div class="language-gate is-visible" id="language-gate" aria-hidden="false">
-    <div class="language-gate-card">
-      <h2 data-i18n="langGate.title">Choose language</h2>
-      <p data-i18n="langGate.subtitle">Select your language to continue</p>
-      <div class="language-gate-options">
-        <button class="language-gate-option" type="button" data-language-option="en" data-i18n="langGate.en">English</button>
-        <button class="language-gate-option" type="button" data-language-option="pt" data-i18n="langGate.pt">Português</button>
-        <button class="language-gate-option" type="button" data-language-option="es" data-i18n="langGate.es">Español</button>
-      </div>
-    </div>
-  </div>
+<body data-page="starflow">
+  <canvas id="star-canvas" aria-hidden="true"></canvas>
+  <div class="noise" aria-hidden="true"></div>
+  <div class="aurora aurora-a" aria-hidden="true"></div>
+  <div class="aurora aurora-b" aria-hidden="true"></div>
 
-  <header class="site-header">
-    <div class="container header-grid">
-      <a class="brand" href="starflow.html" aria-label="Starflow Inc.">
-        <img src="assets/favicon.png" alt="Starflow Inc.">
-        <span class="brand-stack">
-          <strong data-i18n="brand.name">Starflow</strong>
-          <small data-i18n="brand.subtitle">Partner Network</small>
-        </span>
-      </a>
-      <nav class="site-nav" aria-label="Навигация">
-        <a class="nav-link" href="starflow.html" data-i18n="nav.home">Главная</a>
-        <a class="nav-link" href="#about" data-i18n="nav.partners">Партнёры</a>
-        <a class="nav-link" href="#offer" data-i18n="nav.conditions">Условия</a>
-        <a class="nav-link" href="#income" data-i18n="nav.geo">GEO</a>
-        <a class="nav-link" href="#steps" data-i18n="nav.steps">Этапы</a>
-        <a class="nav-link" href="#faq" data-i18n="nav.faq">FAQ</a>
-      </nav>
-      <div class="header-actions">
-        <select class="lang-select" id="site-lang-select" aria-label="Language">
-          <option value="en">EN</option>
-          <option value="pt">PT</option>
-          <option value="es">ES</option>
-        </select>
-        <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
-      </div>
+  <header class="topbar">
+    <a class="brand" href="#top" aria-label="Starflow Inc.">
+      <span class="brand-dot"></span>
+      <span class="brand-name">Starflow Inc.</span>
+    </a>
+    <nav class="topnav" aria-label="Main navigation">
+      <a href="#partners" data-i18n="nav.partners">Partner Types</a>
+      <a href="#terms" data-i18n="nav.terms">Terms</a>
+      <a href="#flow" data-i18n="nav.flow">Partner Flow</a>
+      <a href="#faq" data-i18n="nav.faq">FAQ</a>
+      <a href="#apply" data-i18n="nav.apply">Apply</a>
+    </nav>
+    <div class="topbar-actions">
+      <select id="lang-select" aria-label="Language">
+        <option value="en">EN</option>
+        <option value="pt">PT</option>
+        <option value="es">ES</option>
+      </select>
+      <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+      <a class="btn solid" href="#apply" data-i18n="cta.apply">Apply</a>
     </div>
   </header>
 
-  <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
-    <div class="mobile-nav-backdrop" data-nav-close></div>
-    <div class="mobile-nav-panel">
-      <div class="mobile-nav-header">
-        <span data-i18n="mobile.menu">Меню</span>
-        <select class="lang-select lang-select-mobile" id="site-lang-select-mobile" aria-label="Language">
-          <option value="en">EN</option>
-          <option value="pt">PT</option>
-          <option value="es">ES</option>
-        </select>
-        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
-      </div>
-      <nav class="mobile-nav-links">
-        <a href="starflow.html" data-i18n="nav.home">Главная</a>
-        <a href="#about" data-i18n="nav.partners">Партнёры</a>
-        <a href="#offer" data-i18n="nav.conditions">Условия</a>
-        <a href="#income" data-i18n="nav.geo">GEO</a>
-        <a href="#steps" data-i18n="nav.steps">Этапы</a>
-        <a href="#faq" data-i18n="nav.faq">FAQ</a>
-        <a href="#apply" data-i18n="nav.apply">Заявка</a>
-      </nav>
-      <a class="btn btn-telegram" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram канал</a>
-      <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
-    </div>
-  </div>
-
-  <main class="page">
-    <section class="hero">
-      <div class="liquid-ether-bg" aria-hidden="true"></div>
-      <div class="gradual-blur gradual-blur-top" aria-hidden="true"></div>
-      <div class="gradual-blur gradual-blur-bottom" aria-hidden="true"></div>
-      <div class="container hero-grid">
-        <div class="hero-text reveal">
-          <span class="hero-eyebrow" data-i18n="hero.eyebrow">Partner Network</span>
-          <h1 data-i18n="hero.title">Партнёрская сеть для стриминговых компаний</h1>
-          <p class="hero-lead" data-i18n="hero.lead">
-            Ищем партнёров, которые умеют привлекать людей. Формат команды не важен: арбитражная команда,
-            колл-центр, агентство или фрилансер.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
-            <a class="btn btn-telegram" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram канал</a>
-          </div>
+  <main id="top">
+    <section class="hero section">
+      <div class="hero-copy reveal">
+        <p class="overline" data-i18n="hero.overline">Partner Network For Streaming Companies</p>
+        <h1 data-i18n="hero.title">Bring people.<br>We handle the rest.</h1>
+        <p class="lead" data-i18n="hero.lead">Media buyers, call-centers, agencies, solo freelancers. Team size does not matter. The only thing that matters is your ability to attract candidates.</p>
+        <div class="hero-cta">
+          <a class="btn solid" href="#apply" data-i18n="cta.apply">Apply</a>
+          <a class="btn ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
         </div>
-        <div class="hero-media reveal">
-          <div class="carousel" data-carousel>
-            <div class="carousel-viewport">
-              <div class="carousel-track">
-                <article class="carousel-slide" style="--slide-bg: url('assets/models/model-1.jpg');">
-                  <h3 data-i18n="hero.card1Title">Арбитраж</h3>
-                  <p data-i18n="hero.card1Text">Уже умеют работать с креативами и воронками.</p>
-                </article>
-                <article class="carousel-slide" style="--slide-bg: url('assets/models/milena.jpg');">
-                  <h3 data-i18n="hero.card2Title">Колл-центр</h3>
-                  <p data-i18n="hero.card2Text">Есть менеджеры, которые звонят весь день.</p>
-                </article>
-                <article class="carousel-slide" style="--slide-bg: url('assets/models/model-3.jpg');">
-                  <h3 data-i18n="hero.card3Title">Агентство</h3>
-                  <p data-i18n="hero.card3Text">Работают на лидогенерацию с готовыми процессами.</p>
-                </article>
-                <article class="carousel-slide" style="--slide-bg: url('assets/models/confident.jpg');">
-                  <h3 data-i18n="hero.card4Title">Фрилансер</h3>
-                  <p data-i18n="hero.card4Text">Один человек тоже подходит, если умеет привлекать людей.</p>
-                </article>
-              </div>
-            </div>
-            <div class="carousel-dots">
-              <button class="carousel-dot is-active" type="button" aria-label="Слайд 1"></button>
-              <button class="carousel-dot" type="button" aria-label="Слайд 2"></button>
-              <button class="carousel-dot" type="button" aria-label="Слайд 3"></button>
-              <button class="carousel-dot" type="button" aria-label="Слайд 4"></button>
-            </div>
-          </div>
+      </div>
+
+      <div class="hero-orbit reveal">
+        <div class="ring ring-a"></div>
+        <div class="ring ring-b"></div>
+        <div class="ring ring-c"></div>
+        <div class="core-card tilt" data-tilt>
+          <p class="core-label" data-i18n="hero.signal">Live Offer Signal</p>
+          <p class="core-value">CPA $20-40</p>
+          <p class="core-meta" data-i18n="hero.signalMeta">Weekly payouts in USDT</p>
+          <div class="pulse-line"></div>
         </div>
       </div>
     </section>
 
-    <section class="trust-strip reveal reveal-mask" aria-label="Гарантии Starflow">
-      <div class="container trust-strip-grid">
-        <article class="trust-item">
-          <strong data-i18n="trust.supportTitle">Больше 5 лет в трафике</strong>
-          <p data-i18n="trust.supportText">Работаем со стриминговыми компаниями и квалифицированным трафиком.</p>
+    <section class="kpi section reveal">
+      <article>
+        <span class="kpi-value" data-count="5">0</span>
+        <span class="kpi-suffix">+</span>
+        <p data-i18n="kpi.years">years in traffic</p>
+      </article>
+      <article>
+        <span class="kpi-value" data-count="40">0</span>
+        <span class="kpi-suffix">$</span>
+        <p data-i18n="kpi.max">max CPA per interview</p>
+      </article>
+      <article>
+        <span class="kpi-value" data-count="7">0</span>
+        <span class="kpi-suffix">d</span>
+        <p data-i18n="kpi.weekly">payout cycle</p>
+      </article>
+    </section>
+
+    <section class="section" id="partners">
+      <div class="section-head reveal">
+        <p class="overline" data-i18n="partners.overline">Who We Need</p>
+        <h2 data-i18n="partners.title">Partner profile</h2>
+      </div>
+
+      <div class="partner-grid">
+        <article class="partner-card reveal tilt" data-tilt>
+          <h3 data-i18n="partners.arb.title">Arbitrage Team</h3>
+          <p data-i18n="partners.arb.text">Already knows creatives, funnels, conversion and optimization.</p>
         </article>
-        <article class="trust-item">
-          <strong data-i18n="trust.communicationTitle">Чёткая CPA-модель</strong>
-          <p data-i18n="trust.communicationText">$20-40 за каждое успешное собеседование без лимитов по объёму.</p>
+        <article class="partner-card reveal tilt" data-tilt>
+          <h3 data-i18n="partners.call.title">Call-Center</h3>
+          <p data-i18n="partners.call.text">Has managers on calls all day. Needs only offer + script.</p>
         </article>
-        <article class="trust-item">
-          <strong data-i18n="trust.channelTitle">Выплаты в USDT</strong>
-          <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="trust.channelLink">Каждое воскресенье</a>
+        <article class="partner-card reveal tilt" data-tilt>
+          <h3 data-i18n="partners.agency.title">Marketing Agency</h3>
+          <p data-i18n="partners.agency.text">Leadgen processes are already built and running.</p>
+        </article>
+        <article class="partner-card reveal tilt" data-tilt>
+          <h3 data-i18n="partners.solo.title">Solo Freelancer</h3>
+          <p data-i18n="partners.solo.text">Runs ads/outreach independently and ships results.</p>
         </article>
       </div>
+
+      <div class="notice reveal">
+        <p data-i18n="partners.notice1">Format does not matter: 50 people team or one person with a laptop.</p>
+        <p data-i18n="partners.notice2">Only one thing matters: you can attract people.</p>
+      </div>
     </section>
 
-    <section class="section content-section" id="about">
-      <div class="container split">
-        <div class="split-content reveal">
-          <span class="eyebrow" data-i18n="about.eyebrow">Кого искать</span>
-          <h2 class="section-title-global" data-i18n="about.title">Формат не важен. Важен результат.</h2>
-          <p data-i18n="about.text">
-            Команда из 50 человек или один специалист с ноутбуком - без разницы.
-            Важно одно: партнёр умеет привлекать людей.
-          </p>
-          <div class="hero-actions">
-            <a class="btn btn-ghost" href="#offer" data-i18n="about.cta">Посмотреть условия</a>
-          </div>
-        </div>
-        <div class="about-mosaic reveal">
-          <div class="mosaic-tile large">
-            <video src="assets/videos/stream-1.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          </div>
-          <div class="mosaic-tile">
-            <video src="assets/videos/stream-2.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          </div>
-          <div class="mosaic-tile">
-            <video src="assets/videos/stream-3.mp4" autoplay muted loop playsinline preload="metadata"></video>
-          </div>
+    <section class="section" id="terms">
+      <div class="section-head reveal">
+        <p class="overline" data-i18n="terms.overline">Offer Details</p>
+        <h2 data-i18n="terms.title">How this offer works</h2>
+      </div>
+
+      <div class="terms-layout">
+        <article class="glass reveal">
+          <h3 data-i18n="terms.whatWeDo.title">What we do</h3>
+          <p data-i18n="terms.whatWeDo.text">We find female candidates 18-27 for streamer positions and male candidates 18-30 for moderation roles. Streaming companies pay us for qualified interviews.</p>
+        </article>
+        <article class="glass reveal">
+          <h3 data-i18n="terms.partnerDoes.title">What partner does</h3>
+          <p data-i18n="terms.partnerDoes.text">You drive candidates to interviews by any source: ads, broadcasts, DM, mailing lists, job boards, cold outreach.</p>
+        </article>
+        <article class="glass reveal">
+          <h3 data-i18n="terms.conditions.title">Conditions</h3>
+          <ul>
+            <li data-i18n="terms.conditions.cpa">CPA model: $20-40 per successful interview</li>
+            <li data-i18n="terms.conditions.payout">Payouts every Sunday in USDT</li>
+            <li data-i18n="terms.conditions.limit">No limits: bring more, earn more</li>
+            <li data-i18n="terms.conditions.assets">We provide CRM, scripts and materials</li>
+          </ul>
+        </article>
+        <article class="glass reveal">
+          <h3 data-i18n="terms.geo.title">GEO</h3>
+          <p data-i18n="terms.geo.text">Models: Europe, LatAm. Operators: Europe, LatAm, Asia.</p>
+        </article>
+      </div>
+
+      <div class="marquee" aria-hidden="true">
+        <div class="marquee-track">
+          <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
+          <span>CPA</span><span>USDT</span><span>CRM</span><span>Scripts</span><span>Weekly payouts</span><span>No limits</span><span>Any source</span>
         </div>
       </div>
     </section>
 
-    <section class="section section-center content-section" id="offer">
-      <div class="container">
-        <span class="eyebrow" data-i18n="offer.eyebrow">Условия партнёрства</span>
-        <h2 class="section-title-global" data-i18n="offer.title">Что делает партнёр и как зарабатывает</h2>
-        <p class="section-lead section-subtitle-global" data-i18n="offer.subtitle">Привлекаешь кандидатов любым способом, мы закрываем собеседования и делимся прибылью.</p>
-        <div class="offer-list">
-          <div class="offer-item reveal">
-            <span class="offer-step">01</span>
-            <h3 class="offer-title" data-i18n="offer.item1Title">Кого привлекаем</h3>
-            <p data-i18n="offer.item1Text">Девушки 18-27 на стримерш, парни 18-30 на модерацию.</p>
-            <div class="offer-divider"></div>
-          </div>
-          <div class="offer-item reveal">
-            <span class="offer-step">02</span>
-            <h3 class="offer-title" data-i18n="offer.item2Title">Оплата</h3>
-            <p data-i18n="offer.item2Text">CPA: $20-40 за каждое успешное собеседование.</p>
-            <div class="offer-divider"></div>
-          </div>
-          <div class="offer-item reveal">
-            <span class="offer-step">03</span>
-            <h3 class="offer-title" data-i18n="offer.item3Title">Выплаты</h3>
-            <p data-i18n="offer.item3Text">Каждое воскресенье в USDT. Без лимитов по объёму.</p>
-            <div class="offer-divider"></div>
-          </div>
-          <div class="offer-item reveal">
-            <span class="offer-step">04</span>
-            <h3 class="offer-title" data-i18n="offer.item4Title">Материалы</h3>
-            <p data-i18n="offer.item4Text">Даём CRM, скрипты и готовые материалы под запуск.</p>
-          </div>
-        </div>
-        <div class="hero-actions section-cta">
-          <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
-          <a class="btn btn-ghost" href="#faq" data-i18n="offer.ctaSecondary">Смотреть FAQ</a>
-        </div>
+    <section class="section" id="flow">
+      <div class="section-head reveal">
+        <p class="overline" data-i18n="flow.overline">Partner Flow</p>
+        <h2 data-i18n="flow.title">From traffic to payout</h2>
+      </div>
+      <ol class="timeline">
+        <li class="reveal"><span>01</span><p data-i18n="flow.step1">You launch traffic from any source.</p></li>
+        <li class="reveal"><span>02</span><p data-i18n="flow.step2">Candidates reach interview stage.</p></li>
+        <li class="reveal"><span>03</span><p data-i18n="flow.step3">Qualified interviews are counted in CRM.</p></li>
+        <li class="reveal"><span>04</span><p data-i18n="flow.step4">You receive weekly payout in USDT.</p></li>
+      </ol>
+    </section>
+
+    <section class="section" id="faq">
+      <div class="section-head reveal">
+        <p class="overline">FAQ</p>
+        <h2 data-i18n="faq.title">Common objections</h2>
+      </div>
+      <div class="faq-grid">
+        <article class="faq-card reveal">
+          <h3 data-i18n="faq.exp.q">I have no experience</h3>
+          <p data-i18n="faq.exp.a">We provide CRM and scripts. If you know how to reach people, you will figure it out. Method does not matter, results do.</p>
+          <ul>
+            <li data-i18n="faq.exp.l1">What experience do you have (social, outreach, ads)?</li>
+            <li data-i18n="faq.exp.l2">Are you ready to learn from our materials?</li>
+            <li data-i18n="faq.exp.l3">How much time can you dedicate?</li>
+          </ul>
+        </article>
+        <article class="faq-card reveal">
+          <h3 data-i18n="faq.mlm.q">Is this MLM / pyramid?</h3>
+          <p data-i18n="faq.mlm.a">No. You pay nothing to join. No multi-level structure. You bring candidates, they pass interviews, you get paid.</p>
+          <ul>
+            <li data-i18n="faq.mlm.l1">MLM: pay to join + build multi-level hierarchy.</li>
+            <li data-i18n="faq.mlm.l2">Here: zero investment, one level, payment for result.</li>
+          </ul>
+        </article>
       </div>
     </section>
 
-    <section class="section section-center content-section" id="income">
-      <div class="container">
-        <span class="eyebrow" data-i18n="income.eyebrow">GEO и источники</span>
-        <h2 class="section-title-global" data-i18n="income.title">Где работает оффер</h2>
-        <p class="section-lead section-subtitle-global" data-i18n="income.subtitle">Модели: Европа + LatAm. Операторы: Европа + LatAm + Азия.</p>
-        <div class="income-grid">
-          <article class="income-card reveal">
-            <img src="assets/models/income-spanish.jpg" alt="Europe" loading="lazy">
-            <div class="income-body">
-              <h3 data-i18n="geo.modelsTitle">Модели</h3>
-              <div class="income-amount" data-i18n="geo.modelsValue">Europe, LatAm</div>
-              <div class="income-note" data-i18n="geo.modelsNote">Девушки 18-27</div>
-            </div>
-          </article>
-          <article class="income-card reveal">
-            <img src="assets/models/model-3.jpg" alt="Operators" loading="lazy">
-            <div class="income-body">
-              <h3 data-i18n="geo.operatorsTitle">Операторы</h3>
-              <div class="income-amount" data-i18n="geo.operatorsValue">Europe, LatAm, Asia</div>
-              <div class="income-note" data-i18n="geo.operatorsNote">Парни 18-30</div>
-            </div>
-          </article>
-          <article class="income-card reveal">
-            <img class="income-photo-luana" src="assets/models/income-brazilian.jpg" alt="Payments" loading="lazy">
-            <div class="income-body">
-              <h3 data-i18n="geo.paymentsTitle">Выплаты</h3>
-              <div class="income-amount" data-i18n="geo.paymentsValue">Every Sunday</div>
-              <div class="income-note" data-i18n="geo.paymentsNote">USDT</div>
-            </div>
-          </article>
-        </div>
+    <section class="section apply" id="apply">
+      <div class="section-head reveal">
+        <p class="overline" data-i18n="apply.overline">Application</p>
+        <h2 data-i18n="apply.title">Start as a partner</h2>
       </div>
-    </section>
 
-    <section class="section section-center content-section" id="steps">
-      <div class="container">
-        <span class="eyebrow" data-i18n="steps.eyebrow">Как работает</span>
-        <h2 class="section-title-global" data-i18n="steps.title">Три шага до выплат</h2>
-        <p class="section-lead section-subtitle-global" data-i18n="steps.subtitle">Простой процесс без лишней бюрократии.</p>
-        <div class="steps-list">
-          <div class="steps-item reveal">
-            <div class="steps-number">01</div>
-            <div class="steps-content">
-              <h3 data-i18n="steps.item1Title">Оставляешь заявку</h3>
-              <p data-i18n="steps.item1Text">Заполняешь короткую форму и получаешь доступ к материалам.</p>
-            </div>
-          </div>
-          <div class="steps-item reveal">
-            <div class="steps-number">02</div>
-            <div class="steps-content">
-              <h3 data-i18n="steps.item2Title">Запускаешь трафик</h3>
-              <p data-i18n="steps.item2Text">Таргет, рассылки, джоб-борды, холодный аутрич - любой источник.</p>
-            </div>
-          </div>
-          <div class="steps-item reveal">
-            <div class="steps-number">03</div>
-            <div class="steps-content">
-              <h3 data-i18n="steps.item3Title">Получаешь CPA</h3>
-              <p data-i18n="steps.item3Text">Кандидаты проходят собеседования - ты получаешь выплаты в USDT.</p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
+      <form id="apply-form" class="apply-form reveal" novalidate>
+        <input type="hidden" name="project" value="starflow_corp">
+        <input type="hidden" name="site_lang" value="en">
 
-    <section class="section content-section" id="faq">
-      <div class="container">
-        <div class="section-head">
-          <span class="eyebrow" data-i18n="faq.eyebrow">FAQ</span>
-          <h2 class="section-title-global" data-i18n="faq.title">Частые вопросы партнёров</h2>
-          <p class="section-lead section-subtitle-global" data-i18n="faq.subtitle">Коротко о частых возражениях и как мы их закрываем.</p>
-        </div>
-        <div class="faq-grid">
-          <article class="faq-item reveal card-spotlight">
-            <h3 data-i18n="faq.item1Question">«У меня нет опыта»</h3>
-            <p data-i18n="faq.item1AnswerRu">Мы даём CRM и скрипты. Если умеешь находить людей - разберёшься. Способ не важен, важен результат.</p>
-            <ul class="faq-list">
-              <li data-i18n="faq.item1Point1">Какой опыт есть? (соцсети, рассылки, реклама)</li>
-              <li data-i18n="faq.item1Point2">Готов учиться по нашим материалам?</li>
-              <li data-i18n="faq.item1Point3">Сколько времени готов уделять?</li>
-            </ul>
-          </article>
-          <article class="faq-item reveal card-spotlight">
-            <h3 data-i18n="faq.item2Question">«Это MLM / пирамида?»</h3>
-            <p data-i18n="faq.item2AnswerRu">Нет. Ты ничего не платишь за вход. Нет многоуровневой структуры. Приводишь кандидатов - они проходят собеседования - получаешь деньги.</p>
-            <ul class="faq-list">
-              <li data-i18n="faq.item2Point1">MLM: платишь за вход, строишь пирамиду уровней</li>
-              <li data-i18n="faq.item2Point2">Мы: ноль вложений, один уровень, оплата за результат</li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
+        <label>
+          <span data-i18n="form.name">Full name</span>
+          <input type="text" name="name" autocomplete="name" required>
+        </label>
 
-    <section class="section content-section" id="apply">
-      <div class="container form-section">
-        <div class="form-intro reveal">
-          <span class="eyebrow" data-i18n="form.eyebrow">Заявка</span>
-          <h2 class="section-title-global" data-i18n="form.title">Анкета партнёра Starflow</h2>
-          <p data-i18n="form.subtitle">Оставь короткую заявку. После отправки продолжишь в Telegram или WhatsApp.</p>
-          <div class="mini-steps">
-            <div class="mini-step">
-              <span>1</span>
-              <p data-i18n="form.mini1">Заполняешь 5 полей.</p>
-            </div>
-            <div class="mini-step">
-              <span>2</span>
-              <p data-i18n="form.mini2">Выбираешь удобный мессенджер.</p>
-            </div>
-            <div class="mini-step">
-              <span>3</span>
-              <p data-i18n="form.mini3">Получаешь материалы и стартуешь.</p>
-            </div>
+        <label>
+          <span data-i18n="form.contact">Contact details</span>
+          <div class="inline-controls">
+            <select name="preferred_contact" id="preferred-contact">
+              <option value="telegram">Telegram</option>
+              <option value="whatsapp">WhatsApp</option>
+            </select>
+            <input type="text" name="contact_value" id="contact-value" required data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
+          </div>
+        </label>
+
+        <label>
+          <span data-i18n="form.email">Email for registration</span>
+          <input type="email" name="email" autocomplete="email" required>
+        </label>
+
+        <label>
+          <span data-i18n="form.birth">Date of birth</span>
+          <input type="text" name="age" id="birthdate" inputmode="numeric" maxlength="10" placeholder="DD.MM.YYYY" required>
+        </label>
+
+        <label>
+          <span data-i18n="form.phone">Phone number</span>
+          <input type="tel" name="phone" id="phone" autocomplete="tel" placeholder="+34 600 000 000" required>
+        </label>
+
+        <button type="submit" class="btn solid" id="submit-btn" data-i18n="form.submit">Send application</button>
+
+        <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
+
+        <div class="next-actions" id="next-actions" hidden>
+          <p data-i18n="form.next">Continue in messenger</p>
+          <div class="next-links">
+            <a id="next-telegram" class="btn ghost" target="_blank" rel="noopener" data-i18n="form.telegram">Open Telegram</a>
+            <a id="next-whatsapp" class="btn ghost" target="_blank" rel="noopener" data-i18n="form.whatsapp">Open WhatsApp</a>
           </div>
         </div>
-
-        <form class="form-card" data-application-form enctype="multipart/form-data">
-          <div class="form-card-layout">
-            <aside class="form-side-progress" data-form-side-progress>
-              <div class="form-side-header">
-                <h3 data-i18n="form.progressTitle">Короткая заявка</h3>
-                <span><span data-step-current-side>1</span> / <span data-step-total-side>5</span></span>
-              </div>
-              <div class="form-side-bar">
-                <span data-step-bar-side></span>
-              </div>
-              <ol class="form-side-list">
-                <li data-step-point="1" data-i18n="form.side1">ФИО</li>
-                <li data-step-point="2" data-i18n="form.side2">Контактные данные</li>
-                <li data-step-point="3" data-i18n="form.side3">Email</li>
-                <li data-step-point="4" data-i18n="form.side4">Дата рождения</li>
-                <li data-step-point="5" data-i18n="form.side5">Номер телефона</li>
-              </ol>
-            </aside>
-
-            <div class="form-main">
-              <div class="form-progress">
-                <div class="form-progress-count"><span data-step-current>1</span> / <span data-step-total>5</span></div>
-                <div class="form-progress-bar"><span data-step-bar></span></div>
-              </div>
-
-              <div class="form-steps">
-                <input id="site-lang-field" name="site_lang" type="hidden" value="en">
-                <input name="project" type="hidden" value="starflow_corp">
-                <div class="form-step is-active" data-step="1">
-                  <div class="field">
-                    <label for="name" data-i18n="form.q1">1️⃣ ФИО:</label>
-                    <input id="name" name="name" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="2">
-                  <div class="field">
-                    <label for="contact_value" data-i18n="form.q2">2️⃣ Контактные данные (Telegram или WhatsApp):</label>
-                    <div class="contact-choice">
-                      <label class="contact-option">
-                        <input type="radio" name="preferred_contact" value="telegram" checked>
-                        <span data-i18n="form.contactTelegram">Telegram</span>
-                      </label>
-                      <label class="contact-option">
-                        <input type="radio" name="preferred_contact" value="whatsapp">
-                        <span data-i18n="form.contactWhatsapp">WhatsApp</span>
-                      </label>
-                    </div>
-                    <input id="contact_value" name="contact_value" type="text" required data-contact-value data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
-                    <input name="telegram" type="hidden" value="">
-                    <input name="whatsapp" type="hidden" value="">
-                  </div>
-                </div>
-                <div class="form-step" data-step="3">
-                  <div class="field">
-                    <label for="email" data-i18n="form.q3">3️⃣ Email для регистрации:</label>
-                    <input id="email" name="email" type="email" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="4">
-                  <div class="field">
-                    <label for="age" data-i18n="form.q4">4️⃣ Дата рождения (пример: 01.01.2000):</label>
-                    <input id="age" name="age" type="text" required>
-                  </div>
-                </div>
-                <div class="form-step" data-step="5">
-                  <div class="field">
-                    <label for="phone" data-i18n="form.q5">5️⃣ Номер телефона:</label>
-                    <input id="phone" name="phone" type="tel" required>
-                  </div>
-                </div>
-              </div>
-
-              <div class="form-nav">
-                <button class="btn btn-ghost" type="button" data-step-prev data-i18n="form.prev">Назад</button>
-                <button class="btn btn-primary" type="button" data-step-next data-i18n="form.next">Далее</button>
-                <button class="btn btn-primary hidden" type="submit" data-step-submit data-i18n="form.submit">Отправить заявку</button>
-              </div>
-            </div>
-          </div>
-
-          <div class="form-status" data-form-status role="status" aria-live="polite"></div>
-          <div class="form-next hidden" data-form-next>
-            <p class="form-next-title" data-i18n="form.nextChoiceTitle">Продолжить в выбранном мессенджере:</p>
-            <div class="form-next-actions">
-              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="telegram" data-i18n="form.openTelegram">Продолжить в Telegram</a>
-              <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="whatsapp" data-i18n="form.openWhatsapp">Продолжить в WhatsApp</a>
-            </div>
-          </div>
-        </form>
-      </div>
+      </form>
     </section>
   </main>
 
-  <footer class="site-footer">
-    <div class="container footer-grid">
-      <div class="footer-brand">
-        <img src="assets/favicon.png" alt="Starflow Inc.">
-        <div class="footer-brand-text">
-          <strong data-i18n="brand.name">Starflow</strong>
-          <span data-i18n="brand.subtitle">Partner Network</span>
-        </div>
-      </div>
-      <div class="footer-links">
-        <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="footer.channel">Канал Starflow</a>
-        <a href="#apply" data-i18n="cta.apply">Оставить заявку</a>
-      </div>
-      <div class="footer-note" data-i18n="footer.rights">© Starflow Inc. Все права защищены.</div>
-    </div>
+  <footer class="footer">
+    <p>© <span id="year"></span> Starflow Inc.</p>
+    <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram</a>
   </footer>
 
-  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
-    <img class="floating-menu-logo" src="assets/favicon.png" alt="Starflow Inc.">
-    <span data-menu-text data-i18n="mobile.menu">Меню</span>
-  </button>
-
-  <div id="video-modal" class="modal" aria-hidden="true">
-    <div class="modal-backdrop" data-close></div>
-    <div class="modal-content" role="dialog" aria-modal="true">
-      <button class="modal-close" type="button" data-close>×</button>
-      <video controls playsinline></video>
-    </div>
-  </div>
-
-  <script src="starflow.js?v=20260226-01"></script>
+  <script src="starflow.js?v=20260226-02" defer></script>
 </body>
 </html>
