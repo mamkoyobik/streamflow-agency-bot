@@ -352,37 +352,53 @@ body[data-page='starflow'] .signal-topline i {
   box-shadow: 0 0 0 6px rgba(31, 79, 115, 0.14);
 }
 
-body[data-page='starflow'] .signal-summary {
-  margin: 0.36rem 0 0;
-  color: #3b536a;
-}
-
-body[data-page='starflow'] .signal-snapshot .snapshot-grid {
-  margin-top: 0.72rem;
+body[data-page='starflow'] .offer-grid {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.48rem;
+  grid-template-columns: 1.08fr 0.92fr;
+  gap: 0.56rem;
 }
 
-body[data-page='starflow'] .signal-snapshot .snapshot-grid article {
-  border: 1px solid #d4e0eb;
-  border-radius: 12px;
-  background: #f7fbff;
-  padding: 0.52rem;
-  display: grid;
-  gap: 0.25rem;
+body[data-page='starflow'] .offer-card {
+  border: 1px solid #d5e1ec;
+  border-radius: 14px;
+  background: #f8fbff;
+  padding: 0.72rem;
 }
 
-body[data-page='starflow'] .signal-snapshot .snapshot-grid strong {
+body[data-page='starflow'] .offer-card-main {
+  grid-row: span 2;
+}
+
+body[data-page='starflow'] .offer-card-label {
+  margin: 0;
+  font-size: 0.68rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #517092;
+  font-weight: 700;
+}
+
+body[data-page='starflow'] .offer-card h3 {
+  margin: 0.42rem 0 0.36rem;
   font-family: 'Syne', sans-serif;
-  font-size: 0.95rem;
-  color: #183a59;
+  font-size: 1.12rem;
+  color: #173652;
 }
 
-body[data-page='starflow'] .signal-snapshot .snapshot-grid span {
-  color: #476079;
-  font-size: 0.74rem;
-  line-height: 1.35;
+body[data-page='starflow'] .offer-card p,
+body[data-page='starflow'] .offer-card span {
+  color: #324f69;
+}
+
+body[data-page='starflow'] .offer-list-points {
+  margin: 0.5rem 0 0;
+  padding: 0 0 0 1rem;
+  display: grid;
+  gap: 0.32rem;
+}
+
+body[data-page='starflow'] .offer-list-points li {
+  color: #2f4d68;
 }
 
 body[data-page='starflow'] .hero-roadmap {
@@ -426,6 +442,14 @@ body[data-page='starflow'] .hero-roadmap li p {
 
 body[data-page='starflow'] .stage-grid-cards {
   gap: 0.58rem;
+}
+
+body[data-page='starflow'] .mini-stat.offer-card strong {
+  color: #1a3e61;
+}
+
+body[data-page='starflow'] .mini-stat.offer-card span {
+  color: #3c5872;
 }
 
 body[data-page='starflow'] .lab-bar-track {
@@ -633,12 +657,16 @@ body[data-page='starflow'] .reveal {
     font-size: clamp(1.82rem, 9.6vw, 2.9rem);
   }
 
-  body[data-page='starflow'] .signal-snapshot .snapshot-grid {
+  body[data-page='starflow'] .hero-roadmap li {
+    grid-template-columns: 30px 1fr;
+  }
+
+  body[data-page='starflow'] .offer-grid {
     grid-template-columns: 1fr;
   }
 
-  body[data-page='starflow'] .hero-roadmap li {
-    grid-template-columns: 30px 1fr;
+  body[data-page='starflow'] .offer-card-main {
+    grid-row: auto;
   }
 
   body[data-page='starflow'] .source-ribbon {
