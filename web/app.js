@@ -141,6 +141,7 @@ const I18N = {
     'cta.apply': 'Оставить заявку',
     'cta.telegram': 'Telegram канал',
     'cta.watchExamples': 'Смотреть примеры',
+    'a11y.skip': 'Перейти к основному контенту',
     'mobile.menu': 'Меню',
     'mobile.close': 'Закрыть',
     'hero.eyebrow': 'Model Agency',
@@ -185,10 +186,36 @@ const I18N = {
     'offer.item3Title': 'Стабильный рост',
     'offer.item3Text': 'Поддержка и рекомендации, чтобы результат рос плавно.',
     'offer.ctaSecondary': 'Смотреть этапы',
+    'readiness.eyebrow': 'Готовность к старту',
+    'readiness.title': 'Проверка за 20 секунд',
+    'readiness.subtitle': 'Отметь, что уже есть — и получи оценку готовности к запуску.',
+    'readiness.check1': 'Есть стабильный интернет и личное пространство для эфиров.',
+    'readiness.check2': 'Готова уделять работе минимум 3-4 часа в день.',
+    'readiness.check3': 'Готова работать по плану менеджера и обратной связи.',
+    'readiness.check4': 'Есть устройство с камерой и микрофоном.',
+    'readiness.check5': 'Готова пройти анкету и выйти на связь в мессенджере.',
+    'readiness.scoreLabel': 'Индекс готовности',
+    'readiness.status.high': 'Высокая готовность: можно запускаться сразу.',
+    'readiness.status.mid': 'Средняя готовность: запуск возможен после небольшой подготовки.',
+    'readiness.status.low': 'Низкая готовность: сначала собери базовые условия.',
+    'readiness.cta': 'Перейти к анкете',
     'income.eyebrow': 'Примеры дохода',
     'income.title': 'Примеры дохода',
     'income.subtitle': 'Это реальные цифры моделей, которые работают с нами несколько месяцев.',
     'income.note': 'Рост дохода',
+    'planner.eyebrow': 'Планировщик',
+    'planner.title': 'Оцени потенциальный доход',
+    'planner.subtitle': 'Ориентировочный расчёт по твоему графику и этапу адаптации.',
+    'planner.hours': 'Часов в день',
+    'planner.hoursUnit': 'часа / день',
+    'planner.days': 'Дней в неделю',
+    'planner.daysUnit': 'дней / неделя',
+    'planner.level': 'Этап адаптации',
+    'planner.level.start': 'Старт',
+    'planner.level.steady': 'Стабильный ритм',
+    'planner.level.pro': 'Продвинутый',
+    'planner.monthly': 'Оценка в месяц',
+    'planner.note': 'Это ориентировочная оценка для планирования.',
     'streams.eyebrow': 'Видеопримеры',
     'streams.title': 'Смотри атмосферу и ритм стримов.',
     'streams.subtitle': 'Фрагменты реальных стримов, снятых моделями дома.',
@@ -292,6 +319,7 @@ const I18N = {
     'cta.apply': 'Apply now',
     'cta.telegram': 'Telegram channel',
     'cta.watchExamples': 'View samples',
+    'a11y.skip': 'Skip to main content',
     'mobile.menu': 'Menu',
     'mobile.close': 'Close',
     'hero.eyebrow': 'Model Agency',
@@ -336,10 +364,36 @@ const I18N = {
     'offer.item3Title': 'Stable growth',
     'offer.item3Text': 'Support and recommendations for steady results.',
     'offer.ctaSecondary': 'View steps',
+    'readiness.eyebrow': 'Readiness check',
+    'readiness.title': '20-second launch check',
+    'readiness.subtitle': 'Mark what you already have and get a quick launch-readiness score.',
+    'readiness.check1': 'Stable internet and private space for streaming.',
+    'readiness.check2': 'Ready to allocate at least 3-4 hours per day.',
+    'readiness.check3': 'Ready to follow manager workflow and feedback.',
+    'readiness.check4': 'Device with camera and microphone is available.',
+    'readiness.check5': 'Ready to complete form and continue in messenger.',
+    'readiness.scoreLabel': 'Readiness score',
+    'readiness.status.high': 'High readiness: you can launch now.',
+    'readiness.status.mid': 'Medium readiness: launch is possible after light preparation.',
+    'readiness.status.low': 'Low readiness: build basic setup first.',
+    'readiness.cta': 'Go to application',
     'income.eyebrow': 'Income examples',
     'income.title': 'Income examples',
     'income.subtitle': 'Real numbers from models working with us for several months.',
     'income.note': 'Income growth',
+    'planner.eyebrow': 'Planner',
+    'planner.title': 'Estimate potential income',
+    'planner.subtitle': 'Planning estimate based on your schedule and adaptation stage.',
+    'planner.hours': 'Hours per day',
+    'planner.hoursUnit': 'hours / day',
+    'planner.days': 'Days per week',
+    'planner.daysUnit': 'days / week',
+    'planner.level': 'Adaptation stage',
+    'planner.level.start': 'Start',
+    'planner.level.steady': 'Steady rhythm',
+    'planner.level.pro': 'Advanced',
+    'planner.monthly': 'Estimated monthly',
+    'planner.note': 'This is an approximate planning estimate.',
     'streams.eyebrow': 'Stream examples',
     'streams.title': 'See the atmosphere and stream rhythm.',
     'streams.subtitle': 'Real stream fragments recorded by models at home.',
@@ -443,6 +497,7 @@ const I18N = {
     'cta.apply': 'Enviar candidatura',
     'cta.telegram': 'Canal Telegram',
     'cta.watchExamples': 'Ver exemplos',
+    'a11y.skip': 'Ir para o conteúdo principal',
     'mobile.menu': 'Menu',
     'mobile.close': 'Fechar',
     'hero.eyebrow': 'Model Agency',
@@ -487,10 +542,36 @@ const I18N = {
     'offer.item3Title': 'Crescimento estável',
     'offer.item3Text': 'Suporte e recomendações para resultados consistentes.',
     'offer.ctaSecondary': 'Ver etapas',
+    'readiness.eyebrow': 'Prontidão para iniciar',
+    'readiness.title': 'Check de 20 segundos',
+    'readiness.subtitle': 'Marque o que você já tem e veja sua prontidão para começar.',
+    'readiness.check1': 'Internet estável e espaço privado para lives.',
+    'readiness.check2': 'Pronta para dedicar pelo menos 3-4 horas por dia.',
+    'readiness.check3': 'Pronta para seguir o plano do manager e feedback.',
+    'readiness.check4': 'Dispositivo com câmera e microfone disponível.',
+    'readiness.check5': 'Pronta para preencher o formulário e continuar no mensageiro.',
+    'readiness.scoreLabel': 'Índice de prontidão',
+    'readiness.status.high': 'Alta prontidão: você pode iniciar agora.',
+    'readiness.status.mid': 'Prontidão média: início possível após leve preparação.',
+    'readiness.status.low': 'Baixa prontidão: monte a base primeiro.',
+    'readiness.cta': 'Ir para candidatura',
     'income.eyebrow': 'Exemplos de renda',
     'income.title': 'Exemplos de renda',
     'income.subtitle': 'Números reais de modelos que trabalham conosco há alguns meses.',
     'income.note': 'Crescimento da renda',
+    'planner.eyebrow': 'Planejador',
+    'planner.title': 'Estime sua renda potencial',
+    'planner.subtitle': 'Estimativa com base na sua rotina e estágio de adaptação.',
+    'planner.hours': 'Horas por dia',
+    'planner.hoursUnit': 'horas / dia',
+    'planner.days': 'Dias por semana',
+    'planner.daysUnit': 'dias / semana',
+    'planner.level': 'Estágio de adaptação',
+    'planner.level.start': 'Início',
+    'planner.level.steady': 'Ritmo estável',
+    'planner.level.pro': 'Avançado',
+    'planner.monthly': 'Estimativa mensal',
+    'planner.note': 'Estimativa aproximada para planejamento.',
     'streams.eyebrow': 'Exemplos de stream',
     'streams.title': 'Veja o ritmo e a atmosfera das lives.',
     'streams.subtitle': 'Trechos reais de streams gravados pelas modelos em casa.',
@@ -594,6 +675,7 @@ const I18N = {
     'cta.apply': 'Enviar solicitud',
     'cta.telegram': 'Canal Telegram',
     'cta.watchExamples': 'Ver ejemplos',
+    'a11y.skip': 'Saltar al contenido principal',
     'mobile.menu': 'Menú',
     'mobile.close': 'Cerrar',
     'hero.eyebrow': 'Model Agency',
@@ -638,10 +720,36 @@ const I18N = {
     'offer.item3Title': 'Crecimiento estable',
     'offer.item3Text': 'Soporte y recomendaciones para resultados constantes.',
     'offer.ctaSecondary': 'Ver etapas',
+    'readiness.eyebrow': 'Preparación para empezar',
+    'readiness.title': 'Chequeo en 20 segundos',
+    'readiness.subtitle': 'Marca lo que ya tienes y obtén tu nivel de preparación.',
+    'readiness.check1': 'Internet estable y espacio privado para streams.',
+    'readiness.check2': 'Lista para dedicar al menos 3-4 horas por día.',
+    'readiness.check3': 'Lista para seguir el plan del manager y feedback.',
+    'readiness.check4': 'Dispositivo con cámara y micrófono disponible.',
+    'readiness.check5': 'Lista para completar el formulario y seguir por mensajería.',
+    'readiness.scoreLabel': 'Índice de preparación',
+    'readiness.status.high': 'Alta preparación: puedes iniciar ahora.',
+    'readiness.status.mid': 'Preparación media: inicio posible con ajuste ligero.',
+    'readiness.status.low': 'Preparación baja: primero arma la base.',
+    'readiness.cta': 'Ir a la solicitud',
     'income.eyebrow': 'Ejemplos de ingresos',
     'income.title': 'Ejemplos de ingresos',
     'income.subtitle': 'Cifras reales de modelos que trabajan con nosotros hace meses.',
     'income.note': 'Crecimiento de ingresos',
+    'planner.eyebrow': 'Planificador',
+    'planner.title': 'Calcula ingresos potenciales',
+    'planner.subtitle': 'Estimación según tu horario y etapa de adaptación.',
+    'planner.hours': 'Horas por día',
+    'planner.hoursUnit': 'horas / día',
+    'planner.days': 'Días por semana',
+    'planner.daysUnit': 'días / semana',
+    'planner.level': 'Etapa de adaptación',
+    'planner.level.start': 'Inicio',
+    'planner.level.steady': 'Ritmo estable',
+    'planner.level.pro': 'Avanzado',
+    'planner.monthly': 'Estimación mensual',
+    'planner.note': 'Estimación aproximada para planificación.',
     'streams.eyebrow': 'Ejemplos de stream',
     'streams.title': 'Mira el ritmo y la atmósfera de los streams.',
     'streams.subtitle': 'Fragmentos reales grabados por modelos desde casa.',
@@ -851,6 +959,83 @@ function initSiteLanguage() {
 }
 
 initSiteLanguage();
+
+function initReadinessScanner() {
+  const checks = Array.from(document.querySelectorAll('[data-ready-check]'));
+  const scoreNode = document.querySelector('[data-ready-score]');
+  const statusNode = document.querySelector('[data-ready-status]');
+  if (!checks.length || !scoreNode || !statusNode) return;
+
+  const total = checks.reduce((sum, node) => {
+    const value = Number(node.value || 0);
+    return sum + (Number.isFinite(value) ? value : 0);
+  }, 0);
+
+  function resolveStatus(percent) {
+    if (percent >= 75) return { key: 'readiness.status.high', level: 'high' };
+    if (percent >= 45) return { key: 'readiness.status.mid', level: 'mid' };
+    return { key: 'readiness.status.low', level: 'low' };
+  }
+
+  function update() {
+    const active = checks.reduce((sum, node) => {
+      if (!node.checked) return sum;
+      const value = Number(node.value || 0);
+      return sum + (Number.isFinite(value) ? value : 0);
+    }, 0);
+    const percent = total > 0 ? Math.round((active / total) * 100) : 0;
+    const status = resolveStatus(percent);
+    scoreNode.textContent = `${percent}%`;
+    statusNode.textContent = siteText(status.key);
+    statusNode.setAttribute('data-level', status.level);
+  }
+
+  checks.forEach((node) => node.addEventListener('change', update));
+  document.addEventListener('site-language-changed', update);
+  update();
+}
+
+function initIncomePlanner() {
+  const hoursInput = document.getElementById('planner-hours');
+  const daysInput = document.getElementById('planner-days');
+  const levelInput = document.getElementById('planner-level');
+  const hoursOut = document.querySelector('[data-planner-hours]');
+  const daysOut = document.querySelector('[data-planner-days]');
+  const incomeOut = document.querySelector('[data-planner-income]');
+  if (!hoursInput || !daysInput || !levelInput || !incomeOut) return;
+
+  const levelMultiplier = {
+    start: 0.85,
+    steady: 1.1,
+    pro: 1.4,
+  };
+
+  function estimateRubIncome() {
+    const hours = Math.max(1, Math.min(10, Number(hoursInput.value || 0)));
+    const days = Math.max(2, Math.min(7, Number(daysInput.value || 0)));
+    const level = String(levelInput.value || 'steady');
+    const multiplier = levelMultiplier[level] || levelMultiplier.steady;
+    const monthlyHours = hours * days * 4.2;
+    const monthlyRub = Math.round(monthlyHours * 1400 * multiplier);
+    return { hours, days, monthlyRub };
+  }
+
+  function update() {
+    const { hours, days, monthlyRub } = estimateRubIncome();
+    if (hoursOut) hoursOut.textContent = String(hours);
+    if (daysOut) daysOut.textContent = String(days);
+    incomeOut.textContent = formatIncomeAmount(monthlyRub, CURRENT_SITE_LANG);
+  }
+
+  hoursInput.addEventListener('input', update);
+  daysInput.addEventListener('input', update);
+  levelInput.addEventListener('change', update);
+  document.addEventListener('site-language-changed', update);
+  update();
+}
+
+initReadinessScanner();
+initIncomePlanner();
 
 function initHeroParallax() {
   if (prefersReduced) return;

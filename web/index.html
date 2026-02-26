@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260226-02">
+  <link rel="stylesheet" href="styles.css?v=20260226-03">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -76,6 +76,7 @@
 </head>
 <body class="preload lang-locked" data-page="home">
   <noscript><div><img src="https://mc.yandex.ru/watch/106823371" style="position:absolute; left:-9999px;" alt=""></div></noscript>
+  <a class="skip-link" href="#main-content" data-i18n="a11y.skip">Перейти к основному контенту</a>
   <div class="grain"></div>
   <div class="language-gate is-visible" id="language-gate" aria-hidden="false">
     <div class="language-gate-card">
@@ -148,7 +149,7 @@
     </div>
   </div>
 
-  <main class="page">
+  <main class="page" id="main-content">
     <section class="hero">
       <div class="liquid-ether-bg" aria-hidden="true"></div>
       <div class="hero-ambient" aria-hidden="true"></div>
@@ -293,6 +294,44 @@
       </div>
     </section>
 
+    <section class="section section-center content-section" id="readiness">
+      <div class="container">
+        <span class="eyebrow" data-i18n="readiness.eyebrow">Готовность к старту</span>
+        <h2 class="section-title-global" data-i18n="readiness.title">Проверка за 20 секунд</h2>
+        <p class="section-lead section-subtitle-global" data-i18n="readiness.subtitle">Отметь, что у тебя уже есть — и получи объективную оценку готовности к запуску.</p>
+        <div class="readiness-grid reveal card-spotlight">
+          <div class="readiness-list">
+            <label class="readiness-item">
+              <input type="checkbox" data-ready-check value="24" checked>
+              <span data-i18n="readiness.check1">Есть стабильный интернет и личное пространство для эфиров.</span>
+            </label>
+            <label class="readiness-item">
+              <input type="checkbox" data-ready-check value="20" checked>
+              <span data-i18n="readiness.check2">Готова уделять работе минимум 3-4 часа в день.</span>
+            </label>
+            <label class="readiness-item">
+              <input type="checkbox" data-ready-check value="18" checked>
+              <span data-i18n="readiness.check3">Готова работать по плану менеджера и обратной связи.</span>
+            </label>
+            <label class="readiness-item">
+              <input type="checkbox" data-ready-check value="18" checked>
+              <span data-i18n="readiness.check4">Есть устройство с камерой и микрофоном.</span>
+            </label>
+            <label class="readiness-item">
+              <input type="checkbox" data-ready-check value="20" checked>
+              <span data-i18n="readiness.check5">Готова пройти короткую анкету и выйти на связь в мессенджере.</span>
+            </label>
+          </div>
+          <aside class="readiness-score" aria-live="polite">
+            <p data-i18n="readiness.scoreLabel">Индекс готовности</p>
+            <strong data-ready-score>100%</strong>
+            <p data-ready-status data-i18n="readiness.status.high">Высокая готовность: можно запускаться сразу.</p>
+            <a class="btn btn-primary" href="#apply" data-i18n="readiness.cta">Перейти к анкете</a>
+          </aside>
+        </div>
+      </div>
+    </section>
+
     <section class="section section-center content-section" id="income">
       <div class="container">
         <span class="eyebrow" data-i18n="income.eyebrow">Примеры дохода</span>
@@ -347,6 +386,43 @@
               <div class="income-note" data-i18n="income.note">Рост дохода</div>
             </div>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="section section-center content-section" id="planner">
+      <div class="container">
+        <span class="eyebrow" data-i18n="planner.eyebrow">Планировщик</span>
+        <h2 class="section-title-global" data-i18n="planner.title">Оцени потенциальный доход</h2>
+        <p class="section-lead section-subtitle-global" data-i18n="planner.subtitle">Простой ориентир по твоему графику. Точная сумма зависит от активности, качества эфиров и этапа адаптации.</p>
+        <div class="planner-grid reveal card-spotlight">
+          <div class="planner-controls">
+            <label>
+              <span data-i18n="planner.hours">Часов в день</span>
+              <input id="planner-hours" type="range" min="1" max="10" step="1" value="4">
+            </label>
+            <p class="planner-read"><strong data-planner-hours>4</strong><span data-i18n="planner.hoursUnit">часа / день</span></p>
+
+            <label>
+              <span data-i18n="planner.days">Дней в неделю</span>
+              <input id="planner-days" type="range" min="2" max="7" step="1" value="5">
+            </label>
+            <p class="planner-read"><strong data-planner-days>5</strong><span data-i18n="planner.daysUnit">дней / неделя</span></p>
+
+            <label>
+              <span data-i18n="planner.level">Этап адаптации</span>
+              <select id="planner-level">
+                <option value="start" data-i18n="planner.level.start">Старт</option>
+                <option value="steady" data-i18n="planner.level.steady">Стабильный ритм</option>
+                <option value="pro" data-i18n="planner.level.pro">Продвинутый</option>
+              </select>
+            </label>
+          </div>
+          <aside class="planner-result" aria-live="polite">
+            <p data-i18n="planner.monthly">Оценка в месяц</p>
+            <strong data-planner-income>0 ₽</strong>
+            <p data-i18n="planner.note">Это ориентировочная оценка для планирования.</p>
+          </aside>
         </div>
       </div>
     </section>
@@ -515,25 +591,25 @@
                 <div class="form-step is-active" data-step="1">
                   <div class="field">
                     <label for="name" data-i18n="form.q1">1️⃣ Как тебя зовут?<br><br>Напиши имя полностью:</label>
-                    <input id="name" name="name" type="text" required>
+                    <input id="name" name="name" type="text" maxlength="64" autocomplete="name" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="2">
                   <div class="field">
                     <label for="phone" data-i18n="form.q2">2️⃣ Контактный телефон (+код):</label>
-                    <input id="phone" name="phone" type="tel" required>
+                    <input id="phone" name="phone" type="tel" maxlength="32" inputmode="tel" autocomplete="tel" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="3">
                   <div class="field">
                     <label for="age" data-i18n="form.q3">3️⃣ Дата рождения<br><br>Пример: 01.01.2000</label>
-                    <input id="age" name="age" type="text" required>
+                    <input id="age" name="age" type="text" maxlength="10" inputmode="numeric" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="4">
                   <div class="field">
                     <label for="device_model" data-i18n="form.q4">4️⃣ Модель устройства:</label>
-                    <input id="device_model" name="device_model" type="text" required>
+                    <input id="device_model" name="device_model" type="text" maxlength="80" required>
                   </div>
                 </div>
                 <div class="form-step" data-step="5">
@@ -549,7 +625,7 @@
                         <span data-i18n="form.contactWhatsapp">WhatsApp</span>
                       </label>
                     </div>
-                    <input id="contact_value" name="contact_value" type="text" required data-contact-value data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
+                    <input id="contact_value" name="contact_value" type="text" maxlength="64" inputmode="text" required data-contact-value data-i18n-placeholder="form.contactPlaceholderTelegram" placeholder="@username">
                     <input name="telegram" type="hidden" value="">
                     <input name="whatsapp" type="hidden" value="">
                   </div>
@@ -609,6 +685,6 @@
 
   
 
-  <script src="app.js?v=20260226-02"></script>
+  <script src="app.js?v=20260226-03"></script>
 </body>
 </html>

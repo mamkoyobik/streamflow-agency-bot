@@ -10,7 +10,9 @@
     ru: {
       'langGate.title': 'Выберите язык',
       'langGate.subtitle': 'Выберите язык, чтобы продолжить',
+      'nav.proof': 'Преимущества',
       'nav.partners': 'Кого ищем',
+      'nav.playbooks': 'Источники',
       'nav.terms': 'Оффер',
       'nav.flow': 'Как это работает',
       'nav.faq': 'FAQ',
@@ -18,27 +20,70 @@
       'cta.telegram': 'Telegram',
       'cta.apply': 'Стать партнёром',
       'a11y.skip': 'Перейти к основному содержанию',
-      'hero.overline': 'Партнёрская сеть по найму для стриминговых компаний',
-      'hero.title': 'Приводите кандидатов.<br>Получайте оплату за интервью.',
-      'hero.lead': 'Вы привлекаете людей на собеседования любым способом. Мы даём оффер, CRM, скрипты, валидацию и еженедельные выплаты в USDT.',
-      'hero.signal': 'Оффер активен',
-      'hero.signalMeta': 'Оплата за подтверждённые интервью каждое воскресенье',
+      'hero.overline': 'Performance-партнёрка для найма в стриминговые проекты',
+      'hero.title': 'Масштабируйте интервью по понятной CPA-модели.',
+      'hero.lead': 'Вы отвечаете за привлечение. Мы закрываем обработку, квалификацию и выплаты.',
+      'hero.list1': 'Любой источник: таргет, аутрич, DM, job boards, рассылки.',
+      'hero.list2': 'Еженедельные выплаты в USDT каждое воскресенье.',
+      'hero.list3': 'CRM, скрипты и запуск с менеджером с первого дня.',
+      'hero.signal': 'Панель оффера',
+      'hero.signalMeta': 'Оффер активен сейчас',
       'hero.bar1': 'Доходимость до интервью',
-      'hero.bar2': 'Качество кандидатов',
-      'hero.bar3': 'Стабильность потока',
-      'hero.cardA.title': 'Прозрачная CRM',
-      'hero.cardA.text': 'Статусы лидов и интервью видны в реальном времени.',
-      'hero.cardB.title': 'Быстрый запуск',
-      'hero.cardB.text': 'Выдаём материалы и скрипт сразу после одобрения.',
+      'hero.bar2': 'Качество аппрува',
+      'hero.bar3': 'Надёжность еженедельной выплаты',
+      'hero.cardA.title': 'Быстрый онбординг',
+      'hero.cardA.text': 'Скрипты, CRM и шаблоны сразу после одобрения.',
+      'hero.cardB.title': 'Одна KPI-логика',
+      'hero.cardB.text': 'Вы приводите на интервью. Мы платим за подтверждённый результат.',
       'hero.line1': 'Таргет',
       'hero.line2': 'Job boards',
       'hero.line3': 'Рассылки',
       'hero.line4': 'Холодный аутрич',
       'hero.line5': 'DM / мессенджеры',
       'hero.line6': 'Источник не ограничен',
+      'proof.item1': 'Без вступительных платежей',
+      'proof.item2': 'Еженедельный payout в USDT',
+      'proof.item3': 'Закреплённый менеджер',
+      'proof.item4': 'Любой канал привлечения',
+      'proof.item5': 'Прозрачная CRM-воронка',
+      'proof.item6': 'Масштаб: от соло до команд',
       'kpi.years': 'лет работы с трафиком',
       'kpi.max': 'за подтверждённое интервью',
       'kpi.weekly': 'день еженедельной выплаты',
+      'fit.overline': 'Быстрая квалификация',
+      'fit.title': 'Partner Fit Scanner',
+      'fit.lead': 'Проверьте за 20 секунд, готовы ли вы к запуску.',
+      'fit.check1': 'Я могу стабильно приводить кандидатов каждую неделю.',
+      'fit.check2': 'Я умею запускать хотя бы один канал (ads / DM / outreach / boards).',
+      'fit.check3': 'Я готов работать по скриптам и фиксировать статусы в CRM.',
+      'fit.check4': 'Я готов к недельной payout-модели и KPI-дисциплине.',
+      'fit.scoreLabel': 'Индекс готовности',
+      'fit.status.high': 'Высокий fit: можно запускаться сразу.',
+      'fit.status.mid': 'Средний fit: запуск возможен после выравнивания процессов.',
+      'fit.status.low': 'Низкий fit: сначала соберите базовую систему привлечения.',
+      'fit.cta': 'Перейти к анкете',
+      'play.overline': 'Система запуска',
+      'play.title': 'Playbooks по каналам',
+      'play.tab1': 'Paid Ads',
+      'play.tab2': 'Job Boards',
+      'play.tab3': 'Cold Outreach',
+      'play.tab4': 'Direct DM',
+      'play.p1.title': 'Запуск через paid ads',
+      'play.p1.l1': 'Используйте креативы с чётким intent на интервью.',
+      'play.p1.l2': 'Ведите трафик на квалификацию, затем на собеседование.',
+      'play.p1.l3': 'Оптимизируйте кампании по подтверждённым интервью.',
+      'play.p2.title': 'Запуск через job boards',
+      'play.p2.l1': 'Публикуйте роли с прозрачными GEO и возрастными фильтрами.',
+      'play.p2.l2': 'Используйте быстрый скрипт ответа для снижения отвалов.',
+      'play.p2.l3': 'Сравнивайте board-to-interview ratio каждую неделю.',
+      'play.p3.title': 'Запуск через cold outreach',
+      'play.p3.l1': 'Сегментируйте базу по GEO и intent перед отправкой.',
+      'play.p3.l2': 'В первом сообщении оставляйте один CTA: пройти интервью.',
+      'play.p3.l3': 'Фиксируйте качество ответов в CRM и улучшайте скрипт.',
+      'play.p4.title': 'Запуск через direct DM',
+      'play.p4.l1': 'Начинайте с контекста, потом переходите к офферу.',
+      'play.p4.l2': 'Перед ссылкой используйте короткий qualification-checklist.',
+      'play.p4.l3': 'Тестируйте первые 2 строки DM для роста ответов.',
       'calc.overline': 'Планирование дохода',
       'calc.title': 'Оцените потенциальную выплату',
       'calc.interviews': 'Подтверждённых интервью в неделю',
@@ -141,7 +186,9 @@
     en: {
       'langGate.title': 'Choose language',
       'langGate.subtitle': 'Select language to continue',
+      'nav.proof': 'Why Starflow',
       'nav.partners': 'Who We Need',
+      'nav.playbooks': 'Playbooks',
       'nav.terms': 'Offer',
       'nav.flow': 'How It Works',
       'nav.faq': 'FAQ',
@@ -149,27 +196,70 @@
       'cta.telegram': 'Telegram',
       'cta.apply': 'Become Partner',
       'a11y.skip': 'Skip to main content',
-      'hero.overline': 'Partner network for streaming recruitment',
-      'hero.title': 'Bring candidates.<br>Get paid per interview.',
-      'hero.lead': 'You drive people to interviews using any source. We provide offer, CRM, scripts, validation and weekly USDT payouts.',
-      'hero.signal': 'Offer is live',
-      'hero.signalMeta': 'Paid every Sunday for approved interviews',
+      'hero.overline': 'Performance partner network for streaming recruitment',
+      'hero.title': 'Scale interviews with a clean CPA model.',
+      'hero.lead': 'You focus on acquisition. We handle processing, qualification, and payout infrastructure.',
+      'hero.list1': 'Any source: paid ads, outreach, DM, job boards, mailing.',
+      'hero.list2': 'Weekly payouts in USDT every Sunday.',
+      'hero.list3': 'CRM, scripts, and launch support from day one.',
+      'hero.signal': 'Offer control panel',
+      'hero.signalMeta': 'Offer active now',
       'hero.bar1': 'Interview show-up rate',
-      'hero.bar2': 'Candidate quality',
-      'hero.bar3': 'Flow stability',
-      'hero.cardA.title': 'Transparent CRM',
-      'hero.cardA.text': 'Lead and interview statuses are tracked in real time.',
-      'hero.cardB.title': 'Fast launch',
-      'hero.cardB.text': 'Scripts and materials are provided right after approval.',
+      'hero.bar2': 'Approval quality',
+      'hero.bar3': 'Weekly payout reliability',
+      'hero.cardA.title': 'Fast onboarding',
+      'hero.cardA.text': 'Scripts, CRM and templates right after approval.',
+      'hero.cardB.title': 'Single KPI model',
+      'hero.cardB.text': 'You bring candidates to interviews, we pay for approved results.',
       'hero.line1': 'Target Ads',
       'hero.line2': 'Job Boards',
       'hero.line3': 'Mailing Lists',
       'hero.line4': 'Cold Outreach',
       'hero.line5': 'DM / Messengers',
       'hero.line6': 'No source limits',
+      'proof.item1': 'No setup fee',
+      'proof.item2': 'Weekly USDT payout',
+      'proof.item3': 'Dedicated manager',
+      'proof.item4': 'Any acquisition channel',
+      'proof.item5': 'Transparent CRM pipeline',
+      'proof.item6': 'Scalable from solo to team',
       'kpi.years': 'years in traffic',
       'kpi.max': 'per approved interview',
       'kpi.weekly': 'weekly payout day',
+      'fit.overline': 'Quick qualification',
+      'fit.title': 'Partner Fit Scanner',
+      'fit.lead': 'Check in 20 seconds if your current setup is launch-ready.',
+      'fit.check1': 'I can source candidates consistently every week.',
+      'fit.check2': 'I can run at least one channel (ads / DM / outreach / boards).',
+      'fit.check3': 'I can follow scripts and track statuses in CRM.',
+      'fit.check4': 'I can operate under weekly payout cadence and KPI discipline.',
+      'fit.scoreLabel': 'Readiness score',
+      'fit.status.high': 'High fit: you can launch right now.',
+      'fit.status.mid': 'Medium fit: launch is possible after process alignment.',
+      'fit.status.low': 'Low fit: build a stable acquisition baseline first.',
+      'fit.cta': 'Start application',
+      'play.overline': 'Execution system',
+      'play.title': 'Channel playbooks by source',
+      'play.tab1': 'Paid Ads',
+      'play.tab2': 'Job Boards',
+      'play.tab3': 'Cold Outreach',
+      'play.tab4': 'Direct DM',
+      'play.p1.title': 'Paid ads launch',
+      'play.p1.l1': 'Use clear intent creatives focused on interviews.',
+      'play.p1.l2': 'Route traffic to qualification first, then interview booking.',
+      'play.p1.l3': 'Optimize on approved interview events, not only clicks.',
+      'play.p2.title': 'Job boards launch',
+      'play.p2.l1': 'Publish role-specific listings with clear GEO and age filters.',
+      'play.p2.l2': 'Use fast response scripts to reduce candidate drop-off.',
+      'play.p2.l3': 'Track board-to-interview ratio weekly and scale winners.',
+      'play.p3.title': 'Cold outreach launch',
+      'play.p3.l1': 'Segment audience by geography and role intent before outreach.',
+      'play.p3.l2': 'Use one core CTA in outreach: pass interview screening.',
+      'play.p3.l3': 'Log response quality in CRM and iterate weekly.',
+      'play.p4.title': 'Direct DM launch',
+      'play.p4.l1': 'Lead with contextual relevance before offer details.',
+      'play.p4.l2': 'Run qualification checklist before sending booking link.',
+      'play.p4.l3': 'A/B test the first two DM lines to improve response rate.',
       'calc.overline': 'Income planning',
       'calc.title': 'Estimate your potential payout',
       'calc.interviews': 'Approved interviews per week',
@@ -272,7 +362,9 @@
     pt: {
       'langGate.title': 'Escolha o idioma',
       'langGate.subtitle': 'Escolha o idioma da interface para continuar',
+      'nav.proof': 'Vantagens',
       'nav.partners': 'Tipos de Parceiro',
+      'nav.playbooks': 'Playbooks',
       'nav.terms': 'Condições',
       'nav.flow': 'Fluxo do Parceiro',
       'nav.faq': 'FAQ',
@@ -280,27 +372,70 @@
       'cta.telegram': 'Telegram',
       'cta.apply': 'Aplicar',
       'a11y.skip': 'Ir para o conteúdo principal',
-      'hero.overline': 'Rede de Parceiros para Empresas de Streaming',
-      'hero.title': 'Traga pessoas.<br>Nos cuidamos do resto.',
-      'hero.lead': 'Mídia buyers, call-centers, agências e freelancers solo. Tamanho da equipe não importa. O que importa é sua capacidade de atrair candidatos.',
-      'hero.signal': 'Sinal da Oferta',
-      'hero.signalMeta': 'Pagamentos semanais em USDT',
-      'hero.bar1': 'Qualidade da entrevista',
-      'hero.bar2': 'Fluxo de operadores',
-      'hero.bar3': 'Fluxo de modelos',
-      'hero.cardA.title': 'Execução semanal',
-      'hero.cardA.text': 'Pagamentos todo domingo em USDT.',
-      'hero.cardB.title': 'Qualquer fonte funciona',
-      'hero.cardB.text': 'DM, outreach, boards, ads - KPI é o resultado.',
+      'hero.overline': 'Rede de parceiros de performance para recrutamento em streaming',
+      'hero.title': 'Escalone entrevistas com um modelo CPA claro.',
+      'hero.lead': 'Você foca na aquisição. Nós cuidamos da qualificação, operação e pagamentos.',
+      'hero.list1': 'Qualquer fonte: tráfego pago, outreach, DM, job boards, listas.',
+      'hero.list2': 'Pagamentos semanais em USDT todo domingo.',
+      'hero.list3': 'CRM, scripts e suporte de lançamento desde o início.',
+      'hero.signal': 'Painel da oferta',
+      'hero.signalMeta': 'Oferta ativa agora',
+      'hero.bar1': 'Taxa de comparecimento em entrevistas',
+      'hero.bar2': 'Qualidade de aprovação',
+      'hero.bar3': 'Confiabilidade de pagamento semanal',
+      'hero.cardA.title': 'Onboarding rápido',
+      'hero.cardA.text': 'Scripts, CRM e templates logo após aprovação.',
+      'hero.cardB.title': 'Modelo com KPI único',
+      'hero.cardB.text': 'Você leva candidatos para entrevistas, nós pagamos por aprovados.',
       'hero.line1': 'Tráfego pago',
       'hero.line2': 'Job boards',
       'hero.line3': 'Listas de envio',
       'hero.line4': 'Outreach frio',
       'hero.line5': 'DM direto',
       'hero.line6': 'Sem limite de fontes',
+      'proof.item1': 'Sem taxa de entrada',
+      'proof.item2': 'Pagamento semanal em USDT',
+      'proof.item3': 'Manager dedicado',
+      'proof.item4': 'Qualquer canal de aquisição',
+      'proof.item5': 'Pipeline CRM transparente',
+      'proof.item6': 'Escala: solo ou equipe',
       'kpi.years': 'anos com tráfego',
       'kpi.max': 'CPA máximo por entrevista',
       'kpi.weekly': 'ciclo de pagamento',
+      'fit.overline': 'Qualificação rápida',
+      'fit.title': 'Partner Fit Scanner',
+      'fit.lead': 'Verifique em 20 segundos se sua estrutura já está pronta.',
+      'fit.check1': 'Consigo atrair candidatos de forma consistente toda semana.',
+      'fit.check2': 'Consigo operar ao menos um canal (ads / DM / outreach / boards).',
+      'fit.check3': 'Consigo seguir scripts e controlar status no CRM.',
+      'fit.check4': 'Consigo trabalhar com ritmo semanal e disciplina de KPI.',
+      'fit.scoreLabel': 'Índice de prontidão',
+      'fit.status.high': 'Alta aderência: você pode lançar agora.',
+      'fit.status.mid': 'Aderência média: lançamento possível com ajuste de processo.',
+      'fit.status.low': 'Baixa aderência: monte a base de aquisição primeiro.',
+      'fit.cta': 'Iniciar candidatura',
+      'play.overline': 'Sistema de execução',
+      'play.title': 'Playbooks por canal',
+      'play.tab1': 'Paid Ads',
+      'play.tab2': 'Job Boards',
+      'play.tab3': 'Cold Outreach',
+      'play.tab4': 'Direct DM',
+      'play.p1.title': 'Lançamento com paid ads',
+      'play.p1.l1': 'Use criativos com intenção clara de entrevista.',
+      'play.p1.l2': 'Leve o tráfego para qualificação e depois para agendamento.',
+      'play.p1.l3': 'Otimize por entrevistas aprovadas, não só por cliques.',
+      'play.p2.title': 'Lançamento com job boards',
+      'play.p2.l1': 'Publique vagas com filtros claros de GEO e faixa etária.',
+      'play.p2.l2': 'Use script de resposta rápida para reduzir perda de candidatos.',
+      'play.p2.l3': 'Acompanhe board-to-interview ratio semanalmente.',
+      'play.p3.title': 'Lançamento com cold outreach',
+      'play.p3.l1': 'Segmente a base por GEO e intenção antes do contato.',
+      'play.p3.l2': 'Use um único CTA principal: passar na triagem de entrevista.',
+      'play.p3.l3': 'Registre qualidade das respostas no CRM e itere semanalmente.',
+      'play.p4.title': 'Lançamento com direct DM',
+      'play.p4.l1': 'Comece com contexto e só depois apresente a oferta.',
+      'play.p4.l2': 'Use checklist de qualificação antes do link de entrevista.',
+      'play.p4.l3': 'Teste as duas primeiras linhas do DM para aumentar resposta.',
       'calc.overline': 'Planejamento de receita',
       'calc.title': 'Estime seu pagamento potencial',
       'calc.interviews': 'Entrevistas aprovadas por semana',
@@ -403,7 +538,9 @@
     es: {
       'langGate.title': 'Elige idioma',
       'langGate.subtitle': 'Elige el idioma de la interfaz para continuar',
+      'nav.proof': 'Ventajas',
       'nav.partners': 'Tipos de Partner',
+      'nav.playbooks': 'Playbooks',
       'nav.terms': 'Condiciones',
       'nav.flow': 'Flujo del Partner',
       'nav.faq': 'FAQ',
@@ -411,27 +548,70 @@
       'cta.telegram': 'Telegram',
       'cta.apply': 'Aplicar',
       'a11y.skip': 'Saltar al contenido principal',
-      'hero.overline': 'Red de Partners para Empresas de Streaming',
-      'hero.title': 'Trae gente.<br>Nosotros hacemos el resto.',
-      'hero.lead': 'Media buyers, call-centers, agencias y freelancers. El tamaño del equipo no importa. Lo único importante es atraer candidatos.',
-      'hero.signal': 'Señal de Oferta',
-      'hero.signalMeta': 'Pagos semanales en USDT',
-      'hero.bar1': 'Calidad de entrevistas',
-      'hero.bar2': 'Flujo de operadores',
-      'hero.bar3': 'Flujo de modelos',
-      'hero.cardA.title': 'Ejecución semanal',
-      'hero.cardA.text': 'Pagos cada domingo en USDT.',
-      'hero.cardB.title': 'Cualquier fuente funciona',
-      'hero.cardB.text': 'DM, outreach, boards, ads - KPI es el resultado.',
+      'hero.overline': 'Red de partners de performance para reclutamiento en streaming',
+      'hero.title': 'Escala entrevistas con un modelo CPA claro.',
+      'hero.lead': 'Tú te enfocas en adquisición. Nosotros cubrimos operación, validación y pagos.',
+      'hero.list1': 'Cualquier fuente: ads, outreach, DM, job boards, mailings.',
+      'hero.list2': 'Pagos semanales en USDT cada domingo.',
+      'hero.list3': 'CRM, scripts y soporte de lanzamiento desde el día uno.',
+      'hero.signal': 'Panel de oferta',
+      'hero.signalMeta': 'Oferta activa ahora',
+      'hero.bar1': 'Tasa de asistencia a entrevistas',
+      'hero.bar2': 'Calidad de aprobación',
+      'hero.bar3': 'Confiabilidad de pago semanal',
+      'hero.cardA.title': 'Onboarding rápido',
+      'hero.cardA.text': 'Scripts, CRM y plantillas justo después de la aprobación.',
+      'hero.cardB.title': 'Modelo KPI único',
+      'hero.cardB.text': 'Traes candidatos a entrevistas, pagamos por aprobados.',
       'hero.line1': 'Ads',
       'hero.line2': 'Job boards',
       'hero.line3': 'Mailings',
       'hero.line4': 'Outreach en frío',
       'hero.line5': 'DM directo',
       'hero.line6': 'Sin límite de fuentes',
+      'proof.item1': 'Sin tarifa de entrada',
+      'proof.item2': 'Pago semanal en USDT',
+      'proof.item3': 'Manager dedicado',
+      'proof.item4': 'Cualquier canal de adquisición',
+      'proof.item5': 'Pipeline CRM transparente',
+      'proof.item6': 'Escalable: solo o equipo',
       'kpi.years': 'años en tráfico',
       'kpi.max': 'CPA máximo por entrevista',
       'kpi.weekly': 'ciclo de pago',
+      'fit.overline': 'Calificación rápida',
+      'fit.title': 'Partner Fit Scanner',
+      'fit.lead': 'Comprueba en 20 segundos si tu sistema está listo para lanzar.',
+      'fit.check1': 'Puedo atraer candidatos de forma consistente cada semana.',
+      'fit.check2': 'Puedo operar al menos un canal (ads / DM / outreach / boards).',
+      'fit.check3': 'Puedo seguir scripts y controlar estados en CRM.',
+      'fit.check4': 'Puedo trabajar con ritmo semanal y disciplina KPI.',
+      'fit.scoreLabel': 'Índice de preparación',
+      'fit.status.high': 'Alta compatibilidad: puedes lanzar ahora.',
+      'fit.status.mid': 'Compatibilidad media: lanzamiento posible con ajustes.',
+      'fit.status.low': 'Baja compatibilidad: arma primero la base de adquisición.',
+      'fit.cta': 'Iniciar solicitud',
+      'play.overline': 'Sistema de ejecución',
+      'play.title': 'Playbooks por canal',
+      'play.tab1': 'Paid Ads',
+      'play.tab2': 'Job Boards',
+      'play.tab3': 'Cold Outreach',
+      'play.tab4': 'Direct DM',
+      'play.p1.title': 'Lanzamiento con paid ads',
+      'play.p1.l1': 'Usa creativos con intención clara de entrevista.',
+      'play.p1.l2': 'Lleva tráfico a calificación y luego a agendamiento.',
+      'play.p1.l3': 'Optimiza por entrevistas aprobadas, no solo clics.',
+      'play.p2.title': 'Lanzamiento con job boards',
+      'play.p2.l1': 'Publica roles con filtros claros de GEO y edad.',
+      'play.p2.l2': 'Usa respuesta rápida para reducir abandono de candidatos.',
+      'play.p2.l3': 'Mide board-to-interview ratio semanalmente.',
+      'play.p3.title': 'Lanzamiento con cold outreach',
+      'play.p3.l1': 'Segmenta audiencia por GEO e intención antes de contactar.',
+      'play.p3.l2': 'Usa un solo CTA: pasar el filtro de entrevista.',
+      'play.p3.l3': 'Registra calidad de respuestas en CRM e itera cada semana.',
+      'play.p4.title': 'Lanzamiento con direct DM',
+      'play.p4.l1': 'Empieza por contexto y luego pasa a la oferta.',
+      'play.p4.l2': 'Aplica checklist de calificación antes del link.',
+      'play.p4.l3': 'Testea las dos primeras líneas de DM para subir respuesta.',
       'calc.overline': 'Planificación de ingresos',
       'calc.title': 'Calcula tu pago potencial',
       'calc.interviews': 'Entrevistas aprobadas por semana',
@@ -538,6 +718,7 @@
     lang: storedLang || DEFAULT_LANG,
     hasStoredLang: Boolean(storedLang),
     calcUpdate: null,
+    fitUpdate: null,
     config: {
       telegram_link: 'https://t.me/starflowcorp',
       bot_link: null,
@@ -571,6 +752,11 @@
     calcCpaValue: document.getElementById('calc-cpa-value'),
     calcWeekly: document.getElementById('calc-weekly'),
     calcMonthly: document.getElementById('calc-monthly'),
+    fitToggles: document.querySelectorAll('[data-fit-toggle]'),
+    fitScore: document.getElementById('fit-score'),
+    fitStatus: document.querySelector('[data-fit-status]'),
+    playbookButtons: document.querySelectorAll('[data-playbook-btn]'),
+    playbookPanels: document.querySelectorAll('[data-playbook-panel]'),
   };
 
   function getStoredLang() {
@@ -628,6 +814,9 @@
     updateContactPlaceholder();
     if (typeof state.calcUpdate === 'function') {
       state.calcUpdate();
+    }
+    if (typeof state.fitUpdate === 'function') {
+      state.fitUpdate();
     }
   }
 
@@ -1119,6 +1308,82 @@
     update();
   }
 
+  function initPartnerFit() {
+    const toggles = Array.from(dom.fitToggles || []);
+    if (!toggles.length || !dom.fitScore || !dom.fitStatus) {
+      return;
+    }
+
+    const totalWeight = toggles.reduce((sum, toggle) => {
+      const value = Number(toggle.value || '0');
+      return sum + (Number.isFinite(value) ? value : 0);
+    }, 0);
+
+    const resolveStatus = (percent) => {
+      if (percent >= 75) return { key: 'fit.status.high', level: 'high' };
+      if (percent >= 45) return { key: 'fit.status.mid', level: 'mid' };
+      return { key: 'fit.status.low', level: 'low' };
+    };
+
+    const update = () => {
+      const activeWeight = toggles.reduce((sum, toggle) => {
+        if (!toggle.checked) return sum;
+        const value = Number(toggle.value || '0');
+        return sum + (Number.isFinite(value) ? value : 0);
+      }, 0);
+      const percent = totalWeight > 0 ? Math.round((activeWeight / totalWeight) * 100) : 0;
+      const status = resolveStatus(percent);
+
+      dom.fitScore.textContent = `${percent}%`;
+      dom.fitStatus.textContent = t(status.key);
+      dom.fitStatus.setAttribute('data-level', status.level);
+    };
+
+    toggles.forEach((toggle) => {
+      toggle.addEventListener('change', update);
+    });
+
+    state.fitUpdate = update;
+    update();
+  }
+
+  function initPlaybooks() {
+    const buttons = Array.from(dom.playbookButtons || []);
+    const panels = Array.from(dom.playbookPanels || []);
+    if (!buttons.length || !panels.length) {
+      return;
+    }
+
+    function setActive(id) {
+      buttons.forEach((button) => {
+        const active = button.getAttribute('data-playbook-btn') === id;
+        button.classList.toggle('is-active', active);
+        button.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+
+      panels.forEach((panel) => {
+        const active = panel.getAttribute('data-playbook-panel') === id;
+        panel.classList.toggle('is-active', active);
+        panel.hidden = !active;
+      });
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const id = button.getAttribute('data-playbook-btn');
+        if (id) {
+          setActive(id);
+        }
+      });
+    });
+
+    const initial = buttons.find((button) => button.classList.contains('is-active')) || buttons[0];
+    const initialId = initial ? initial.getAttribute('data-playbook-btn') : null;
+    if (initialId) {
+      setActive(initialId);
+    }
+  }
+
   function initHeroLabParallax() {
     const lab = dom.heroLab;
     if (!lab || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
@@ -1328,6 +1593,8 @@
     animateCounters();
     initScrollProgress();
     initHeroBars();
+    initPartnerFit();
+    initPlaybooks();
     initEarningsCalculator();
     initTimelineFocus();
     loadConfig();

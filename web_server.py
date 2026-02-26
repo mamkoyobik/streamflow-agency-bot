@@ -11,6 +11,8 @@ import urllib.parse
 import urllib.request
 import urllib.error
 import time
+import threading
+from collections import deque
 from datetime import datetime, timezone, timedelta
 from email.parser import BytesParser
 from email.policy import default
@@ -51,7 +53,8 @@ ROOT_DIR = Path(__file__).parent
 WEB_DIR = ROOT_DIR / "web"
 ENV_PATH = ROOT_DIR / ".env"
 
-MAX_BODY_SIZE = 30 * 1024 * 1024
+MAX_APPLY_BODY_SIZE = 2 * 1024 * 1024
+MAX_WEBHOOK_BODY_SIZE = 4 * 1024 * 1024
 MAX_NAME_LEN = SHARED_FORM_NAME_MAX_LEN
 MAX_CITY_LEN = SHARED_FORM_CITY_MAX_LEN
 MAX_PHONE_LEN = SHARED_FORM_PHONE_MAX_LEN
@@ -99,6 +102,15 @@ def _env_int(name: str, default: int) -> int:
         return default
 
 SITE_LEAD_TOKEN_TTL_HOURS = max(24, _env_int("SITE_LEAD_TOKEN_TTL_HOURS", 72))
+APPLY_RATE_WINDOW_SECONDS = max(10, _env_int("APPLY_RATE_WINDOW_SECONDS", 60))
+APPLY_RATE_MAX_PER_WINDOW = max(1, _env_int("APPLY_RATE_MAX_PER_WINDOW", 10))
+WEBHOOK_RATE_WINDOW_SECONDS = max(10, _env_int("WEBHOOK_RATE_WINDOW_SECONDS", 60))
+WEBHOOK_RATE_MAX_PER_WINDOW = max(1, _env_int("WEBHOOK_RATE_MAX_PER_WINDOW", 180))
+APPLY_SAME_PHONE_COOLDOWN_SECONDS = max(30, _env_int("APPLY_SAME_PHONE_COOLDOWN_SECONDS", 300))
+
+_RATE_LIMIT_LOCK = threading.Lock()
+_RATE_LIMIT_WINDOWS: dict[str, deque[float]] = {}
+_PHONE_COOLDOWN_CACHE: dict[str, float] = {}
 
 
 def _env_flag(name: str, default: bool = False) -> bool:
@@ -210,6 +222,8 @@ GENERAL_MESSAGES = {
         "token_missing": "Не настроен BOT_TOKEN или ADMIN_GROUP_ID.",
         "db_error": "Ошибка сохранения анкеты. Попробуй ещё раз.",
         "success": "✅ Заявка принята мгновенно и автоматически.",
+        "rate_limited_ip": "Слишком много попыток за короткое время. Подожди немного и попробуй снова.",
+        "rate_limited_phone": "Похоже, заявка с этим номером уже отправлялась недавно. Повтори чуть позже.",
     },
     "en": {
         "bad_size": "Invalid request size.",
@@ -222,6 +236,8 @@ GENERAL_MESSAGES = {
         "token_missing": "BOT_TOKEN or ADMIN_GROUP_ID is not configured.",
         "db_error": "Failed to save application. Please try again.",
         "success": "✅ Application received instantly and automatically.",
+        "rate_limited_ip": "Too many attempts in a short time. Please wait and try again.",
+        "rate_limited_phone": "An application with this phone was submitted recently. Please try again later.",
     },
     "pt": {
         "bad_size": "Tamanho da requisição inválido.",
@@ -234,6 +250,8 @@ GENERAL_MESSAGES = {
         "token_missing": "BOT_TOKEN ou ADMIN_GROUP_ID não configurado.",
         "db_error": "Falha ao salvar candidatura. Tente novamente.",
         "success": "✅ Cadastro recebido instantaneamente e automaticamente.",
+        "rate_limited_ip": "Muitas tentativas em pouco tempo. Aguarde e tente novamente.",
+        "rate_limited_phone": "Uma candidatura com este telefone foi enviada recentemente. Tente novamente mais tarde.",
     },
     "es": {
         "bad_size": "Tamaño de solicitud inválido.",
@@ -246,6 +264,8 @@ GENERAL_MESSAGES = {
         "token_missing": "BOT_TOKEN o ADMIN_GROUP_ID no están configurados.",
         "db_error": "Error al guardar la solicitud. Inténtalo de nuevo.",
         "success": "✅ Solicitud recibida al instante y automáticamente.",
+        "rate_limited_ip": "Demasiados intentos en poco tiempo. Espera y vuelve a intentarlo.",
+        "rate_limited_phone": "Ya hubo una solicitud reciente con este teléfono. Inténtalo de nuevo más tarde.",
     },
 }
 
@@ -858,6 +878,84 @@ def request_host_from_headers(host_header: str | None, forwarded_host_header: st
             return candidate
     return direct or forwarded
 
+
+def _client_ip_from_headers(handler: SimpleHTTPRequestHandler) -> str:
+    forwarded_for = (handler.headers.get("X-Forwarded-For") or "").strip()
+    if forwarded_for:
+        first = forwarded_for.split(",", 1)[0].strip()
+        # Keep a safe subset only; avoid header-injected junk.
+        first = re.sub(r"[^0-9a-fA-F:.\[\]]", "", first)[:64]
+        if first:
+            return first
+    direct = handler.client_address[0] if handler.client_address else ""
+    direct = re.sub(r"[^0-9a-fA-F:.\[\]]", "", str(direct or ""))[:64]
+    return direct or "unknown"
+
+
+def _rate_limit_key(scope: str, key: str) -> str:
+    return f"rl:{scope}:{key}"
+
+
+def _consume_rate_limit(scope: str, key: str, window_seconds: int, max_hits: int) -> tuple[bool, int]:
+    now = time.monotonic()
+    key_name = _rate_limit_key(scope, key)
+    with _RATE_LIMIT_LOCK:
+        bucket = _RATE_LIMIT_WINDOWS.get(key_name)
+        if bucket is None:
+            bucket = deque()
+            _RATE_LIMIT_WINDOWS[key_name] = bucket
+        while bucket and now - bucket[0] > window_seconds:
+            bucket.popleft()
+        if len(bucket) >= max_hits:
+            retry_after = max(1, int(window_seconds - (now - bucket[0])))
+            return False, retry_after
+        bucket.append(now)
+        return True, 0
+
+
+def _phone_digits(value: str | None) -> str:
+    return re.sub(r"\D", "", value or "")
+
+
+def _parse_recent_apply_ts(value: str | None) -> datetime | None:
+    raw = str(value or "").strip()
+    if not raw:
+        return None
+    try:
+        parsed = datetime.fromisoformat(raw.replace("Z", "+00:00"))
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=timezone.utc)
+        return parsed.astimezone(timezone.utc)
+    except Exception:
+        pass
+    for fmt in ("%Y-%m-%d %H:%M:%S", "%Y-%m-%d %H:%M:%S.%f"):
+        try:
+            parsed = datetime.strptime(raw, fmt).replace(tzinfo=timezone.utc)
+            return parsed
+        except Exception:
+            continue
+    return None
+
+
+def _is_phone_apply_cooldown(phone: str | None) -> tuple[bool, int]:
+    digits = _phone_digits(phone)
+    if len(digits) < 8:
+        return False, 0
+    now = time.monotonic()
+    with _RATE_LIMIT_LOCK:
+        ts = _PHONE_COOLDOWN_CACHE.get(digits)
+        if ts and (now - ts) < APPLY_SAME_PHONE_COOLDOWN_SECONDS:
+            return True, max(1, int(APPLY_SAME_PHONE_COOLDOWN_SECONDS - (now - ts)))
+    return False, 0
+
+
+def _mark_phone_apply(phone: str | None) -> None:
+    digits = _phone_digits(phone)
+    if len(digits) < 8:
+        return
+    with _RATE_LIMIT_LOCK:
+        _PHONE_COOLDOWN_CACHE[digits] = time.monotonic()
+
 def site_lead_setting_key(token: str) -> str:
     return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
 
@@ -917,7 +1015,9 @@ def build_whatsapp_stage2_link(token: str, lang: str | None = None) -> str | Non
     base = build_whatsapp_base_link()
     if not base:
         return None
-    return base
+    locale = normalize_site_lang(lang)
+    start_payload = f"s2_{token}_{locale}"
+    return f"{base}?text={urllib.parse.quote(start_payload, safe='')}"
 try:
     from excel_export import append_application_row
 except Exception:
@@ -3070,7 +3170,8 @@ def build_multipart(fields: dict, files: dict):
         add_line(str(value))
 
     for name, file_info in files.items():
-        filename = file_info["filename"]
+        filename = str(file_info.get("filename") or "file.bin")
+        filename = re.sub(r"[\r\n\"\\\\]", "_", filename)[:180]
         content_type = file_info.get("content_type") or "application/octet-stream"
         data = file_info["data"]
         add_line(f"--{boundary}")
@@ -3209,9 +3310,27 @@ class Handler(SimpleHTTPRequestHandler):
         self.send_header("X-Frame-Options", "DENY")
         self.send_header(
             "Content-Security-Policy",
-            "frame-ancestors 'none'; object-src 'none'; base-uri 'self'; form-action 'self'",
+            "default-src 'self'; "
+            "base-uri 'self'; "
+            "frame-ancestors 'none'; "
+            "object-src 'none'; "
+            "form-action 'self'; "
+            "img-src 'self' data: https:; "
+            "media-src 'self' blob: https:; "
+            "font-src 'self' data: https://fonts.gstatic.com; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
+            "script-src 'self' 'unsafe-inline' https://mc.yandex.ru; "
+            "connect-src 'self' https://mc.yandex.ru https://*.yandex.net",
         )
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
+        self.send_header("Cross-Origin-Opener-Policy", "same-origin")
+        self.send_header("Cross-Origin-Resource-Policy", "same-origin")
+        self.send_header(
+            "Permissions-Policy",
+            "accelerometer=(), autoplay=(), camera=(), geolocation=(), gyroscope=(), "
+            "magnetometer=(), microphone=(), payment=(), usb=(), browsing-topics=()",
+        )
+        self.send_header("X-Permitted-Cross-Domain-Policies", "none")
         proto = (self.headers.get("X-Forwarded-Proto") or "").strip().lower()
         if proto == "https":
             self.send_header("Strict-Transport-Security", "max-age=31536000; includeSubDomains; preload")
@@ -3236,6 +3355,16 @@ class Handler(SimpleHTTPRequestHandler):
             self.headers.get("Host"),
             self.headers.get("X-Forwarded-Host"),
         )
+
+    def _is_allowed_request_host(self) -> bool:
+        host = self._request_host()
+        if not host:
+            return False
+        if host in {"127.0.0.1", "0.0.0.0", "localhost"}:
+            return True
+        if is_internal_proxy_host(host):
+            return True
+        return host in canonical_public_hosts()
 
     def _request_origin_host(self) -> str:
         for header_name in ("Origin", "Referer"):
@@ -3279,7 +3408,10 @@ class Handler(SimpleHTTPRequestHandler):
 
     def _redirect_canonical(self):
         target_base = canonical_site_url_for_host(self._request_host())
-        target = f"{target_base}{self.path}"
+        parsed = urllib.parse.urlsplit(self.path)
+        safe_path = parsed.path or "/"
+        safe_query = f"?{parsed.query}" if parsed.query else ""
+        target = f"{target_base}{safe_path}{safe_query}"
         self.send_response(301)
         self.send_header("Location", target)
         self.end_headers()
@@ -3302,6 +3434,8 @@ class Handler(SimpleHTTPRequestHandler):
         return super().do_GET()
 
     def do_POST(self):
+        if not self._is_allowed_request_host():
+            return self.send_json({"ok": False, "message": "misdirected host"}, status=421)
         parsed = urllib.parse.urlparse(self.path)
         if parsed.path == "/api/apply":
             self.handle_apply()
@@ -3339,7 +3473,7 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"ok": False, "message": msg("ru", "bad_size")}, status=400)
         if content_length <= 0:
             return self.send_json({"ok": False, "message": msg("ru", "bad_size")}, status=400)
-        if content_length > MAX_BODY_SIZE:
+        if content_length > MAX_APPLY_BODY_SIZE:
             return self.send_json({"ok": False, "message": msg("ru", "too_big")}, status=413)
 
         body = self.rfile.read(content_length)
@@ -3354,12 +3488,21 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"ok": False, "message": msg("ru", "bad_type")}, status=400)
 
         site_lang = normalize_site_lang(fields.get("site_lang"))
+        client_ip = _client_ip_from_headers(self)
 
-        def error(message: str, status: int = 400, field: str | None = None):
+        def error(
+            message: str,
+            status: int = 400,
+            field: str | None = None,
+            retry_after: int | None = None,
+        ):
             payload = {"ok": False, "message": message}
             if field:
                 payload["field"] = field
-            return self.send_json(payload, status=status)
+            if retry_after is not None:
+                payload["retry_after"] = int(retry_after)
+            extra_headers = {"Retry-After": str(int(retry_after))} if retry_after is not None else None
+            return self.send_json(payload, status=status, extra_headers=extra_headers)
 
         def get_limited(field_name: str, max_len: int, error_field: str | None = None) -> tuple[str | None, bool]:
             raw = clean_text(fields.get(field_name) or "")
@@ -3370,6 +3513,19 @@ class Handler(SimpleHTTPRequestHandler):
                 )
                 return None, False
             return raw, True
+
+        allowed, retry_after = _consume_rate_limit(
+            "apply_ip",
+            client_ip,
+            APPLY_RATE_WINDOW_SECONDS,
+            APPLY_RATE_MAX_PER_WINDOW,
+        )
+        if not allowed:
+            return error(
+                msg(site_lang, "rate_limited_ip"),
+                status=429,
+                retry_after=retry_after,
+            )
 
         project = resolve_project(fields.get("project"), self._request_host())
 
@@ -3385,6 +3541,31 @@ class Handler(SimpleHTTPRequestHandler):
         if not is_valid_phone(phone_raw):
             return error(field_error(site_lang, "phone"), field="phone")
         phone = normalize_phone(phone_raw) or phone_raw
+        cooldown_hit, cooldown_retry = _is_phone_apply_cooldown(phone)
+        if cooldown_hit:
+            return error(
+                msg(site_lang, "rate_limited_phone"),
+                status=429,
+                field="phone",
+                retry_after=cooldown_retry,
+            )
+        try:
+            recent = find_recent_site_lead_by_phone(phone)
+        except Exception:
+            recent = None
+        if recent:
+            recent_ts = _parse_recent_apply_ts(recent.get("updated_at"))
+            if recent_ts:
+                now_utc = datetime.now(timezone.utc)
+                age_seconds = (now_utc - recent_ts).total_seconds()
+                if age_seconds < APPLY_SAME_PHONE_COOLDOWN_SECONDS:
+                    retry = max(1, int(APPLY_SAME_PHONE_COOLDOWN_SECONDS - max(0, age_seconds)))
+                    return error(
+                        msg(site_lang, "rate_limited_phone"),
+                        status=429,
+                        field="phone",
+                        retry_after=retry,
+                    )
 
         age_raw, ok = get_limited("age", MAX_BIRTHDATE_LEN, "age")
         if not ok or age_raw is None:
@@ -3469,6 +3650,7 @@ class Handler(SimpleHTTPRequestHandler):
         try:
             save_site_lead_payload(lead_token, payload)
             save_web_application(user_id, payload, source=site_source, status="pending")
+            _mark_phone_apply(phone)
             if append_application_row:
                 try:
                     append_application_row(payload, user_id, "pending")
@@ -3509,11 +3691,24 @@ class Handler(SimpleHTTPRequestHandler):
             return self.send_json({"ok": False, "message": "webhook auth misconfigured"}, status=503)
         if not _is_infobip_webhook_authorized(self):
             return self.send_json({"ok": False, "message": "unauthorized"}, status=401)
+        client_ip = _client_ip_from_headers(self)
+        allowed, retry_after = _consume_rate_limit(
+            "infobip_ip",
+            client_ip,
+            WEBHOOK_RATE_WINDOW_SECONDS,
+            WEBHOOK_RATE_MAX_PER_WINDOW,
+        )
+        if not allowed:
+            return self.send_json(
+                {"ok": False, "message": "rate limited", "retry_after": retry_after},
+                status=429,
+                extra_headers={"Retry-After": str(retry_after)},
+            )
         try:
             content_length = int(self.headers.get("Content-Length", "0"))
         except ValueError:
             content_length = 0
-        if content_length > MAX_BODY_SIZE:
+        if content_length > MAX_WEBHOOK_BODY_SIZE:
             return self.send_json({"ok": False, "message": "payload too large"}, status=413)
 
         body = self.rfile.read(content_length) if content_length > 0 else b""
@@ -3664,11 +3859,16 @@ class Handler(SimpleHTTPRequestHandler):
             }
         )
 
-    def send_json(self, payload: dict, status: int = 200):
+    def send_json(self, payload: dict, status: int = 200, extra_headers: dict | None = None):
         data = json.dumps(payload, ensure_ascii=False).encode("utf-8")
         self.send_response(status)
         self.send_header("Content-Type", "application/json; charset=utf-8")
         self.send_header("Content-Length", str(len(data)))
+        if extra_headers:
+            for key, value in extra_headers.items():
+                if value is None:
+                    continue
+                self.send_header(str(key), str(value))
         self.end_headers()
         try:
             self.wfile.write(data)

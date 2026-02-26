@@ -102,13 +102,13 @@ class WebServerWhatsAppTests(unittest.TestCase):
         self.assertEqual(web_server._parse_wa_yes_no_choice("yn_yes", "en"), "Да")
         self.assertEqual(web_server._parse_wa_yes_no_choice("yn_no", "en"), "Нет")
 
-    def test_whatsapp_link_has_no_stage2_key(self):
+    def test_whatsapp_link_contains_stage2_payload(self):
         original_sender = web_server.INFOBIP_WHATSAPP_SENDER
         try:
             web_server.INFOBIP_WHATSAPP_SENDER = "447860089369"
             link = web_server.build_whatsapp_stage2_link("abcdef123456", "en")
-            self.assertEqual(link, "https://wa.me/447860089369")
-            self.assertNotIn("text=", link)
+            self.assertEqual(link, "https://wa.me/447860089369?text=s2_abcdef123456_en")
+            self.assertIn("text=s2_abcdef123456_en", link)
         finally:
             web_server.INFOBIP_WHATSAPP_SENDER = original_sender
 
