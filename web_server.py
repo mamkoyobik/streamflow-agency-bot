@@ -712,7 +712,6 @@ def load_settings():
 
 BOT_TOKEN, ADMIN_GROUP_ID, ADMIN_USERNAME, BOT_USERNAME, CHANNEL_LINK, SITE_URL = load_settings()
 SITE_URL = SITE_URL.rstrip("/")
-CANONICAL_HOST = (urllib.parse.urlparse(SITE_URL).netloc or "").split(":", 1)[0].lower()
 PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
 WA_MANAGER_PHONE = (os.getenv("WA_MANAGER_PHONE", "+380998074928") or "+380998074928").strip()
@@ -759,6 +758,82 @@ def project_site_url(project: str) -> str:
     normalized = normalize_project(project)
     if normalized == PROJECT_STARFLOW and STARFLOW_SITE_URL:
         return STARFLOW_SITE_URL
+    return SITE_URL
+
+
+def normalize_host(value: str | None) -> str:
+    raw = (value or "").strip().lower()
+    if not raw:
+        return ""
+    raw = raw.split(",", 1)[0].strip()
+    if raw.startswith("[") and "]" in raw:
+        return raw[1 : raw.index("]")].strip().rstrip(".")
+    return raw.split(":", 1)[0].strip().rstrip(".")
+
+
+def _host_from_url(url: str | None) -> str:
+    raw = (url or "").strip()
+    if not raw:
+        return ""
+    candidate = raw if "://" in raw else f"https://{raw}"
+    parsed = urllib.parse.urlparse(candidate)
+    return normalize_host(parsed.netloc)
+
+
+def _host_aliases(host: str) -> set[str]:
+    value = normalize_host(host)
+    if not value:
+        return set()
+    aliases = {value}
+    if value.startswith("www."):
+        aliases.add(value[4:])
+    else:
+        aliases.add(f"www.{value}")
+    return aliases
+
+
+CANONICAL_HOST = _host_from_url(SITE_URL)
+
+
+def canonical_public_hosts() -> set[str]:
+    hosts: set[str] = set()
+    hosts.update(_host_aliases(_host_from_url(SITE_URL)))
+    hosts.update(_host_aliases(_host_from_url(STARFLOW_SITE_URL)))
+    return hosts
+
+
+def infer_project_from_host(host: str | None) -> str:
+    normalized = normalize_host(host)
+    if not normalized:
+        return PROJECT_STREAMFLOW
+    starflow_host = _host_from_url(STARFLOW_SITE_URL)
+    if starflow_host and normalized in _host_aliases(starflow_host):
+        return PROJECT_STARFLOW
+    streamflow_host = _host_from_url(SITE_URL)
+    if streamflow_host and normalized in _host_aliases(streamflow_host):
+        return PROJECT_STREAMFLOW
+    return PROJECT_STREAMFLOW
+
+
+def resolve_project(project: str | None, host: str | None = None) -> str:
+    raw = (project or "").strip()
+    if raw:
+        return normalize_project(raw)
+    return infer_project_from_host(host)
+
+
+def homepage_path_for_host(host: str | None) -> str:
+    project = infer_project_from_host(host)
+    if project == PROJECT_STARFLOW:
+        return "/starflow.html"
+    return "/index.html"
+
+
+def canonical_site_url_for_host(host: str | None) -> str:
+    project = infer_project_from_host(host)
+    target = project_site_url(project).strip().rstrip("/")
+    if target:
+        return target
     return SITE_URL
 
 def site_lead_setting_key(token: str) -> str:
@@ -3090,25 +3165,30 @@ class Handler(SimpleHTTPRequestHandler):
             # Client closed connection early (browser navigation/refresh).
             pass
 
-    def _host_header(self) -> str:
-        return (self.headers.get("Host") or "").split(":", 1)[0].strip().lower()
+    def _request_host(self) -> str:
+        forwarded = normalize_host(self.headers.get("X-Forwarded-Host"))
+        if forwarded:
+            return forwarded
+        return normalize_host(self.headers.get("Host"))
 
     def _should_redirect_to_canonical(self) -> bool:
-        if not CANONICAL_HOST:
+        allowed_hosts = canonical_public_hosts()
+        if not allowed_hosts:
             return False
-        host = self._host_header()
+        host = self._request_host()
         if not host:
             return False
-        if host == CANONICAL_HOST:
+        if host in allowed_hosts:
             return False
-        if host in {"127.0.0.1", "localhost"}:
+        if host in {"127.0.0.1", "0.0.0.0", "localhost"}:
             return False
         if host.endswith(".railway.internal"):
             return False
         return True
 
     def _redirect_canonical(self):
-        target = f"{SITE_URL}{self.path}"
+        target_base = canonical_site_url_for_host(self._request_host())
+        target = f"{target_base}{self.path}"
         self.send_response(301)
         self.send_header("Location", target)
         self.end_headers()
@@ -3125,7 +3205,7 @@ class Handler(SimpleHTTPRequestHandler):
         if parsed.path == "/api/config":
             return self.handle_config()
         if parsed.path == "/":
-            self.path = "/index.html"
+            self.path = homepage_path_for_host(self._request_host())
         elif parsed.path in {"/starflow", "/starflow/"}:
             self.path = "/starflow.html"
         return super().do_GET()
@@ -3143,7 +3223,8 @@ class Handler(SimpleHTTPRequestHandler):
     def handle_config(self):
         parsed = urllib.parse.urlparse(self.path)
         query = urllib.parse.parse_qs(parsed.query or "")
-        project = normalize_project((query.get("project") or [PROJECT_STREAMFLOW])[0])
+        requested_project = (query.get("project") or [None])[0]
+        project = resolve_project(requested_project, self._request_host())
         admin_username = ADMIN_USERNAME.lstrip("@")
         bot_link = project_bot_public_link(project)
         wa_link = build_whatsapp_base_link()
@@ -3197,7 +3278,7 @@ class Handler(SimpleHTTPRequestHandler):
                 return None, False
             return raw, True
 
-        project = normalize_project(fields.get("project"))
+        project = resolve_project(fields.get("project"), self._request_host())
 
         name, ok = get_limited("name", MAX_NAME_LEN, "name")
         if not ok or name is None:

@@ -32,6 +32,71 @@ class WebServerProjectTests(unittest.TestCase):
             web_server.BOT_USERNAME = original_main
             web_server.STARFLOW_BOT_USERNAME = original_star
 
+    def test_infer_project_from_host(self):
+        original_site = web_server.SITE_URL
+        original_star_site = web_server.STARFLOW_SITE_URL
+        try:
+            web_server.SITE_URL = "https://streamflowagency.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowcorp.com"
+            self.assertEqual(
+                web_server.infer_project_from_host("starflowcorp.com"),
+                web_server.PROJECT_STARFLOW,
+            )
+            self.assertEqual(
+                web_server.infer_project_from_host("www.starflowcorp.com"),
+                web_server.PROJECT_STARFLOW,
+            )
+            self.assertEqual(
+                web_server.infer_project_from_host("streamflowagency.com"),
+                web_server.PROJECT_STREAMFLOW,
+            )
+            self.assertEqual(
+                web_server.infer_project_from_host("unknown-host.com"),
+                web_server.PROJECT_STREAMFLOW,
+            )
+        finally:
+            web_server.SITE_URL = original_site
+            web_server.STARFLOW_SITE_URL = original_star_site
+
+    def test_homepage_path_for_host(self):
+        original_site = web_server.SITE_URL
+        original_star_site = web_server.STARFLOW_SITE_URL
+        try:
+            web_server.SITE_URL = "https://streamflowagency.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowcorp.com"
+            self.assertEqual(web_server.homepage_path_for_host("streamflowagency.com"), "/index.html")
+            self.assertEqual(web_server.homepage_path_for_host("starflowcorp.com"), "/starflow.html")
+            self.assertEqual(web_server.homepage_path_for_host(""), "/index.html")
+        finally:
+            web_server.SITE_URL = original_site
+            web_server.STARFLOW_SITE_URL = original_star_site
+
+    def test_resolve_project_prefers_explicit_param(self):
+        original_site = web_server.SITE_URL
+        original_star_site = web_server.STARFLOW_SITE_URL
+        try:
+            web_server.SITE_URL = "https://streamflowagency.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowcorp.com"
+            self.assertEqual(
+                web_server.resolve_project("streamflow", host="starflowcorp.com"),
+                web_server.PROJECT_STREAMFLOW,
+            )
+            self.assertEqual(
+                web_server.resolve_project("starflow", host="streamflowagency.com"),
+                web_server.PROJECT_STARFLOW,
+            )
+            self.assertEqual(
+                web_server.resolve_project("", host="starflowcorp.com"),
+                web_server.PROJECT_STARFLOW,
+            )
+            self.assertEqual(
+                web_server.resolve_project(None, host="unknown-host.com"),
+                web_server.PROJECT_STREAMFLOW,
+            )
+        finally:
+            web_server.SITE_URL = original_site
+            web_server.STARFLOW_SITE_URL = original_star_site
+
 
 if __name__ == "__main__":
     unittest.main()
