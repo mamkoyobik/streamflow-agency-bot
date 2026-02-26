@@ -20,11 +20,12 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-04">
+  <link rel="stylesheet" href="starflow.css?v=20260226-05">
 </head>
 <body data-page="starflow" class="is-loading">
-  <canvas id="star-canvas" aria-hidden="true"></canvas>
+  <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
   <div class="backdrop-noise" aria-hidden="true"></div>
+  <div class="backdrop-grid" aria-hidden="true"></div>
   <div class="backdrop-orb orb-a" aria-hidden="true"></div>
   <div class="backdrop-orb orb-b" aria-hidden="true"></div>
   <div class="cursor-glow" id="cursor-glow" aria-hidden="true"></div>
@@ -102,22 +103,60 @@
           </div>
         </div>
 
-        <div class="hero-stage reveal" data-reveal-delay="120">
-          <div class="stage-grid"></div>
-          <div class="signal-card tilt" data-tilt>
+        <div class="hero-stage reveal" data-reveal-delay="120" data-hero-lab>
+          <div class="hero-stage-grid" aria-hidden="true"></div>
+          <div class="signal-card tilt">
             <p class="signal-tag" data-i18n="hero.signal">Live Offer Signal</p>
             <p class="signal-value">CPA $20-40</p>
             <p class="signal-meta" data-i18n="hero.signalMeta">Weekly payouts in USDT</p>
-            <div class="signal-wave" aria-hidden="true"></div>
+            <div class="lab-bars">
+              <div class="lab-bar" data-bar="84">
+                <div class="lab-bar-head">
+                  <span data-i18n="hero.bar1">Interview quality</span>
+                  <strong>84%</strong>
+                </div>
+                <div class="lab-bar-track"><i></i></div>
+              </div>
+              <div class="lab-bar" data-bar="72">
+                <div class="lab-bar-head">
+                  <span data-i18n="hero.bar2">Operator flow</span>
+                  <strong>72%</strong>
+                </div>
+                <div class="lab-bar-track"><i></i></div>
+              </div>
+              <div class="lab-bar" data-bar="91">
+                <div class="lab-bar-head">
+                  <span data-i18n="hero.bar3">Model flow</span>
+                  <strong>91%</strong>
+                </div>
+                <div class="lab-bar-track"><i></i></div>
+              </div>
+            </div>
           </div>
-          <div class="mini-stat mini-stat-a">
-            <strong>5+</strong>
-            <span data-i18n="kpi.years">years in traffic</span>
+          <div class="mini-stat mini-stat-a tilt">
+            <strong data-i18n="hero.cardA.title">Weekly execution</strong>
+            <span data-i18n="hero.cardA.text">Payout cycle every Sunday in USDT.</span>
           </div>
-          <div class="mini-stat mini-stat-b">
-            <strong>7d</strong>
-            <span data-i18n="kpi.weekly">payout cycle</span>
+          <div class="mini-stat mini-stat-b tilt">
+            <strong data-i18n="hero.cardB.title">Any source works</strong>
+            <span data-i18n="hero.cardB.text">DM, outreach, boards, ads - result is KPI.</span>
           </div>
+        </div>
+      </div>
+      <div class="hero-marquee" aria-hidden="true">
+        <div class="hero-marquee-track">
+          <span data-i18n="hero.line1">Target Ads</span>
+          <span data-i18n="hero.line2">Job Boards</span>
+          <span data-i18n="hero.line3">Mailing Lists</span>
+          <span data-i18n="hero.line4">Cold Outreach</span>
+          <span data-i18n="hero.line5">Direct DM</span>
+          <span data-i18n="hero.line6">No Source Limits</span>
+          <span data-i18n="hero.line1">Target Ads</span>
+          <span data-i18n="hero.line2">Job Boards</span>
+          <span data-i18n="hero.line3">Mailing Lists</span>
+          <span data-i18n="hero.line4">Cold Outreach</span>
+          <span data-i18n="hero.line5">Direct DM</span>
+          <span data-i18n="hero.line6">No Source Limits</span>
         </div>
       </div>
     </section>
@@ -412,6 +451,6 @@
     </div>
   </footer>
 
-  <script src="starflow.js?v=20260226-04" defer></script>
+  <script src="starflow.js?v=20260226-05" defer></script>
 </body>
 </html>

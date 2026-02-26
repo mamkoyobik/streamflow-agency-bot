@@ -22,6 +22,19 @@
       'hero.lead': 'Арбитражные команды, колл-центры, агентства и соло-фрилансеры. Размер команды не важен. Важен только ваш результат в привлечении кандидатов.',
       'hero.signal': 'Активный оффер',
       'hero.signalMeta': 'Выплаты каждое воскресенье в USDT',
+      'hero.bar1': 'Качество интервью',
+      'hero.bar2': 'Поток операторов',
+      'hero.bar3': 'Поток моделей',
+      'hero.cardA.title': 'Еженедельное исполнение',
+      'hero.cardA.text': 'Выплаты каждое воскресенье в USDT.',
+      'hero.cardB.title': 'Работает любой источник',
+      'hero.cardB.text': 'DM, outreach, boards, ads - KPI только результат.',
+      'hero.line1': 'Таргет',
+      'hero.line2': 'Job boards',
+      'hero.line3': 'Рассылки',
+      'hero.line4': 'Холодный outreach',
+      'hero.line5': 'Direct DM',
+      'hero.line6': 'Без лимитов по источникам',
       'kpi.years': 'лет в трафике',
       'kpi.max': 'максимум CPA за интервью',
       'kpi.weekly': 'цикл выплат',
@@ -131,6 +144,19 @@
       'hero.lead': 'Media buyers, call-centers, agencies, solo freelancers. Team size does not matter. The only thing that matters is your ability to attract candidates.',
       'hero.signal': 'Live Offer Signal',
       'hero.signalMeta': 'Weekly payouts in USDT',
+      'hero.bar1': 'Interview quality',
+      'hero.bar2': 'Operator flow',
+      'hero.bar3': 'Model flow',
+      'hero.cardA.title': 'Weekly execution',
+      'hero.cardA.text': 'Payout cycle every Sunday in USDT.',
+      'hero.cardB.title': 'Any source works',
+      'hero.cardB.text': 'DM, outreach, boards, ads - result is KPI.',
+      'hero.line1': 'Target Ads',
+      'hero.line2': 'Job Boards',
+      'hero.line3': 'Mailing Lists',
+      'hero.line4': 'Cold Outreach',
+      'hero.line5': 'Direct DM',
+      'hero.line6': 'No Source Limits',
       'kpi.years': 'years in traffic',
       'kpi.max': 'max CPA per interview',
       'kpi.weekly': 'payout cycle',
@@ -240,6 +266,19 @@
       'hero.lead': 'Mídia buyers, call-centers, agências e freelancers solo. Tamanho da equipe não importa. O que importa é sua capacidade de atrair candidatos.',
       'hero.signal': 'Sinal da Oferta',
       'hero.signalMeta': 'Pagamentos semanais em USDT',
+      'hero.bar1': 'Qualidade da entrevista',
+      'hero.bar2': 'Fluxo de operadores',
+      'hero.bar3': 'Fluxo de modelos',
+      'hero.cardA.title': 'Execução semanal',
+      'hero.cardA.text': 'Pagamentos todo domingo em USDT.',
+      'hero.cardB.title': 'Qualquer fonte funciona',
+      'hero.cardB.text': 'DM, outreach, boards, ads - KPI é o resultado.',
+      'hero.line1': 'Tráfego pago',
+      'hero.line2': 'Job boards',
+      'hero.line3': 'Listas de envio',
+      'hero.line4': 'Outreach frio',
+      'hero.line5': 'DM direto',
+      'hero.line6': 'Sem limite de fontes',
       'kpi.years': 'anos com tráfego',
       'kpi.max': 'CPA máximo por entrevista',
       'kpi.weekly': 'ciclo de pagamento',
@@ -349,6 +388,19 @@
       'hero.lead': 'Media buyers, call-centers, agencias y freelancers. El tamaño del equipo no importa. Lo único importante es atraer candidatos.',
       'hero.signal': 'Señal de Oferta',
       'hero.signalMeta': 'Pagos semanales en USDT',
+      'hero.bar1': 'Calidad de entrevistas',
+      'hero.bar2': 'Flujo de operadores',
+      'hero.bar3': 'Flujo de modelos',
+      'hero.cardA.title': 'Ejecución semanal',
+      'hero.cardA.text': 'Pagos cada domingo en USDT.',
+      'hero.cardB.title': 'Cualquier fuente funciona',
+      'hero.cardB.text': 'DM, outreach, boards, ads - KPI es el resultado.',
+      'hero.line1': 'Ads',
+      'hero.line2': 'Job boards',
+      'hero.line3': 'Mailings',
+      'hero.line4': 'Outreach en frío',
+      'hero.line5': 'DM directo',
+      'hero.line6': 'Sin límite de fuentes',
       'kpi.years': 'años en tráfico',
       'kpi.max': 'CPA máximo por entrevista',
       'kpi.weekly': 'ciclo de pago',
@@ -472,6 +524,10 @@
     nextBox: document.getElementById('next-actions'),
     nextTelegram: document.getElementById('next-telegram'),
     nextWhatsapp: document.getElementById('next-whatsapp'),
+    progressBar: document.getElementById('scroll-progress-bar'),
+    heroLab: document.querySelector('[data-hero-lab]'),
+    sourceChips: document.querySelectorAll('.source-ribbon span'),
+    timelineItems: document.querySelectorAll('.timeline li'),
   };
 
   function getStoredLang() {
@@ -909,70 +965,144 @@
     counters.forEach((node) => observer.observe(node));
   }
 
-  function initStarfield() {
-    const canvas = document.getElementById('star-canvas');
-    if (!canvas || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+  function initScrollProgress() {
+    if (!dom.progressBar) {
       return;
     }
 
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
+    const onScroll = () => {
+      const doc = document.documentElement;
+      const scrollTop = doc.scrollTop || document.body.scrollTop || 0;
+      const height = Math.max(doc.scrollHeight - doc.clientHeight, 1);
+      const progress = Math.min(100, Math.max(0, (scrollTop / height) * 100));
+      dom.progressBar.style.width = `${progress}%`;
+    };
 
-    let w = 0;
-    let h = 0;
-    let raf = null;
-    const stars = [];
-    const STAR_COUNT = 100;
+    let ticking = false;
+    const onScrollThrottled = () => {
+      if (ticking) return;
+      ticking = true;
+      requestAnimationFrame(() => {
+        onScroll();
+        ticking = false;
+      });
+    };
 
-    function resize() {
-      w = window.innerWidth;
-      h = window.innerHeight;
-      canvas.width = Math.max(1, Math.floor(w * window.devicePixelRatio));
-      canvas.height = Math.max(1, Math.floor(h * window.devicePixelRatio));
-      canvas.style.width = `${w}px`;
-      canvas.style.height = `${h}px`;
-      ctx.setTransform(window.devicePixelRatio, 0, 0, window.devicePixelRatio, 0, 0);
+    onScroll();
+    window.addEventListener('scroll', onScrollThrottled, { passive: true });
+    window.addEventListener('resize', onScrollThrottled);
+  }
 
-      stars.length = 0;
-      for (let i = 0; i < STAR_COUNT; i += 1) {
-        stars.push({
-          x: Math.random() * w,
-          y: Math.random() * h,
-          z: 0.2 + Math.random() * 0.8,
-          vx: -0.08 + Math.random() * 0.16,
-          vy: 0.04 + Math.random() * 0.2,
-          r: 0.4 + Math.random() * 1.8,
+  function initHeroBars() {
+    const bars = document.querySelectorAll('.lab-bar');
+    if (!bars.length) return;
+
+    const activate = () => {
+      bars.forEach((bar) => {
+        const value = Number(bar.getAttribute('data-bar') || '0');
+        const fill = bar.querySelector('.lab-bar-track i');
+        if (fill) {
+          fill.style.width = `${Math.max(0, Math.min(100, value))}%`;
+        }
+      });
+    };
+
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      activate();
+      return;
+    }
+
+    const hero = dom.heroLab;
+    if (!hero) {
+      activate();
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            activate();
+            observer.disconnect();
+          }
         });
-      }
+      },
+      { threshold: 0.25 }
+    );
+
+    observer.observe(hero);
+  }
+
+  function initHeroLabParallax() {
+    const lab = dom.heroLab;
+    if (!lab || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    const panel = lab.querySelector('.signal-card');
+    const cards = Array.from(lab.querySelectorAll('.mini-stat'));
+    if (!panel && !cards.length) {
+      return;
     }
 
-    function draw() {
-      ctx.clearRect(0, 0, w, h);
-
-      for (const star of stars) {
-        star.x += star.vx * star.z;
-        star.y += star.vy * star.z;
-
-        if (star.x < -5) star.x = w + 5;
-        if (star.x > w + 5) star.x = -5;
-        if (star.y < -5) star.y = h + 5;
-        if (star.y > h + 5) star.y = -5;
-
-        ctx.beginPath();
-        ctx.fillStyle = `rgba(255, 186, 133, ${0.24 + star.z * 0.54})`;
-        ctx.arc(star.x, star.y, star.r * star.z, 0, Math.PI * 2);
-        ctx.fill();
+    lab.addEventListener('pointermove', (event) => {
+      const rect = lab.getBoundingClientRect();
+      const x = (event.clientX - rect.left) / rect.width - 0.5;
+      const y = (event.clientY - rect.top) / rect.height - 0.5;
+      if (panel) {
+        panel.style.transform = `translate3d(${x * 14}px, ${y * 14}px, 0)`;
       }
+      cards.forEach((card, index) => {
+        const scale = index === 0 ? 1 : -1;
+        card.style.transform = `translate3d(${x * 11 * scale}px, ${y * 11 * scale}px, 0)`;
+      });
+    });
 
-      raf = requestAnimationFrame(draw);
+    lab.addEventListener('pointerleave', () => {
+      if (panel) {
+        panel.style.transform = '';
+      }
+      cards.forEach((card) => {
+        card.style.transform = '';
+      });
+    });
+  }
+
+  function initTimelineFocus() {
+    const items = Array.from(dom.timelineItems || []);
+    if (!items.length) {
+      return;
     }
 
-    window.addEventListener('resize', resize);
-    resize();
-    draw();
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          entry.target.classList.toggle('is-active', entry.isIntersecting && entry.intersectionRatio >= 0.45);
+        });
+      },
+      { threshold: [0.2, 0.45, 0.75] }
+    );
 
-    window.addEventListener('beforeunload', () => {
-      if (raf) cancelAnimationFrame(raf);
+    items.forEach((item) => observer.observe(item));
+  }
+
+  function initMagneticTargets() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+    const targets = [
+      ...Array.from(document.querySelectorAll('.hero .btn, .header-tools .btn')),
+      ...Array.from(dom.sourceChips || []),
+    ];
+    targets.forEach((target) => {
+      target.addEventListener('pointermove', (event) => {
+        const rect = target.getBoundingClientRect();
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        target.style.transform = `translate3d(${x * 7}px, ${y * 7}px, 0)`;
+      });
+      target.addEventListener('pointerleave', () => {
+        target.style.transform = '';
+      });
     });
   }
 
@@ -1113,7 +1243,11 @@
     initHeroParallax();
     initFaqAccordion();
     animateCounters();
-    initStarfield();
+    initScrollProgress();
+    initHeroBars();
+    initHeroLabParallax();
+    initTimelineFocus();
+    initMagneticTargets();
     loadConfig();
   }
 
