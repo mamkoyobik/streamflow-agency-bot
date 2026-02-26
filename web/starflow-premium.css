@@ -1,0 +1,579 @@
+/* Starflow premium redesign: clean editorial light concept */
+body[data-page='starflow'] {
+  color-scheme: light;
+  --sf-bg: #edf3f9;
+  --sf-bg-2: #e2eaf3;
+  --sf-surface: #ffffff;
+  --sf-surface-2: #f7fafd;
+  --sf-ink: #12263c;
+  --sf-muted: #53657a;
+  --sf-line: #cfdae6;
+  --sf-line-strong: #9fb2c6;
+  --sf-accent: #1f4f73;
+  --sf-accent-2: #51677f;
+  --sf-shadow: 0 24px 60px rgba(21, 42, 63, 0.12);
+  color: var(--sf-ink);
+  background:
+    radial-gradient(1200px 620px at -12% -18%, rgba(52, 95, 130, 0.24), transparent 70%),
+    radial-gradient(920px 520px at 110% -10%, rgba(84, 101, 119, 0.2), transparent 65%),
+    linear-gradient(180deg, var(--sf-bg) 0%, var(--sf-bg-2) 100%);
+}
+
+body[data-page='starflow'] .backdrop-grid,
+body[data-page='starflow'] .cursor-glow {
+  display: none;
+}
+
+body[data-page='starflow'] .backdrop-radial {
+  background:
+    radial-gradient(920px 520px at 8% 0%, rgba(31, 79, 115, 0.15), transparent 72%),
+    radial-gradient(840px 480px at 100% 8%, rgba(81, 103, 127, 0.14), transparent 70%);
+  opacity: 0.75;
+}
+
+body[data-page='starflow'] .scroll-progress {
+  background: rgba(31, 79, 115, 0.14);
+}
+
+body[data-page='starflow'] .scroll-progress span {
+  background: linear-gradient(90deg, var(--sf-accent), var(--sf-accent-2));
+  box-shadow: 0 0 16px rgba(31, 79, 115, 0.4);
+}
+
+body[data-page='starflow'] .site-loader {
+  background: rgba(236, 244, 251, 0.94);
+  backdrop-filter: blur(8px);
+}
+
+body[data-page='starflow'] .site-loader-card {
+  border: 1px solid var(--sf-line);
+  background: var(--sf-surface);
+  border-radius: 20px;
+  box-shadow: var(--sf-shadow);
+}
+
+body[data-page='starflow'] .site-loader-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.52rem;
+  font-family: 'Syne', sans-serif;
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .site-loader-brand img {
+  width: 44px;
+  height: auto;
+  border: 0;
+}
+
+body[data-page='starflow'] .site-loader-text {
+  color: var(--sf-muted);
+}
+
+body[data-page='starflow'] .lang-gate-backdrop {
+  background: rgba(238, 245, 251, 0.76);
+  backdrop-filter: blur(8px);
+}
+
+body[data-page='starflow'] .lang-gate-card {
+  border: 1px solid var(--sf-line);
+  background: var(--sf-surface);
+  color: var(--sf-ink);
+  box-shadow: var(--sf-shadow);
+}
+
+body[data-page='starflow'] .lang-gate-card > p {
+  color: var(--sf-muted);
+}
+
+body[data-page='starflow'] .lang-gate-btn {
+  background: var(--sf-surface-2);
+  border: 1px solid var(--sf-line);
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .lang-gate-btn:hover {
+  border-color: var(--sf-line-strong);
+  background: #f0f6fc;
+}
+
+body[data-page='starflow'] .skip-link {
+  border: 1px solid var(--sf-line-strong);
+  background: var(--sf-surface);
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .site-header {
+  min-height: auto;
+  border-bottom: 0;
+  background: transparent;
+  backdrop-filter: none;
+  padding: 0.84rem 0;
+}
+
+body[data-page='starflow'] .site-header .inner {
+  grid-template-columns: auto 1fr auto;
+  gap: 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid var(--sf-line);
+  border-radius: 20px;
+  padding: 0.6rem 0.75rem;
+  box-shadow: 0 14px 34px rgba(30, 53, 78, 0.12);
+}
+
+body[data-page='starflow'] .brand {
+  gap: 0.62rem;
+}
+
+body[data-page='starflow'] .brand-mark {
+  width: 32px;
+  height: auto;
+  display: block;
+  filter: drop-shadow(0 6px 12px rgba(31, 79, 115, 0.16));
+}
+
+body[data-page='starflow'] .brand-word {
+  display: inline-flex;
+  flex-direction: column;
+  line-height: 1;
+  gap: 0.12rem;
+}
+
+body[data-page='starflow'] .brand-word strong {
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .brand-word small {
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--sf-muted);
+}
+
+body[data-page='starflow'] .site-nav {
+  justify-content: center;
+  gap: 0.48rem;
+}
+
+body[data-page='starflow'] .site-nav a {
+  color: var(--sf-muted);
+  font-weight: 700;
+  border-radius: 999px;
+  padding: 0.4rem 0.7rem;
+  border: 1px solid transparent;
+}
+
+body[data-page='starflow'] .site-nav a:hover {
+  color: var(--sf-ink);
+  border-color: var(--sf-line);
+  background: #f1f6fb;
+}
+
+body[data-page='starflow'] #lang-select,
+body[data-page='starflow'] .inline-controls select,
+body[data-page='starflow'] .apply-form input {
+  border: 1px solid var(--sf-line);
+  background: #fbfdff;
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .btn {
+  border-radius: 12px;
+}
+
+body[data-page='starflow'] .btn.solid {
+  color: #f3f8fd;
+  background: linear-gradient(136deg, var(--sf-accent), var(--sf-accent-2));
+  border: 1px solid rgba(31, 79, 115, 0.24);
+}
+
+body[data-page='starflow'] .btn.ghost {
+  color: var(--sf-ink);
+  border: 1px solid var(--sf-line);
+  background: #f7fbff;
+}
+
+body[data-page='starflow'] .section {
+  padding: clamp(3.1rem, 7vw, 6rem) 0;
+}
+
+body[data-page='starflow'] .section-card::before {
+  display: none;
+}
+
+body[data-page='starflow'] .section-card {
+  position: relative;
+}
+
+body[data-page='starflow'] .section-card::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-top: 1px solid rgba(153, 173, 195, 0.24);
+  border-bottom: 1px solid rgba(153, 173, 195, 0.24);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.72), rgba(247, 251, 255, 0.65));
+}
+
+body[data-page='starflow'] .hero {
+  padding-top: clamp(2.2rem, 6vw, 4.4rem);
+}
+
+body[data-page='starflow'] .hero-layout {
+  grid-template-columns: 1.06fr 0.94fr;
+  gap: clamp(1.2rem, 3vw, 2.8rem);
+}
+
+body[data-page='starflow'] .hero-copy {
+  display: grid;
+  align-content: start;
+  gap: 0.94rem;
+}
+
+body[data-page='starflow'] .eyebrow {
+  color: #3f6182;
+}
+
+body[data-page='starflow'] .hero-copy h1 {
+  margin: 0;
+  color: #0f2237;
+  font-size: clamp(2.2rem, 5.5vw, 4.6rem);
+  line-height: 0.93;
+  text-wrap: pretty;
+}
+
+body[data-page='starflow'] .hero-lead,
+body[data-page='starflow'] .hero-points li,
+body[data-page='starflow'] .hero-stage-head p,
+body[data-page='starflow'] .signal-topline span,
+body[data-page='starflow'] .partner-card p,
+body[data-page='starflow'] .glass p,
+body[data-page='starflow'] .glass li,
+body[data-page='starflow'] .metric-label,
+body[data-page='starflow'] .apply-copy p,
+body[data-page='starflow'] .faq-panel p,
+body[data-page='starflow'] .calc-note,
+body[data-page='starflow'] .fit-lead,
+body[data-page='starflow'] .fit-result p,
+body[data-page='starflow'] .playbook-panel ul,
+body[data-page='starflow'] .source-ribbon span,
+body[data-page='starflow'] .next-actions p,
+body[data-page='starflow'] .footer-inner {
+  color: var(--sf-muted);
+}
+
+body[data-page='starflow'] .hero-points li::before {
+  background: linear-gradient(130deg, var(--sf-accent), var(--sf-accent-2));
+}
+
+body[data-page='starflow'] .source-ribbon span {
+  background: rgba(255, 255, 255, 0.88);
+  border-color: var(--sf-line);
+  color: #334b61;
+}
+
+body[data-page='starflow'] .source-ribbon span:hover {
+  border-color: #9db2c8;
+  background: #f7fbff;
+}
+
+body[data-page='starflow'] .hero-stage,
+body[data-page='starflow'] .signal-card,
+body[data-page='starflow'] .mini-stat,
+body[data-page='starflow'] .metrics-grid article,
+body[data-page='starflow'] .partner-card,
+body[data-page='starflow'] .notice,
+body[data-page='starflow'] .fit-card,
+body[data-page='starflow'] .fit-check,
+body[data-page='starflow'] .fit-result,
+body[data-page='starflow'] .glass,
+body[data-page='starflow'] .playbook-box,
+body[data-page='starflow'] .playbook-panel,
+body[data-page='starflow'] .calc-controls,
+body[data-page='starflow'] .calc-results,
+body[data-page='starflow'] .calc-results article,
+body[data-page='starflow'] .timeline li,
+body[data-page='starflow'] .faq-item,
+body[data-page='starflow'] .apply-form,
+body[data-page='starflow'] .next-actions,
+body[data-page='starflow'] .proof-strip,
+body[data-page='starflow'] .lang-gate-card {
+  border: 1px solid var(--sf-line);
+  background: var(--sf-surface);
+  box-shadow: 0 16px 36px rgba(29, 53, 78, 0.08);
+}
+
+body[data-page='starflow'] .hero-stage {
+  border-radius: 28px;
+  overflow: hidden;
+}
+
+body[data-page='starflow'] .hero-stage-head {
+  border-bottom: 1px solid var(--sf-line);
+}
+
+body[data-page='starflow'] .hero-stage-head strong,
+body[data-page='starflow'] .signal-value,
+body[data-page='starflow'] .metric-num,
+body[data-page='starflow'] .section-head h2,
+body[data-page='starflow'] .partner-card h3,
+body[data-page='starflow'] .glass h3,
+body[data-page='starflow'] .playbook-panel h3,
+body[data-page='starflow'] .apply-copy h2,
+body[data-page='starflow'] .timeline li p,
+body[data-page='starflow'] .faq-trigger,
+body[data-page='starflow'] .fit-result strong,
+body[data-page='starflow'] .calc-read strong,
+body[data-page='starflow'] .calc-results article strong,
+body[data-page='starflow'] .lab-bar-head strong,
+body[data-page='starflow'] .lab-bar-head,
+body[data-page='starflow'] .signal-topline,
+body[data-page='starflow'] .site-loader-brand {
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .partner-no {
+  color: #88a0b8;
+}
+
+body[data-page='starflow'] .signal-topline i {
+  background: var(--sf-accent);
+  box-shadow: 0 0 0 6px rgba(31, 79, 115, 0.14);
+}
+
+body[data-page='starflow'] .lab-bar-track {
+  background: #dce7f1;
+}
+
+body[data-page='starflow'] .lab-bar-track i {
+  background: linear-gradient(90deg, var(--sf-accent), var(--sf-accent-2));
+}
+
+body[data-page='starflow'] .proof-track span {
+  border-color: var(--sf-line);
+  background: #f5f9fd;
+  color: #3f556b;
+}
+
+body[data-page='starflow'] .notice {
+  background: linear-gradient(135deg, #f5f9fd, #edf4fb);
+}
+
+body[data-page='starflow'] .fit-check {
+  background: #f8fbfe;
+}
+
+body[data-page='starflow'] .fit-check span {
+  color: #3a5269;
+}
+
+body[data-page='starflow'] .fit-check input {
+  accent-color: var(--sf-accent);
+}
+
+body[data-page='starflow'] [data-fit-status] {
+  color: #3e5770;
+}
+
+body[data-page='starflow'] [data-fit-status][data-level='high'] {
+  color: #2f6a93;
+}
+
+body[data-page='starflow'] [data-fit-status][data-level='mid'] {
+  color: #9c7a2a;
+}
+
+body[data-page='starflow'] [data-fit-status][data-level='low'] {
+  color: #b13b5d;
+}
+
+body[data-page='starflow'] .playbook-tab {
+  border: 1px solid var(--sf-line);
+  background: #f4f9fd;
+  color: #3b546b;
+}
+
+body[data-page='starflow'] .playbook-tab.is-active {
+  border-color: #9ab3ca;
+  background: #eaf2fb;
+  color: #18324d;
+}
+
+body[data-page='starflow'] .calc-controls input[type='range'] {
+  background: #d2dfeb;
+}
+
+body[data-page='starflow'] .calc-controls input[type='range']::-webkit-slider-thumb,
+body[data-page='starflow'] .calc-controls input[type='range']::-moz-range-thumb {
+  border-color: rgba(16, 37, 55, 0.28);
+  background: linear-gradient(120deg, var(--sf-accent), var(--sf-accent-2));
+}
+
+body[data-page='starflow'] .timeline li::after {
+  background: linear-gradient(var(--sf-accent), transparent);
+}
+
+body[data-page='starflow'] .timeline li span {
+  border-color: #afc2d6;
+  color: var(--sf-accent);
+  background: #f7fbff;
+}
+
+body[data-page='starflow'] .timeline li.is-active {
+  border-color: #9fb5cb;
+  background: #f0f7ff;
+}
+
+body[data-page='starflow'] .faq-trigger {
+  color: var(--sf-ink);
+}
+
+body[data-page='starflow'] .faq-chevron::before,
+body[data-page='starflow'] .faq-chevron::after {
+  background: #2d5f87;
+}
+
+body[data-page='starflow'] .faq-subtitle {
+  color: #27435f !important;
+}
+
+body[data-page='starflow'] .faq-panel ul,
+body[data-page='starflow'] .apply-hints {
+  color: #3f576e;
+}
+
+body[data-page='starflow'] .faq-item.is-open {
+  border-color: #9db4ca;
+}
+
+body[data-page='starflow'] .apply-form label span {
+  color: #253e59;
+}
+
+body[data-page='starflow'] .apply-form input:focus,
+body[data-page='starflow'] .inline-controls select:focus,
+body[data-page='starflow'] .faq-trigger:focus-visible,
+body[data-page='starflow'] :focus-visible {
+  outline-color: rgba(58, 102, 138, 0.54);
+}
+
+body[data-page='starflow'] .form-status {
+  color: #3d5872;
+}
+
+body[data-page='starflow'] .form-status.error {
+  color: #b33a60;
+}
+
+body[data-page='starflow'] .form-status.success {
+  color: #2c6791;
+}
+
+body[data-page='starflow'] .site-footer {
+  border-top: 1px solid rgba(129, 153, 178, 0.32);
+}
+
+body[data-page='starflow'] .mobile-cta {
+  border-top: 1px solid rgba(129, 153, 178, 0.35);
+  background: rgba(245, 250, 255, 0.95);
+  backdrop-filter: blur(10px);
+}
+
+body[data-page='starflow'] .reveal {
+  transition-duration: 0.72s;
+}
+
+@media (max-width: 1120px) {
+  body[data-page='starflow'] .site-header .inner {
+    grid-template-columns: 1fr;
+    justify-items: start;
+  }
+
+  body[data-page='starflow'] .site-nav {
+    justify-content: flex-start;
+  }
+
+  body[data-page='starflow'] .hero-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 900px) {
+  body[data-page='starflow'] .hero-stage {
+    display: block;
+  }
+
+  body[data-page='starflow'] .proof-section {
+    display: block;
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-page='starflow'] {
+    background: linear-gradient(180deg, #eaf1f8 0%, #dce7f2 100%);
+  }
+
+  body[data-page='starflow'] .site-header {
+    padding: 0.58rem 0;
+  }
+
+  body[data-page='starflow'] .site-header .inner {
+    padding: 0.56rem 0.54rem;
+    border-radius: 14px;
+  }
+
+  body[data-page='starflow'] .brand-word strong {
+    font-size: 0.96rem;
+  }
+
+  body[data-page='starflow'] .brand-word small {
+    font-size: 0.66rem;
+  }
+
+  body[data-page='starflow'] .header-tools .btn.ghost {
+    display: inline-flex;
+  }
+
+  body[data-page='starflow'] .hero {
+    padding-top: 1.5rem;
+  }
+
+  body[data-page='starflow'] .hero-copy h1 {
+    font-size: clamp(1.82rem, 9.6vw, 2.9rem);
+  }
+
+  body[data-page='starflow'] .source-ribbon {
+    display: flex;
+  }
+
+  body[data-page='starflow'] .hero-points {
+    display: grid;
+  }
+
+  body[data-page='starflow'] .hero-stage,
+  body[data-page='starflow'] .fit-card,
+  body[data-page='starflow'] .playbook-box,
+  body[data-page='starflow'] .calc-controls,
+  body[data-page='starflow'] .calc-results,
+  body[data-page='starflow'] .apply-form,
+  body[data-page='starflow'] .faq-item,
+  body[data-page='starflow'] .partner-card,
+  body[data-page='starflow'] .glass,
+  body[data-page='starflow'] .timeline li {
+    border-radius: 14px;
+    padding: 0.82rem;
+  }
+
+  body[data-page='starflow'] .mobile-cta {
+    background: rgba(245, 250, 255, 0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  body[data-page='starflow'] .reveal {
+    transition: none !important;
+  }
+}
