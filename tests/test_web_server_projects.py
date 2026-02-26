@@ -97,6 +97,26 @@ class WebServerProjectTests(unittest.TestCase):
             web_server.SITE_URL = original_site
             web_server.STARFLOW_SITE_URL = original_star_site
 
+    def test_request_host_from_headers_prefers_public_host(self):
+        original_site = web_server.SITE_URL
+        original_star_site = web_server.STARFLOW_SITE_URL
+        try:
+            web_server.SITE_URL = "https://streamflowagency.com"
+            web_server.STARFLOW_SITE_URL = "https://starflowinc.com"
+            host = web_server.request_host_from_headers(
+                "starflowinc.com",
+                "tqmax4l.up.railway.app",
+            )
+            self.assertEqual(host, "starflowinc.com")
+        finally:
+            web_server.SITE_URL = original_site
+            web_server.STARFLOW_SITE_URL = original_star_site
+
+    def test_internal_proxy_host_detection(self):
+        self.assertTrue(web_server.is_internal_proxy_host("internal.railway.internal"))
+        self.assertTrue(web_server.is_internal_proxy_host("tqmax4l.up.railway.app"))
+        self.assertFalse(web_server.is_internal_proxy_host("streamflowagency.com"))
+
 
 if __name__ == "__main__":
     unittest.main()

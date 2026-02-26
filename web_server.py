@@ -793,6 +793,7 @@ def _host_aliases(host: str) -> set[str]:
 
 
 CANONICAL_HOST = _host_from_url(SITE_URL)
+RAILWAY_INTERNAL_SUFFIXES = (".railway.internal", ".up.railway.app")
 
 
 def canonical_public_hosts() -> set[str]:
@@ -835,6 +836,24 @@ def canonical_site_url_for_host(host: str | None) -> str:
     if target:
         return target
     return SITE_URL
+
+
+def is_internal_proxy_host(host: str | None) -> bool:
+    normalized = normalize_host(host)
+    if not normalized:
+        return False
+    return normalized.endswith(RAILWAY_INTERNAL_SUFFIXES)
+
+
+def request_host_from_headers(host_header: str | None, forwarded_host_header: str | None) -> str:
+    direct = normalize_host(host_header)
+    forwarded = normalize_host(forwarded_host_header)
+    allowed = canonical_public_hosts()
+    # Prefer explicit public host from client-facing Host header.
+    for candidate in (direct, forwarded):
+        if candidate and candidate in allowed:
+            return candidate
+    return direct or forwarded
 
 def site_lead_setting_key(token: str) -> str:
     return f"{SITE_LEAD_TOKEN_PREFIX}{token}"
@@ -3166,10 +3185,10 @@ class Handler(SimpleHTTPRequestHandler):
             pass
 
     def _request_host(self) -> str:
-        forwarded = normalize_host(self.headers.get("X-Forwarded-Host"))
-        if forwarded:
-            return forwarded
-        return normalize_host(self.headers.get("Host"))
+        return request_host_from_headers(
+            self.headers.get("Host"),
+            self.headers.get("X-Forwarded-Host"),
+        )
 
     def _should_redirect_to_canonical(self) -> bool:
         allowed_hosts = canonical_public_hosts()
@@ -3182,7 +3201,7 @@ class Handler(SimpleHTTPRequestHandler):
             return False
         if host in {"127.0.0.1", "0.0.0.0", "localhost"}:
             return False
-        if host.endswith(".railway.internal"):
+        if is_internal_proxy_host(host):
             return False
         return True
 
