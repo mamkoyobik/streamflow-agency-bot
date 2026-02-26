@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260210-02">
+  <link rel="stylesheet" href="styles.css?v=20260226-01">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -150,7 +150,9 @@
 
   <main class="page">
     <section class="hero">
+      <canvas class="hero-dust" id="hero-dust" aria-hidden="true"></canvas>
       <div class="liquid-ether-bg" aria-hidden="true"></div>
+      <div class="hero-gridline" aria-hidden="true"></div>
       <div class="gradual-blur gradual-blur-top" aria-hidden="true"></div>
       <div class="gradual-blur gradual-blur-bottom" aria-hidden="true"></div>
       <div class="container hero-grid">
@@ -161,12 +163,43 @@
             Спокойный старт, ясные шаги и поддержка команды на каждом этапе.
             Без спешки, без давления, с понятной коммуникацией.
           </p>
+
+          <div class="hero-metrics" aria-label="Streamflow metrics">
+            <article class="hero-metric">
+              <strong>5+</strong>
+              <span data-i18n="hero.metric1">лет опыта команды</span>
+            </article>
+            <article class="hero-metric">
+              <strong>24h</strong>
+              <span data-i18n="hero.metric2">до первого ответа</span>
+            </article>
+            <article class="hero-metric">
+              <strong>1:1</strong>
+              <span data-i18n="hero.metric3">персональное сопровождение</span>
+            </article>
+          </div>
+
+          <div class="hero-tags">
+            <span data-i18n="hero.tag1">Без давления</span>
+            <span data-i18n="hero.tag2">Прозрачные шаги</span>
+            <span data-i18n="hero.tag3">Поддержка 1:1</span>
+          </div>
+
           <div class="hero-actions">
             <a class="btn btn-primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
             <a class="btn btn-telegram" data-telegram-link href="https://t.me/streamflowagency" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram канал</a>
           </div>
         </div>
         <div class="hero-media reveal">
+          <div class="hero-orbit" aria-hidden="true">
+            <span class="orbit-chip chip-a" data-i18n="hero.float1">Live onboarding</span>
+            <span class="orbit-chip chip-b" data-i18n="hero.float2">Личный менеджер</span>
+            <span class="orbit-chip chip-c" data-i18n="hero.float3">Безопасный старт</span>
+          </div>
+          <div class="hero-media-head">
+            <strong data-i18n="hero.noteTitle">Плавный вход в работу</strong>
+            <span data-i18n="hero.noteText">Форма -> мессенджер -> менеджер ведёт тебя по шагам</span>
+          </div>
           <div class="carousel" data-carousel>
             <div class="carousel-viewport">
               <div class="carousel-track">
@@ -196,6 +229,9 @@
             </div>
           </div>
         </div>
+      </div>
+      <div class="hero-scroll-hint" aria-hidden="true">
+        <span></span>
       </div>
     </section>
 
@@ -590,6 +626,6 @@
 
   
 
-  <script src="app.js?v=20260221-06"></script>
+  <script src="app.js?v=20260226-01"></script>
 </body>
 </html>

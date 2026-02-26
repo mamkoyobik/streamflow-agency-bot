@@ -154,6 +154,17 @@ const I18N = {
     'hero.card3Text': 'Команда рядом на каждом шаге.',
     'hero.card4Title': 'Уверенность',
     'hero.card4Text': 'Спокойный рост без давления и стресса.',
+    'hero.metric1': 'лет опыта команды',
+    'hero.metric2': 'до первого ответа',
+    'hero.metric3': 'персональное сопровождение',
+    'hero.tag1': 'Без давления',
+    'hero.tag2': 'Прозрачные шаги',
+    'hero.tag3': 'Поддержка 1:1',
+    'hero.float1': 'Live onboarding',
+    'hero.float2': 'Личный менеджер',
+    'hero.float3': 'Безопасный старт',
+    'hero.noteTitle': 'Плавный вход в работу',
+    'hero.noteText': 'Форма -> мессенджер -> менеджер ведёт тебя по шагам',
     'trust.supportTitle': 'Персональная поддержка старта',
     'trust.supportText': 'Каждую анкету ведёт менеджер и даёт обратную связь по шагам.',
     'trust.communicationTitle': 'Прозрачная коммуникация',
@@ -294,6 +305,17 @@ const I18N = {
     'hero.card3Text': 'The team is near on every step.',
     'hero.card4Title': 'Confidence',
     'hero.card4Text': 'Steady growth without stress.',
+    'hero.metric1': 'years of team experience',
+    'hero.metric2': 'to first response',
+    'hero.metric3': 'personal support format',
+    'hero.tag1': 'No pressure',
+    'hero.tag2': 'Transparent steps',
+    'hero.tag3': '1:1 support',
+    'hero.float1': 'Live onboarding',
+    'hero.float2': 'Personal manager',
+    'hero.float3': 'Safe start',
+    'hero.noteTitle': 'Smooth onboarding flow',
+    'hero.noteText': 'Form -> messenger -> manager guides every step',
     'trust.supportTitle': 'Personal launch support',
     'trust.supportText': 'Every profile is handled by a manager with clear feedback.',
     'trust.communicationTitle': 'Transparent communication',
@@ -434,6 +456,17 @@ const I18N = {
     'hero.card3Text': 'A equipe está ao seu lado em cada etapa.',
     'hero.card4Title': 'Confiança',
     'hero.card4Text': 'Crescimento estável sem estresse.',
+    'hero.metric1': 'anos de experiência da equipe',
+    'hero.metric2': 'até a primeira resposta',
+    'hero.metric3': 'suporte pessoal',
+    'hero.tag1': 'Sem pressão',
+    'hero.tag2': 'Etapas transparentes',
+    'hero.tag3': 'Suporte 1:1',
+    'hero.float1': 'Live onboarding',
+    'hero.float2': 'Gerente pessoal',
+    'hero.float3': 'Início seguro',
+    'hero.noteTitle': 'Entrada suave no trabalho',
+    'hero.noteText': 'Formulário -> mensageiro -> gerente acompanha cada etapa',
     'trust.supportTitle': 'Suporte pessoal no início',
     'trust.supportText': 'Cada candidatura é acompanhada por um gerente.',
     'trust.communicationTitle': 'Comunicação transparente',
@@ -574,6 +607,17 @@ const I18N = {
     'hero.card3Text': 'El equipo está contigo en cada paso.',
     'hero.card4Title': 'Confianza',
     'hero.card4Text': 'Crecimiento estable sin estrés.',
+    'hero.metric1': 'años de experiencia del equipo',
+    'hero.metric2': 'hasta la primera respuesta',
+    'hero.metric3': 'acompañamiento personal',
+    'hero.tag1': 'Sin presión',
+    'hero.tag2': 'Pasos transparentes',
+    'hero.tag3': 'Soporte 1:1',
+    'hero.float1': 'Live onboarding',
+    'hero.float2': 'Manager personal',
+    'hero.float3': 'Inicio seguro',
+    'hero.noteTitle': 'Entrada suave al trabajo',
+    'hero.noteText': 'Formulario -> mensajería -> manager guía cada paso',
     'trust.supportTitle': 'Soporte personal de inicio',
     'trust.supportText': 'Cada solicitud la revisa un manager con feedback claro.',
     'trust.communicationTitle': 'Comunicación transparente',
@@ -847,6 +891,153 @@ function initHeroParallax() {
 }
 
 initHeroParallax();
+
+function initHeroMediaTilt() {
+  if (prefersReduced) return;
+  if (window.matchMedia('(max-width: 980px)').matches) return;
+
+  const hero = document.querySelector('.hero');
+  const media = document.querySelector('.hero-media');
+  if (!hero || !media) return;
+
+  let targetX = 0;
+  let targetY = 0;
+  let currentX = 0;
+  let currentY = 0;
+
+  const render = () => {
+    currentX += (targetX - currentX) * 0.12;
+    currentY += (targetY - currentY) * 0.12;
+    media.style.transform = `perspective(1200px) rotateY(${currentX}deg) rotateX(${currentY}deg)`;
+    requestAnimationFrame(render);
+  };
+
+  hero.addEventListener('pointermove', (event) => {
+    const rect = media.getBoundingClientRect();
+    const nx = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1;
+    targetX = Math.max(-5.5, Math.min(5.5, nx * 5.5));
+    targetY = Math.max(-4.2, Math.min(4.2, -ny * 4.2));
+  });
+
+  hero.addEventListener('pointerleave', () => {
+    targetX = 0;
+    targetY = 0;
+  });
+
+  render();
+}
+
+initHeroMediaTilt();
+
+function initHeroDust() {
+  const hero = document.querySelector('.hero');
+  const canvas = document.getElementById('hero-dust');
+  if (!hero || !canvas || prefersReduced) return;
+
+  const ctx = canvas.getContext('2d');
+  if (!ctx) return;
+
+  let width = 0;
+  let height = 0;
+  let dpr = 1;
+  let frameId = 0;
+  let driftX = 0;
+  let driftY = 0;
+  let particles = [];
+
+  function createParticle() {
+    return {
+      x: Math.random() * width,
+      y: Math.random() * height,
+      vx: -0.15 + Math.random() * 0.3,
+      vy: -0.1 + Math.random() * 0.2,
+      r: 0.6 + Math.random() * 1.8,
+      alpha: 0.3 + Math.random() * 0.7,
+    };
+  }
+
+  function resize() {
+    const rect = hero.getBoundingClientRect();
+    width = Math.max(1, Math.round(rect.width));
+    height = Math.max(1, Math.round(rect.height));
+    dpr = Math.min(2, window.devicePixelRatio || 1);
+
+    canvas.width = Math.max(1, Math.floor(width * dpr));
+    canvas.height = Math.max(1, Math.floor(height * dpr));
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+
+    const targetCount = Math.max(36, Math.round((width * height) / 26000));
+    particles = Array.from({ length: targetCount }, createParticle);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, width, height);
+    const offsetX = driftX * 8;
+    const offsetY = driftY * 8;
+
+    for (let i = 0; i < particles.length; i += 1) {
+      const p = particles[i];
+      p.x += p.vx;
+      p.y += p.vy;
+
+      if (p.x < -8) p.x = width + 8;
+      if (p.x > width + 8) p.x = -8;
+      if (p.y < -8) p.y = height + 8;
+      if (p.y > height + 8) p.y = -8;
+
+      ctx.beginPath();
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.14 + p.alpha * 0.42})`;
+      ctx.arc(p.x + offsetX, p.y + offsetY, p.r, 0, Math.PI * 2);
+      ctx.fill();
+    }
+
+    for (let i = 0; i < particles.length; i += 1) {
+      for (let j = i + 1; j < particles.length; j += 1) {
+        const a = particles[i];
+        const b = particles[j];
+        const dx = a.x - b.x;
+        const dy = a.y - b.y;
+        const dist = Math.hypot(dx, dy);
+        if (dist > 120) continue;
+        const alpha = (1 - dist / 120) * 0.22;
+        ctx.strokeStyle = `rgba(255, 124, 195, ${alpha})`;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(a.x + offsetX, a.y + offsetY);
+        ctx.lineTo(b.x + offsetX, b.y + offsetY);
+        ctx.stroke();
+      }
+    }
+
+    frameId = requestAnimationFrame(draw);
+  }
+
+  hero.addEventListener('pointermove', (event) => {
+    const rect = hero.getBoundingClientRect();
+    const nx = ((event.clientX - rect.left) / Math.max(rect.width, 1)) * 2 - 1;
+    const ny = ((event.clientY - rect.top) / Math.max(rect.height, 1)) * 2 - 1;
+    driftX = Math.max(-1, Math.min(1, nx));
+    driftY = Math.max(-1, Math.min(1, ny));
+  });
+
+  hero.addEventListener('pointerleave', () => {
+    driftX = 0;
+    driftY = 0;
+  });
+
+  window.addEventListener('resize', resize);
+  resize();
+  draw();
+
+  window.addEventListener('beforeunload', () => {
+    if (frameId) cancelAnimationFrame(frameId);
+  });
+}
+
+initHeroDust();
 
 function initLiquidEtherBackground() {
   const layer = document.querySelector('.liquid-ether-bg');
@@ -1162,6 +1353,9 @@ carousels.forEach((carousel) => {
   let startScrollLeft = 0;
 
   function setActive(index) {
+    slides.forEach((slide, idx) => {
+      slide.classList.toggle('is-current', idx === index);
+    });
     if (!dots.length) return;
     dots.forEach((dot, idx) => dot.classList.toggle('is-active', idx === index));
   }
