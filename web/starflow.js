@@ -5,6 +5,7 @@
   const SUPPORTED_LANGS = ['ru', 'en', 'pt', 'es'];
   const DEFAULT_LANG = 'ru';
   const PROJECT_KEY = 'starflow_corp';
+  const ALWAYS_SHOW_LANG_GATE = true;
 
   const I18N = {
     ru: {
@@ -863,7 +864,7 @@
       });
     });
 
-    if (!state.hasStoredLang) {
+    if (ALWAYS_SHOW_LANG_GATE || !state.hasStoredLang) {
       openLangGate();
     }
   }

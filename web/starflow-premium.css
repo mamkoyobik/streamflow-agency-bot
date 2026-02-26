@@ -5,8 +5,8 @@ body[data-page='starflow'] {
   --sf-bg-2: #e2eaf3;
   --sf-surface: #ffffff;
   --sf-surface-2: #f7fafd;
-  --sf-ink: #12263c;
-  --sf-muted: #53657a;
+  --sf-ink: #10263d;
+  --sf-muted: #42596f;
   --sf-line: #cfdae6;
   --sf-line-strong: #9fb2c6;
   --sf-accent: #1f4f73;
@@ -61,9 +61,10 @@ body[data-page='starflow'] .site-loader-brand {
 }
 
 body[data-page='starflow'] .site-loader-brand img {
-  width: 44px;
+  width: 40px;
   height: auto;
   border: 0;
+  object-fit: contain;
 }
 
 body[data-page='starflow'] .site-loader-text {
@@ -126,9 +127,12 @@ body[data-page='starflow'] .brand {
 }
 
 body[data-page='starflow'] .brand-mark {
-  width: 32px;
+  width: 38px;
+  aspect-ratio: 1 / 1;
   height: auto;
   display: block;
+  object-fit: contain;
+  overflow: visible;
   filter: drop-shadow(0 6px 12px rgba(31, 79, 115, 0.16));
 }
 
@@ -159,7 +163,7 @@ body[data-page='starflow'] .site-nav {
 }
 
 body[data-page='starflow'] .site-nav a {
-  color: var(--sf-muted);
+  color: #35516b;
   font-weight: 700;
   border-radius: 999px;
   padding: 0.4rem 0.7rem;
@@ -167,7 +171,7 @@ body[data-page='starflow'] .site-nav a {
 }
 
 body[data-page='starflow'] .site-nav a:hover {
-  color: var(--sf-ink);
+  color: #14324d;
   border-color: var(--sf-line);
   background: #f1f6fb;
 }
@@ -239,7 +243,7 @@ body[data-page='starflow'] .eyebrow {
 
 body[data-page='starflow'] .hero-copy h1 {
   margin: 0;
-  color: #0f2237;
+  color: #0d253c;
   font-size: clamp(2.2rem, 5.5vw, 4.6rem);
   line-height: 0.93;
   text-wrap: pretty;
@@ -308,11 +312,15 @@ body[data-page='starflow'] .lang-gate-card {
 
 body[data-page='starflow'] .hero-stage {
   border-radius: 28px;
-  overflow: hidden;
+  overflow: visible;
 }
 
 body[data-page='starflow'] .hero-stage-head {
   border-bottom: 1px solid var(--sf-line);
+}
+
+body[data-page='starflow'] .hero-stage-head strong {
+  color: #244360;
 }
 
 body[data-page='starflow'] .hero-stage-head strong,
@@ -344,6 +352,82 @@ body[data-page='starflow'] .signal-topline i {
   box-shadow: 0 0 0 6px rgba(31, 79, 115, 0.14);
 }
 
+body[data-page='starflow'] .signal-summary {
+  margin: 0.36rem 0 0;
+  color: #3b536a;
+}
+
+body[data-page='starflow'] .signal-snapshot .snapshot-grid {
+  margin-top: 0.72rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.48rem;
+}
+
+body[data-page='starflow'] .signal-snapshot .snapshot-grid article {
+  border: 1px solid #d4e0eb;
+  border-radius: 12px;
+  background: #f7fbff;
+  padding: 0.52rem;
+  display: grid;
+  gap: 0.25rem;
+}
+
+body[data-page='starflow'] .signal-snapshot .snapshot-grid strong {
+  font-family: 'Syne', sans-serif;
+  font-size: 0.95rem;
+  color: #183a59;
+}
+
+body[data-page='starflow'] .signal-snapshot .snapshot-grid span {
+  color: #476079;
+  font-size: 0.74rem;
+  line-height: 1.35;
+}
+
+body[data-page='starflow'] .hero-roadmap {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: grid;
+  gap: 0.42rem;
+}
+
+body[data-page='starflow'] .hero-roadmap li {
+  border: 1px solid #d4e0eb;
+  border-radius: 12px;
+  background: #f8fbff;
+  padding: 0.56rem 0.62rem;
+  display: grid;
+  grid-template-columns: 34px 1fr;
+  align-items: start;
+  gap: 0.5rem;
+}
+
+body[data-page='starflow'] .hero-roadmap li span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  font-family: 'Syne', sans-serif;
+  font-size: 0.68rem;
+  color: #1a3f62;
+  border: 1px solid #acc2d7;
+  background: #f4f9ff;
+}
+
+body[data-page='starflow'] .hero-roadmap li p {
+  margin: 0;
+  color: #3f5a74;
+  font-size: 0.79rem;
+  line-height: 1.38;
+}
+
+body[data-page='starflow'] .stage-grid-cards {
+  gap: 0.58rem;
+}
+
 body[data-page='starflow'] .lab-bar-track {
   background: #dce7f1;
 }
@@ -367,7 +451,7 @@ body[data-page='starflow'] .fit-check {
 }
 
 body[data-page='starflow'] .fit-check span {
-  color: #3a5269;
+  color: #334f68;
 }
 
 body[data-page='starflow'] .fit-check input {
@@ -393,7 +477,7 @@ body[data-page='starflow'] [data-fit-status][data-level='low'] {
 body[data-page='starflow'] .playbook-tab {
   border: 1px solid var(--sf-line);
   background: #f4f9fd;
-  color: #3b546b;
+  color: #2e4d69;
 }
 
 body[data-page='starflow'] .playbook-tab.is-active {
@@ -442,7 +526,7 @@ body[data-page='starflow'] .faq-subtitle {
 
 body[data-page='starflow'] .faq-panel ul,
 body[data-page='starflow'] .apply-hints {
-  color: #3f576e;
+  color: #33506b;
 }
 
 body[data-page='starflow'] .faq-item.is-open {
@@ -533,6 +617,10 @@ body[data-page='starflow'] .reveal {
     font-size: 0.66rem;
   }
 
+  body[data-page='starflow'] .brand-mark {
+    width: 36px;
+  }
+
   body[data-page='starflow'] .header-tools .btn.ghost {
     display: inline-flex;
   }
@@ -543,6 +631,14 @@ body[data-page='starflow'] .reveal {
 
   body[data-page='starflow'] .hero-copy h1 {
     font-size: clamp(1.82rem, 9.6vw, 2.9rem);
+  }
+
+  body[data-page='starflow'] .signal-snapshot .snapshot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  body[data-page='starflow'] .hero-roadmap li {
+    grid-template-columns: 30px 1fr;
   }
 
   body[data-page='starflow'] .source-ribbon {
