@@ -1411,3 +1411,137 @@ body.is-loading .site-loader {
     display: none;
   }
 }
+
+/* Style refresh: less transparency + cleaner mobile */
+body {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(90, 140, 255, 0.13), transparent 34%),
+    linear-gradient(160deg, #070d14 0%, #0a121d 48%, #0d1623 100%);
+}
+
+.backdrop-radial {
+  opacity: 0.68;
+}
+
+.backdrop-grid,
+.cursor-glow {
+  opacity: 0.08;
+}
+
+.site-header {
+  backdrop-filter: none;
+  background: #0a111b;
+}
+
+.hero-stage,
+.signal-card,
+.mini-stat,
+.metrics-grid article,
+.partner-card,
+.notice,
+.fit-card,
+.fit-check,
+.fit-result,
+.glass,
+.playbook-box,
+.playbook-panel,
+.calc-controls,
+.calc-results,
+.calc-results article,
+.timeline li,
+.faq-item,
+.apply-form,
+.next-actions,
+.site-loader-card,
+.lang-gate-card {
+  background: #111b2a;
+}
+
+.hero-stage,
+.fit-card,
+.glass,
+.playbook-box,
+.apply-form,
+.calc-controls,
+.calc-results,
+.timeline li,
+.faq-item,
+.partner-card,
+.notice,
+.metrics-grid article {
+  border-color: rgba(129, 159, 192, 0.38);
+}
+
+.hero-points li,
+.timeline li p,
+.faq-panel ul,
+.apply-hints,
+.hero-stage-head p,
+.signal-topline span,
+.partner-card p,
+.glass p,
+.glass li {
+  color: rgba(224, 237, 252, 0.92);
+}
+
+@media (max-width: 900px) {
+  .hero-stage {
+    display: none;
+  }
+
+  .proof-section {
+    display: none;
+  }
+
+  .section {
+    padding: clamp(2.6rem, 6.5vw, 4rem) 0;
+  }
+}
+
+@media (max-width: 760px) {
+  .backdrop-grid,
+  .cursor-glow {
+    display: none;
+  }
+
+  .header-tools .btn.ghost {
+    display: none;
+  }
+
+  .hero-points,
+  .source-ribbon {
+    display: none;
+  }
+
+  .section-head {
+    margin-bottom: 0.95rem;
+  }
+
+  .section-head h2 {
+    font-size: clamp(1.34rem, 7vw, 2rem);
+  }
+
+  .partner-card,
+  .glass,
+  .timeline li,
+  .faq-item,
+  .apply-form,
+  .calc-controls,
+  .calc-results,
+  .fit-card,
+  .playbook-box {
+    border-radius: 14px;
+    padding: 0.82rem;
+  }
+
+  .mobile-cta {
+    background: #0a111b;
+    backdrop-filter: none;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

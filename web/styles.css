@@ -4233,3 +4233,117 @@ body[data-page="home"] .carousel-dot.is-active {
     left: 0.7rem;
   }
 }
+
+/* Style refresh: less glass + mobile declutter */
+.site-header {
+  backdrop-filter: none;
+  background: #100c14;
+}
+
+body[data-page="home"] .hero-media,
+.trust-item,
+.offer-item,
+.income-card,
+.steps-item,
+.portfolio-block,
+.form-card,
+.readiness-grid,
+.planner-grid,
+.readiness-item,
+.readiness-score,
+.planner-result {
+  background: #1a151f;
+}
+
+.offer-item,
+.income-card,
+.steps-item,
+.portfolio-block,
+.form-card,
+.trust-item,
+.readiness-grid,
+.planner-grid {
+  border-color: rgba(255, 255, 255, 0.14);
+}
+
+body[data-page="home"] .hero-media,
+.readiness-grid,
+.planner-grid,
+.readiness-score,
+.planner-result,
+.form-card {
+  box-shadow: none;
+}
+
+body[data-page="home"] .hero-media::after {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+@media (max-width: 900px) {
+  .grain,
+  body[data-page="home"] .hero-ambient,
+  body[data-page="home"] .liquid-ether-bg {
+    display: none;
+  }
+
+  body[data-page="home"] .hero-media {
+    padding: 10px;
+    border-radius: 16px;
+  }
+}
+
+@media (max-width: 760px) {
+  body[data-page="home"] .hero {
+    padding-top: 120px;
+  }
+
+  body[data-page="home"] .hero-grid {
+    gap: 14px;
+  }
+
+  body[data-page="home"] .hero-text h1 {
+    font-size: clamp(1.75rem, 8.4vw, 2.35rem);
+    margin-bottom: 0.7rem;
+  }
+
+  body[data-page="home"] .hero-lead {
+    font-size: 0.95rem;
+    line-height: 1.5;
+  }
+
+  body[data-page="home"] .hero-media {
+    display: none;
+  }
+
+  body[data-page="home"] .hero-metrics {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .trust-strip {
+    display: none;
+  }
+
+  .section {
+    padding-block: clamp(2rem, 6vw, 3rem);
+  }
+
+  .readiness-grid,
+  .planner-grid,
+  .form-card,
+  .offer-item,
+  .income-card,
+  .steps-item,
+  .portfolio-block {
+    border-radius: 14px;
+    padding: 0.82rem;
+  }
+
+  .reveal,
+  .reveal-mask {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+    filter: none !important;
+  }
+}
