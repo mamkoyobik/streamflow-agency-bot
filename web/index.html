@@ -43,8 +43,8 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;500;600;700&family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="styles.css?v=20260226-04">
-  <link rel="stylesheet" href="streamflow-rework.css?v=20260226-02">
+  <link rel="stylesheet" href="styles.css?v=20260302-01">
+  <link rel="stylesheet" href="streamflow-rework.css?v=20260302-01">
   <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -79,9 +79,9 @@
   <noscript><div><img src="https://mc.yandex.ru/watch/106823371" style="position:absolute; left:-9999px;" alt=""></div></noscript>
   <a class="skip-link" href="#main-content" data-i18n="a11y.skip">Перейти к основному контенту</a>
   <div class="grain"></div>
-  <div class="language-gate is-visible" id="language-gate" aria-hidden="false">
+  <div class="language-gate is-visible" id="language-gate" aria-hidden="false" role="dialog" aria-modal="true" aria-labelledby="language-gate-title">
     <div class="language-gate-card">
-      <h2 data-i18n="langGate.title">Выберите язык</h2>
+      <h2 id="language-gate-title" data-i18n="langGate.title">Выберите язык</h2>
       <p data-i18n="langGate.subtitle">Select your language to continue</p>
       <div class="language-gate-options">
         <button class="language-gate-option" type="button" data-language-option="ru" data-i18n="langGate.ru">Русский</button>
@@ -124,7 +124,7 @@
 
   <div class="mobile-nav" id="mobile-nav" aria-hidden="true">
     <div class="mobile-nav-backdrop" data-nav-close></div>
-    <div class="mobile-nav-panel">
+    <div class="mobile-nav-panel" id="mobile-nav-panel" tabindex="-1">
       <div class="mobile-nav-header">
         <span data-i18n="mobile.menu">Меню</span>
         <select class="lang-select lang-select-mobile" id="site-lang-select-mobile" aria-label="Language">
@@ -133,7 +133,7 @@
           <option value="pt">PT</option>
           <option value="es">ES</option>
         </select>
-        <button class="mobile-nav-close" type="button" data-nav-close aria-label="Закрыть">×</button>
+        <button class="mobile-nav-close" type="button" data-nav-close data-i18n-aria-label="mobile.close" aria-label="Закрыть">×</button>
       </div>
       <nav class="mobile-nav-links">
         <a href="index.html" data-i18n="nav.home">Главная</a>
@@ -649,6 +649,7 @@
               <a class="btn btn-ghost" href="#" target="_blank" rel="noopener" data-next-link="whatsapp" data-i18n="form.openWhatsapp">Продолжить в WhatsApp</a>
             </div>
           </div>
+          <p class="form-privacy" data-i18n="form.privacyNote">Отправляя форму, ты подтверждаешь согласие на обработку контактных данных для связи по заявке.</p>
         </form>
       </div>
     </section>
@@ -671,7 +672,7 @@
     </div>
   </footer>
 
-  <button class="floating-menu-btn" type="button" data-nav-open aria-expanded="false">
+  <button class="floating-menu-btn" type="button" data-nav-open data-i18n-aria-label="mobile.menu" aria-label="Меню" aria-controls="mobile-nav" aria-expanded="false">
     <img class="floating-menu-logo" src="assets/favicon.png" alt="Streamflow">
     <span data-menu-text data-i18n="mobile.menu">Меню</span>
   </button>
@@ -686,6 +687,6 @@
 
   
 
-  <script src="app.js?v=20260226-04"></script>
+  <script src="app.js?v=20260302-01"></script>
 </body>
 </html>

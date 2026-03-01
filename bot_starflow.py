@@ -2254,17 +2254,9 @@ def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str
     reviewed = accepted + rejected
     total = counts.get("total", pending + reviewed)
     return (
-        "🛠 <b>Админ-панель</b>\n\n"
-        "Быстрые разделы:\n"
-        "• 🆕 Новые\n"
-        "• 1️⃣ Управление проектом Streamflow Agency\n"
-        "• 2️⃣ Управление проектом Starflow Inc.\n"
-        "• 1️⃣ Этап 1\n"
-        "• 2️⃣ Этап 2\n"
-        "• ✅ Решённые\n"
-        "• 📝 Создать пост\n"
-        "• 📣 Выложенные посты\n\n"
+        "🎛 <b>Центр управления</b>\n\n"
         f"Ожидают: <b>{pending}</b>\n"
+        f"Приняты: <b>{accepted}</b>  ·  Отклонены: <b>{rejected}</b>\n"
         f"Решённые: <b>{reviewed}</b>\n"
         f"Этап 1: <b>{stage_quick}</b>\n"
         f"Этап 2: <b>{stage_full}</b>\n"
@@ -3231,8 +3223,8 @@ def _admin_list_label(filter_key: str | None) -> str:
         "src_site": "Источник: сайт",
         "src_bot": "Источник: боты",
         "src_unknown": "Источник: не определён",
-        "project_streamflow": "Проект: Streamflow Agency",
-        "project_starflow": "Проект: Starflow Inc.",
+        "project_streamflow": "Проект P1",
+        "project_starflow": "Проект P2",
         None: "Все заявки",
     }.get(filter_key, "Все заявки")
 
@@ -3296,12 +3288,9 @@ def _build_admin_list_header(
     offset: int,
     total: int,
 ) -> str:
-    page = offset // ADMIN_LIST_LIMIT + 1
-    pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
     return (
-        f"🗂 <b>{label}</b>\n\n"
-        f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
-        f"Страница: <b>{page}/{pages}</b>\n\n"
+        f"🗂 <b>{label}</b>\n"
+        f"<b>{offset + 1} из {total}</b>\n\n"
     )
 
 
@@ -6789,7 +6778,7 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
         if action == "cat_content":
             await clear_admin_view_message()
             await update_admin_menu_message(
-                "🗂 <b>Контент</b>\n\nПубликация и управление постами.",
+                "📣 <b>Контент</b>\n\nПосты и публикации.",
                 admin_menu_content_keyboard()
             )
             return
@@ -6798,28 +6787,28 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             counts = get_status_counts()
             stage_counts = get_application_stage_counts()
             await update_admin_menu_message(
-                "📥 <b>Заявки</b>\n\nФильтры по статусам и этапам воронки.",
+                "📥 <b>Анкеты</b>\n\nФильтры и быстрый обзор.",
                 admin_menu_applications_keyboard(counts, stage_counts)
             )
             return
         if action == "cat_analytics":
             await clear_admin_view_message()
             await update_admin_menu_message(
-                "📊 <b>Аналитика</b>\n\nСтатистика и выгрузка Excel.",
+                "📊 <b>Отчёты</b>\n\nСводка и выгрузка.",
                 admin_menu_analytics_keyboard()
             )
             return
         if action == "sources":
             await clear_admin_view_message()
             await update_admin_menu_message(
-                "🌐 <b>Фильтр по источнику</b>\n\nБыстрый просмотр заявок из сайта или бота.",
+                "🌐 <b>Источники</b>\n\nСайт / боты / не определён.",
                 admin_menu_sources_keyboard()
             )
             return
         if action == "cat_service":
             await clear_admin_view_message()
             await update_admin_menu_message(
-                "⚙️ <b>Сервис</b>\n\nОбслуживание меню и базы.",
+                "⚙️ <b>Сервис</b>\n\nУтилиты панели.",
                 admin_menu_service_keyboard()
             )
             return
@@ -6913,6 +6902,13 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
         logger.exception("Ошибка в admin_menu_action")
         await safe_call_answer(call, "Ошибка выполнения команды", show_alert=False)
 
+@dp.callback_query(StateFilter("*"), F.data == "admin_noop")
+async def admin_noop(call: CallbackQuery):
+    if not await can_manage_admin_callback(call):
+        await safe_call_answer(call, "Недостаточно прав", show_alert=True)
+        return
+    await safe_call_answer(call)
+
 @dp.callback_query(StateFilter("*"), F.data.startswith("admin_list:"))
 async def admin_list_pagination(call: CallbackQuery):
     if not await can_manage_admin_callback(call):
@@ -6967,13 +6963,10 @@ async def admin_view_photo(call: CallbackQuery):
             offset = 0
         if offset >= total:
             offset = total - 1
-        page = offset // ADMIN_LIST_LIMIT + 1
-        pages = (total + ADMIN_LIST_LIMIT - 1) // ADMIN_LIST_LIMIT
         body = build_admin_full_text(data, uid, status)
         text = (
-            f"🗂 <b>{label}</b>\n\n"
-            f"Заявка <b>{offset + 1}</b> из <b>{total}</b>\n"
-            f"Страница: <b>{page}/{pages}</b>\n\n"
+            f"🗂 <b>{label}</b>\n"
+            f"<b>{offset + 1} из {total}</b>\n\n"
             f"{body}"
         )
         await update_admin_view_message(

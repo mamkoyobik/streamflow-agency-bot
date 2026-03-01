@@ -661,7 +661,8 @@ body[data-page='home'] .field {
 body[data-page='home'] .field label,
 body[data-page='home'] .form-progress-count,
 body[data-page='home'] .form-next-title,
-body[data-page='home'] .form-status {
+body[data-page='home'] .form-status,
+body[data-page='home'] .form-privacy {
   color: #d5bad3;
 }
 

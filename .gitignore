@@ -7,6 +7,11 @@ __pycache__/
 .DS_Store
 
 bot_database.db
+*.db-shm
+*.db-wal
 applications.db
 applications.xlsx
 bot_errors.log
+.playwright-cli/
+backups/
+output/

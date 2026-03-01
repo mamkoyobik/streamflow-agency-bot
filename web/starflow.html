@@ -1,6 +1,18 @@
 <!doctype html>
 <html lang="en">
 <head>
+  <!-- Yandex.Metrika counter -->
+  <script type="text/javascript">
+      (function(m,e,t,r,i,k,a){
+          m[i]=m[i]||function(){(m[i].a=m[i].a||[]).push(arguments)};
+          m[i].l=1*new Date();
+          for (var j = 0; j < document.scripts.length; j++) {if (document.scripts[j].src === r) { return; }}
+          k=e.createElement(t),a=e.getElementsByTagName(t)[0],k.async=1,k.src=r,a.parentNode.insertBefore(k,a)
+      })(window, document,'script','https://mc.yandex.ru/metrika/tag.js?id=106823371', 'ym');
+
+      ym(106823371, 'init', {ssr:true, webvisor:true, clickmap:true, ecommerce:"dataLayer", referrer: document.referrer, url: location.href, accurateTrackBounce:true, trackLinks:true});
+  </script>
+  <!-- /Yandex.Metrika counter -->
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Starflow Inc. - Partner Network</title>
@@ -25,7 +37,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Syne:wght@500;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260226-14">
+  <link rel="stylesheet" href="starflow.css?v=20260302-01">
   <link rel="stylesheet" href="starflow-premium.css?v=20260226-02">
   <script type="application/ld+json">
     {
@@ -39,6 +51,7 @@
   </script>
 </head>
 <body data-page="starflow" class="is-loading">
+  <noscript><div><img src="https://mc.yandex.ru/watch/106823371" style="position:absolute; left:-9999px;" alt=""></div></noscript>
   <a class="skip-link" href="#main-content" data-i18n="a11y.skip">Skip to main content</a>
   <span id="top" aria-hidden="true"></span>
   <div class="scroll-progress" aria-hidden="true"><span id="scroll-progress-bar"></span></div>
@@ -56,11 +69,11 @@
     </div>
   </div>
 
-  <div class="lang-gate" id="lang-gate" hidden>
+  <div class="lang-gate" id="lang-gate" role="dialog" aria-modal="true" aria-labelledby="lang-gate-title" hidden>
     <div class="lang-gate-backdrop" data-lang-close></div>
     <div class="lang-gate-card">
       <p class="lang-gate-eyebrow">Starflow Inc.</p>
-      <h2 data-i18n="langGate.title">Choose language</h2>
+      <h2 id="lang-gate-title" data-i18n="langGate.title">Choose language</h2>
       <p data-i18n="langGate.subtitle">Select interface language before you continue</p>
       <div class="lang-gate-options">
         <button type="button" class="lang-gate-btn" data-lang-choice="ru">RU - Русский</button>
@@ -592,6 +605,7 @@
           </label>
 
           <button type="submit" class="btn solid" id="submit-btn" data-i18n="form.submit">Send application</button>
+          <p class="form-privacy" data-i18n="form.privacy">By submitting this form, you agree to contact-data processing solely for application follow-up.</p>
 
           <p class="form-status" id="form-status" role="status" aria-live="polite"></p>
 
@@ -619,6 +633,6 @@
     <a class="btn solid" href="#apply" data-i18n="cta.apply">Become Partner</a>
   </div>
 
-  <script src="starflow.js?v=20260226-13" defer></script>
+  <script src="starflow.js?v=20260302-01" defer></script>
 </body>
 </html>

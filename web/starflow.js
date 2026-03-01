@@ -5,7 +5,9 @@
   const SUPPORTED_LANGS = ['ru', 'en', 'pt', 'es'];
   const DEFAULT_LANG = 'ru';
   const PROJECT_KEY = 'starflow_corp';
-  const ALWAYS_SHOW_LANG_GATE = true;
+  const ALWAYS_SHOW_LANG_GATE = false;
+  const METRIKA_COUNTER_ID = 106823371;
+  const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 
   const I18N = {
     ru: {
@@ -168,7 +170,8 @@
       'form.email': 'Email для доступа',
       'form.birth': 'Дата рождения (18+)',
       'form.phone': 'Телефон для связи',
-      'form.submit': 'Отправить и получить доступ',
+      'form.privacy': 'Отправляя форму, вы подтверждаете согласие на обработку контактных данных для связи по заявке.',
+      'form.submit': 'Отправить',
       'form.next': 'Следующий шаг',
       'form.telegram': 'Открыть Telegram',
       'form.whatsapp': 'Открыть WhatsApp',
@@ -344,7 +347,8 @@
       'form.email': 'Email for access',
       'form.birth': 'Date of birth (18+)',
       'form.phone': 'Phone number',
-      'form.submit': 'Submit and get access',
+      'form.privacy': 'By submitting this form, you agree to contact-data processing solely for application follow-up.',
+      'form.submit': 'Submit',
       'form.next': 'Next step',
       'form.telegram': 'Open Telegram',
       'form.whatsapp': 'Open WhatsApp',
@@ -520,6 +524,7 @@
       'form.email': 'Email para registro',
       'form.birth': 'Data de nascimento',
       'form.phone': 'Telefone',
+      'form.privacy': 'Ao enviar o formulário, você concorda com o processamento de dados de contato apenas para retorno da aplicação.',
       'form.submit': 'Enviar aplicação',
       'form.next': 'Continuar no mensageiro',
       'form.telegram': 'Abrir Telegram',
@@ -696,6 +701,7 @@
       'form.email': 'Email para registro',
       'form.birth': 'Fecha de nacimiento',
       'form.phone': 'Número de teléfono',
+      'form.privacy': 'Al enviar el formulario, aceptas el tratamiento de datos de contacto únicamente para responder a tu solicitud.',
       'form.submit': 'Enviar aplicación',
       'form.next': 'Continuar en mensajería',
       'form.telegram': 'Abrir Telegram',
@@ -745,7 +751,6 @@
     nextWhatsapp: document.getElementById('next-whatsapp'),
     progressBar: document.getElementById('scroll-progress-bar'),
     heroLab: document.querySelector('[data-hero-lab]'),
-    sourceChips: document.querySelectorAll('.source-ribbon span'),
     timelineItems: document.querySelectorAll('.timeline li'),
     calcInterviews: document.getElementById('calc-interviews'),
     calcCpa: document.getElementById('calc-cpa'),
@@ -759,6 +764,8 @@
     playbookButtons: document.querySelectorAll('[data-playbook-btn]'),
     playbookPanels: document.querySelectorAll('[data-playbook-panel]'),
   };
+
+  let langGateRestoreFocus = null;
 
   function getStoredLang() {
     try {
@@ -784,6 +791,21 @@
     return (I18N[state.lang] && I18N[state.lang][key]) || I18N.en[key] || key;
   }
 
+  function escapeHtml(raw) {
+    return String(raw || '')
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#39;');
+  }
+
+  function setSafeTextWithBreaks(node, value) {
+    if (!node) return;
+    const escaped = escapeHtml(value);
+    node.innerHTML = escaped.replace(/&lt;br\s*\/?&gt;/gi, '<br>');
+  }
+
   function applyI18n() {
     document.documentElement.lang = state.lang;
     if (dom.lang) {
@@ -793,16 +815,20 @@
     document.querySelectorAll('[data-i18n]').forEach((node) => {
       const key = node.getAttribute('data-i18n');
       const value = t(key);
-      if (value.includes('<br>')) {
-        node.innerHTML = value;
-      } else {
-        node.textContent = value;
-      }
+      setSafeTextWithBreaks(node, value);
     });
 
     document.querySelectorAll('[data-i18n-placeholder]').forEach((node) => {
       const key = node.getAttribute('data-i18n-placeholder');
       node.setAttribute('placeholder', t(key));
+    });
+
+    document.querySelectorAll('[data-i18n-aria-label]').forEach((node) => {
+      const key = node.getAttribute('data-i18n-aria-label');
+      const value = t(key);
+      if (value) {
+        node.setAttribute('aria-label', value);
+      }
     });
 
     if (dom.form) {
@@ -835,8 +861,15 @@
     if (!dom.langGate) {
       return;
     }
+    if (document.activeElement instanceof HTMLElement) {
+      langGateRestoreFocus = document.activeElement;
+    }
     dom.langGate.hidden = false;
     document.body.classList.add('lang-gate-open');
+    const firstChoice = dom.langGate.querySelector('[data-lang-choice]');
+    if (firstChoice instanceof HTMLElement) {
+      firstChoice.focus();
+    }
   }
 
   function closeLangGate() {
@@ -845,6 +878,10 @@
     }
     dom.langGate.hidden = true;
     document.body.classList.remove('lang-gate-open');
+    if (langGateRestoreFocus instanceof HTMLElement && document.contains(langGateRestoreFocus)) {
+      langGateRestoreFocus.focus();
+    }
+    langGateRestoreFocus = null;
   }
 
   function initLanguageGate() {
@@ -862,6 +899,13 @@
       node.addEventListener('click', () => {
         closeLangGate();
       });
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key !== 'Escape') return;
+      if (dom.langGate && !dom.langGate.hidden) {
+        closeLangGate();
+      }
     });
 
     if (ALWAYS_SHOW_LANG_GATE || !state.hasStoredLang) {
@@ -919,6 +963,37 @@
     if (mode) {
       dom.status.classList.add(mode);
     }
+  }
+
+  function trackGoal(goal, params = {}) {
+    try {
+      if (typeof window.ym !== 'function') return;
+      window.ym(METRIKA_COUNTER_ID, 'reachGoal', goal, params);
+    } catch (err) {
+      // ignore analytics failures
+    }
+  }
+
+  function ensureHoneypotFields() {
+    if (!dom.form) return;
+    const fields = [
+      { name: 'website', autocomplete: 'off' },
+      { name: 'company', autocomplete: 'organization' },
+    ];
+    fields.forEach((meta) => {
+      let field = dom.form.querySelector(`input[name="${meta.name}"]`);
+      if (!field) {
+        field = document.createElement('input');
+        field.type = 'text';
+        field.name = meta.name;
+        field.value = '';
+        field.className = 'hp-field';
+        field.tabIndex = -1;
+        field.autocomplete = meta.autocomplete;
+        field.setAttribute('aria-hidden', 'true');
+        dom.form.appendChild(field);
+      }
+    });
   }
 
   function normalizeBirthInput(raw) {
@@ -1030,6 +1105,10 @@
   function revealOnScroll() {
     const nodes = document.querySelectorAll('.reveal');
     if (!nodes.length) return;
+    if (prefersReducedMotion) {
+      nodes.forEach((node) => node.classList.add('visible'));
+      return;
+    }
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -1092,81 +1171,6 @@
           setOpen(item, true);
         }
       });
-    });
-  }
-
-  function bindTilt() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    const cards = document.querySelectorAll('[data-tilt]');
-    cards.forEach((card) => {
-      card.addEventListener('pointermove', (event) => {
-        const rect = card.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width;
-        const y = (event.clientY - rect.top) / rect.height;
-        const rotateY = (x - 0.5) * 12;
-        const rotateX = (0.5 - y) * 10;
-        card.style.transform = `perspective(800px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-      });
-      card.addEventListener('pointerleave', () => {
-        card.style.transform = 'perspective(800px) rotateX(0deg) rotateY(0deg)';
-      });
-    });
-  }
-
-  function initCursorGlow() {
-    const glow = document.getElementById('cursor-glow');
-    if (!glow || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    let frameRequested = false;
-    let targetX = window.innerWidth * 0.5;
-    let targetY = window.innerHeight * 0.45;
-
-    function apply() {
-      frameRequested = false;
-      const x = Math.max(0, Math.min(window.innerWidth, targetX));
-      const y = Math.max(0, Math.min(window.innerHeight, targetY));
-      document.documentElement.style.setProperty('--mx', `${x}px`);
-      document.documentElement.style.setProperty('--my', `${y}px`);
-    }
-
-    function onMove(event) {
-      targetX = event.clientX;
-      targetY = event.clientY;
-      if (!frameRequested) {
-        frameRequested = true;
-        requestAnimationFrame(apply);
-      }
-    }
-
-    window.addEventListener('pointermove', onMove, { passive: true });
-    apply();
-  }
-
-  function initHeroParallax() {
-    const stage = document.querySelector('.hero-stage');
-    if (!stage || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    const copy = document.querySelector('.hero-copy');
-
-    stage.addEventListener('pointermove', (event) => {
-      const rect = stage.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-      stage.style.transform = `perspective(1000px) rotateY(${x * 5}deg) rotateX(${y * -4}deg)`;
-      if (copy) {
-        copy.style.transform = `translate3d(${x * 8}px, ${y * 8}px, 0)`;
-      }
-    });
-
-    stage.addEventListener('pointerleave', () => {
-      stage.style.transform = 'perspective(1000px) rotateY(0deg) rotateX(0deg)';
-      if (copy) {
-        copy.style.transform = 'translate3d(0,0,0)';
-      }
     });
   }
 
@@ -1376,6 +1380,41 @@
           setActive(id);
         }
       });
+      button.addEventListener('keydown', (event) => {
+        const currentIndex = buttons.indexOf(button);
+        if (currentIndex < 0) return;
+        if (event.key === 'ArrowRight') {
+          event.preventDefault();
+          const nextButton = buttons[(currentIndex + 1) % buttons.length];
+          nextButton.focus();
+          const id = nextButton.getAttribute('data-playbook-btn');
+          if (id) setActive(id);
+          return;
+        }
+        if (event.key === 'ArrowLeft') {
+          event.preventDefault();
+          const prevButton = buttons[(currentIndex - 1 + buttons.length) % buttons.length];
+          prevButton.focus();
+          const id = prevButton.getAttribute('data-playbook-btn');
+          if (id) setActive(id);
+          return;
+        }
+        if (event.key === 'Home') {
+          event.preventDefault();
+          const firstButton = buttons[0];
+          firstButton.focus();
+          const id = firstButton.getAttribute('data-playbook-btn');
+          if (id) setActive(id);
+          return;
+        }
+        if (event.key === 'End') {
+          event.preventDefault();
+          const lastButton = buttons[buttons.length - 1];
+          lastButton.focus();
+          const id = lastButton.getAttribute('data-playbook-btn');
+          if (id) setActive(id);
+        }
+      });
     });
 
     const initial = buttons.find((button) => button.classList.contains('is-active')) || buttons[0];
@@ -1383,40 +1422,6 @@
     if (initialId) {
       setActive(initialId);
     }
-  }
-
-  function initHeroLabParallax() {
-    const lab = dom.heroLab;
-    if (!lab || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    const panel = lab.querySelector('.signal-card');
-    const cards = Array.from(lab.querySelectorAll('.mini-stat'));
-    if (!panel && !cards.length) {
-      return;
-    }
-
-    lab.addEventListener('pointermove', (event) => {
-      const rect = lab.getBoundingClientRect();
-      const x = (event.clientX - rect.left) / rect.width - 0.5;
-      const y = (event.clientY - rect.top) / rect.height - 0.5;
-      if (panel) {
-        panel.style.transform = `translate3d(${x * 14}px, ${y * 14}px, 0)`;
-      }
-      cards.forEach((card, index) => {
-        const scale = index === 0 ? 1 : -1;
-        card.style.transform = `translate3d(${x * 11 * scale}px, ${y * 11 * scale}px, 0)`;
-      });
-    });
-
-    lab.addEventListener('pointerleave', () => {
-      if (panel) {
-        panel.style.transform = '';
-      }
-      cards.forEach((card) => {
-        card.style.transform = '';
-      });
-    });
   }
 
   function initTimelineFocus() {
@@ -1437,27 +1442,6 @@
     items.forEach((item) => observer.observe(item));
   }
 
-  function initMagneticTargets() {
-    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      return;
-    }
-    const targets = [
-      ...Array.from(document.querySelectorAll('.hero .btn, .header-tools .btn')),
-      ...Array.from(dom.sourceChips || []),
-    ];
-    targets.forEach((target) => {
-      target.addEventListener('pointermove', (event) => {
-        const rect = target.getBoundingClientRect();
-        const x = (event.clientX - rect.left) / rect.width - 0.5;
-        const y = (event.clientY - rect.top) / rect.height - 0.5;
-        target.style.transform = `translate3d(${x * 7}px, ${y * 7}px, 0)`;
-      });
-      target.addEventListener('pointerleave', () => {
-        target.style.transform = '';
-      });
-    });
-  }
-
   async function submitForm(event) {
     event.preventDefault();
     if (!dom.form || !dom.submit) {
@@ -1472,6 +1456,8 @@
       email: String(data.get('email') || '').trim(),
       age: String(data.get('age') || '').trim(),
       phone: normalizePhone(String(data.get('phone') || '').trim()),
+      website: String(data.get('website') || '').trim(),
+      company: String(data.get('company') || '').trim(),
       project: PROJECT_KEY,
       site_lang: state.lang,
     };
@@ -1488,6 +1474,7 @@
 
     const validationError = validateForm(values);
     if (validationError) {
+      trackGoal('starflow_apply_validation_error', { lang: state.lang });
       setStatus(validationError, 'error');
       dom.nextBox.hidden = true;
       return;
@@ -1511,10 +1498,12 @@
 
       const json = await response.json().catch(() => ({}));
       if (!response.ok || !json.ok) {
+        trackGoal('starflow_apply_submit_error', { lang: state.lang, field: String(json.field || '') });
         setStatus(json.message || t('msg.error'), 'error');
         return;
       }
 
+      trackGoal('starflow_apply_submit_success', { lang: state.lang });
       setStatus(json.message || t('msg.success'), 'success');
 
       const telegramLink = (json.next_links && json.next_links.telegram) || json.telegram_bot_link || state.config.bot_link;
@@ -1529,6 +1518,12 @@
       if (telegramLink) {
         dom.nextTelegram.href = telegramLink;
         dom.nextTelegram.hidden = false;
+        if (!dom.nextTelegram.dataset.goalBound) {
+          dom.nextTelegram.dataset.goalBound = '1';
+          dom.nextTelegram.addEventListener('click', () => {
+            trackGoal('starflow_apply_open_telegram', { lang: state.lang });
+          });
+        }
       } else {
         dom.nextTelegram.hidden = true;
       }
@@ -1536,6 +1531,12 @@
       if (whatsappLink) {
         dom.nextWhatsapp.href = whatsappLink;
         dom.nextWhatsapp.hidden = false;
+        if (!dom.nextWhatsapp.dataset.goalBound) {
+          dom.nextWhatsapp.dataset.goalBound = '1';
+          dom.nextWhatsapp.addEventListener('click', () => {
+            trackGoal('starflow_apply_open_whatsapp', { lang: state.lang });
+          });
+        }
       } else {
         dom.nextWhatsapp.hidden = true;
       }
@@ -1549,6 +1550,7 @@
       }
       updateContactPlaceholder();
     } catch (err) {
+      trackGoal('starflow_apply_submit_error', { lang: state.lang });
       setStatus(t('msg.error'), 'error');
     } finally {
       dom.submit.disabled = false;
@@ -1586,6 +1588,7 @@
     }
 
     initLoader();
+    ensureHoneypotFields();
     applyI18n();
     bindEvents();
     initLanguageGate();

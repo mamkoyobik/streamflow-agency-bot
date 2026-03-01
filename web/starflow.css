@@ -346,6 +346,15 @@ body.is-loading .site-loader {
   transition: transform 0.18s ease, border-color 0.18s ease, filter 0.18s ease;
 }
 
+.btn:disabled,
+.btn[aria-disabled='true'] {
+  opacity: 0.56;
+  cursor: not-allowed;
+  pointer-events: none;
+  transform: none;
+  filter: none;
+}
+
 .btn:hover {
   transform: translateY(-1px);
   filter: brightness(1.04);
@@ -1266,11 +1275,28 @@ body.is-loading .site-loader {
   color: var(--accent);
 }
 
+.form-privacy {
+  margin: 0.2rem 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
 .next-actions {
   border: 1px solid var(--line);
   border-radius: 13px;
   background: rgba(22, 38, 58, 0.44);
   padding: 0.82rem;
+}
+
+.hp-field {
+  position: absolute !important;
+  left: -10000px !important;
+  top: auto !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
 }
 
 .next-actions p {

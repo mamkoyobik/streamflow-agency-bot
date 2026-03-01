@@ -7,6 +7,12 @@ def _row_callback_data(markup, row: int, col: int) -> str:
     return markup.inline_keyboard[row][col].callback_data
 
 
+def _all_buttons(markup):
+    for row in markup.inline_keyboard:
+        for button in row:
+            yield button
+
+
 class AdminKeyboardCallbacksTests(unittest.TestCase):
     def test_pending_item_keyboard_has_plain_accept_reject_callbacks(self):
         markup = admin_list_item_keyboard(user_id=123, status="pending")
@@ -87,6 +93,20 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
         ]
         self.assertIn("admin_menu:project_streamflow", callbacks)
         self.assertIn("admin_menu:project_starflow", callbacks)
+
+    def test_view_keyboard_has_compact_counter_button(self):
+        markup = admin_list_view_keyboard(
+            user_id=456,
+            status="pending",
+            filter_key="all",
+            offset=5,
+            total=46,
+            limit=1,
+        )
+        buttons = list(_all_buttons(markup))
+        counter = next((btn for btn in buttons if btn.callback_data == "admin_noop"), None)
+        self.assertIsNotNone(counter)
+        self.assertEqual(counter.text, "6/46")
 
 
 if __name__ == "__main__":

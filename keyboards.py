@@ -245,38 +245,39 @@ def reject_templates_keyboard(
         [InlineKeyboardButton(text="🧩 Не совпали условия", callback_data=f"reject_tpl:2{callback_suffix}")],
         [InlineKeyboardButton(text="🕐 Вернёмся позже", callback_data=f"reject_tpl:3{callback_suffix}")],
         [InlineKeyboardButton(text="✍️ Своя причина", callback_data=f"reject_tpl:custom{callback_suffix}")],
-        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+        [InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")],
     ])
 
 def reject_reason_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")]
+        [InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")]
     ])
 
 
 def admin_send_model_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❌ Отменить", callback_data="admin_send_model_cancel")],
-        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+        [InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")],
     ])
 
 
 def admin_request_info_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❌ Отменить", callback_data="admin_request_info_cancel")],
-        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+        [InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")],
     ])
 
 def confirm_reset_db_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="⚠️ Да, обнулить", callback_data="admin_reset_db:confirm"),
+            InlineKeyboardButton(text="⚠️ Обнулить", callback_data="admin_reset_db:confirm"),
             InlineKeyboardButton(text="Отмена", callback_data="admin_reset_db:cancel")
         ]
     ])
 
 def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = None):
     pending = counts.get("pending", 0) if counts else 0
+    total = counts.get("total", pending) if counts else pending
     stage_quick = stage_counts.get("quick", 0) if stage_counts else 0
     stage_full = stage_counts.get("full", 0) if stage_counts else 0
     accepted = counts.get("accepted", 0) if counts else 0
@@ -284,33 +285,26 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
     reviewed = accepted + rejected
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=f"🆕 Новые ({pending})", callback_data="admin_menu:pending"),
+            InlineKeyboardButton(text=f"📥 Анкеты ({pending})", callback_data="admin_menu:cat_apps"),
+            InlineKeyboardButton(text="📣 Контент", callback_data="admin_menu:cat_content"),
         ],
         [
-            InlineKeyboardButton(
-                text="1️⃣ Управление проектом Streamflow Agency",
-                callback_data="admin_menu:project_streamflow",
-            ),
+            InlineKeyboardButton(text="🧱 P1", callback_data="admin_menu:project_streamflow"),
+            InlineKeyboardButton(text="🧱 P2", callback_data="admin_menu:project_starflow"),
         ],
         [
-            InlineKeyboardButton(
-                text="2️⃣ Управление проектом Starflow Inc.",
-                callback_data="admin_menu:project_starflow",
-            ),
+            InlineKeyboardButton(text=f"1️⃣ {stage_quick}", callback_data="admin_menu:stage_quick"),
+            InlineKeyboardButton(text=f"2️⃣ {stage_full}", callback_data="admin_menu:stage_full"),
         ],
         [
-            InlineKeyboardButton(text=f"1️⃣ Этап 1 ({stage_quick})", callback_data="admin_menu:stage_quick"),
-            InlineKeyboardButton(text=f"2️⃣ Этап 2 ({stage_full})", callback_data="admin_menu:stage_full"),
+            InlineKeyboardButton(text=f"✅ {reviewed}", callback_data="admin_menu:reviewed"),
+            InlineKeyboardButton(text=f"📚 {total}", callback_data="admin_menu:all"),
         ],
         [
-            InlineKeyboardButton(text=f"✅ Решённые ({reviewed})", callback_data="admin_menu:reviewed"),
-        ],
-        [
-            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post"),
-            InlineKeyboardButton(text="📣 Выложенные посты", callback_data="admin_menu:posts"),
-        ],
-        [
+            InlineKeyboardButton(text="📊 Отчёт", callback_data="admin_menu:cat_analytics"),
             InlineKeyboardButton(text="⚙️ Сервис", callback_data="admin_menu:cat_service"),
+        ],
+        [
             InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
         ]
     ])
@@ -319,12 +313,12 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
 def admin_menu_content_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📝 Создать пост", callback_data="admin_menu:create_post"),
-            InlineKeyboardButton(text="📣 Выложенные посты", callback_data="admin_menu:posts"),
+            InlineKeyboardButton(text="➕ Пост", callback_data="admin_menu:create_post"),
+            InlineKeyboardButton(text="📚 Посты", callback_data="admin_menu:posts"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+            InlineKeyboardButton(text="🔄", callback_data="admin_menu:refresh"),
         ],
     ])
 
@@ -338,32 +332,28 @@ def admin_menu_applications_keyboard(counts: dict | None = None, stage_counts: d
     stage_full = stage_counts.get("full", 0) if stage_counts else 0
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=f"⏳ Ожидают ({pending})", callback_data="admin_menu:pending"),
-            InlineKeyboardButton(text=f"📚 Все ({total})", callback_data="admin_menu:all"),
+            InlineKeyboardButton(text=f"⏳ {pending}", callback_data="admin_menu:pending"),
+            InlineKeyboardButton(text=f"📚 {total}", callback_data="admin_menu:all"),
         ],
         [
-            InlineKeyboardButton(
-                text="1️⃣ Управление проектом Streamflow Agency",
-                callback_data="admin_menu:project_streamflow",
-            ),
+            InlineKeyboardButton(text=f"✅ {accepted}", callback_data="admin_menu:accepted"),
+            InlineKeyboardButton(text=f"❌ {rejected}", callback_data="admin_menu:rejected"),
         ],
         [
-            InlineKeyboardButton(
-                text="2️⃣ Управление проектом Starflow Inc.",
-                callback_data="admin_menu:project_starflow",
-            ),
+            InlineKeyboardButton(text=f"🧩 1:{stage_quick}", callback_data="admin_menu:stage_quick"),
+            InlineKeyboardButton(text=f"🧩 2:{stage_full}", callback_data="admin_menu:stage_full"),
         ],
         [
-            InlineKeyboardButton(text=f"✅ Принятые ({accepted})", callback_data="admin_menu:accepted"),
-            InlineKeyboardButton(text=f"❌ Отклонённые ({rejected})", callback_data="admin_menu:rejected"),
+            InlineKeyboardButton(text=f"✅ Решённые", callback_data="admin_menu:reviewed"),
+            InlineKeyboardButton(text="🌐 Источники", callback_data="admin_menu:sources"),
         ],
         [
-            InlineKeyboardButton(text=f"1️⃣ Этап 1 ({stage_quick})", callback_data="admin_menu:stage_quick"),
-            InlineKeyboardButton(text=f"2️⃣ Полные ({stage_full})", callback_data="admin_menu:stage_full"),
+            InlineKeyboardButton(text="🧱 P1", callback_data="admin_menu:project_streamflow"),
+            InlineKeyboardButton(text="🧱 P2", callback_data="admin_menu:project_starflow"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+            InlineKeyboardButton(text="🔄", callback_data="admin_menu:refresh"),
         ],
     ])
 
@@ -371,12 +361,12 @@ def admin_menu_applications_keyboard(counts: dict | None = None, stage_counts: d
 def admin_menu_analytics_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_menu:stats"),
+            InlineKeyboardButton(text="📊 Сводка", callback_data="admin_menu:stats"),
             InlineKeyboardButton(text="📁 Excel", callback_data="admin_menu:excel"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+            InlineKeyboardButton(text="🔄", callback_data="admin_menu:refresh"),
         ],
     ])
 
@@ -389,11 +379,11 @@ def admin_menu_service_keyboard():
         ],
         [
             InlineKeyboardButton(text="🧹 Архив", callback_data="admin_menu:archive"),
-            InlineKeyboardButton(text="⚠️ Сбросить базу", callback_data="admin_menu:reset"),
+            InlineKeyboardButton(text="⚠️ Сброс", callback_data="admin_menu:reset"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+            InlineKeyboardButton(text="🔄", callback_data="admin_menu:refresh"),
         ],
     ])
 
@@ -402,22 +392,22 @@ def admin_menu_sources_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="🌐 Сайт", callback_data="admin_menu:src_site"),
-            InlineKeyboardButton(text="🤖 Бот", callback_data="admin_menu:src_bot"),
+            InlineKeyboardButton(text="🤖 Боты", callback_data="admin_menu:src_bot"),
         ],
         [
-            InlineKeyboardButton(text="❔ Неопределён", callback_data="admin_menu:src_unknown"),
-            InlineKeyboardButton(text="📚 Все источники", callback_data="admin_menu:all"),
+            InlineKeyboardButton(text="❔ Неопред.", callback_data="admin_menu:src_unknown"),
+            InlineKeyboardButton(text="📚 Все", callback_data="admin_menu:all"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="admin_menu:home"),
-            InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
+            InlineKeyboardButton(text="🔄", callback_data="admin_menu:refresh"),
         ],
     ])
 
 def admin_create_post_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="❌ Отменить", callback_data="admin_post:cancel")],
-        [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+        [InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")],
     ])
 
 
@@ -454,13 +444,14 @@ def admin_posts_view_keyboard(post_id: int, offset: int, total: int, content_typ
     next_offset = offset + 1
     nav_row = []
     if prev_offset >= 0:
-        nav_row.append(InlineKeyboardButton(text="⬅️ Предыдущий", callback_data=f"admin_posts:{prev_offset}"))
+        nav_row.append(InlineKeyboardButton(text="◀️", callback_data=f"admin_posts:{prev_offset}"))
+    nav_row.append(InlineKeyboardButton(text=f"{offset + 1}/{total}", callback_data="admin_noop"))
     if next_offset < total:
-        nav_row.append(InlineKeyboardButton(text="Следующий ➡️", callback_data=f"admin_posts:{next_offset}"))
+        nav_row.append(InlineKeyboardButton(text="▶️", callback_data=f"admin_posts:{next_offset}"))
     if nav_row:
         rows.append(nav_row)
 
-    rows.append([InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")])
+    rows.append([InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
@@ -468,7 +459,7 @@ def admin_posts_edit_keyboard(post_id: int, offset: int):
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [InlineKeyboardButton(text="❌ Отменить", callback_data=f"admin_post_edit_cancel:{post_id}:{offset}")],
-            [InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")],
+            [InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")],
         ]
     )
 
@@ -480,21 +471,27 @@ def admin_list_nav_keyboard(filter_key: str, offset: int, total: int, limit: int
     if prev_offset >= 0:
         nav_row.append(
             InlineKeyboardButton(
-                text="⬅️ Предыдущая",
+                text="◀️",
                 callback_data=f"admin_list:{filter_key}:{prev_offset}"
             )
         )
+    nav_row.append(
+        InlineKeyboardButton(
+            text=f"{offset + 1}/{total}",
+            callback_data="admin_noop",
+        )
+    )
     if next_offset < total:
         nav_row.append(
             InlineKeyboardButton(
-                text="Следующая ➡️",
+                text="▶️",
                 callback_data=f"admin_list:{filter_key}:{next_offset}"
             )
         )
     if nav_row:
         buttons.append(nav_row)
     buttons.append([
-        InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")
+        InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")
     ])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
@@ -503,18 +500,18 @@ def admin_list_item_keyboard(user_id: int, status: str, contact_url: str | None 
     rows = []
     if status == "pending":
         rows.append([
-            InlineKeyboardButton(text="✅ Принять", callback_data=f"admin_accept:{user_id}"),
-            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"admin_reject:{user_id}"),
+            InlineKeyboardButton(text="✅ Взять", callback_data=f"admin_accept:{user_id}"),
+            InlineKeyboardButton(text="❌ Отказ", callback_data=f"admin_reject:{user_id}"),
         ])
         rows.append([
-            InlineKeyboardButton(text="📝 Запросить уточнение", callback_data=f"admin_request_info:{user_id}")
+            InlineKeyboardButton(text="📝 Уточнить", callback_data=f"admin_request_info:{user_id}")
         ])
     elif status == "accepted":
         rows.append([
             InlineKeyboardButton(text="✅ Принято", callback_data=f"admin_status:{user_id}:accepted")
         ])
         rows.append([
-            InlineKeyboardButton(text="📨 Отправить сообщение модели", callback_data=f"admin_send_model:{user_id}")
+            InlineKeyboardButton(text="📨 Сообщение", callback_data=f"admin_send_model:{user_id}")
         ])
     elif status == "rejected":
         rows.append([
@@ -524,7 +521,7 @@ def admin_list_item_keyboard(user_id: int, status: str, contact_url: str | None 
         InlineKeyboardButton(text="📷 Фото", callback_data=f"admin_photos:{user_id}")
     ])
     rows.append([
-        InlineKeyboardButton(text="💬 Написать кандидату", url=contact)
+        InlineKeyboardButton(text="💬 Контакт", url=contact)
     ])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -543,13 +540,13 @@ def admin_list_view_keyboard(
     rows = []
     if status == "pending":
         rows.append([
-            InlineKeyboardButton(text="✅ Принять", callback_data=f"admin_accept:{user_id}:view:{filter_key}:{offset}"),
-            InlineKeyboardButton(text="❌ Отклонить", callback_data=f"admin_reject:{user_id}:view:{filter_key}:{offset}"),
+            InlineKeyboardButton(text="✅ Взять", callback_data=f"admin_accept:{user_id}:view:{filter_key}:{offset}"),
+            InlineKeyboardButton(text="❌ Отказ", callback_data=f"admin_reject:{user_id}:view:{filter_key}:{offset}"),
         ])
         if allow_request_info:
             rows.append([
                 InlineKeyboardButton(
-                    text="📝 Запросить уточнение",
+                    text="📝 Уточнить",
                     callback_data=f"admin_request_info:{user_id}:view:{filter_key}:{offset}"
                 )
             ])
@@ -559,7 +556,7 @@ def admin_list_view_keyboard(
         ])
         rows.append([
             InlineKeyboardButton(
-                text="📨 Отправить сообщение модели",
+                text="📨 Сообщение",
                 callback_data=f"admin_send_model:{user_id}:view:{filter_key}:{offset}"
             )
         ])
@@ -574,12 +571,12 @@ def admin_list_view_keyboard(
             callback_data=f"admin_view_photo:{user_id}:face:{filter_key}:{offset}",
         ),
         InlineKeyboardButton(
-            text="🧍 Профиль",
+            text="🧍 Рост",
             callback_data=f"admin_view_photo:{user_id}:full:{filter_key}:{offset}",
         )
     ])
     rows.append([
-        InlineKeyboardButton(text="💬 Написать кандидату", url=contact)
+        InlineKeyboardButton(text="💬 Контакт", url=contact)
     ])
 
     prev_offset = offset - limit
@@ -588,14 +585,20 @@ def admin_list_view_keyboard(
     if prev_offset >= 0:
         nav_row.append(
             InlineKeyboardButton(
-                text="⬅️ Предыдущая",
+                text="◀️",
                 callback_data=f"admin_list:{filter_key}:{prev_offset}"
             )
         )
+    nav_row.append(
+        InlineKeyboardButton(
+            text=f"{offset + 1}/{total}",
+            callback_data="admin_noop",
+        )
+    )
     if next_offset < total:
         nav_row.append(
             InlineKeyboardButton(
-                text="Следующая ➡️",
+                text="▶️",
                 callback_data=f"admin_list:{filter_key}:{next_offset}"
             )
         )
@@ -603,6 +606,6 @@ def admin_list_view_keyboard(
         rows.append(nav_row)
 
     rows.append([
-        InlineKeyboardButton(text="⬅️ В админ-меню", callback_data="admin_menu:refresh")
+        InlineKeyboardButton(text="⬅️ Меню", callback_data="admin_menu:refresh")
     ])
     return InlineKeyboardMarkup(inline_keyboard=rows)

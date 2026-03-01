@@ -74,6 +74,8 @@ SITE_LEAD_TOKEN_PREFIX = "site_lead_token:"
 PROJECT_STREAMFLOW = "streamflow_agency"
 PROJECT_STARFLOW = "starflow_corp"
 SUPPORTED_PROJECTS = {PROJECT_STREAMFLOW, PROJECT_STARFLOW}
+HONEYPOT_FIELD_NAMES = ("website", "company")
+MAX_HONEYPOT_LEN = 120
 
 
 def load_env_file(path: Path) -> None:
@@ -111,6 +113,9 @@ APPLY_SAME_PHONE_COOLDOWN_SECONDS = max(30, _env_int("APPLY_SAME_PHONE_COOLDOWN_
 _RATE_LIMIT_LOCK = threading.Lock()
 _RATE_LIMIT_WINDOWS: dict[str, deque[float]] = {}
 _PHONE_COOLDOWN_CACHE: dict[str, float] = {}
+_ADMIN_REFRESH_LOCK = threading.Lock()
+_ADMIN_REFRESH_RUNNING = False
+_ADMIN_REFRESH_DIRTY = False
 
 
 def _env_flag(name: str, default: bool = False) -> bool:
@@ -215,6 +220,7 @@ GENERAL_MESSAGES = {
         "bad_size": "Некорректный размер запроса.",
         "too_big": "Файлы слишком большие.",
         "bad_type": "Неверный тип данных.",
+        "invalid_form": "Проверь поля формы и попробуй ещё раз.",
         "send_error": "Ошибка отправки анкеты. Попробуй ещё раз.",
         "group_not_found": "Бот не видит админ‑группу. Проверь ADMIN_GROUP_ID и что бот добавлен в группу.",
         "group_no_rights": "Бот без прав отправки в группу. Добавь бота и выдай права.",
@@ -229,6 +235,7 @@ GENERAL_MESSAGES = {
         "bad_size": "Invalid request size.",
         "too_big": "Files are too large.",
         "bad_type": "Unsupported payload type.",
+        "invalid_form": "Please check form fields and try again.",
         "send_error": "Failed to send application. Please try again.",
         "group_not_found": "Bot cannot reach admin group. Check ADMIN_GROUP_ID and bot membership.",
         "group_no_rights": "Bot has no permission to post in admin group.",
@@ -243,6 +250,7 @@ GENERAL_MESSAGES = {
         "bad_size": "Tamanho da requisição inválido.",
         "too_big": "Arquivos muito grandes.",
         "bad_type": "Tipo de dados não suportado.",
+        "invalid_form": "Verifique os campos do formulário e tente novamente.",
         "send_error": "Falha ao enviar candidatura. Tente novamente.",
         "group_not_found": "O bot não alcança o grupo admin. Verifique ADMIN_GROUP_ID.",
         "group_no_rights": "O bot não tem permissão para enviar no grupo admin.",
@@ -257,6 +265,7 @@ GENERAL_MESSAGES = {
         "bad_size": "Tamaño de solicitud inválido.",
         "too_big": "Los archivos son demasiado grandes.",
         "bad_type": "Tipo de datos no soportado.",
+        "invalid_form": "Revisa los campos del formulario y vuelve a intentarlo.",
         "send_error": "Error al enviar la solicitud. Inténtalo de nuevo.",
         "group_not_found": "El bot no puede llegar al grupo admin. Revisa ADMIN_GROUP_ID.",
         "group_no_rights": "El bot no tiene permisos para enviar en el grupo admin.",
@@ -892,6 +901,37 @@ def _client_ip_from_headers(handler: SimpleHTTPRequestHandler) -> str:
     return direct or "unknown"
 
 
+def _hash_for_logs(value: str | None) -> str:
+    raw = (value or "").strip()
+    if not raw:
+        return "unknown"
+    return hashlib.sha256(raw.encode("utf-8", errors="ignore")).hexdigest()[:12]
+
+
+def log_apply_event(
+    *,
+    outcome: str,
+    project: str,
+    lang: str,
+    client_ip: str,
+    status: int,
+    field: str | None = None,
+    retry_after: int | None = None,
+) -> None:
+    print(
+        "Apply event:",
+        {
+            "outcome": outcome,
+            "project": normalize_project(project),
+            "lang": normalize_site_lang(lang),
+            "status": int(status),
+            "field": (field or "").strip(),
+            "retry_after": int(retry_after) if retry_after is not None else 0,
+            "ip_hash": _hash_for_logs(client_ip),
+        },
+    )
+
+
 def _rate_limit_key(scope: str, key: str) -> str:
     return f"rl:{scope}:{key}"
 
@@ -1102,6 +1142,16 @@ def extract_country_from_phone(phone: str | None) -> str | None:
 
 def clean_text(value: str, max_len: int | None = None) -> str:
     return shared_clean_user_text(value, max_len=max_len)
+
+
+def detect_honeypot_field(fields: dict[str, str] | None) -> str | None:
+    if not isinstance(fields, dict):
+        return None
+    for field_name in HONEYPOT_FIELD_NAMES:
+        raw = clean_text(str(fields.get(field_name) or ""), max_len=MAX_HONEYPOT_LEN)
+        if raw:
+            return field_name
+    return None
 
 
 def is_valid_phone(text: str) -> bool:
@@ -1359,7 +1409,10 @@ def _infobip_dedupe_key(message: dict) -> str:
         message.get("message_id")
         or f"{message.get('from')}|{message.get('to')}|{message.get('type')}|{message.get('text')}|{message.get('received_at')}"
     )
-    digest = hashlib.sha1(str(signature).encode("utf-8")).hexdigest()[:20]
+    digest = hashlib.sha1(
+        str(signature).encode("utf-8"),
+        usedforsecurity=False,
+    ).hexdigest()[:20]
     return f"infobip_seen:{digest}"
 
 
@@ -1468,7 +1521,10 @@ def _wa_user_id(phone: str | None) -> int | None:
     if not digits:
         return None
     # Stable pseudo-user ID for non-Telegram channels.
-    digest = hashlib.sha1(digits.encode("utf-8")).hexdigest()[:15]
+    digest = hashlib.sha1(
+        digits.encode("utf-8"),
+        usedforsecurity=False,
+    ).hexdigest()[:15]
     value = int(digest, 16)
     return -value
 
@@ -2669,8 +2725,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             except Exception as err:
                 print("Failed to send site->whatsapp application to admin:", err)
             try:
-                notify_admin_new_application()
-                update_admin_menu_message()
+                schedule_admin_refresh()
             except Exception as err:
                 print("Failed to refresh admin menu after site->whatsapp application:", err)
 
@@ -2963,8 +3018,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
         except Exception as err:
             print("Failed to send whatsapp application card to admin:", err)
         try:
-            notify_admin_new_application()
-            update_admin_menu_message()
+            schedule_admin_refresh()
         except Exception as err:
             print("Failed to refresh admin menu after whatsapp application:", err)
 
@@ -3082,6 +3136,43 @@ def build_admin_menu_keyboard(counts: dict) -> dict:
             ],
         ]
     }
+
+
+def _admin_refresh_worker() -> None:
+    global _ADMIN_REFRESH_RUNNING
+    global _ADMIN_REFRESH_DIRTY
+    while True:
+        try:
+            notify_admin_new_application()
+        except Exception:
+            pass
+        try:
+            update_admin_menu_message()
+        except Exception:
+            pass
+        with _ADMIN_REFRESH_LOCK:
+            if _ADMIN_REFRESH_DIRTY:
+                _ADMIN_REFRESH_DIRTY = False
+                continue
+            _ADMIN_REFRESH_RUNNING = False
+            return
+
+
+def schedule_admin_refresh() -> None:
+    global _ADMIN_REFRESH_RUNNING
+    global _ADMIN_REFRESH_DIRTY
+    with _ADMIN_REFRESH_LOCK:
+        if _ADMIN_REFRESH_RUNNING:
+            _ADMIN_REFRESH_DIRTY = True
+            return
+        _ADMIN_REFRESH_RUNNING = True
+        _ADMIN_REFRESH_DIRTY = False
+    threading.Thread(
+        target=_admin_refresh_worker,
+        name="admin-refresh-worker",
+        daemon=True,
+    ).start()
+
 
 def notify_admin_new_application():
     counts = get_status_counts()
@@ -3320,7 +3411,7 @@ class Handler(SimpleHTTPRequestHandler):
             "font-src 'self' data: https://fonts.gstatic.com; "
             "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; "
             "script-src 'self' 'unsafe-inline' https://mc.yandex.ru; "
-            "connect-src 'self' https://mc.yandex.ru https://*.yandex.net",
+            "connect-src 'self' https://mc.yandex.ru wss://mc.yandex.ru https://*.yandex.net wss://*.yandex.net",
         )
         self.send_header("Referrer-Policy", "strict-origin-when-cross-origin")
         self.send_header("Cross-Origin-Opener-Policy", "same-origin")
@@ -3489,6 +3580,7 @@ class Handler(SimpleHTTPRequestHandler):
 
         site_lang = normalize_site_lang(fields.get("site_lang"))
         client_ip = _client_ip_from_headers(self)
+        project = resolve_project(fields.get("project"), self._request_host())
 
         def error(
             message: str,
@@ -3502,6 +3594,15 @@ class Handler(SimpleHTTPRequestHandler):
             if retry_after is not None:
                 payload["retry_after"] = int(retry_after)
             extra_headers = {"Retry-After": str(int(retry_after))} if retry_after is not None else None
+            log_apply_event(
+                outcome="reject",
+                project=project,
+                lang=site_lang,
+                client_ip=client_ip,
+                status=status,
+                field=field,
+                retry_after=retry_after,
+            )
             return self.send_json(payload, status=status, extra_headers=extra_headers)
 
         def get_limited(field_name: str, max_len: int, error_field: str | None = None) -> tuple[str | None, bool]:
@@ -3513,6 +3614,14 @@ class Handler(SimpleHTTPRequestHandler):
                 )
                 return None, False
             return raw, True
+
+        honeypot_field = detect_honeypot_field(fields)
+        if honeypot_field:
+            return error(
+                msg(site_lang, "invalid_form"),
+                status=400,
+                field=honeypot_field,
+            )
 
         allowed, retry_after = _consume_rate_limit(
             "apply_ip",
@@ -3526,8 +3635,6 @@ class Handler(SimpleHTTPRequestHandler):
                 status=429,
                 retry_after=retry_after,
             )
-
-        project = resolve_project(fields.get("project"), self._request_host())
 
         name, ok = get_limited("name", MAX_NAME_LEN, "name")
         if not ok or name is None:
@@ -3660,8 +3767,7 @@ class Handler(SimpleHTTPRequestHandler):
             print("DB error:", err)
             return error(msg(site_lang, "db_error"), status=500)
 
-        notify_admin_new_application()
-        update_admin_menu_message()
+        schedule_admin_refresh()
 
         tg_link = build_bot_stage2_link(lead_token, site_lang, project=project) or project_bot_public_link(project)
         wa_link = build_whatsapp_stage2_link(lead_token, site_lang)
@@ -3669,6 +3775,13 @@ class Handler(SimpleHTTPRequestHandler):
             preferred_link = wa_link
         else:
             preferred_link = tg_link
+        log_apply_event(
+            outcome="accepted",
+            project=project,
+            lang=site_lang,
+            client_ip=client_ip,
+            status=200,
+        )
         return self.send_json(
             {
                 "ok": True,

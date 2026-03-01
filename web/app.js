@@ -66,6 +66,7 @@ function initScrollProgress() {
 initScrollProgress();
 
 const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const smoothScrollBehavior = prefersReduced ? 'auto' : 'smooth';
 
 const SITE_LANG_STORAGE_KEY = 'streamflow_site_lang';
 const SITE_LANGS = ['ru', 'en', 'pt', 'es'];
@@ -281,6 +282,7 @@ const I18N = {
     'form.nextUnavailable': '⚠️ Для выбранного мессенджера ссылка пока не настроена.',
     'form.sendError': 'Ошибка отправки.',
     'form.invalid': 'Поле заполнено неверно.',
+    'form.privacyNote': 'Отправляя форму, ты подтверждаешь согласие на обработку контактных данных для связи по заявке.',
     'footer.channel': 'Канал Streamflow',
     'footer.rights': '© Streamflow. Все права защищены.',
     'validation.name': 'Введите имя полностью.',
@@ -459,6 +461,7 @@ const I18N = {
     'form.nextUnavailable': '⚠️ Link for the selected messenger is not configured yet.',
     'form.sendError': 'Sending error.',
     'form.invalid': 'Invalid field value.',
+    'form.privacyNote': 'By submitting this form, you agree to contact-data processing strictly for application follow-up.',
     'footer.channel': 'Streamflow channel',
     'footer.rights': '© Streamflow. All rights reserved.',
     'validation.name': 'Enter full name.',
@@ -637,6 +640,7 @@ const I18N = {
     'form.nextUnavailable': '⚠️ O link para o mensageiro selecionado ainda não está configurado.',
     'form.sendError': 'Erro ao enviar.',
     'form.invalid': 'Campo preenchido incorretamente.',
+    'form.privacyNote': 'Ao enviar o formulário, você concorda com o processamento de dados de contato apenas para retorno da candidatura.',
     'footer.channel': 'Canal Streamflow',
     'footer.rights': '© Streamflow. Todos os direitos reservados.',
     'validation.name': 'Digite o nome completo.',
@@ -815,6 +819,7 @@ const I18N = {
     'form.nextUnavailable': '⚠️ El enlace del mensajero seleccionado aún no está configurado.',
     'form.sendError': 'Error al enviar.',
     'form.invalid': 'Campo inválido.',
+    'form.privacyNote': 'Al enviar el formulario, aceptas el tratamiento de datos de contacto únicamente para responder a tu solicitud.',
     'footer.channel': 'Canal Streamflow',
     'footer.rights': '© Streamflow. Todos los derechos reservados.',
     'validation.name': 'Escribe el nombre completo.',
@@ -880,6 +885,9 @@ function updateMenuToggleText() {
   document.querySelectorAll('[data-menu-text]').forEach((node) => {
     node.textContent = text;
   });
+  document.querySelectorAll('[data-nav-open]').forEach((button) => {
+    button.setAttribute('aria-label', text);
+  });
 }
 
 function applySiteTranslations(lang) {
@@ -895,6 +903,11 @@ function applySiteTranslations(lang) {
     const key = element.getAttribute('data-i18n-placeholder');
     const value = siteText(key, CURRENT_SITE_LANG);
     if (value) element.setAttribute('placeholder', value);
+  });
+  document.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
+    const key = element.getAttribute('data-i18n-aria-label');
+    const value = siteText(key, CURRENT_SITE_LANG);
+    if (value) element.setAttribute('aria-label', value);
   });
   document.querySelectorAll('input[name="site_lang"]').forEach((langField) => {
     langField.value = CURRENT_SITE_LANG;
@@ -916,20 +929,33 @@ function setSiteLanguage(lang, options = {}) {
   applySiteTranslations(locale);
 }
 
+let languageGateRestoreFocus = null;
+
 function hideLanguageGate() {
   const gate = document.getElementById('language-gate');
   if (!gate) return;
   gate.classList.remove('is-visible');
   gate.setAttribute('aria-hidden', 'true');
   document.body.classList.remove('lang-locked');
+  if (languageGateRestoreFocus instanceof HTMLElement && document.contains(languageGateRestoreFocus)) {
+    languageGateRestoreFocus.focus();
+  }
+  languageGateRestoreFocus = null;
 }
 
 function showLanguageGate() {
   const gate = document.getElementById('language-gate');
   if (!gate) return;
+  if (document.activeElement instanceof HTMLElement) {
+    languageGateRestoreFocus = document.activeElement;
+  }
   gate.classList.add('is-visible');
   gate.setAttribute('aria-hidden', 'false');
   document.body.classList.add('lang-locked');
+  const firstOption = gate.querySelector('[data-language-option]');
+  if (firstOption instanceof HTMLElement) {
+    firstOption.focus();
+  }
 }
 
 function initSiteLanguage() {
@@ -955,7 +981,20 @@ function initSiteLanguage() {
     });
   });
 
-  showLanguageGate();
+  if (hasSaved) {
+    hideLanguageGate();
+  } else {
+    showLanguageGate();
+  }
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key !== 'Escape') return;
+    const gate = document.getElementById('language-gate');
+    if (!gate) return;
+    if (gate.classList.contains('is-visible')) {
+      hideLanguageGate();
+    }
+  });
 }
 
 initSiteLanguage();
@@ -1429,17 +1468,76 @@ if (ambientVideos.length) {
 
 const videoModal = document.getElementById('video-modal');
 const modalVideo = videoModal ? videoModal.querySelector('video') : null;
+const FOCUSABLE_SELECTOR = 'a[href], button:not([disabled]), input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
+function getFocusableNodes(container) {
+  if (!container) return [];
+  return Array.from(container.querySelectorAll(FOCUSABLE_SELECTOR)).filter((node) => {
+    if (!(node instanceof HTMLElement)) return false;
+    if (node.hasAttribute('disabled')) return false;
+    if (node.getAttribute('aria-hidden') === 'true') return false;
+    return node.offsetParent !== null || node === document.activeElement;
+  });
+}
+
+function enableFocusTrap(container) {
+  if (!container) return;
+  const previous = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  container.__focusTrapRestore = previous;
+  const focusable = getFocusableNodes(container);
+  const firstTarget = focusable[0] || container;
+  if (firstTarget instanceof HTMLElement) {
+    firstTarget.focus();
+  }
+
+  const onKeyDown = (event) => {
+    if (event.key !== 'Tab') return;
+    const nodes = getFocusableNodes(container);
+    if (!nodes.length) {
+      event.preventDefault();
+      return;
+    }
+    const currentIndex = nodes.indexOf(document.activeElement);
+    let nextIndex = 0;
+    if (event.shiftKey) {
+      nextIndex = currentIndex <= 0 ? nodes.length - 1 : currentIndex - 1;
+    } else {
+      nextIndex = currentIndex === nodes.length - 1 ? 0 : currentIndex + 1;
+    }
+    event.preventDefault();
+    nodes[nextIndex].focus();
+  };
+
+  container.__focusTrapHandler = onKeyDown;
+  document.addEventListener('keydown', onKeyDown);
+}
+
+function disableFocusTrap(container) {
+  if (!container) return;
+  const handler = container.__focusTrapHandler;
+  if (handler) {
+    document.removeEventListener('keydown', handler);
+  }
+  const restore = container.__focusTrapRestore;
+  container.__focusTrapHandler = null;
+  container.__focusTrapRestore = null;
+  if (restore instanceof HTMLElement && document.contains(restore)) {
+    restore.focus();
+  }
+}
 
 function openModal(modal) {
   modal.classList.add('open');
   modal.setAttribute('aria-hidden', 'false');
   document.body.style.overflow = 'hidden';
+  enableFocusTrap(modal);
 }
 
 function closeModal(modal) {
   modal.classList.remove('open');
   modal.setAttribute('aria-hidden', 'true');
   document.body.style.overflow = '';
+  disableFocusTrap(modal);
 }
 
 if (videoModal && modalVideo) {
@@ -1476,6 +1574,10 @@ document.addEventListener('keydown', (event) => {
         modalVideo.removeAttribute('src');
       }
       closeModal(videoModal);
+      return;
+    }
+    if (document.body.classList.contains('nav-open')) {
+      setNavState(false);
     }
   }
 });
@@ -1483,7 +1585,6 @@ document.addEventListener('keydown', (event) => {
 const navOpenButtons = document.querySelectorAll('[data-nav-open]');
 const mobileNav = document.querySelector('.mobile-nav');
 const navCloseButtons = document.querySelectorAll('[data-nav-close]');
-const menuTextNodes = document.querySelectorAll('[data-menu-text]');
 
 function setNavState(isOpen) {
   document.body.classList.toggle('nav-open', isOpen);
@@ -1491,6 +1592,21 @@ function setNavState(isOpen) {
   updateMenuToggleText();
   if (mobileNav) {
     mobileNav.setAttribute('aria-hidden', String(!isOpen));
+    const panel = mobileNav.querySelector('.mobile-nav-panel');
+    if (panel) {
+      panel.setAttribute('role', 'dialog');
+      panel.setAttribute('aria-modal', 'true');
+      panel.setAttribute('aria-label', siteText('mobile.menu'));
+      if (!panel.hasAttribute('tabindex')) {
+        panel.setAttribute('tabindex', '-1');
+      }
+      if (isOpen) {
+        enableFocusTrap(panel);
+        panel.focus();
+      } else {
+        disableFocusTrap(panel);
+      }
+    }
   }
 }
 
@@ -1542,7 +1658,11 @@ carousels.forEach((carousel) => {
       slide.classList.toggle('is-current', idx === index);
     });
     if (!dots.length) return;
-    dots.forEach((dot, idx) => dot.classList.toggle('is-active', idx === index));
+    dots.forEach((dot, idx) => {
+      const isActive = idx === index;
+      dot.classList.toggle('is-active', isActive);
+      dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+    });
   }
 
   function updateActive() {
@@ -1572,7 +1692,7 @@ carousels.forEach((carousel) => {
       typeof positions[index] === 'number'
         ? positions[index]
         : slides[index].offsetLeft;
-    track.scrollTo({ left: target, behavior: 'smooth' });
+    track.scrollTo({ left: target, behavior: smoothScrollBehavior });
     activeIndex = index;
     setActive(index);
   }
@@ -1629,6 +1749,33 @@ carousels.forEach((carousel) => {
   track.addEventListener('pointerleave', endDrag);
   track.addEventListener('pointercancel', endDrag);
 
+  track.setAttribute('tabindex', '0');
+  track.addEventListener('keydown', (event) => {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault();
+      goTo((activeIndex + 1) % slides.length);
+      stopAuto();
+      return;
+    }
+    if (event.key === 'ArrowLeft') {
+      event.preventDefault();
+      goTo((activeIndex - 1 + slides.length) % slides.length);
+      stopAuto();
+      return;
+    }
+    if (event.key === 'Home') {
+      event.preventDefault();
+      goTo(0);
+      stopAuto();
+      return;
+    }
+    if (event.key === 'End') {
+      event.preventDefault();
+      goTo(slides.length - 1);
+      stopAuto();
+    }
+  });
+
   window.addEventListener('resize', () => {
     positions = slides.map((slide) => slide.offsetLeft);
     updateActive();
@@ -1663,13 +1810,17 @@ portfolioSliders.forEach((slider) => {
 
   const updateDots = (index) => {
     if (!dots.length) return;
-    dots.forEach((dot, idx) => dot.classList.toggle('is-active', idx === index));
+    dots.forEach((dot, idx) => {
+      const isActive = idx === index;
+      dot.classList.toggle('is-active', isActive);
+      dot.setAttribute('aria-current', isActive ? 'true' : 'false');
+    });
   };
 
   const goTo = (index) => {
     const slide = slides[index];
     const target = slide ? slide.offsetLeft : 0;
-    track.scrollTo({ left: target, behavior: 'smooth' });
+    track.scrollTo({ left: target, behavior: smoothScrollBehavior });
     updateDots(index);
   };
 
@@ -1767,6 +1918,28 @@ function ensureCountryField(form) {
     field.value = detectCountryFromClient();
   }
   return field;
+}
+
+function ensureHoneypotFields(form) {
+  if (!form) return;
+  const honeypotFields = [
+    { name: 'website', autocomplete: 'off' },
+    { name: 'company', autocomplete: 'organization' },
+  ];
+  honeypotFields.forEach((meta) => {
+    let field = form.querySelector(`input[name="${meta.name}"]`);
+    if (!field) {
+      field = document.createElement('input');
+      field.type = 'text';
+      field.name = meta.name;
+      field.value = '';
+      field.className = 'hp-field';
+      field.tabIndex = -1;
+      field.autocomplete = meta.autocomplete;
+      field.setAttribute('aria-hidden', 'true');
+      form.appendChild(field);
+    }
+  });
 }
 
 const forms = document.querySelectorAll('[data-application-form]');
@@ -1980,7 +2153,7 @@ function initMultiStep(form) {
       });
       const active = sidePoints[current];
       if (active && userNavigated) {
-        active.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+        active.scrollIntoView({ block: 'nearest', behavior: smoothScrollBehavior });
       }
     }
     if (btnPrev) btnPrev.classList.toggle('hidden', current === 0);
@@ -1999,7 +2172,7 @@ function initMultiStep(form) {
     });
     if (firstInvalid) {
       firstInvalid.focus();
-      firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      firstInvalid.scrollIntoView({ behavior: smoothScrollBehavior, block: 'center' });
       return false;
     }
     return true;
@@ -2310,7 +2483,7 @@ async function sendApplication(formData, elements, options = {}) {
             stepper.setFieldError(field, payload.message || siteText('form.invalid'));
           }
           field.focus();
-          field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          field.scrollIntoView({ behavior: smoothScrollBehavior, block: 'center' });
           handledInline = true;
         }
       }
@@ -2336,6 +2509,7 @@ async function sendApplication(formData, elements, options = {}) {
 }
 
 forms.forEach((form) => {
+  ensureHoneypotFields(form);
   ensureCountryField(form);
   const formStatus = form.querySelector('[data-form-status]');
   const formNext = form.querySelector('[data-form-next]');
