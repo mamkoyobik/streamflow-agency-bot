@@ -1654,15 +1654,25 @@ def _wa_portfolio_sources() -> dict[str, dict]:
     }
 
 
-def _wa_portfolio_items(kind: str) -> list[dict]:
+def _wa_portfolio_items(kind: str, lang: str = "ru") -> list[dict]:
     source = _wa_portfolio_sources().get(kind) or _wa_portfolio_sources()["cases"]
+    locale = normalize_site_lang(lang)
     patterns = source.get("globs")
     if not isinstance(patterns, list) or not patterns:
         legacy = source.get("glob")
         patterns = [legacy] if isinstance(legacy, str) and legacy.strip() else []
+    localized_patterns: list[str] = []
+    if kind == "cases" and locale != "ru":
+        localized_patterns.append(f"assets/portfolio/{locale}/*.jpg")
     found_files: list[Path] = []
-    for pattern in patterns:
+    for pattern in localized_patterns + patterns:
         found_files.extend(list(WEB_DIR.glob(pattern)))
+    if localized_patterns:
+        localized_files: list[Path] = []
+        for pattern in localized_patterns:
+            localized_files.extend(list(WEB_DIR.glob(pattern)))
+        if localized_files:
+            found_files = localized_files
     unique_files = sorted({path.resolve(): path for path in found_files}.values(), key=_wa_media_sort_key)
     items: list[dict] = []
     for file_path in unique_files:
@@ -1723,10 +1733,11 @@ def _wa_portfolio_buttons(lang: str, index: int, total: int) -> list[dict]:
 
 def _wa_portfolio_item_from_flow(flow: dict | None) -> tuple[dict | None, int, int, str]:
     data = flow.get("data") if isinstance(flow, dict) and isinstance(flow.get("data"), dict) else {}
+    flow_lang = normalize_site_lang(flow.get("lang") if isinstance(flow, dict) else None)
     kind = str(data.get("portfolio_kind") or "cases").strip().lower()
     if kind not in _wa_portfolio_sources():
         kind = "cases"
-    items = _wa_portfolio_items(kind)
+    items = _wa_portfolio_items(kind, flow_lang)
     if not items:
         return None, 0, 0, kind
     try:
@@ -1741,7 +1752,7 @@ def _wa_portfolio_item_from_flow(flow: dict | None) -> tuple[dict | None, int, i
 
 
 def _wa_start_portfolio_flow(from_phone: str, lang: str, mode: str = "quick") -> str:
-    items = _wa_portfolio_items("cases")
+    items = _wa_portfolio_items("cases", lang)
     if not items:
         _save_wa_flow(from_phone, {"mode": "quick", "step": "menu", "lang": lang, "data": {}})
         empty_by_lang = {
@@ -2860,7 +2871,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, wa_t(lang, "ask_name")
         if menu_key == "portfolio_next":
             next_index = min(current_index + 1, max(total_items - 1, 0))
-            items = _wa_portfolio_items(current_kind)
+            items = _wa_portfolio_items(current_kind, lang)
             if not items:
                 return True, _wa_start_portfolio_flow(from_phone, lang, mode="quick")
             item = items[next_index]
@@ -2876,7 +2887,7 @@ def handle_whatsapp_application_message(message: dict) -> tuple[bool, str | None
             return True, _wa_portfolio_caption(lang, item, next_index, total_items)
         if menu_key == "portfolio_prev":
             prev_index = max(current_index - 1, 0)
-            items = _wa_portfolio_items(current_kind)
+            items = _wa_portfolio_items(current_kind, lang)
             if not items:
                 return True, _wa_start_portfolio_flow(from_phone, lang, mode="quick")
             item = items[prev_index]

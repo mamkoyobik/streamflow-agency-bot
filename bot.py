@@ -3878,11 +3878,24 @@ def _portfolio_player_text(lang: str, key: str) -> str:
     return values.get(locale, values["ru"]).get(key, values["ru"][key])
 
 
-def load_portfolio_player_items() -> list[dict]:
+def _localized_portfolio_path(base_dir: Path, relative_path: str, lang: str) -> Path:
+    locale = normalize_lang(lang)
+    source_path = base_dir / relative_path
+    rel = Path(relative_path)
+    if locale == "ru":
+        return source_path
+    if rel.parts and rel.parts[0] == "media":
+        candidate = base_dir / "media" / "i18n" / locale / rel.name
+        if candidate.exists():
+            return candidate
+    return source_path
+
+
+def load_portfolio_player_items(lang: str = "ru") -> list[dict]:
     base_dir = Path(__file__).resolve().parent
     items: list[dict] = []
     for spec in PORTFOLIO_PLAYER_SPECS:
-        file_path = base_dir / str(spec.get("file") or "")
+        file_path = _localized_portfolio_path(base_dir, str(spec.get("file") or ""), lang)
         if not file_path.exists():
             continue
         raw_autonext = spec.get("autonext_seconds")
@@ -3998,7 +4011,7 @@ async def show_portfolio_player(
 ):
     if not skip_autonext_cancel:
         cancel_portfolio_autonext(user_id)
-    items = load_portfolio_player_items()
+    items = load_portfolio_player_items(lang)
     if not items:
         await send_or_edit_user_text(
             user_id,
@@ -7334,7 +7347,7 @@ async def portfolio_reviews(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        items = load_portfolio_player_items()
+        items = load_portfolio_player_items(lang)
         start_index = portfolio_start_index(items, "photo")
         await show_portfolio_player(
             call.from_user.id,
@@ -7353,7 +7366,7 @@ async def portfolio_streams(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        items = load_portfolio_player_items()
+        items = load_portfolio_player_items(lang)
         start_index = portfolio_start_index(items, "video")
         await show_portfolio_player(
             call.from_user.id,
@@ -7396,7 +7409,7 @@ async def portfolio_jump(call: CallbackQuery):
             return
         _, raw_kind = call.data.split(":", 1)
         kind = raw_kind.strip().lower()
-        items = load_portfolio_player_items()
+        items = load_portfolio_player_items(lang)
         target_index = portfolio_start_index(items, kind)
         await show_portfolio_player(
             call.from_user.id,
