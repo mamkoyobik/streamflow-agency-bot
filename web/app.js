@@ -16,6 +16,7 @@
       'nav.model': 'Формат',
       'nav.process': 'Этапы',
       'nav.income': 'Доход',
+      'nav.planner': 'Калькулятор',
       'nav.portfolio': 'Портфолио',
       'nav.apply': 'Анкета',
       'cta.apply': 'Оставить заявку',
@@ -50,7 +51,21 @@
       'steps.s3.text': 'Получаешь план действий и стартуешь с поддержкой.',
       'income.eyebrow': 'Примеры',
       'income.title': 'Ориентиры по доходу при стабильном графике',
-      'income.note': 'после этапа адаптации',
+      'income.subtitle': 'Реальные ориентиры моделей при рабочем ритме и поддержке менеджера.',
+      'income.note': 'Рост дохода',
+      'planner.eyebrow': 'Калькулятор',
+      'planner.title': 'Оцени потенциальный доход по своему графику',
+      'planner.subtitle': 'Ориентировочный расчёт по часам, дням и этапу адаптации.',
+      'planner.hours': 'Часов в день',
+      'planner.hoursUnit': 'часа / день',
+      'planner.days': 'Дней в неделю',
+      'planner.daysUnit': 'дней / неделя',
+      'planner.level': 'Этап адаптации',
+      'planner.level.start': 'Старт',
+      'planner.level.steady': 'Стабильный ритм',
+      'planner.level.pro': 'Продвинутый',
+      'planner.monthly': 'Оценка в месяц',
+      'planner.note': 'Это ориентировочная оценка для планирования.',
       'portfolio.eyebrow': 'Портфолио',
       'portfolio.title': 'Примеры профилей и кейсов',
       'portfolio.lead': 'Язык слайдов подстраивается под выбранную локализацию сайта.',
@@ -70,10 +85,13 @@
       'fit.low': 'Низкая готовность: сначала закрой базовые условия старта.',
       'form.eyebrow': 'Анкета',
       'form.title': 'Оставь заявку за минуту',
-      'form.lead': 'После отправки сразу получишь кнопку для перехода в выбранный мессенджер.',
+      'form.lead': 'Сначала короткая анкета, затем переход в выбранный мессенджер для второго этапа.',
       'form.b1': 'Короткая форма без лишних полей',
       'form.b2': 'Никаких повторных отправок',
       'form.b3': 'Ответ в рабочее время',
+      'form.stepLabel': 'Шаг',
+      'form.step1Title': 'Шаг 1. Базовые данные',
+      'form.step2Title': 'Шаг 2. Куда написать',
       'form.name': 'Имя',
       'form.phone': 'Телефон',
       'form.age': 'Дата рождения (18+)',
@@ -82,6 +100,8 @@
       'form.contactValue': 'Контакт',
       'form.contactPlaceholderTelegram': '@username',
       'form.contactPlaceholderWhatsapp': '+7 900 000 00 00',
+      'form.nextStep': 'Далее',
+      'form.prevStep': 'Назад',
       'form.submit': 'Отправить заявку',
       'form.privacy': 'Отправляя форму, ты подтверждаешь согласие на обработку контактных данных для связи по заявке.',
       'form.next': 'Продолжить в мессенджере',
@@ -111,6 +131,7 @@
       'nav.model': 'Format',
       'nav.process': 'Steps',
       'nav.income': 'Income',
+      'nav.planner': 'Calculator',
       'nav.portfolio': 'Portfolio',
       'nav.apply': 'Form',
       'cta.apply': 'Apply now',
@@ -145,7 +166,21 @@
       'steps.s3.text': 'Get the launch plan and start with support.',
       'income.eyebrow': 'Examples',
       'income.title': 'Income references with a stable work rhythm',
-      'income.note': 'after adaptation stage',
+      'income.subtitle': 'Real benchmarks with a stable schedule and manager support.',
+      'income.note': 'Income growth',
+      'planner.eyebrow': 'Calculator',
+      'planner.title': 'Estimate potential income based on your schedule',
+      'planner.subtitle': 'Planning estimate by hours, days, and adaptation stage.',
+      'planner.hours': 'Hours per day',
+      'planner.hoursUnit': 'hours / day',
+      'planner.days': 'Days per week',
+      'planner.daysUnit': 'days / week',
+      'planner.level': 'Adaptation stage',
+      'planner.level.start': 'Start',
+      'planner.level.steady': 'Steady rhythm',
+      'planner.level.pro': 'Advanced',
+      'planner.monthly': 'Monthly estimate',
+      'planner.note': 'This is an approximate planning estimate.',
       'portfolio.eyebrow': 'Portfolio',
       'portfolio.title': 'Profile and case examples',
       'portfolio.lead': 'Slide language switches automatically with the selected site language.',
@@ -165,10 +200,13 @@
       'fit.low': 'Low readiness: close core prerequisites first.',
       'form.eyebrow': 'Application',
       'form.title': 'Submit your form in one minute',
-      'form.lead': 'After submission, you will instantly get the messenger next step.',
+      'form.lead': 'First complete a short form, then continue to the second step in your chosen messenger.',
       'form.b1': 'Short form with no extra fields',
       'form.b2': 'No duplicate submissions',
       'form.b3': 'Reply during business hours',
+      'form.stepLabel': 'Step',
+      'form.step1Title': 'Step 1. Basic details',
+      'form.step2Title': 'Step 2. Preferred contact',
       'form.name': 'Name',
       'form.phone': 'Phone',
       'form.age': 'Birth date (18+)',
@@ -177,6 +215,8 @@
       'form.contactValue': 'Contact',
       'form.contactPlaceholderTelegram': '@username',
       'form.contactPlaceholderWhatsapp': '+1 555 123 4567',
+      'form.nextStep': 'Next',
+      'form.prevStep': 'Back',
       'form.submit': 'Submit application',
       'form.privacy': 'By submitting this form, you consent to processing of contact data for application follow-up.',
       'form.next': 'Continue in messenger',
@@ -206,6 +246,7 @@
       'nav.model': 'Formato',
       'nav.process': 'Etapas',
       'nav.income': 'Renda',
+      'nav.planner': 'Calculadora',
       'nav.portfolio': 'Portfólio',
       'nav.apply': 'Formulário',
       'cta.apply': 'Enviar formulário',
@@ -240,7 +281,21 @@
       'steps.s3.text': 'Recebe o plano e inicia com suporte.',
       'income.eyebrow': 'Exemplos',
       'income.title': 'Referências de renda com rotina estável',
-      'income.note': 'após fase de adaptação',
+      'income.subtitle': 'Referências reais com rotina estável e suporte do gerente.',
+      'income.note': 'Crescimento da renda',
+      'planner.eyebrow': 'Calculadora',
+      'planner.title': 'Estime sua renda potencial pelo seu ritmo',
+      'planner.subtitle': 'Estimativa por horas, dias e estágio de adaptação.',
+      'planner.hours': 'Horas por dia',
+      'planner.hoursUnit': 'horas / dia',
+      'planner.days': 'Dias por semana',
+      'planner.daysUnit': 'dias / semana',
+      'planner.level': 'Estágio de adaptação',
+      'planner.level.start': 'Início',
+      'planner.level.steady': 'Ritmo estável',
+      'planner.level.pro': 'Avançado',
+      'planner.monthly': 'Estimativa mensal',
+      'planner.note': 'Estimativa aproximada para planejamento.',
       'portfolio.eyebrow': 'Portfólio',
       'portfolio.title': 'Exemplos de perfis e casos',
       'portfolio.lead': 'O idioma dos slides muda automaticamente com o idioma selecionado no site.',
@@ -260,10 +315,13 @@
       'fit.low': 'Prontidão baixa: primeiro feche os requisitos básicos.',
       'form.eyebrow': 'Formulário',
       'form.title': 'Envie sua inscrição em um minuto',
-      'form.lead': 'Após o envio, você recebe imediatamente o próximo passo no mensageiro.',
+      'form.lead': 'Primeiro preencha um formulário curto e depois continue para a segunda etapa no mensageiro escolhido.',
       'form.b1': 'Formulário curto sem campos extras',
       'form.b2': 'Sem envios duplicados',
       'form.b3': 'Resposta em horário comercial',
+      'form.stepLabel': 'Etapa',
+      'form.step1Title': 'Etapa 1. Dados básicos',
+      'form.step2Title': 'Etapa 2. Contato',
       'form.name': 'Nome',
       'form.phone': 'Telefone',
       'form.age': 'Data de nascimento (18+)',
@@ -272,6 +330,8 @@
       'form.contactValue': 'Contato',
       'form.contactPlaceholderTelegram': '@username',
       'form.contactPlaceholderWhatsapp': '+55 11 99999 9999',
+      'form.nextStep': 'Avançar',
+      'form.prevStep': 'Voltar',
       'form.submit': 'Enviar inscrição',
       'form.privacy': 'Ao enviar, você concorda com o processamento dos dados de contato para retorno da inscrição.',
       'form.next': 'Continuar no mensageiro',
@@ -301,6 +361,7 @@
       'nav.model': 'Formato',
       'nav.process': 'Etapas',
       'nav.income': 'Ingresos',
+      'nav.planner': 'Calculadora',
       'nav.portfolio': 'Portafolio',
       'nav.apply': 'Formulario',
       'cta.apply': 'Enviar solicitud',
@@ -335,7 +396,21 @@
       'steps.s3.text': 'Recibes plan de acción e inicias con soporte.',
       'income.eyebrow': 'Ejemplos',
       'income.title': 'Referencias de ingresos con ritmo estable',
-      'income.note': 'después de la adaptación',
+      'income.subtitle': 'Referencias reales con ritmo estable y soporte del manager.',
+      'income.note': 'Crecimiento de ingresos',
+      'planner.eyebrow': 'Calculadora',
+      'planner.title': 'Calcula ingresos potenciales según tu agenda',
+      'planner.subtitle': 'Estimación por horas, días y etapa de adaptación.',
+      'planner.hours': 'Horas por día',
+      'planner.hoursUnit': 'horas / día',
+      'planner.days': 'Días por semana',
+      'planner.daysUnit': 'días / semana',
+      'planner.level': 'Etapa de adaptación',
+      'planner.level.start': 'Inicio',
+      'planner.level.steady': 'Ritmo estable',
+      'planner.level.pro': 'Avanzado',
+      'planner.monthly': 'Estimación mensual',
+      'planner.note': 'Estimación aproximada para planificación.',
       'portfolio.eyebrow': 'Portafolio',
       'portfolio.title': 'Ejemplos de perfiles y casos',
       'portfolio.lead': 'El idioma de las diapositivas cambia automáticamente según el idioma del sitio.',
@@ -355,10 +430,13 @@
       'fit.low': 'Preparación baja: primero cubre requisitos básicos.',
       'form.eyebrow': 'Formulario',
       'form.title': 'Envía tu solicitud en un minuto',
-      'form.lead': 'Después del envío, recibirás de inmediato el siguiente paso en mensajería.',
+      'form.lead': 'Primero completa un formulario corto y luego continúa al segundo paso en el mensajero elegido.',
       'form.b1': 'Formulario corto sin campos extra',
       'form.b2': 'Sin envíos duplicados',
       'form.b3': 'Respuesta en horario laboral',
+      'form.stepLabel': 'Paso',
+      'form.step1Title': 'Paso 1. Datos básicos',
+      'form.step2Title': 'Paso 2. Contacto',
       'form.name': 'Nombre',
       'form.phone': 'Teléfono',
       'form.age': 'Fecha de nacimiento (18+)',
@@ -367,6 +445,8 @@
       'form.contactValue': 'Contacto',
       'form.contactPlaceholderTelegram': '@username',
       'form.contactPlaceholderWhatsapp': '+34 600 000 000',
+      'form.nextStep': 'Siguiente',
+      'form.prevStep': 'Atrás',
       'form.submit': 'Enviar solicitud',
       'form.privacy': 'Al enviar, aceptas el tratamiento de datos de contacto para respuesta de esta solicitud.',
       'form.next': 'Continuar en mensajería',
@@ -515,19 +595,25 @@
     field.classList.toggle('is-field-error', Boolean(enabled));
   }
 
+  function formatIncomeAmount(rubAmount, lang) {
+    const rub = Number(rubAmount || 0);
+    if (!Number.isFinite(rub) || rub <= 0) {
+      return '0 ₽';
+    }
+    if (lang === 'ru') {
+      return new Intl.NumberFormat('ru-RU').format(rub) + ' ₽';
+    }
+    const usd = Math.round(rub / 92);
+    return '$' + new Intl.NumberFormat('en-US').format(usd);
+  }
+
   function updateIncomeByLang(lang) {
-    const usdRate = 92;
     qsa('[data-income-rub]').forEach((node) => {
       const rub = Number(node.getAttribute('data-income-rub') || 0);
       if (!Number.isFinite(rub) || rub <= 0) {
         return;
       }
-      if (lang === 'ru') {
-        node.textContent = new Intl.NumberFormat('ru-RU').format(rub) + ' ₽';
-        return;
-      }
-      const usd = Math.round(rub / usdRate);
-      node.textContent = '$' + new Intl.NumberFormat('en-US').format(usd);
+      node.textContent = formatIncomeAmount(rub, lang);
     });
   }
 
@@ -556,7 +642,7 @@
           observer.unobserve(entry.target);
         });
       },
-      { threshold: 0.2 }
+      { threshold: 0.12 }
     );
 
     items.forEach((item) => observer.observe(item));
@@ -595,6 +681,52 @@
     });
 
     update();
+  }
+
+  function initPlanner(state) {
+    const hoursInput = qs('#sf-planner-hours');
+    const daysInput = qs('#sf-planner-days');
+    const levelInput = qs('#sf-planner-level');
+    const hoursOut = qs('[data-planner-hours]');
+    const daysOut = qs('[data-planner-days]');
+    const incomeOut = qs('[data-planner-income]');
+
+    if (!hoursInput || !daysInput || !levelInput || !incomeOut) {
+      return () => {};
+    }
+
+    const levelMultiplier = {
+      start: 0.85,
+      steady: 1.1,
+      pro: 1.4
+    };
+
+    const estimateRubIncome = () => {
+      const hours = Math.max(1, Math.min(10, Number(hoursInput.value || 0)));
+      const days = Math.max(2, Math.min(7, Number(daysInput.value || 0)));
+      const level = String(levelInput.value || 'steady');
+      const multiplier = levelMultiplier[level] || levelMultiplier.steady;
+      const monthlyHours = hours * days * 4.2;
+      const monthlyRub = Math.round(monthlyHours * 1400 * multiplier);
+      return { hours, days, monthlyRub };
+    };
+
+    const update = () => {
+      const estimate = estimateRubIncome();
+      if (hoursOut) {
+        hoursOut.textContent = String(estimate.hours);
+      }
+      if (daysOut) {
+        daysOut.textContent = String(estimate.days);
+      }
+      incomeOut.textContent = formatIncomeAmount(estimate.monthlyRub, state.lang);
+    };
+
+    hoursInput.addEventListener('input', update);
+    daysInput.addEventListener('input', update);
+    levelInput.addEventListener('change', update);
+    update();
+    return update;
   }
 
   function portfolioPath(lang, slideNumber) {
@@ -769,18 +901,36 @@
   function initForm(state) {
     const form = qs('#sf-apply-form');
     const submitBtn = qs('#sf-submit');
+    const nextBtn = qs('[data-form-next]', form || document);
+    const prevBtn = qs('[data-form-prev]', form || document);
     const status = qs('#sf-form-status');
     const nextBox = qs('#sf-form-next');
     const nextTg = qs('#sf-next-telegram');
     const nextWa = qs('#sf-next-whatsapp');
     const contactType = qs('#sf-preferred-contact');
     const contactValue = qs('#sf-contact-value');
+    const steps = qsa('[data-form-step]', form || document);
+    const stepCurrent = qs('[data-form-step-current]', form || document);
+    const stepTotal = qs('[data-form-step-total]', form || document);
+    const stepBar = qs('[data-form-step-bar]', form || document);
     const hiddenTelegram = qs('input[name="telegram"]', form || document);
     const hiddenWhatsapp = qs('input[name="whatsapp"]', form || document);
 
-    if (!form || !submitBtn || !status || !contactType || !contactValue || !hiddenTelegram || !hiddenWhatsapp) {
+    if (
+      !form ||
+      !submitBtn ||
+      !status ||
+      !contactType ||
+      !contactValue ||
+      !hiddenTelegram ||
+      !hiddenWhatsapp ||
+      !steps.length
+    ) {
       return;
     }
+
+    const totalSteps = steps.length;
+    let currentStep = 0;
 
     const switchContactPlaceholder = () => {
       const isTelegram = contactType.value === 'telegram';
@@ -791,23 +941,62 @@
       contactValue.setAttribute('inputmode', isTelegram ? 'text' : 'tel');
     };
 
-    const resetValidation = () => {
-      qsa('input, select', form).forEach((field) => markFieldError(field, false));
+    const setStep = (index, focusFieldName) => {
+      currentStep = Math.max(0, Math.min(totalSteps - 1, Number(index) || 0));
+      steps.forEach((stepNode, stepIndex) => {
+        stepNode.classList.toggle('is-active', stepIndex === currentStep);
+      });
+      if (stepCurrent) {
+        stepCurrent.textContent = String(currentStep + 1);
+      }
+      if (stepTotal) {
+        stepTotal.textContent = String(totalSteps);
+      }
+      if (stepBar) {
+        stepBar.style.width = `${((currentStep + 1) / totalSteps) * 100}%`;
+      }
+      if (typeof focusFieldName === 'string' && focusFieldName) {
+        const focusTarget = qs(`[name="${focusFieldName}"]`, form);
+        if (focusTarget) {
+          focusTarget.focus();
+        }
+      }
     };
 
     const getField = (name) => qs(`[name="${name}"]`, form);
 
-    const validate = () => {
-      resetValidation();
+    const clearValidation = (fieldNames) => {
+      fieldNames.forEach((fieldName) => {
+        const field = getField(fieldName);
+        if (field) {
+          markFieldError(field, false);
+        }
+      });
+    };
+
+    const validateStepOne = () => {
+      clearValidation(['name', 'phone', 'age', 'device_model']);
 
       const name = String(getField('name')?.value || '').trim();
       const phone = String(getField('phone')?.value || '').trim();
       const age = String(getField('age')?.value || '').trim();
       const device = String(getField('device_model')?.value || '').trim();
-      const contact = String(contactValue.value || '').trim();
 
-      if (!name || !phone || !age || !device || !contact) {
+      if (!name || !phone || !age || !device) {
         setStatus(status, t('msg.required', state.lang), true, false);
+        if (!name) {
+          markFieldError(getField('name'), true);
+          getField('name')?.focus();
+        } else if (!phone) {
+          markFieldError(getField('phone'), true);
+          getField('phone')?.focus();
+        } else if (!age) {
+          markFieldError(getField('age'), true);
+          getField('age')?.focus();
+        } else {
+          markFieldError(getField('device_model'), true);
+          getField('device_model')?.focus();
+        }
         return false;
       }
       if (name.length < 2) {
@@ -834,7 +1023,20 @@
         getField('device_model')?.focus();
         return false;
       }
+      setStatus(status, '', false, false);
+      return true;
+    };
 
+    const validateStepTwo = () => {
+      clearValidation(['contact_value', 'preferred_contact', 'telegram', 'whatsapp']);
+      const contact = String(contactValue.value || '').trim();
+
+      if (!contact) {
+        markFieldError(contactValue, true);
+        setStatus(status, t('msg.required', state.lang), true, false);
+        contactValue.focus();
+        return false;
+      }
       if (contactType.value === 'telegram') {
         if (!isValidTelegram(contact)) {
           markFieldError(contactValue, true);
@@ -849,11 +1051,18 @@
         return false;
       }
 
+      setStatus(status, '', false, false);
       return true;
     };
 
     const setLoading = (loading) => {
       submitBtn.disabled = loading;
+      if (nextBtn) {
+        nextBtn.disabled = loading;
+      }
+      if (prevBtn) {
+        prevBtn.disabled = loading;
+      }
       submitBtn.setAttribute('aria-disabled', loading ? 'true' : 'false');
       form.setAttribute('aria-busy', loading ? 'true' : 'false');
       if (loading) {
@@ -872,10 +1081,40 @@
     };
 
     contactType.addEventListener('change', switchContactPlaceholder);
+    document.addEventListener('streamflow-language-change', switchContactPlaceholder);
+    if (nextBtn) {
+      nextBtn.addEventListener('click', () => {
+        if (!validateStepOne()) {
+          return;
+        }
+        trackGoal('streamflow_form_step_2');
+        setStep(1, 'contact_value');
+      });
+    }
+    if (prevBtn) {
+      prevBtn.addEventListener('click', () => {
+        setStatus(status, '', false, false);
+        setStep(0, 'name');
+      });
+    }
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
-      if (!validate()) {
+      if (currentStep === 0) {
+        if (validateStepOne()) {
+          setStep(1, 'contact_value');
+        }
+        return;
+      }
+
+      const stepOneValid = validateStepOne();
+      if (!stepOneValid) {
+        setStep(0);
+        return;
+      }
+      const stepTwoValid = validateStepTwo();
+      if (!stepTwoValid) {
+        setStep(1);
         return;
       }
 
@@ -913,6 +1152,12 @@
           if (payload && payload.field) {
             const field = resolveInputByApiField(String(payload.field));
             if (field) {
+              const fieldName = String(payload.field);
+              if (['name', 'phone', 'age', 'device_model'].includes(fieldName)) {
+                setStep(0);
+              } else {
+                setStep(1);
+              }
               markFieldError(field, true);
               field.focus();
             }
@@ -959,6 +1204,7 @@
         if (langInput) {
           langInput.value = state.lang;
         }
+        setStep(0);
         contactType.value = 'telegram';
         switchContactPlaceholder();
       } catch (_err) {
@@ -969,6 +1215,7 @@
       }
     });
 
+    setStep(0);
     switchContactPlaceholder();
   }
 
@@ -985,15 +1232,18 @@
     };
 
     const refreshPortfolio = initPortfolio(state);
+    const refreshPlanner = initPlanner(state);
 
     const onLangChange = (lang) => {
       applyI18n(lang);
       updateIncomeByLang(lang);
       refreshPortfolio();
+      refreshPlanner();
       const langInput = qs('#sf-site-lang');
       if (langInput) {
         langInput.value = lang;
       }
+      document.dispatchEvent(new Event('streamflow-language-change'));
     };
 
     initYear();
