@@ -3535,6 +3535,36 @@ class Handler(SimpleHTTPRequestHandler):
             self.path = "/starflow.html"
         return super().do_GET()
 
+    def do_OPTIONS(self):
+        if self._should_redirect_to_canonical():
+            return self._redirect_canonical()
+        if not self._is_allowed_request_host():
+            return self.send_json({"ok": False, "message": "misdirected host"}, status=421)
+
+        parsed = urllib.parse.urlparse(self.path)
+        if parsed.path == "/api/apply":
+            if not self._is_allowed_site_origin():
+                return self.send_json({"ok": False, "message": "forbidden"}, status=403)
+            origin = self.headers.get("Origin", "").strip()
+            self.send_response(204)
+            self.send_header("Allow", "POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Methods", "POST, OPTIONS")
+            self.send_header("Access-Control-Allow-Headers", "Content-Type")
+            self.send_header("Access-Control-Max-Age", "600")
+            if origin:
+                self.send_header("Access-Control-Allow-Origin", origin)
+                self.send_header("Vary", "Origin")
+            self.end_headers()
+            return
+
+        if parsed.path == "/api/infobip/webhook":
+            self.send_response(204)
+            self.send_header("Allow", "POST, OPTIONS")
+            self.end_headers()
+            return
+
+        self.send_error(404)
+
     def do_POST(self):
         if not self._is_allowed_request_host():
             return self.send_json({"ok": False, "message": "misdirected host"}, status=421)

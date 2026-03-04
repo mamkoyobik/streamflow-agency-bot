@@ -1,3 +1,5 @@
+import http.client
+import threading
 import unittest
 from email.message import Message
 
@@ -195,6 +197,57 @@ class WebServerProjectTests(unittest.TestCase):
         finally:
             web_server.SITE_URL = original_site
             web_server.STARFLOW_SITE_URL = original_star_site
+
+
+class WebServerOptionsTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        cls._server = web_server.ThreadingHTTPServer(("127.0.0.1", 0), web_server.Handler)
+        cls._thread = threading.Thread(target=cls._server.serve_forever, daemon=True)
+        cls._thread.start()
+        cls._port = cls._server.server_address[1]
+
+    @classmethod
+    def tearDownClass(cls):
+        cls._server.shutdown()
+        cls._server.server_close()
+        cls._thread.join(timeout=1.0)
+
+    def _request(self, method: str, path: str, headers: dict[str, str] | None = None):
+        conn = http.client.HTTPConnection("127.0.0.1", self._port, timeout=2)
+        conn.request(method, path, body=None, headers=headers or {})
+        response = conn.getresponse()
+        status = response.status
+        body = response.read()
+        response_headers = dict(response.getheaders())
+        conn.close()
+        return status, body, response_headers
+
+    def test_options_apply_allows_streamflow_origin(self):
+        status, _body, headers = self._request(
+            "OPTIONS",
+            "/api/apply",
+            headers={"Origin": "https://streamflowagency.com"},
+        )
+        self.assertEqual(status, 204)
+        self.assertEqual(headers.get("Allow"), "POST, OPTIONS")
+        self.assertEqual(headers.get("Access-Control-Allow-Methods"), "POST, OPTIONS")
+        self.assertEqual(headers.get("Access-Control-Allow-Headers"), "Content-Type")
+        self.assertEqual(headers.get("Access-Control-Allow-Origin"), "https://streamflowagency.com")
+
+    def test_options_apply_rejects_foreign_origin(self):
+        status, body, _headers = self._request(
+            "OPTIONS",
+            "/api/apply",
+            headers={"Origin": "https://evil.example"},
+        )
+        self.assertEqual(status, 403)
+        self.assertIn(b"forbidden", body)
+
+    def test_options_infobip_webhook_returns_no_content(self):
+        status, _body, headers = self._request("OPTIONS", "/api/infobip/webhook")
+        self.assertEqual(status, 204)
+        self.assertEqual(headers.get("Allow"), "POST, OPTIONS")
 
 
 if __name__ == "__main__":
