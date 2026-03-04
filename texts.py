@@ -123,7 +123,7 @@ TRANSLATIONS = {
         ),
         "portfolio_menu_reviews": "🤍 Отзывы моделей",
         "portfolio_menu_videos": "🎥 Примеры стримов",
-        "portfolio_menu_pdf": "📄 PDF портфолио",
+        "portfolio_menu_pdf": "🖼 Слайды портфолио",
         "resume_prompt": "🤍 Похоже, анкета не завершена.\n\nХочешь продолжить заполнение?",
         "already_started_prompt": "🤍 Похоже, анкета уже начата.\n\nПродолжим с того места, где остановились?",
         "already_started_site_prompt": (
@@ -287,7 +287,7 @@ TRANSLATIONS = {
         ),
         "portfolio_menu_reviews": "🤍 Model reviews",
         "portfolio_menu_videos": "🎥 Stream samples",
-        "portfolio_menu_pdf": "📄 Portfolio PDF",
+        "portfolio_menu_pdf": "🖼 Portfolio slides",
         "resume_prompt": "🤍 Looks like your form is not finished.\n\nDo you want to continue?",
         "already_started_prompt": "🤍 Looks like your application is already started.\n\nContinue where you left off?",
         "already_started_site_prompt": (
@@ -452,7 +452,7 @@ TRANSLATIONS = {
         ),
         "portfolio_menu_reviews": "🤍 Avaliações",
         "portfolio_menu_videos": "🎥 Exemplos de stream",
-        "portfolio_menu_pdf": "📄 PDF do portfólio",
+        "portfolio_menu_pdf": "🖼 Slides do portfólio",
         "resume_prompt": "🤍 Parece que seu formulário não foi concluído.\n\nQuer continuar?",
         "already_started_prompt": "🤍 Parece que sua candidatura já foi iniciada.\n\nContinuar de onde parou?",
         "already_started_site_prompt": (
@@ -617,7 +617,7 @@ TRANSLATIONS = {
         ),
         "portfolio_menu_reviews": "🤍 Reseñas",
         "portfolio_menu_videos": "🎥 Ejemplos de stream",
-        "portfolio_menu_pdf": "📄 PDF del portafolio",
+        "portfolio_menu_pdf": "🖼 Slides de portafolio",
         "resume_prompt": "🤍 Parece que tu formulario no está completo.\n\n¿Quieres continuar?",
         "already_started_prompt": "🤍 Parece que tu solicitud ya está iniciada.\n\n¿Continuamos desde donde quedaste?",
         "already_started_site_prompt": (

@@ -783,6 +783,10 @@ AUTO_REQUEST_INFO_FLAG_KEY = "auto_info_requested_at"
 PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
 PORTFOLIO_CLEANUP_TASKS: dict[int, asyncio.Task] = {}
 PORTFOLIO_AUTONEXT_TASKS: dict[int, asyncio.Task] = {}
+PORTFOLIO_MODE_DEFAULT = "default"
+PORTFOLIO_MODE_SITE_SLIDES = "site_slides"
+PORTFOLIO_MODE_BY_USER: dict[int, str] = {}
+PORTFOLIO_SITE_SLIDES_COUNT = 8
 PORTFOLIO_PLAYER_SPECS = (
     {
         "kind": "photo",
@@ -4019,6 +4023,42 @@ def load_portfolio_player_items(lang: str = "ru") -> list[dict]:
     return items
 
 
+def load_site_portfolio_slide_items(lang: str = "ru") -> list[dict]:
+    base_dir = Path(__file__).resolve().parent
+    locale = normalize_lang(lang)
+    title = {
+        "ru": "Слайды портфолио",
+        "en": "Portfolio slides",
+        "pt": "Slides do portfólio",
+        "es": "Slides de portafolio",
+    }
+    items: list[dict] = []
+    for index in range(1, PORTFOLIO_SITE_SLIDES_COUNT + 1):
+        default_path = base_dir / "web" / "assets" / "portfolio" / f"{index}.jpg"
+        localized_path = base_dir / "web" / "assets" / "portfolio" / locale / f"{index}.jpg"
+        if locale != "ru" and localized_path.exists():
+            file_path = localized_path
+        else:
+            file_path = default_path
+        if not file_path.exists():
+            continue
+        items.append(
+            {
+                "kind": "photo",
+                "path": file_path,
+                "title": title,
+                "autonext_seconds": 0,
+            }
+        )
+    return items
+
+
+def load_portfolio_items(lang: str = "ru", mode: str = PORTFOLIO_MODE_DEFAULT) -> list[dict]:
+    if mode == PORTFOLIO_MODE_SITE_SLIDES:
+        return load_site_portfolio_slide_items(lang)
+    return load_portfolio_player_items(lang)
+
+
 def portfolio_start_index(items: list[dict], kind: str | None = None) -> int:
     if not items:
         return 0
@@ -4113,10 +4153,13 @@ async def show_portfolio_player(
     source_message: Message | None = None,
     source_message_id: int | None = None,
     skip_autonext_cancel: bool = False,
+    mode: str | None = None,
 ):
     if not skip_autonext_cancel:
         cancel_portfolio_autonext(user_id)
-    items = load_portfolio_player_items(lang)
+    active_mode = mode or PORTFOLIO_MODE_BY_USER.get(user_id, PORTFOLIO_MODE_DEFAULT)
+    PORTFOLIO_MODE_BY_USER[user_id] = active_mode
+    items = load_portfolio_items(lang, active_mode)
     if not items:
         await send_or_edit_user_text(
             user_id,
@@ -5424,6 +5467,7 @@ async def portfolio(call: CallbackQuery):
         lang = lang_for(call.from_user.id)
         await safe_call_answer(call)
         await clear_portfolio_media(call.from_user.id)
+        PORTFOLIO_MODE_BY_USER[call.from_user.id] = PORTFOLIO_MODE_DEFAULT
         await send_or_edit_user_text(
             call.from_user.id,
             t(lang, "profile_portfolio_title"),
@@ -7467,12 +7511,13 @@ async def portfolio_reviews(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        items = load_portfolio_player_items(lang)
+        items = load_portfolio_items(lang, PORTFOLIO_MODE_DEFAULT)
         start_index = portfolio_start_index(items, "photo")
         await show_portfolio_player(
             call.from_user.id,
             lang,
             start_index,
+            mode=PORTFOLIO_MODE_DEFAULT,
         )
         await safe_call_answer(call)
     except Exception:
@@ -7486,12 +7531,13 @@ async def portfolio_streams(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        items = load_portfolio_player_items(lang)
+        items = load_portfolio_items(lang, PORTFOLIO_MODE_DEFAULT)
         start_index = portfolio_start_index(items, "video")
         await show_portfolio_player(
             call.from_user.id,
             lang,
             start_index,
+            mode=PORTFOLIO_MODE_DEFAULT,
         )
         await safe_call_answer(call)
     except Exception:
@@ -7529,7 +7575,8 @@ async def portfolio_jump(call: CallbackQuery):
             return
         _, raw_kind = call.data.split(":", 1)
         kind = raw_kind.strip().lower()
-        items = load_portfolio_player_items(lang)
+        active_mode = PORTFOLIO_MODE_BY_USER.get(call.from_user.id, PORTFOLIO_MODE_DEFAULT)
+        items = load_portfolio_items(lang, active_mode)
         target_index = portfolio_start_index(items, kind)
         await show_portfolio_player(
             call.from_user.id,
@@ -7549,23 +7596,19 @@ async def portfolio_pdf(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        await clear_portfolio_media(call.from_user.id)
-        base_dir = Path(__file__).resolve().parent
-        candidates = [
-            base_dir / "media" / "portfolio.pdf",
-            base_dir / "web" / "assets" / "portfolio.pdf",
-        ]
-        pdf_path = next((p for p in candidates if p.exists()), None)
-        if not pdf_path:
-            raise FileNotFoundError("portfolio.pdf не найден ни в media, ни в web/assets")
-        msg = await call.message.answer_document(
-            FSInputFile(str(pdf_path))
+        items = load_portfolio_items(lang, PORTFOLIO_MODE_SITE_SLIDES)
+        if not items:
+            raise FileNotFoundError("site portfolio slides not found")
+        await show_portfolio_player(
+            call.from_user.id,
+            lang,
+            0,
+            mode=PORTFOLIO_MODE_SITE_SLIDES,
         )
-        track_portfolio_media(call.from_user.id, [msg.message_id])
         await safe_call_answer(call)
     except Exception:
         logger.exception("Ошибка в portfolio_pdf")
-        await safe_call_answer(call, t(lang_for(call.from_user.id), "pdf_send_error"), show_alert=False)
+        await safe_call_answer(call, t(lang_for(call.from_user.id), "portfolio_send_error"), show_alert=False)
 
 # ================= ADMIN STATS =================
 
