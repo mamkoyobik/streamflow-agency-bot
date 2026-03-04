@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="streamflow-rework.css?v=20260304-01">
+  <link rel="stylesheet" href="streamflow-rework.css?v=20260304-02">
 
   <script type="application/ld+json">
     {
@@ -162,6 +162,18 @@
             <li><strong>1:1</strong><span data-i18n="hero.kpi2">персональный менеджер</span></li>
             <li><strong>5+</strong><span data-i18n="hero.kpi3">лет операционного опыта</span></li>
           </ul>
+          <div class="sf-hero-modes">
+            <p class="sf-hero-modes__label" data-i18n="hero.modeLabel">Выбери темп старта</p>
+            <div class="sf-hero-modes__tabs" role="group" data-i18n-aria-label="hero.modeLabel" aria-label="Выбери темп старта">
+              <button type="button" class="is-active" data-hero-mode="soft" data-i18n="hero.modeSoft">Мягкий</button>
+              <button type="button" data-hero-mode="balanced" data-i18n="hero.modeBalanced">Сбалансированный</button>
+              <button type="button" data-hero-mode="pro" data-i18n="hero.modePro">Интенсивный</button>
+            </div>
+            <div class="sf-hero-modes__result" aria-live="polite">
+              <strong id="sf-hero-mode-value">3-4h/day</strong>
+              <p id="sf-hero-mode-note">Комфортный вход без перегруза в первые недели.</p>
+            </div>
+          </div>
         </div>
 
         <article class="sf-hero__card sf-reveal" data-reveal-delay="80">
@@ -171,46 +183,7 @@
             <li data-i18n="hero.card2">Прозрачную коммуникацию в мессенджере</li>
             <li data-i18n="hero.card3">План запуска и поддержку</li>
           </ul>
-          <div class="sf-hero-media">
-            <video
-              id="sf-hero-video"
-              class="sf-hero-media__video"
-              controls
-              playsinline
-              muted
-              preload="metadata"
-              poster="assets/models/confident.jpg"
-              aria-label="Stream example"
-            >
-              <source src="assets/videos/stream-1.mp4" type="video/mp4">
-            </video>
-            <div
-              class="sf-hero-media__controls"
-              role="group"
-              data-i18n-aria-label="hero.streamPreviewAria"
-              aria-label="Примеры стримов"
-            >
-              <button
-                type="button"
-                class="is-active"
-                data-hero-video-src="assets/videos/stream-1.mp4"
-                data-hero-video-poster="assets/models/confident.jpg"
-                data-i18n="hero.streamBtn1"
-              >Стрим 01</button>
-              <button
-                type="button"
-                data-hero-video-src="assets/videos/stream-2.mp4"
-                data-hero-video-poster="assets/models/model-3.jpg"
-                data-i18n="hero.streamBtn2"
-              >Стрим 02</button>
-              <button
-                type="button"
-                data-hero-video-src="assets/videos/stream-3.mp4"
-                data-hero-video-poster="assets/models/income-spanish.jpg"
-                data-i18n="hero.streamBtn3"
-              >Стрим 03</button>
-            </div>
-          </div>
+          <img src="assets/models/confident.jpg" alt="Streamflow onboarding" width="736" height="1313" loading="lazy" decoding="async">
         </article>
       </div>
     </section>
@@ -326,6 +299,32 @@
               <p data-i18n="income.note">Рост дохода</p>
             </div>
           </article>
+        </div>
+      </div>
+    </section>
+
+    <section class="sf-section" id="streams">
+      <div class="sf-container">
+        <div class="sf-section__head sf-reveal">
+          <p class="sf-eyebrow" data-i18n="streams.eyebrow">Стрим-примеры</p>
+          <h2 data-i18n="streams.title">Посмотри, как выглядит рабочий эфир</h2>
+          <p class="sf-lead" data-i18n="streams.subtitle">Отдельный блок с короткими примерами стримов из твоих файлов.</p>
+        </div>
+        <div class="sf-streams sf-reveal" data-reveal-delay="70">
+          <figure class="sf-streams__main">
+            <video id="sf-stream-video" controls playsinline preload="metadata" poster="assets/models/confident.jpg">
+              <source src="assets/videos/stream-1.mp4" type="video/mp4">
+            </video>
+            <figcaption>
+              <strong id="sf-stream-title">Стрим 01</strong>
+              <span id="sf-stream-counter" aria-live="polite">1/3</span>
+            </figcaption>
+          </figure>
+          <div class="sf-streams__tabs" role="group" data-i18n-aria-label="streams.eyebrow" aria-label="Примеры стримов">
+            <button type="button" class="is-active" data-stream-src="assets/videos/stream-1.mp4" data-stream-poster="assets/models/confident.jpg" data-stream-title-key="streams.sample1" data-i18n="streams.sample1">Стрим 01</button>
+            <button type="button" data-stream-src="assets/videos/stream-2.mp4" data-stream-poster="assets/models/model-3.jpg" data-stream-title-key="streams.sample2" data-i18n="streams.sample2">Стрим 02</button>
+            <button type="button" data-stream-src="assets/videos/stream-3.mp4" data-stream-poster="assets/models/income-spanish.jpg" data-stream-title-key="streams.sample3" data-i18n="streams.sample3">Стрим 03</button>
+          </div>
         </div>
       </div>
     </section>
@@ -526,6 +525,6 @@
     <a class="sf-btn sf-btn--primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
   </div>
 
-  <script src="app.js?v=20260304-01" defer></script>
+  <script src="app.js?v=20260304-02" defer></script>
 </body>
 </html>

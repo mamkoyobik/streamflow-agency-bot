@@ -33,10 +33,16 @@
       'hero.card1': 'Пошаговый старт без хаоса',
       'hero.card2': 'Прозрачную коммуникацию в мессенджере',
       'hero.card3': 'План запуска и поддержку',
-      'hero.streamPreviewAria': 'Примеры стримов',
-      'hero.streamBtn1': 'Стрим 01',
-      'hero.streamBtn2': 'Стрим 02',
-      'hero.streamBtn3': 'Стрим 03',
+      'hero.modeLabel': 'Выбери темп старта',
+      'hero.modeSoft': 'Мягкий',
+      'hero.modeBalanced': 'Сбалансированный',
+      'hero.modePro': 'Интенсивный',
+      'hero.modeSoftValue': '3-4 ч/день',
+      'hero.modeBalancedValue': '4-6 ч/день',
+      'hero.modeProValue': '6-8 ч/день',
+      'hero.modeSoftNote': 'Комфортный вход без перегруза в первые недели.',
+      'hero.modeBalancedNote': 'Ровный темп с быстрым ростом навыков и дохода.',
+      'hero.modeProNote': 'Максимальный фокус для быстрого масштабирования результата.',
       'model.eyebrow': 'Формат работы',
       'model.title': 'Аккуратная система, где каждый шаг понятен заранее',
       'model.card1.title': 'Чёткие правила',
@@ -57,6 +63,12 @@
       'income.title': 'Ориентиры по доходу при стабильном графике',
       'income.subtitle': 'Реальные ориентиры моделей при рабочем ритме и поддержке менеджера.',
       'income.note': 'Рост дохода',
+      'streams.eyebrow': 'Стрим-примеры',
+      'streams.title': 'Посмотри, как выглядит рабочий эфир',
+      'streams.subtitle': 'Отдельный блок с короткими примерами стримов из твоих файлов.',
+      'streams.sample1': 'Стрим 01',
+      'streams.sample2': 'Стрим 02',
+      'streams.sample3': 'Стрим 03',
       'planner.eyebrow': 'Калькулятор',
       'planner.title': 'Оцени потенциальный доход по своему графику',
       'planner.subtitle': 'Ориентировочный расчёт по часам, дням и этапу адаптации.',
@@ -152,10 +164,16 @@
       'hero.card1': 'Step-by-step start without chaos',
       'hero.card2': 'Clear communication in messenger',
       'hero.card3': 'Launch plan and support',
-      'hero.streamPreviewAria': 'Stream examples',
-      'hero.streamBtn1': 'Stream 01',
-      'hero.streamBtn2': 'Stream 02',
-      'hero.streamBtn3': 'Stream 03',
+      'hero.modeLabel': 'Pick your launch pace',
+      'hero.modeSoft': 'Soft',
+      'hero.modeBalanced': 'Balanced',
+      'hero.modePro': 'Intense',
+      'hero.modeSoftValue': '3-4 h/day',
+      'hero.modeBalancedValue': '4-6 h/day',
+      'hero.modeProValue': '6-8 h/day',
+      'hero.modeSoftNote': 'Comfort-first onboarding with low pressure.',
+      'hero.modeBalancedNote': 'Steady tempo with faster growth in skills and income.',
+      'hero.modeProNote': 'High-focus mode for rapid scaling.',
       'model.eyebrow': 'Work format',
       'model.title': 'A clean system where every step is clear in advance',
       'model.card1.title': 'Clear rules',
@@ -176,6 +194,12 @@
       'income.title': 'Income references with a stable work rhythm',
       'income.subtitle': 'Real benchmarks with a stable schedule and manager support.',
       'income.note': 'Income growth',
+      'streams.eyebrow': 'Stream examples',
+      'streams.title': 'See what real working streams look like',
+      'streams.subtitle': 'Separate block with short stream examples from your media files.',
+      'streams.sample1': 'Stream 01',
+      'streams.sample2': 'Stream 02',
+      'streams.sample3': 'Stream 03',
       'planner.eyebrow': 'Calculator',
       'planner.title': 'Estimate potential income based on your schedule',
       'planner.subtitle': 'Planning estimate by hours, days, and adaptation stage.',
@@ -271,10 +295,16 @@
       'hero.card1': 'Início por etapas sem caos',
       'hero.card2': 'Comunicação clara no mensageiro',
       'hero.card3': 'Plano de lançamento e suporte',
-      'hero.streamPreviewAria': 'Exemplos de streams',
-      'hero.streamBtn1': 'Stream 01',
-      'hero.streamBtn2': 'Stream 02',
-      'hero.streamBtn3': 'Stream 03',
+      'hero.modeLabel': 'Escolha seu ritmo de início',
+      'hero.modeSoft': 'Suave',
+      'hero.modeBalanced': 'Equilibrado',
+      'hero.modePro': 'Intenso',
+      'hero.modeSoftValue': '3-4 h/dia',
+      'hero.modeBalancedValue': '4-6 h/dia',
+      'hero.modeProValue': '6-8 h/dia',
+      'hero.modeSoftNote': 'Entrada confortável, sem sobrecarga nas primeiras semanas.',
+      'hero.modeBalancedNote': 'Ritmo estável com crescimento mais rápido de habilidades e renda.',
+      'hero.modeProNote': 'Foco máximo para escalar resultados com rapidez.',
       'model.eyebrow': 'Formato de trabalho',
       'model.title': 'Um sistema claro onde cada etapa é previsível',
       'model.card1.title': 'Regras claras',
@@ -295,6 +325,12 @@
       'income.title': 'Referências de renda com rotina estável',
       'income.subtitle': 'Referências reais com rotina estável e suporte do gerente.',
       'income.note': 'Crescimento da renda',
+      'streams.eyebrow': 'Exemplos de stream',
+      'streams.title': 'Veja como é uma transmissão real de trabalho',
+      'streams.subtitle': 'Bloco separado com trechos curtos de stream dos seus arquivos.',
+      'streams.sample1': 'Stream 01',
+      'streams.sample2': 'Stream 02',
+      'streams.sample3': 'Stream 03',
       'planner.eyebrow': 'Calculadora',
       'planner.title': 'Estime sua renda potencial pelo seu ritmo',
       'planner.subtitle': 'Estimativa por horas, dias e estágio de adaptação.',
@@ -390,10 +426,16 @@
       'hero.card1': 'Inicio paso a paso sin caos',
       'hero.card2': 'Comunicación clara en mensajería',
       'hero.card3': 'Plan de lanzamiento y soporte',
-      'hero.streamPreviewAria': 'Ejemplos de streams',
-      'hero.streamBtn1': 'Stream 01',
-      'hero.streamBtn2': 'Stream 02',
-      'hero.streamBtn3': 'Stream 03',
+      'hero.modeLabel': 'Elige tu ritmo de inicio',
+      'hero.modeSoft': 'Suave',
+      'hero.modeBalanced': 'Equilibrado',
+      'hero.modePro': 'Intensivo',
+      'hero.modeSoftValue': '3-4 h/día',
+      'hero.modeBalancedValue': '4-6 h/día',
+      'hero.modeProValue': '6-8 h/día',
+      'hero.modeSoftNote': 'Inicio cómodo sin sobrecarga en las primeras semanas.',
+      'hero.modeBalancedNote': 'Ritmo estable con crecimiento más rápido de habilidades e ingresos.',
+      'hero.modeProNote': 'Enfoque máximo para escalar resultados rápidamente.',
       'model.eyebrow': 'Formato de trabajo',
       'model.title': 'Sistema claro donde cada paso es predecible',
       'model.card1.title': 'Reglas claras',
@@ -414,6 +456,12 @@
       'income.title': 'Referencias de ingresos con ritmo estable',
       'income.subtitle': 'Referencias reales con ritmo estable y soporte del manager.',
       'income.note': 'Crecimiento de ingresos',
+      'streams.eyebrow': 'Ejemplos de stream',
+      'streams.title': 'Mira cómo se ve un stream de trabajo real',
+      'streams.subtitle': 'Bloque separado con fragmentos cortos de stream de tus archivos.',
+      'streams.sample1': 'Stream 01',
+      'streams.sample2': 'Stream 02',
+      'streams.sample3': 'Stream 03',
       'planner.eyebrow': 'Calculadora',
       'planner.title': 'Calcula ingresos potenciales según tu agenda',
       'planner.subtitle': 'Estimación por horas, días y etapa de adaptación.',
@@ -729,7 +777,7 @@
     }
 
     const spotlightTargets = qsa(
-      '.sf-hero__copy, .sf-hero__card, .sf-hero-media, .sf-card, .sf-income-card, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
+      '.sf-hero__copy, .sf-hero__card, .sf-hero-modes, .sf-card, .sf-income-card, .sf-streams, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
     );
     spotlightTargets.forEach((node, index) => {
       const maxTilt = index < 2 ? 6 : 3.8;
@@ -866,39 +914,72 @@
     return update;
   }
 
-  function initHeroMedia() {
-    const video = qs('#sf-hero-video');
-    const buttons = qsa('[data-hero-video-src]');
-    if (!video || !buttons.length) {
-      return;
+  function initHeroModes(state) {
+    const buttons = qsa('[data-hero-mode]');
+    const valueNode = qs('#sf-hero-mode-value');
+    const noteNode = qs('#sf-hero-mode-note');
+    if (!buttons.length || !valueNode || !noteNode) {
+      return () => {};
     }
 
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    let index = 0;
-    let rotationTimer = 0;
-
-    const stopRotation = () => {
-      if (!rotationTimer) {
-        return;
+    const map = {
+      soft: {
+        valueKey: 'hero.modeSoftValue',
+        noteKey: 'hero.modeSoftNote'
+      },
+      balanced: {
+        valueKey: 'hero.modeBalancedValue',
+        noteKey: 'hero.modeBalancedNote'
+      },
+      pro: {
+        valueKey: 'hero.modeProValue',
+        noteKey: 'hero.modeProNote'
       }
-      window.clearInterval(rotationTimer);
-      rotationTimer = 0;
     };
 
-    const apply = (nextIndex, shouldPlay) => {
-      const safeIndex = ((nextIndex % buttons.length) + buttons.length) % buttons.length;
-      const target = buttons[safeIndex];
-      const src = target && target.getAttribute('data-hero-video-src');
-      if (!target || !src) {
+    let activeMode = 'soft';
+
+    const render = () => {
+      const config = map[activeMode] || map.soft;
+      valueNode.textContent = t(config.valueKey, state.lang);
+      noteNode.textContent = t(config.noteKey, state.lang);
+      buttons.forEach((button) => {
+        button.classList.toggle('is-active', button.getAttribute('data-hero-mode') === activeMode);
+      });
+    };
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        activeMode = String(button.getAttribute('data-hero-mode') || 'soft');
+        render();
+      });
+    });
+
+    render();
+    return render;
+  }
+
+  function initStreamShowcase(state) {
+    const video = qs('#sf-stream-video');
+    const title = qs('#sf-stream-title');
+    const counter = qs('#sf-stream-counter');
+    const buttons = qsa('[data-stream-src]');
+    if (!video || !title || !counter || !buttons.length) {
+      return () => {};
+    }
+
+    let index = 0;
+
+    const render = () => {
+      const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
+      const button = buttons[safeIndex];
+      const src = button.getAttribute('data-stream-src');
+      const poster = button.getAttribute('data-stream-poster') || '';
+      const titleKey = button.getAttribute('data-stream-title-key') || 'streams.sample1';
+      if (!src) {
         return;
       }
 
-      index = safeIndex;
-      buttons.forEach((button, buttonIndex) => {
-        button.classList.toggle('is-active', buttonIndex === index);
-      });
-
-      const poster = target.getAttribute('data-hero-video-poster') || '';
       if (video.getAttribute('src') !== src) {
         video.pause();
         video.setAttribute('src', src);
@@ -908,39 +989,22 @@
         video.setAttribute('poster', poster);
       }
 
-      if (shouldPlay && !reduced) {
-        void video.play().catch(() => {});
-      }
-    };
-
-    const startRotation = () => {
-      if (reduced || buttons.length < 2) {
-        return;
-      }
-      stopRotation();
-      rotationTimer = window.setInterval(() => {
-        apply(index + 1, false);
-      }, 9500);
+      title.textContent = t(titleKey, state.lang);
+      counter.textContent = `${safeIndex + 1}/${buttons.length}`;
+      buttons.forEach((item, itemIndex) => {
+        item.classList.toggle('is-active', itemIndex === safeIndex);
+      });
     };
 
     buttons.forEach((button, buttonIndex) => {
       button.addEventListener('click', () => {
-        apply(buttonIndex, true);
-        startRotation();
+        index = buttonIndex;
+        render();
       });
     });
 
-    video.addEventListener('pointerenter', stopRotation);
-    video.addEventListener('pointerleave', startRotation);
-    video.addEventListener('play', stopRotation);
-    video.addEventListener('pause', startRotation);
-    video.addEventListener('ended', () => {
-      apply(index + 1, true);
-      startRotation();
-    });
-
-    apply(0, false);
-    startRotation();
+    render();
+    return render;
   }
 
   function portfolioPath(lang, slideNumber) {
@@ -1519,12 +1583,16 @@
       lang: normalizeLang(safeStorageGet(STORAGE_KEY) || DEFAULT_LANG)
     };
 
+    const refreshHeroModes = initHeroModes(state);
+    const refreshStreamShowcase = initStreamShowcase(state);
     const refreshPortfolio = initPortfolio(state);
     const refreshPlanner = initPlanner(state);
 
     const onLangChange = (lang) => {
       applyI18n(lang);
       updateIncomeByLang(lang);
+      refreshHeroModes();
+      refreshStreamShowcase();
       refreshPortfolio();
       refreshPlanner();
       const langInput = qs('#sf-site-lang');
@@ -1537,7 +1605,6 @@
     initYear();
     initReveal();
     initStreamflowInteractivity();
-    initHeroMedia();
     initMobileMenu();
     initLangGate(state, onLangChange);
     initFitScore(state);
