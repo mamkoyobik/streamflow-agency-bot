@@ -851,6 +851,8 @@ POLLING_CONFLICT_SLEEP_SECONDS = max(
     POLLING_RETRY_BASE_SECONDS,
     _get_env_int("POLLING_CONFLICT_SLEEP_SECONDS", default=30, min_value=POLLING_RETRY_BASE_SECONDS),
 )
+ADMIN_PANEL_ENABLED = os.getenv("ADMIN_PANEL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
+ADMIN_CENTER_MODE = os.getenv("ADMIN_CENTER_MODE", "0").strip().lower() in {"1", "true", "yes", "on"}
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 TELEGRAM_CAPTION_LIMIT = 1024
 TELEGRAM_TEXT_LIMIT = 4096
@@ -1784,6 +1786,8 @@ def is_anonymous_admin_post(message: Message) -> bool:
 
 
 async def can_manage_admin_group(message: Message) -> bool:
+    if not ADMIN_PANEL_ENABLED:
+        return False
     if not message or not message.chat:
         return False
     if message.chat.type not in {"group", "supergroup"}:
@@ -1811,6 +1815,8 @@ async def can_manage_admin_group(message: Message) -> bool:
 
 
 async def can_manage_admin_callback(call: CallbackQuery) -> bool:
+    if not ADMIN_PANEL_ENABLED:
+        return False
     if not call.message or not call.from_user:
         return False
     if call.message.chat.type not in {"group", "supergroup"}:
@@ -2338,6 +2344,62 @@ def project_label_for_user(user_id: int, data: dict | None = None) -> str:
     return project_label(payload.get("project"))
 
 
+PROJECT_USER_BOTS: dict[str, Bot] = {}
+
+
+def _project_token_for_outbound(project_key: str) -> str:
+    normalized = normalize_project_value(project_key)
+    if normalized == PROJECT_STARFLOW:
+        return (os.getenv("STARFLOW_BOT_TOKEN") or "").strip()
+    return (os.getenv("STREAMFLOW_BOT_TOKEN") or "").strip()
+
+
+def _create_project_user_bot(token: str) -> Bot:
+    if DefaultBotProperties:
+        return Bot(
+            token=token,
+            default=DefaultBotProperties(parse_mode=ParseMode.HTML),
+        )
+    return Bot(
+        token=token,
+        parse_mode=ParseMode.HTML,
+    )
+
+
+def user_bot_for_user_id(user_id: int | None) -> Bot:
+    if not ADMIN_CENTER_MODE:
+        return bot
+    try:
+        uid = int(user_id or 0)
+    except Exception:
+        return bot
+    if uid <= 0:
+        return bot
+    data = get_form_data(uid) or {}
+    project_key = project_key_from_data(data)
+    token = _project_token_for_outbound(project_key)
+    if not token or token == BOT_TOKEN:
+        return bot
+    if project_key in PROJECT_USER_BOTS:
+        return PROJECT_USER_BOTS[project_key]
+    try:
+        created = _create_project_user_bot(token)
+        PROJECT_USER_BOTS[project_key] = created
+        return created
+    except Exception:
+        logger.exception("Не удалось инициализировать проектный бот для user_id=%s project=%s", uid, project_key)
+        return bot
+
+
+async def close_project_user_bots():
+    for project_key, project_bot in list(PROJECT_USER_BOTS.items()):
+        try:
+            await project_bot.session.close()
+        except Exception:
+            logger.exception("Не удалось закрыть сессию проектного бота: %s", project_key)
+    PROJECT_USER_BOTS.clear()
+
+
 def _whatsapp_contact_url(data: dict | None) -> str | None:
     payload = data or {}
     candidates = [
@@ -2784,6 +2846,8 @@ async def auto_request_info_task():
         await asyncio.sleep(AUTO_REQUEST_INFO_CHECK_SECONDS)
 
 async def ensure_admin_menu_posted():
+    if not ADMIN_PANEL_ENABLED:
+        return
     try:
         admin_chat_id = current_admin_chat_id()
         try:
@@ -3116,6 +3180,8 @@ async def update_admin_photos(user_id: int):
         logger.exception("Ошибка отправки фото админу")
 
 async def notify_admin_new_application():
+    if not ADMIN_PANEL_ENABLED:
+        return
     admin_chat_id = current_admin_chat_id()
     try:
         counts = get_status_counts()
@@ -3673,12 +3739,13 @@ async def send_or_edit_user_menu(
     lang: str | None = None,
     channel_url: str | None = None,
 ) -> bool:
+    target_bot = user_bot_for_user_id(user_id)
     locale = normalize_lang(lang or lang_for(user_id))
     resolved_channel_url = _normalize_telegram_url(channel_url) or CHANNEL_PUBLIC_LINK
     message_id = get_menu_message_id(user_id)
     if message_id:
         try:
-            await bot.edit_message_caption(
+            await target_bot.edit_message_caption(
                 chat_id=user_id,
                 message_id=message_id,
                 caption=caption,
@@ -3697,11 +3764,11 @@ async def send_or_edit_user_menu(
             logger.exception("Не удалось обновить меню пользователя")
     if message_id:
         try:
-            await bot.delete_message(user_id, message_id)
+            await target_bot.delete_message(user_id, message_id)
         except Exception:
             pass
     try:
-        msg = await bot.send_photo(
+        msg = await target_bot.send_photo(
             user_id,
             FSInputFile("media/menu.jpg"),
             caption=caption,
@@ -3721,10 +3788,11 @@ async def send_or_edit_user_text(
     text: str,
     reply_markup=None
 ) -> bool:
+    target_bot = user_bot_for_user_id(user_id)
     message_id = get_flow_message_id(user_id)
     if message_id:
         try:
-            await bot.edit_message_text(
+            await target_bot.edit_message_text(
                 chat_id=user_id,
                 message_id=message_id,
                 text=text,
@@ -3746,7 +3814,7 @@ async def send_or_edit_user_text(
         menu_id = get_menu_message_id(user_id)
         if menu_id and len(text) <= CAPTION_LIMIT:
             try:
-                await bot.edit_message_caption(
+                await target_bot.edit_message_caption(
                     chat_id=user_id,
                     message_id=menu_id,
                     caption=text,
@@ -3766,11 +3834,11 @@ async def send_or_edit_user_text(
                 logger.exception("Не удалось обновить меню пользователя, пробую отправить новое сообщение")
     if message_id:
         try:
-            await bot.delete_message(user_id, message_id)
+            await target_bot.delete_message(user_id, message_id)
         except Exception:
             pass
     try:
-        msg = await bot.send_message(
+        msg = await target_bot.send_message(
             user_id,
             text,
             reply_markup=reply_markup
@@ -3790,11 +3858,12 @@ async def send_or_edit_user_preview(
     caption: str,
     reply_markup=None,
 ) -> bool:
+    target_bot = user_bot_for_user_id(user_id)
     message_id = get_flow_message_id(user_id)
     safe_caption = fit_caption(caption)
     if message_id:
         try:
-            await bot.edit_message_media(
+            await target_bot.edit_message_media(
                 chat_id=user_id,
                 message_id=message_id,
                 media=InputMediaPhoto(
@@ -3809,7 +3878,7 @@ async def send_or_edit_user_preview(
             err = str(e).lower()
             if "message is not modified" in err:
                 try:
-                    await bot.edit_message_reply_markup(
+                    await target_bot.edit_message_reply_markup(
                         chat_id=user_id,
                         message_id=message_id,
                         reply_markup=reply_markup,
@@ -3826,12 +3895,12 @@ async def send_or_edit_user_preview(
 
     if message_id:
         try:
-            await bot.delete_message(user_id, message_id)
+            await target_bot.delete_message(user_id, message_id)
         except Exception:
             pass
 
     try:
-        msg = await bot.send_photo(
+        msg = await target_bot.send_photo(
             user_id,
             photo=media,
             caption=safe_caption,
@@ -3852,7 +3921,7 @@ async def clear_user_flow_message(user_id: int):
     if not message_id:
         return
     try:
-        await bot.delete_message(user_id, message_id)
+        await user_bot_for_user_id(user_id).delete_message(user_id, message_id)
     except Exception:
         pass
     set_flow_message_id(user_id, None)
@@ -3862,7 +3931,7 @@ async def clear_user_menu_message(user_id: int):
     if not message_id:
         return
     try:
-        await bot.delete_message(user_id, message_id)
+        await user_bot_for_user_id(user_id).delete_message(user_id, message_id)
     except Exception:
         pass
     set_menu_message_id(user_id, None)
@@ -3875,9 +3944,10 @@ async def clear_portfolio_media(user_id: int):
     if cleanup_task and not cleanup_task.done():
         cleanup_task.cancel()
     ids = PORTFOLIO_MEDIA_IDS.pop(user_id, [])
+    target_bot = user_bot_for_user_id(user_id)
     for message_id in ids:
         try:
-            await bot.delete_message(user_id, message_id)
+            await target_bot.delete_message(user_id, message_id)
         except Exception:
             pass
 
@@ -4158,6 +4228,7 @@ async def show_portfolio_player(
 ):
     if not skip_autonext_cancel:
         cancel_portfolio_autonext(user_id)
+    target_bot = user_bot_for_user_id(user_id)
     active_mode = mode or PORTFOLIO_MODE_BY_USER.get(user_id, PORTFOLIO_MODE_DEFAULT)
     PORTFOLIO_MODE_BY_USER[user_id] = active_mode
     items = load_portfolio_items(lang, active_mode)
@@ -4190,7 +4261,7 @@ async def show_portfolio_player(
     target_message_id = source_message.message_id if source_message else source_message_id
     if target_message_id:
         try:
-            await bot.edit_message_media(
+            await target_bot.edit_message_media(
                 chat_id=user_id,
                 message_id=target_message_id,
                 media=media_obj,
@@ -4204,7 +4275,7 @@ async def show_portfolio_player(
         except TelegramBadRequest as exc:
             if _is_not_modified_error(exc):
                 try:
-                    await bot.edit_message_reply_markup(
+                    await target_bot.edit_message_reply_markup(
                         chat_id=user_id,
                         message_id=target_message_id,
                         reply_markup=reply_markup,
@@ -4221,14 +4292,14 @@ async def show_portfolio_player(
 
     await clear_portfolio_media(user_id)
     if kind == "video":
-        sent = await bot.send_video(
+        sent = await target_bot.send_video(
             chat_id=user_id,
             video=FSInputFile(media_path),
             caption=caption,
             reply_markup=reply_markup,
         )
     else:
-        sent = await bot.send_photo(
+        sent = await target_bot.send_photo(
             chat_id=user_id,
             photo=FSInputFile(media_path),
             caption=caption,
@@ -6475,7 +6546,8 @@ async def admin_send_model_message(message: Message, state: FSMContext):
             )
             return
 
-        await bot.copy_message(
+        target_bot = user_bot_for_user_id(uid)
+        await target_bot.copy_message(
             chat_id=uid,
             from_chat_id=message.chat.id,
             message_id=message.message_id,
@@ -6640,7 +6712,8 @@ async def admin_request_info_message(message: Message, state: FSMContext):
             await post_admin_menu()
             return
 
-        await bot.copy_message(
+        target_bot = user_bot_for_user_id(uid)
+        await target_bot.copy_message(
             chat_id=uid,
             from_chat_id=message.chat.id,
             message_id=message.message_id,
@@ -7743,12 +7816,12 @@ async def main():
         cleanup_old_form_data()
     except Exception:
         logger.exception("Ошибка очистки старых данных")
-    await ensure_admin_menu_posted()
-    tasks = [
-        asyncio.create_task(daily_stats_task(), name="daily_stats_task"),
-        asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"),
-        asyncio.create_task(auto_request_info_task(), name="auto_request_info_task"),
-    ]
+    if ADMIN_PANEL_ENABLED:
+        await ensure_admin_menu_posted()
+    tasks = [asyncio.create_task(auto_request_info_task(), name="auto_request_info_task")]
+    if ADMIN_PANEL_ENABLED:
+        tasks.append(asyncio.create_task(daily_stats_task(), name="daily_stats_task"))
+        tasks.append(asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"))
     try:
         try:
             await bot.delete_webhook(drop_pending_updates=False)
@@ -7759,6 +7832,7 @@ async def main():
         for task in tasks:
             task.cancel()
         await asyncio.gather(*tasks, return_exceptions=True)
+        await close_project_user_bots()
         await bot.session.close()
 
 
