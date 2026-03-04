@@ -722,7 +722,7 @@ body[data-site='streamflow'] :focus-visible {
   border-radius: var(--sf-radius-md);
   background: var(--sf-surface-2);
   display: grid;
-  grid-template-rows: 200px auto;
+  grid-template-rows: clamp(220px, 24vw, 280px) auto;
 }
 
 .sf-income-card img {
@@ -732,7 +732,7 @@ body[data-site='streamflow'] :focus-visible {
   border: 0;
   border-bottom: 1px solid var(--sf-line);
   object-fit: cover;
-  object-position: center top;
+  object-position: center var(--sf-face-y, 20%);
 }
 
 .sf-income-card > div {

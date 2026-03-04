@@ -664,11 +664,20 @@
     if (!Number.isFinite(rub) || rub <= 0) {
       return '0 ₽';
     }
-    if (lang === 'ru') {
-      return new Intl.NumberFormat('ru-RU').format(rub) + ' ₽';
-    }
-    const usd = Math.round(rub / 92);
-    return '$' + new Intl.NumberFormat('en-US').format(usd);
+    const locale = normalizeLang(lang);
+    const currencyByLang = {
+      ru: { code: 'RUB', locale: 'ru-RU', rate: 1 },
+      en: { code: 'USD', locale: 'en-US', rate: 1 / 92 },
+      pt: { code: 'BRL', locale: 'pt-BR', rate: 1 / 18 },
+      es: { code: 'EUR', locale: 'es-ES', rate: 1 / 100 }
+    };
+    const config = currencyByLang[locale] || currencyByLang.ru;
+    const amount = Math.round(rub * config.rate);
+    return new Intl.NumberFormat(config.locale, {
+      style: 'currency',
+      currency: config.code,
+      maximumFractionDigits: 0
+    }).format(amount);
   }
 
   function updateIncomeByLang(lang) {
@@ -954,8 +963,18 @@
       return;
     }
 
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     const playVideo = (video) => {
       if (!video) {
+        return;
+      }
+      video.defaultMuted = true;
+      video.muted = true;
+      video.autoplay = true;
+      video.loop = true;
+      video.playsInline = true;
+      if (reduced) {
+        video.pause();
         return;
       }
       void video.play().catch(() => {});
