@@ -1,0 +1,12 @@
+#!/bin/sh
+# Auto-push current branch after each commit.
+branch="$(git rev-parse --abbrev-ref HEAD 2>/dev/null)" || exit 0
+if [ -z "$branch" ] || [ "$branch" = "HEAD" ]; then
+  exit 0
+fi
+
+if git rev-parse --verify "refs/remotes/origin/$branch" >/dev/null 2>&1; then
+  git push origin "$branch"
+else
+  git push -u origin "$branch"
+fi
