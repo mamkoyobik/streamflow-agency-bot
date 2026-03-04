@@ -783,11 +783,13 @@ AUTO_REQUEST_INFO_FLAG_KEY = "auto_info_requested_at"
 PORTFOLIO_MEDIA_IDS: dict[int, list[int]] = {}
 PORTFOLIO_CLEANUP_TASKS: dict[int, asyncio.Task] = {}
 PORTFOLIO_AUTONEXT_TASKS: dict[int, asyncio.Task] = {}
-PORTFOLIO_MODE_DEFAULT = "default"
+PORTFOLIO_MODE_REVIEWS = "reviews"
+PORTFOLIO_MODE_STREAMS = "streams"
 PORTFOLIO_MODE_SITE_SLIDES = "site_slides"
+PORTFOLIO_MODE_DEFAULT = PORTFOLIO_MODE_REVIEWS
 PORTFOLIO_MODE_BY_USER: dict[int, str] = {}
 PORTFOLIO_SITE_SLIDES_COUNT = 8
-PORTFOLIO_PLAYER_SPECS = (
+PORTFOLIO_REVIEW_PLAYER_SPECS = (
     {
         "kind": "photo",
         "file": "media/review1.jpg",
@@ -798,6 +800,8 @@ PORTFOLIO_PLAYER_SPECS = (
         "file": "media/review2.jpg",
         "title": {"ru": "Отзывы моделей", "en": "Model reviews", "pt": "Avaliações de modelos", "es": "Reseñas de modelos"},
     },
+)
+PORTFOLIO_STREAM_PLAYER_SPECS = (
     {
         "kind": "video",
         "file": "media/stream1.MP4",
@@ -3992,10 +3996,10 @@ def _localized_portfolio_path(base_dir: Path, relative_path: str, lang: str) -> 
     return source_path
 
 
-def load_portfolio_player_items(lang: str = "ru") -> list[dict]:
+def _load_portfolio_items_from_specs(specs: tuple[dict, ...], lang: str) -> list[dict]:
     base_dir = Path(__file__).resolve().parent
     items: list[dict] = []
-    for spec in PORTFOLIO_PLAYER_SPECS:
+    for spec in specs:
         file_path = _localized_portfolio_path(base_dir, str(spec.get("file") or ""), lang)
         if not file_path.exists():
             continue
@@ -4013,6 +4017,14 @@ def load_portfolio_player_items(lang: str = "ru") -> list[dict]:
             }
         )
     return items
+
+
+def load_portfolio_review_items(lang: str = "ru") -> list[dict]:
+    return _load_portfolio_items_from_specs(PORTFOLIO_REVIEW_PLAYER_SPECS, lang)
+
+
+def load_portfolio_stream_items(lang: str = "ru") -> list[dict]:
+    return _load_portfolio_items_from_specs(PORTFOLIO_STREAM_PLAYER_SPECS, lang)
 
 
 def load_site_portfolio_slide_items(lang: str = "ru") -> list[dict]:
@@ -4046,9 +4058,13 @@ def load_site_portfolio_slide_items(lang: str = "ru") -> list[dict]:
 
 
 def load_portfolio_items(lang: str = "ru", mode: str = PORTFOLIO_MODE_DEFAULT) -> list[dict]:
+    if mode == PORTFOLIO_MODE_REVIEWS:
+        return load_portfolio_review_items(lang)
+    if mode == PORTFOLIO_MODE_STREAMS:
+        return load_portfolio_stream_items(lang)
     if mode == PORTFOLIO_MODE_SITE_SLIDES:
         return load_site_portfolio_slide_items(lang)
-    return load_portfolio_player_items(lang)
+    return load_portfolio_review_items(lang)
 
 
 def portfolio_start_index(items: list[dict], kind: str | None = None) -> int:
@@ -4111,7 +4127,7 @@ def schedule_portfolio_autonext(user_id: int, next_index: int | None, delay_seco
     )
 
 
-def portfolio_player_keyboard(lang: str, index: int, total: int, has_photos: bool, has_videos: bool):
+def portfolio_player_keyboard(lang: str, index: int, total: int):
     locale = normalize_lang(lang)
     rows: list[list[InlineKeyboardButton]] = []
     if total > 1:
@@ -4127,13 +4143,6 @@ def portfolio_player_keyboard(lang: str, index: int, total: int, has_photos: boo
                 ),
             ]
         )
-    jump_row: list[InlineKeyboardButton] = []
-    if has_photos:
-        jump_row.append(InlineKeyboardButton(text=_portfolio_player_text(locale, "photos"), callback_data="portfolio_jump:photo"))
-    if has_videos:
-        jump_row.append(InlineKeyboardButton(text=_portfolio_player_text(locale, "videos"), callback_data="portfolio_jump:video"))
-    if jump_row:
-        rows.append(jump_row)
     rows.append([InlineKeyboardButton(text=t(locale, "btn_back"), callback_data="portfolio")])
     return InlineKeyboardMarkup(inline_keyboard=rows)
 
@@ -4165,10 +4174,8 @@ async def show_portfolio_player(
         index = len(items) - 1
     item = items[index]
     total = len(items)
-    has_photos = any(str(x.get("kind") or "").lower() == "photo" for x in items)
-    has_videos = any(str(x.get("kind") or "").lower() == "video" for x in items)
     caption = portfolio_player_caption(lang, item, index, total)
-    reply_markup = portfolio_player_keyboard(lang, index, total, has_photos, has_videos)
+    reply_markup = portfolio_player_keyboard(lang, index, total)
 
     kind = str(item.get("kind") or "").strip().lower()
     media_path = str(item.get("path"))
@@ -7511,13 +7518,13 @@ async def portfolio_reviews(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        items = load_portfolio_items(lang, PORTFOLIO_MODE_DEFAULT)
+        items = load_portfolio_items(lang, PORTFOLIO_MODE_REVIEWS)
         start_index = portfolio_start_index(items, "photo")
         await show_portfolio_player(
             call.from_user.id,
             lang,
             start_index,
-            mode=PORTFOLIO_MODE_DEFAULT,
+            mode=PORTFOLIO_MODE_REVIEWS,
         )
         await safe_call_answer(call)
     except Exception:
@@ -7531,13 +7538,13 @@ async def portfolio_streams(call: CallbackQuery):
         if not call.message:
             await safe_call_answer(call, t(lang, "temp_error_retry"), show_alert=False)
             return
-        items = load_portfolio_items(lang, PORTFOLIO_MODE_DEFAULT)
+        items = load_portfolio_items(lang, PORTFOLIO_MODE_STREAMS)
         start_index = portfolio_start_index(items, "video")
         await show_portfolio_player(
             call.from_user.id,
             lang,
             start_index,
-            mode=PORTFOLIO_MODE_DEFAULT,
+            mode=PORTFOLIO_MODE_STREAMS,
         )
         await safe_call_answer(call)
     except Exception:
@@ -7575,14 +7582,18 @@ async def portfolio_jump(call: CallbackQuery):
             return
         _, raw_kind = call.data.split(":", 1)
         kind = raw_kind.strip().lower()
-        active_mode = PORTFOLIO_MODE_BY_USER.get(call.from_user.id, PORTFOLIO_MODE_DEFAULT)
-        items = load_portfolio_items(lang, active_mode)
+        if kind == "video":
+            target_mode = PORTFOLIO_MODE_STREAMS
+        else:
+            target_mode = PORTFOLIO_MODE_REVIEWS
+        items = load_portfolio_items(lang, target_mode)
         target_index = portfolio_start_index(items, kind)
         await show_portfolio_player(
             call.from_user.id,
             lang,
             target_index,
             source_message=call.message,
+            mode=target_mode,
         )
         await safe_call_answer(call)
     except Exception:

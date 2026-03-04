@@ -27,6 +27,14 @@ class PortfolioSiteSlidesTests(unittest.TestCase):
         self.assertNotEqual(len(default_items), 0)
         self.assertGreaterEqual(len(site_items), 8)
 
+    def test_reviews_and_streams_are_separate(self):
+        review_items = bot.load_portfolio_items("ru", bot.PORTFOLIO_MODE_REVIEWS)
+        stream_items = bot.load_portfolio_items("ru", bot.PORTFOLIO_MODE_STREAMS)
+        self.assertTrue(review_items)
+        self.assertTrue(stream_items)
+        self.assertTrue(all(item["kind"] == "photo" for item in review_items))
+        self.assertTrue(all(item["kind"] == "video" for item in stream_items))
+
 
 if __name__ == "__main__":
     unittest.main()
