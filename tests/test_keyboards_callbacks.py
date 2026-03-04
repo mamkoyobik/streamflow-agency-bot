@@ -119,7 +119,9 @@ class AdminKeyboardCallbacksTests(unittest.TestCase):
             if button.callback_data
         ]
         self.assertIn("admin_menu:f:sfp", callbacks)
-        self.assertIn("admin_menu:f:sf", callbacks)
+        self.assertIn("admin_menu:f:sfa", callbacks)
+        self.assertIn("admin_menu:f:sfr", callbacks)
+        self.assertIn("admin_menu:sections_sf", callbacks)
 
     def test_view_keyboard_has_compact_counter_button(self):
         markup = admin_list_view_keyboard(

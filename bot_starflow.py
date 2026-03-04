@@ -2274,10 +2274,8 @@ def build_admin_project_menu_text(project_code: str, counts: dict) -> str:
         f"🆕 Новые: <b>{counts.get('pending', 0)}</b>\n"
         f"✅ Принятые: <b>{counts.get('accepted', 0)}</b>\n"
         f"❌ Отклонённые: <b>{counts.get('rejected', 0)}</b>\n"
-        f"🧾 Обработанные: <b>{counts.get('reviewed', 0)}</b>\n"
-        f"1️⃣ Этап 1: <b>{counts.get('stage_quick', 0)}</b>\n"
-        f"2️⃣ Этап 2: <b>{counts.get('stage_full', 0)}</b>\n"
-        f"📚 Всего: <b>{counts.get('total', 0)}</b>"
+        f"📚 Всего: <b>{counts.get('total', 0)}</b>\n\n"
+        "Остальные функции вынесены в «🗂 Подразделы»."
     )
 
 async def persist_form_data(state: FSMContext, user_id: int):
@@ -3374,18 +3372,12 @@ def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = 
 
 def _project_panel_counts(project_code: str) -> dict[str, int]:
     code = "st" if (project_code or "").strip().lower() == "st" else "sf"
-    suffix = {
-        "all": "",
-        "pending": "p",
-        "accepted": "a",
-        "rejected": "r",
-        "reviewed": "v",
-        "stage_quick": "q",
-        "stage_full": "f",
+    return {
+        "total": _apps_total_for_filter(code),
+        "pending": _apps_total_for_filter(f"{code}p"),
+        "accepted": _apps_total_for_filter(f"{code}a"),
+        "rejected": _apps_total_for_filter(f"{code}r"),
     }
-    values = {name: _apps_total_for_filter(f"{code}{token}") for name, token in suffix.items()}
-    values["reviewed"] = values.get("accepted", 0) + values.get("rejected", 0)
-    return values
 
 
 def _build_admin_list_header(
@@ -6902,6 +6894,14 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             await update_admin_menu_message(
                 build_admin_project_menu_text(project_code, counts),
                 admin_project_menu_keyboard(project_code, counts),
+            )
+            return
+        if action in {"sections_sf", "sections_st"}:
+            await clear_admin_view_message()
+            project_code = "st" if action.endswith("_st") else "sf"
+            await update_admin_menu_message(
+                "🗂 <b>Подразделы</b>\n\nКонтент, отчёты и сервисные действия.",
+                admin_project_sections_keyboard(project_code),
             )
             return
         if action.startswith("f:"):
