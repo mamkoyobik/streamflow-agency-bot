@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="streamflow-rework.css?v=20260303-01">
+  <link rel="stylesheet" href="streamflow-rework.css?v=20260304-01">
 
   <script type="application/ld+json">
     {
@@ -171,7 +171,46 @@
             <li data-i18n="hero.card2">Прозрачную коммуникацию в мессенджере</li>
             <li data-i18n="hero.card3">План запуска и поддержку</li>
           </ul>
-          <img src="assets/models/confident.jpg" alt="Streamflow onboarding" width="736" height="1313" loading="lazy" decoding="async">
+          <div class="sf-hero-media">
+            <video
+              id="sf-hero-video"
+              class="sf-hero-media__video"
+              controls
+              playsinline
+              muted
+              preload="metadata"
+              poster="assets/models/confident.jpg"
+              aria-label="Stream example"
+            >
+              <source src="assets/videos/stream-1.mp4" type="video/mp4">
+            </video>
+            <div
+              class="sf-hero-media__controls"
+              role="group"
+              data-i18n-aria-label="hero.streamPreviewAria"
+              aria-label="Примеры стримов"
+            >
+              <button
+                type="button"
+                class="is-active"
+                data-hero-video-src="assets/videos/stream-1.mp4"
+                data-hero-video-poster="assets/models/confident.jpg"
+                data-i18n="hero.streamBtn1"
+              >Стрим 01</button>
+              <button
+                type="button"
+                data-hero-video-src="assets/videos/stream-2.mp4"
+                data-hero-video-poster="assets/models/model-3.jpg"
+                data-i18n="hero.streamBtn2"
+              >Стрим 02</button>
+              <button
+                type="button"
+                data-hero-video-src="assets/videos/stream-3.mp4"
+                data-hero-video-poster="assets/models/income-spanish.jpg"
+                data-i18n="hero.streamBtn3"
+              >Стрим 03</button>
+            </div>
+          </div>
         </article>
       </div>
     </section>
@@ -487,6 +526,6 @@
     <a class="sf-btn sf-btn--primary" href="#apply" data-i18n="cta.apply">Оставить заявку</a>
   </div>
 
-  <script src="app.js?v=20260302-03" defer></script>
+  <script src="app.js?v=20260304-01" defer></script>
 </body>
 </html>

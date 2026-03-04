@@ -33,6 +33,10 @@
       'hero.card1': 'Пошаговый старт без хаоса',
       'hero.card2': 'Прозрачную коммуникацию в мессенджере',
       'hero.card3': 'План запуска и поддержку',
+      'hero.streamPreviewAria': 'Примеры стримов',
+      'hero.streamBtn1': 'Стрим 01',
+      'hero.streamBtn2': 'Стрим 02',
+      'hero.streamBtn3': 'Стрим 03',
       'model.eyebrow': 'Формат работы',
       'model.title': 'Аккуратная система, где каждый шаг понятен заранее',
       'model.card1.title': 'Чёткие правила',
@@ -148,6 +152,10 @@
       'hero.card1': 'Step-by-step start without chaos',
       'hero.card2': 'Clear communication in messenger',
       'hero.card3': 'Launch plan and support',
+      'hero.streamPreviewAria': 'Stream examples',
+      'hero.streamBtn1': 'Stream 01',
+      'hero.streamBtn2': 'Stream 02',
+      'hero.streamBtn3': 'Stream 03',
       'model.eyebrow': 'Work format',
       'model.title': 'A clean system where every step is clear in advance',
       'model.card1.title': 'Clear rules',
@@ -263,6 +271,10 @@
       'hero.card1': 'Início por etapas sem caos',
       'hero.card2': 'Comunicação clara no mensageiro',
       'hero.card3': 'Plano de lançamento e suporte',
+      'hero.streamPreviewAria': 'Exemplos de streams',
+      'hero.streamBtn1': 'Stream 01',
+      'hero.streamBtn2': 'Stream 02',
+      'hero.streamBtn3': 'Stream 03',
       'model.eyebrow': 'Formato de trabalho',
       'model.title': 'Um sistema claro onde cada etapa é previsível',
       'model.card1.title': 'Regras claras',
@@ -378,6 +390,10 @@
       'hero.card1': 'Inicio paso a paso sin caos',
       'hero.card2': 'Comunicación clara en mensajería',
       'hero.card3': 'Plan de lanzamiento y soporte',
+      'hero.streamPreviewAria': 'Ejemplos de streams',
+      'hero.streamBtn1': 'Stream 01',
+      'hero.streamBtn2': 'Stream 02',
+      'hero.streamBtn3': 'Stream 03',
       'model.eyebrow': 'Formato de trabajo',
       'model.title': 'Sistema claro donde cada paso es predecible',
       'model.card1.title': 'Reglas claras',
@@ -713,7 +729,7 @@
     }
 
     const spotlightTargets = qsa(
-      '.sf-hero__copy, .sf-hero__card, .sf-card, .sf-income-card, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
+      '.sf-hero__copy, .sf-hero__card, .sf-hero-media, .sf-card, .sf-income-card, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
     );
     spotlightTargets.forEach((node, index) => {
       const maxTilt = index < 2 ? 6 : 3.8;
@@ -850,6 +866,83 @@
     return update;
   }
 
+  function initHeroMedia() {
+    const video = qs('#sf-hero-video');
+    const buttons = qsa('[data-hero-video-src]');
+    if (!video || !buttons.length) {
+      return;
+    }
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    let index = 0;
+    let rotationTimer = 0;
+
+    const stopRotation = () => {
+      if (!rotationTimer) {
+        return;
+      }
+      window.clearInterval(rotationTimer);
+      rotationTimer = 0;
+    };
+
+    const apply = (nextIndex, shouldPlay) => {
+      const safeIndex = ((nextIndex % buttons.length) + buttons.length) % buttons.length;
+      const target = buttons[safeIndex];
+      const src = target && target.getAttribute('data-hero-video-src');
+      if (!target || !src) {
+        return;
+      }
+
+      index = safeIndex;
+      buttons.forEach((button, buttonIndex) => {
+        button.classList.toggle('is-active', buttonIndex === index);
+      });
+
+      const poster = target.getAttribute('data-hero-video-poster') || '';
+      if (video.getAttribute('src') !== src) {
+        video.pause();
+        video.setAttribute('src', src);
+        video.load();
+      }
+      if (poster) {
+        video.setAttribute('poster', poster);
+      }
+
+      if (shouldPlay && !reduced) {
+        void video.play().catch(() => {});
+      }
+    };
+
+    const startRotation = () => {
+      if (reduced || buttons.length < 2) {
+        return;
+      }
+      stopRotation();
+      rotationTimer = window.setInterval(() => {
+        apply(index + 1, false);
+      }, 9500);
+    };
+
+    buttons.forEach((button, buttonIndex) => {
+      button.addEventListener('click', () => {
+        apply(buttonIndex, true);
+        startRotation();
+      });
+    });
+
+    video.addEventListener('pointerenter', stopRotation);
+    video.addEventListener('pointerleave', startRotation);
+    video.addEventListener('play', stopRotation);
+    video.addEventListener('pause', startRotation);
+    video.addEventListener('ended', () => {
+      apply(index + 1, true);
+      startRotation();
+    });
+
+    apply(0, false);
+    startRotation();
+  }
+
   function portfolioPath(lang, slideNumber) {
     const index = Math.max(1, Math.min(8, Number(slideNumber) || 1));
     const locale = normalizeLang(lang);
@@ -864,12 +957,17 @@
     const counter = qs('#sf-portfolio-counter');
     const prevBtn = qs('[data-portfolio-prev]');
     const nextBtn = qs('[data-portfolio-next]');
-    if (!image || !counter || !prevBtn || !nextBtn) {
+    const stage = qs('.sf-portfolio__stage');
+    if (!image || !counter || !prevBtn || !nextBtn || !stage) {
       return () => {};
     }
 
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
     let index = 0;
     const total = 8;
+    let autoplayTimer = 0;
+    let touchStartX = 0;
+    let touchStartY = 0;
 
     const render = () => {
       const slide = index + 1;
@@ -879,14 +977,40 @@
       counter.textContent = `${slide}/${total}`;
     };
 
-    prevBtn.addEventListener('click', () => {
+    const goPrev = () => {
       index = (index - 1 + total) % total;
       render();
+    };
+
+    const goNext = () => {
+      index = (index + 1) % total;
+      render();
+    };
+
+    const stopAutoplay = () => {
+      if (!autoplayTimer) {
+        return;
+      }
+      window.clearInterval(autoplayTimer);
+      autoplayTimer = 0;
+    };
+
+    const startAutoplay = () => {
+      if (reduced) {
+        return;
+      }
+      stopAutoplay();
+      autoplayTimer = window.setInterval(goNext, 7000);
+    };
+
+    prevBtn.addEventListener('click', () => {
+      goPrev();
+      startAutoplay();
     });
 
     nextBtn.addEventListener('click', () => {
-      index = (index + 1) % total;
-      render();
+      goNext();
+      startAutoplay();
     });
 
     image.addEventListener('error', () => {
@@ -897,7 +1021,50 @@
       image.src = `assets/portfolio/${index + 1}.jpg`;
     });
 
+    stage.addEventListener(
+      'touchstart',
+      (event) => {
+        const point = event.changedTouches && event.changedTouches[0];
+        if (!point) {
+          return;
+        }
+        touchStartX = point.clientX;
+        touchStartY = point.clientY;
+      },
+      { passive: true }
+    );
+
+    stage.addEventListener(
+      'touchend',
+      (event) => {
+        const point = event.changedTouches && event.changedTouches[0];
+        if (!point) {
+          return;
+        }
+        const deltaX = point.clientX - touchStartX;
+        const deltaY = point.clientY - touchStartY;
+        if (Math.abs(deltaX) < 36 || Math.abs(deltaX) < Math.abs(deltaY)) {
+          return;
+        }
+        if (deltaX > 0) {
+          goPrev();
+        } else {
+          goNext();
+        }
+        startAutoplay();
+      },
+      { passive: true }
+    );
+
+    [stage, prevBtn, nextBtn].forEach((node) => {
+      node.addEventListener('pointerenter', stopAutoplay);
+      node.addEventListener('pointerleave', startAutoplay);
+      node.addEventListener('focusin', stopAutoplay);
+      node.addEventListener('focusout', startAutoplay);
+    });
+
     render();
+    startAutoplay();
     return render;
   }
 
@@ -1370,6 +1537,7 @@
     initYear();
     initReveal();
     initStreamflowInteractivity();
+    initHeroMedia();
     initMobileMenu();
     initLangGate(state, onLangChange);
     initFitScore(state);
