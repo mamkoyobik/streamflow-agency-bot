@@ -948,6 +948,32 @@
     return render;
   }
 
+  function initAmbientStreams() {
+    const videos = qsa('.sf-stream-card video');
+    if (!videos.length) {
+      return;
+    }
+
+    const playVideo = (video) => {
+      if (!video) {
+        return;
+      }
+      void video.play().catch(() => {});
+    };
+
+    videos.forEach((video) => {
+      playVideo(video);
+      video.addEventListener('loadeddata', () => playVideo(video), { once: true });
+    });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) {
+        return;
+      }
+      videos.forEach((video) => playVideo(video));
+    });
+  }
+
   function portfolioPath(lang, slideNumber) {
     const index = Math.max(1, Math.min(8, Number(slideNumber) || 1));
     const locale = normalizeLang(lang);
@@ -1544,6 +1570,7 @@
     initYear();
     initReveal();
     initStreamflowInteractivity();
+    initAmbientStreams();
     initMobileMenu();
     initLangGate(state, onLangChange);
     initFitScore(state);
