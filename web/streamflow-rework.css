@@ -448,6 +448,8 @@ body[data-site='streamflow'] :focus-visible {
   border-radius: var(--sf-radius-lg);
   background: var(--sf-surface);
   box-shadow: var(--sf-shadow);
+  position: relative;
+  overflow: hidden;
 }
 
 .sf-hero__copy {
@@ -547,8 +549,45 @@ body[data-site='streamflow'] :focus-visible {
   width: 100%;
   border-radius: 16px;
   border: 1px solid var(--sf-line);
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  max-height: min(62vh, 620px);
+  object-fit: contain;
+  object-position: center;
+  background: rgba(6, 4, 10, 0.82);
+}
+
+.sf-interactive-surface {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+}
+
+.sf-interactive-surface::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      180px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgba(255, 143, 214, 0.24),
+      transparent 70%
+    );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sf-interactive-surface.is-interactive-active {
+  border-color: var(--sf-line-strong);
+  box-shadow:
+    0 20px 36px rgba(0, 0, 0, 0.36),
+    0 0 0 1px rgba(255, 143, 214, 0.2);
+}
+
+.sf-interactive-surface.is-interactive-active::after {
+  opacity: 1;
 }
 
 .sf-section {
@@ -650,8 +689,10 @@ body[data-site='streamflow'] :focus-visible {
 
 .sf-income-card img {
   width: 100%;
-  aspect-ratio: 4 / 5;
-  object-fit: cover;
+  height: clamp(240px, 31vw, 420px);
+  object-fit: contain;
+  object-position: center;
+  background: rgba(6, 4, 10, 0.82);
 }
 
 .sf-income-card > div {
@@ -781,8 +822,10 @@ body[data-site='streamflow'] :focus-visible {
 
 .sf-portfolio__stage img {
   width: 100%;
-  aspect-ratio: 16 / 9;
-  object-fit: cover;
+  height: clamp(240px, 52vw, 560px);
+  object-fit: contain;
+  object-position: center;
+  background: rgba(6, 4, 10, 0.82);
 }
 
 .sf-portfolio__stage figcaption {

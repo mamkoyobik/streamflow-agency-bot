@@ -437,6 +437,8 @@ body[data-site='starflow'] :focus-visible {
   border: 1px solid var(--sfw-line);
   background: var(--sfw-surface);
   box-shadow: var(--sfw-shadow);
+  position: relative;
+  overflow: hidden;
 }
 
 .sfw-hero__copy {
@@ -536,6 +538,41 @@ body[data-site='starflow'] :focus-visible {
   border-radius: 15px;
   border: 1px solid var(--sfw-line);
   background: #fff;
+}
+
+.sfw-interactive-surface {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+  position: relative;
+  overflow: hidden;
+}
+
+.sfw-interactive-surface::after {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  pointer-events: none;
+  background:
+    radial-gradient(
+      170px circle at var(--spot-x, 50%) var(--spot-y, 50%),
+      rgba(62, 116, 159, 0.2),
+      transparent 72%
+    );
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.sfw-interactive-surface.is-interactive-active {
+  border-color: var(--sfw-line-strong);
+  box-shadow:
+    0 18px 34px rgba(26, 53, 78, 0.2),
+    0 0 0 1px rgba(62, 116, 159, 0.18);
+}
+
+.sfw-interactive-surface.is-interactive-active::after {
+  opacity: 1;
 }
 
 .sfw-section {

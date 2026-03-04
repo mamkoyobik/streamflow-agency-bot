@@ -333,10 +333,18 @@ body.menu-open {
   border: 1px solid var(--st-line);
   border-radius: var(--st-radius-lg);
   background:
+    radial-gradient(
+      180px circle at var(--hero-spot-x, 50%) var(--hero-spot-y, 50%),
+      rgba(255, 129, 207, 0.2),
+      transparent 72%
+    ),
     linear-gradient(150deg, rgba(255, 67, 170, 0.2), transparent 43%),
     var(--st-surface);
   box-shadow: var(--st-shadow);
   padding: clamp(1rem, 2vw, 1.8rem);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .eyebrow {
@@ -729,8 +737,10 @@ body.menu-open {
 
 .portfolio-slide img {
   width: 100%;
-  aspect-ratio: 3 / 4;
-  object-fit: cover;
+  aspect-ratio: 16 / 9;
+  object-fit: contain;
+  object-position: center;
+  background: rgba(6, 4, 10, 0.82);
 }
 
 .portfolio-btn {
@@ -1043,8 +1053,28 @@ body.menu-open {
   border-radius: 8px;
 }
 
+.st-interactive-surface {
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  transform-style: preserve-3d;
+  will-change: transform;
+}
+
+.st-interactive-surface.is-interactive-active {
+  border-color: var(--st-line-strong);
+  box-shadow:
+    0 20px 36px rgba(0, 0, 0, 0.34),
+    0 0 0 1px rgba(255, 143, 214, 0.18);
+}
+
 .reveal {
+  opacity: 0;
+  transform: translateY(16px);
+  transition: opacity 0.36s ease, transform 0.36s ease;
+}
+
+.reveal.is-visible {
   opacity: 1;
+  transform: translateY(0);
 }
 
 @media (max-width: 1160px) {
@@ -1135,6 +1165,11 @@ body.menu-open {
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  .reveal {
+    opacity: 1;
+    transform: none;
   }
 
   *,

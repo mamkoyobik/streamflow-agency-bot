@@ -648,6 +648,127 @@
     items.forEach((item) => observer.observe(item));
   }
 
+  function attachPointerTilt(node, className, maxTilt) {
+    if (!node) {
+      return;
+    }
+    node.classList.add(className);
+
+    const tilt = Number.isFinite(maxTilt) ? maxTilt : 5;
+    let frame = 0;
+    let spotX = 50;
+    let spotY = 50;
+    let rotateX = 0;
+    let rotateY = 0;
+
+    const render = () => {
+      node.style.setProperty('--spot-x', `${spotX}%`);
+      node.style.setProperty('--spot-y', `${spotY}%`);
+      node.style.transform = `perspective(980px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+      frame = 0;
+    };
+
+    const queueRender = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(render);
+    };
+
+    const onMove = (event) => {
+      const rect = node.getBoundingClientRect();
+      if (!rect.width || !rect.height) {
+        return;
+      }
+      const x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
+      const y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
+      spotX = Math.round(x * 100);
+      spotY = Math.round(y * 100);
+      rotateX = Number((((0.5 - y) * 2) * tilt).toFixed(2));
+      rotateY = Number((((x - 0.5) * 2) * tilt).toFixed(2));
+      node.classList.add('is-interactive-active');
+      queueRender();
+    };
+
+    const reset = () => {
+      spotX = 50;
+      spotY = 50;
+      rotateX = 0;
+      rotateY = 0;
+      node.classList.remove('is-interactive-active');
+      queueRender();
+    };
+
+    node.addEventListener('pointermove', onMove, { passive: true });
+    node.addEventListener('pointerleave', reset);
+    node.addEventListener('pointercancel', reset);
+    reset();
+  }
+
+  function initStreamflowInteractivity() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (reduced || !finePointer) {
+      return;
+    }
+
+    const spotlightTargets = qsa(
+      '.sf-hero__copy, .sf-hero__card, .sf-card, .sf-income-card, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
+    );
+    spotlightTargets.forEach((node, index) => {
+      const maxTilt = index < 2 ? 6 : 3.8;
+      attachPointerTilt(node, 'sf-interactive-surface', maxTilt);
+    });
+  }
+
+  function initLegacyReveal() {
+    const items = qsa('.reveal');
+    if (!items.length) {
+      return;
+    }
+
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (reduced || typeof window.IntersectionObserver !== 'function') {
+      items.forEach((item) => item.classList.add('is-visible'));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (!entry.isIntersecting) {
+            return;
+          }
+          entry.target.classList.add('is-visible');
+          observer.unobserve(entry.target);
+        });
+      },
+      { threshold: 0.14 }
+    );
+
+    items.forEach((item) => observer.observe(item));
+  }
+
+  function initLegacyInteractivity() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (reduced || !finePointer) {
+      return;
+    }
+
+    const heroSurface = qs('.page-hero .container');
+    if (heroSurface) {
+      attachPointerTilt(heroSurface, 'st-interactive-surface', 5.2);
+    }
+
+    const cardTargets = qsa(
+      '.split-content, .note, .info-card, .offer-item, .steps-item, .video-card, .portfolio-block, .form-card, .form-intro, .stat-item'
+    );
+    cardTargets.forEach((node) => {
+      attachPointerTilt(node, 'st-interactive-surface', 3.1);
+    });
+  }
+
   function initFitScore(state) {
     const checks = qsa('[data-fit-check]');
     const scoreNode = qs('[data-fit-score]');
@@ -1248,6 +1369,7 @@
 
     initYear();
     initReveal();
+    initStreamflowInteractivity();
     initMobileMenu();
     initLangGate(state, onLangChange);
     initFitScore(state);
@@ -1256,6 +1378,8 @@
   }
 
   function initLegacyFallback() {
+    initLegacyReveal();
+    initLegacyInteractivity();
     void syncLinks();
   }
 
