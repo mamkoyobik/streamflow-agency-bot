@@ -777,7 +777,7 @@
     }
 
     const spotlightTargets = qsa(
-      '.sf-hero__copy, .sf-hero__card, .sf-hero-modes, .sf-card, .sf-income-card, .sf-streams, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
+      '.sf-hero__copy, .sf-hero__card, .sf-hero-flow, .sf-card, .sf-income-card, .sf-stream-card, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
     );
     spotlightTargets.forEach((node, index) => {
       const maxTilt = index < 2 ? 6 : 3.8;
@@ -914,91 +914,32 @@
     return update;
   }
 
-  function initHeroModes(state) {
-    const buttons = qsa('[data-hero-mode]');
-    const valueNode = qs('#sf-hero-mode-value');
-    const noteNode = qs('#sf-hero-mode-note');
-    if (!buttons.length || !valueNode || !noteNode) {
+  function initHeroFlow(state) {
+    const buttons = qsa('[data-hero-step]');
+    const textNode = qs('#sf-hero-step-text');
+    if (!buttons.length || !textNode) {
       return () => {};
     }
 
-    const map = {
-      soft: {
-        valueKey: 'hero.modeSoftValue',
-        noteKey: 'hero.modeSoftNote'
-      },
-      balanced: {
-        valueKey: 'hero.modeBalancedValue',
-        noteKey: 'hero.modeBalancedNote'
-      },
-      pro: {
-        valueKey: 'hero.modeProValue',
-        noteKey: 'hero.modeProNote'
-      }
+    const stepTextMap = {
+      '1': 'steps.s1.text',
+      '2': 'steps.s2.text',
+      '3': 'steps.s3.text'
     };
 
-    let activeMode = 'soft';
+    let activeStep = '1';
 
     const render = () => {
-      const config = map[activeMode] || map.soft;
-      valueNode.textContent = t(config.valueKey, state.lang);
-      noteNode.textContent = t(config.noteKey, state.lang);
+      const textKey = stepTextMap[activeStep] || stepTextMap['1'];
+      textNode.textContent = t(textKey, state.lang);
       buttons.forEach((button) => {
-        button.classList.toggle('is-active', button.getAttribute('data-hero-mode') === activeMode);
+        button.classList.toggle('is-active', button.getAttribute('data-hero-step') === activeStep);
       });
     };
 
     buttons.forEach((button) => {
       button.addEventListener('click', () => {
-        activeMode = String(button.getAttribute('data-hero-mode') || 'soft');
-        render();
-      });
-    });
-
-    render();
-    return render;
-  }
-
-  function initStreamShowcase(state) {
-    const video = qs('#sf-stream-video');
-    const title = qs('#sf-stream-title');
-    const counter = qs('#sf-stream-counter');
-    const buttons = qsa('[data-stream-src]');
-    if (!video || !title || !counter || !buttons.length) {
-      return () => {};
-    }
-
-    let index = 0;
-
-    const render = () => {
-      const safeIndex = ((index % buttons.length) + buttons.length) % buttons.length;
-      const button = buttons[safeIndex];
-      const src = button.getAttribute('data-stream-src');
-      const poster = button.getAttribute('data-stream-poster') || '';
-      const titleKey = button.getAttribute('data-stream-title-key') || 'streams.sample1';
-      if (!src) {
-        return;
-      }
-
-      if (video.getAttribute('src') !== src) {
-        video.pause();
-        video.setAttribute('src', src);
-        video.load();
-      }
-      if (poster) {
-        video.setAttribute('poster', poster);
-      }
-
-      title.textContent = t(titleKey, state.lang);
-      counter.textContent = `${safeIndex + 1}/${buttons.length}`;
-      buttons.forEach((item, itemIndex) => {
-        item.classList.toggle('is-active', itemIndex === safeIndex);
-      });
-    };
-
-    buttons.forEach((button, buttonIndex) => {
-      button.addEventListener('click', () => {
-        index = buttonIndex;
+        activeStep = String(button.getAttribute('data-hero-step') || '1');
         render();
       });
     });
@@ -1583,16 +1524,14 @@
       lang: normalizeLang(safeStorageGet(STORAGE_KEY) || DEFAULT_LANG)
     };
 
-    const refreshHeroModes = initHeroModes(state);
-    const refreshStreamShowcase = initStreamShowcase(state);
+    const refreshHeroFlow = initHeroFlow(state);
     const refreshPortfolio = initPortfolio(state);
     const refreshPlanner = initPlanner(state);
 
     const onLangChange = (lang) => {
       applyI18n(lang);
       updateIncomeByLang(lang);
-      refreshHeroModes();
-      refreshStreamShowcase();
+      refreshHeroFlow();
       refreshPortfolio();
       refreshPlanner();
       const langInput = qs('#sf-site-lang');
