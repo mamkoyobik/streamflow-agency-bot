@@ -721,23 +721,19 @@
     items.forEach((item) => observer.observe(item));
   }
 
-  function attachPointerTilt(node, className, maxTilt) {
+  function attachPointerTilt(node, className) {
     if (!node) {
       return;
     }
     node.classList.add(className);
 
-    const tilt = Number.isFinite(maxTilt) ? maxTilt : 5;
     let frame = 0;
     let spotX = 50;
     let spotY = 50;
-    let rotateX = 0;
-    let rotateY = 0;
 
     const render = () => {
       node.style.setProperty('--spot-x', `${spotX}%`);
       node.style.setProperty('--spot-y', `${spotY}%`);
-      node.style.transform = `perspective(980px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
       frame = 0;
     };
 
@@ -757,8 +753,6 @@
       const y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
       spotX = Math.round(x * 100);
       spotY = Math.round(y * 100);
-      rotateX = Number((((0.5 - y) * 2) * tilt).toFixed(2));
-      rotateY = Number((((x - 0.5) * 2) * tilt).toFixed(2));
       node.classList.add('is-interactive-active');
       queueRender();
     };
@@ -766,9 +760,8 @@
     const reset = () => {
       spotX = 50;
       spotY = 50;
-      rotateX = 0;
-      rotateY = 0;
       node.classList.remove('is-interactive-active');
+      node.style.removeProperty('transform');
       queueRender();
     };
 
@@ -788,9 +781,138 @@
     const spotlightTargets = qsa(
       '.sf-hero__copy, .sf-hero__card, .sf-hero-flow, .sf-card, .sf-income-card, .sf-stream-card, .sf-planner, .sf-portfolio, .sf-fit, .sf-apply__copy'
     );
-    spotlightTargets.forEach((node, index) => {
-      const maxTilt = index < 2 ? 6 : 3.8;
-      attachPointerTilt(node, 'sf-interactive-surface', maxTilt);
+    spotlightTargets.forEach((node) => {
+      attachPointerTilt(node, 'sf-interactive-surface');
+    });
+  }
+
+  function initPageProgress() {
+    const bar = qs('#sf-page-progress-bar');
+    if (!bar) {
+      return;
+    }
+
+    let frame = 0;
+    const render = () => {
+      const root = document.documentElement;
+      const max = root.scrollHeight - window.innerHeight;
+      const ratio = max > 0 ? Math.min(1, Math.max(0, window.scrollY / max)) : 0;
+      bar.style.transform = `scaleX(${ratio})`;
+      frame = 0;
+    };
+
+    const queue = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(render);
+    };
+
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue);
+    render();
+  }
+
+  function initScrollSpy() {
+    const sections = qsa('main section[id]');
+    const navLinks = qsa('.sf-nav a[href^="#"], .sf-mobile-nav__links a[href^="#"]');
+    if (!sections.length || !navLinks.length) {
+      return;
+    }
+
+    const linksById = new Map();
+    navLinks.forEach((link) => {
+      const href = link.getAttribute('href') || '';
+      const id = href.startsWith('#') ? href.slice(1) : '';
+      if (!id) {
+        return;
+      }
+      if (!linksById.has(id)) {
+        linksById.set(id, []);
+      }
+      linksById.get(id).push(link);
+    });
+
+    const setActive = (activeId) => {
+      linksById.forEach((links, id) => {
+        const isActive = id === activeId;
+        links.forEach((link) => {
+          link.classList.toggle('is-active', isActive);
+        });
+      });
+    };
+
+    let frame = 0;
+    const update = () => {
+      const pivot = window.scrollY + window.innerHeight * 0.28;
+      let activeId = sections[0].id;
+      sections.forEach((section) => {
+        if (section.offsetTop <= pivot) {
+          activeId = section.id;
+        }
+      });
+      setActive(activeId);
+      frame = 0;
+    };
+
+    const queue = () => {
+      if (frame) {
+        return;
+      }
+      frame = window.requestAnimationFrame(update);
+    };
+
+    window.addEventListener('scroll', queue, { passive: true });
+    window.addEventListener('resize', queue);
+    update();
+  }
+
+  function initMagneticButtons() {
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const finePointer = window.matchMedia('(pointer: fine)').matches;
+    if (reduced || !finePointer) {
+      return;
+    }
+
+    qsa('.sf-btn--primary, .sf-btn--ghost').forEach((button) => {
+      let frame = 0;
+      let tx = 0;
+      let ty = 0;
+
+      const render = () => {
+        button.style.transform = `translate(${tx}px, ${ty}px)`;
+        frame = 0;
+      };
+
+      const queue = () => {
+        if (frame) {
+          return;
+        }
+        frame = window.requestAnimationFrame(render);
+      };
+
+      const onMove = (event) => {
+        const rect = button.getBoundingClientRect();
+        if (!rect.width || !rect.height) {
+          return;
+        }
+        const x = (event.clientX - rect.left) / rect.width - 0.5;
+        const y = (event.clientY - rect.top) / rect.height - 0.5;
+        tx = Number((x * 9).toFixed(2));
+        ty = Number((y * 7).toFixed(2));
+        queue();
+      };
+
+      const reset = () => {
+        tx = 0;
+        ty = 0;
+        queue();
+      };
+
+      button.addEventListener('pointermove', onMove, { passive: true });
+      button.addEventListener('pointerleave', reset);
+      button.addEventListener('pointercancel', reset);
+      button.addEventListener('blur', reset);
     });
   }
 
@@ -1587,8 +1709,11 @@
     };
 
     initYear();
+    initPageProgress();
+    initScrollSpy();
     initReveal();
     initStreamflowInteractivity();
+    initMagneticButtons();
     initAmbientStreams();
     initMobileMenu();
     initLangGate(state, onLangChange);

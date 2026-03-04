@@ -105,6 +105,26 @@ body[data-site='streamflow'] [hidden] {
   top: 1rem;
 }
 
+.sf-page-progress {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 3px;
+  z-index: 60;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sf-page-progress span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  transform-origin: left center;
+  transform: scaleX(0);
+  background: linear-gradient(90deg, var(--sf-accent), var(--sf-accent-2));
+  box-shadow: 0 0 18px rgba(255, 63, 167, 0.44);
+}
+
 body[data-site='streamflow'] :focus-visible {
   outline: 2px solid var(--sf-accent-2);
   outline-offset: 2px;
@@ -185,6 +205,11 @@ body[data-site='streamflow'] :focus-visible {
 .sf-nav a:hover {
   color: var(--sf-text);
   background: rgba(255, 63, 167, 0.16);
+}
+
+.sf-nav a.is-active {
+  color: var(--sf-text);
+  background: rgba(255, 63, 167, 0.22);
 }
 
 .sf-header__tools {
@@ -349,6 +374,11 @@ body[data-site='streamflow'] :focus-visible {
   border-radius: 12px;
   padding: 0.7rem 0.8rem;
   background: rgba(255, 255, 255, 0.02);
+}
+
+.sf-mobile-nav__links a.is-active {
+  border-color: var(--sf-line-strong);
+  background: rgba(255, 63, 167, 0.16);
 }
 
 .sf-mobile-nav__actions {
@@ -591,9 +621,7 @@ body[data-site='streamflow'] :focus-visible {
 }
 
 .sf-interactive-surface {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  transform-style: preserve-3d;
-  will-change: transform;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
   position: relative;
   overflow: hidden;
 }
@@ -1301,7 +1329,8 @@ body[data-site='streamflow'] :focus-visible {
   .sf-btn,
   .sf-mobile-nav__panel,
   .sf-mobile-nav__backdrop,
-  .sf-form__progress-track span {
+  .sf-form__progress-track span,
+  .sf-page-progress span {
     transition: none !important;
   }
 }
