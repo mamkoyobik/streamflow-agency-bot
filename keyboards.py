@@ -275,38 +275,111 @@ def confirm_reset_db_keyboard():
         ]
     ])
 
+def _project_filter_codes(project_code: str) -> dict[str, str]:
+    code = "st" if (project_code or "").strip().lower() == "st" else "sf"
+    return {
+        "pending": f"{code}p",
+        "all": code,
+        "accepted": f"{code}a",
+        "rejected": f"{code}r",
+        "reviewed": f"{code}v",
+        "stage_quick": f"{code}q",
+        "stage_full": f"{code}f",
+        "src_site": f"{code}s",
+        "src_bot": f"{code}b",
+        "src_unknown": f"{code}u",
+    }
+
+
+def _project_title(project_code: str) -> str:
+    return "Starflow" if (project_code or "").strip().lower() == "st" else "Streamflow"
+
+
 def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = None):
-    pending = counts.get("pending", 0) if counts else 0
-    total = counts.get("total", pending) if counts else pending
-    stage_quick = stage_counts.get("quick", 0) if stage_counts else 0
-    stage_full = stage_counts.get("full", 0) if stage_counts else 0
-    accepted = counts.get("accepted", 0) if counts else 0
-    rejected = counts.get("rejected", 0) if counts else 0
-    reviewed = accepted + rejected
+    streamflow_total = counts.get("project_streamflow_total", 0) if counts else 0
+    starflow_total = counts.get("project_starflow_total", 0) if counts else 0
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text=f"📥 Анкеты ({pending})", callback_data="admin_menu:cat_apps"),
+            InlineKeyboardButton(
+                text=f"🧱 Streamflow ({streamflow_total})",
+                callback_data="admin_menu:panel_sf",
+            )
+        ],
+        [
+            InlineKeyboardButton(
+                text=f"⭐ Starflow ({starflow_total})",
+                callback_data="admin_menu:panel_st",
+            )
+        ],
+        [
             InlineKeyboardButton(text="📣 Контент", callback_data="admin_menu:cat_content"),
+            InlineKeyboardButton(text="📚 Посты", callback_data="admin_menu:posts"),
         ],
         [
-            InlineKeyboardButton(text="🧱 P1", callback_data="admin_menu:project_streamflow"),
-            InlineKeyboardButton(text="🧱 P2", callback_data="admin_menu:project_starflow"),
-        ],
-        [
-            InlineKeyboardButton(text=f"1️⃣ {stage_quick}", callback_data="admin_menu:stage_quick"),
-            InlineKeyboardButton(text=f"2️⃣ {stage_full}", callback_data="admin_menu:stage_full"),
-        ],
-        [
-            InlineKeyboardButton(text=f"✅ {reviewed}", callback_data="admin_menu:reviewed"),
-            InlineKeyboardButton(text=f"📚 {total}", callback_data="admin_menu:all"),
-        ],
-        [
-            InlineKeyboardButton(text="📊 Отчёт", callback_data="admin_menu:cat_analytics"),
+            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_menu:stats"),
             InlineKeyboardButton(text="⚙️ Сервис", callback_data="admin_menu:cat_service"),
         ],
         [
             InlineKeyboardButton(text="🔄 Обновить", callback_data="admin_menu:refresh"),
         ]
+    ])
+
+
+def admin_project_menu_keyboard(project_code: str, counts: dict | None = None):
+    filters = _project_filter_codes(project_code)
+    title = _project_title(project_code)
+    pending = counts.get("pending", 0) if counts else 0
+    total = counts.get("total", 0) if counts else 0
+    accepted = counts.get("accepted", 0) if counts else 0
+    rejected = counts.get("rejected", 0) if counts else 0
+    reviewed = counts.get("reviewed", accepted + rejected) if counts else 0
+    stage_quick = counts.get("stage_quick", 0) if counts else 0
+    stage_full = counts.get("stage_full", 0) if counts else 0
+    other_project_action = "admin_menu:panel_st" if (project_code or "").strip().lower() == "sf" else "admin_menu:panel_sf"
+    other_project_title = "Starflow" if (project_code or "").strip().lower() == "sf" else "Streamflow"
+
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text=f"🆕 Новые ({pending})", callback_data=f"admin_menu:f:{filters['pending']}"),
+            InlineKeyboardButton(text=f"📚 Все ({total})", callback_data=f"admin_menu:f:{filters['all']}"),
+        ],
+        [
+            InlineKeyboardButton(text=f"✅ Принятые ({accepted})", callback_data=f"admin_menu:f:{filters['accepted']}"),
+            InlineKeyboardButton(text=f"❌ Отклонённые ({rejected})", callback_data=f"admin_menu:f:{filters['rejected']}"),
+        ],
+        [
+            InlineKeyboardButton(text=f"🧾 Обработанные ({reviewed})", callback_data=f"admin_menu:f:{filters['reviewed']}"),
+        ],
+        [
+            InlineKeyboardButton(text=f"1️⃣ Этап 1 ({stage_quick})", callback_data=f"admin_menu:f:{filters['stage_quick']}"),
+            InlineKeyboardButton(text=f"2️⃣ Этап 2 ({stage_full})", callback_data=f"admin_menu:f:{filters['stage_full']}"),
+        ],
+        [
+            InlineKeyboardButton(text="🌐 Источник: сайт", callback_data=f"admin_menu:f:{filters['src_site']}"),
+            InlineKeyboardButton(text="🤖 Источник: боты", callback_data=f"admin_menu:f:{filters['src_bot']}"),
+        ],
+        [
+            InlineKeyboardButton(text="❔ Источник: не определён", callback_data=f"admin_menu:f:{filters['src_unknown']}"),
+        ],
+        [
+            InlineKeyboardButton(text="📣 Создать пост", callback_data="admin_menu:create_post"),
+            InlineKeyboardButton(text="📚 Посты", callback_data="admin_menu:posts"),
+        ],
+        [
+            InlineKeyboardButton(text="📊 Статистика", callback_data="admin_menu:stats"),
+            InlineKeyboardButton(text="📁 Excel", callback_data="admin_menu:excel"),
+        ],
+        [
+            InlineKeyboardButton(text="🧹 Архив", callback_data="admin_menu:archive"),
+            InlineKeyboardButton(text="⚠️ Сброс базы", callback_data="admin_menu:reset"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ К выбору проекта", callback_data="admin_menu:home"),
+            InlineKeyboardButton(text=f"↔️ {other_project_title}", callback_data=other_project_action),
+        ],
+        [
+            InlineKeyboardButton(text=f"🔄 Обновить {title}", callback_data=f"admin_menu:panel_{(project_code or '').strip().lower() or 'sf'}"),
+        ],
     ])
 
 

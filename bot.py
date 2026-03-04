@@ -46,6 +46,7 @@ from config import (
     CHANNEL_IDS,
 )
 from states import ApplicationStates
+import keyboards as keyboards_module
 from keyboards import *
 from database import (
     set_status,
@@ -2160,21 +2161,37 @@ def build_admin_posted_item_text(item: dict, offset: int, total: int) -> str:
     return result
 
 def build_admin_menu_text(counts: dict, stage_counts: dict | None = None) -> str:
-    stage_quick = (stage_counts or {}).get("quick", 0)
-    stage_full = (stage_counts or {}).get("full", 0)
     pending = counts.get("pending", 0)
-    accepted = counts.get("accepted", 0)
-    rejected = counts.get("rejected", 0)
-    reviewed = accepted + rejected
-    total = counts.get("total", pending + reviewed)
+    total = counts.get("total", 0)
+    streamflow_total = counts.get("project_streamflow_total")
+    if streamflow_total is None:
+        streamflow_total = _apps_total_for_filter("sf")
+    starflow_total = counts.get("project_starflow_total")
+    if starflow_total is None:
+        starflow_total = _apps_total_for_filter("st")
     return (
-        "🎛 <b>Центр управления</b>\n\n"
-        f"Ожидают: <b>{pending}</b>\n"
-        f"Приняты: <b>{accepted}</b>  ·  Отклонены: <b>{rejected}</b>\n"
-        f"Решённые: <b>{reviewed}</b>\n"
-        f"Этап 1: <b>{stage_quick}</b>\n"
-        f"Этап 2: <b>{stage_full}</b>\n"
-        f"Всего: <b>{total}</b>"
+        "🎛 <b>Админ-панель</b>\n\n"
+        "1) Выбери проект\n"
+        "2) Управляй заявками внутри проекта\n\n"
+        f"🧱 Streamflow: <b>{streamflow_total}</b>\n"
+        f"⭐ Starflow: <b>{starflow_total}</b>\n"
+        f"🆕 Новые по всем проектам: <b>{pending}</b>\n"
+        f"📚 Всего заявок: <b>{total}</b>"
+    )
+
+
+def build_admin_project_menu_text(project_code: str, counts: dict) -> str:
+    code = "st" if (project_code or "").strip().lower() == "st" else "sf"
+    title = ADMIN_PROJECT_CODE_TO_TITLE.get(code, ADMIN_PROJECT_CODE_TO_TITLE["sf"])
+    return (
+        f"🧩 <b>{title} — управление</b>\n\n"
+        f"🆕 Новые: <b>{counts.get('pending', 0)}</b>\n"
+        f"✅ Принятые: <b>{counts.get('accepted', 0)}</b>\n"
+        f"❌ Отклонённые: <b>{counts.get('rejected', 0)}</b>\n"
+        f"🧾 Обработанные: <b>{counts.get('reviewed', 0)}</b>\n"
+        f"1️⃣ Этап 1: <b>{counts.get('stage_quick', 0)}</b>\n"
+        f"2️⃣ Этап 2: <b>{counts.get('stage_full', 0)}</b>\n"
+        f"📚 Всего: <b>{counts.get('total', 0)}</b>"
     )
 
 async def persist_form_data(state: FSMContext, user_id: int):
@@ -2239,6 +2256,26 @@ PROJECT_STARFLOW = "starflow_corp"
 PROJECT_LABELS = {
     PROJECT_STREAMFLOW: "Streamflow Agency",
     PROJECT_STARFLOW: "Starflow Inc.",
+}
+ADMIN_PROJECT_CODE_TO_KEY = {
+    "sf": PROJECT_STREAMFLOW,
+    "st": PROJECT_STARFLOW,
+}
+ADMIN_PROJECT_CODE_TO_TITLE = {
+    "sf": "Streamflow",
+    "st": "Starflow",
+}
+ADMIN_PROJECT_SUFFIX_TO_FILTER = {
+    "": "all",
+    "p": "pending",
+    "a": "accepted",
+    "r": "rejected",
+    "v": "reviewed",
+    "q": "stage_quick",
+    "f": "stage_full",
+    "s": "src_site",
+    "b": "src_bot",
+    "u": "src_unknown",
 }
 
 
@@ -3119,7 +3156,47 @@ async def post_admin_menu():
         admin_menu_keyboard(counts, stage_counts)
     )
 
+def _parse_project_scoped_filter(filter_key: str | None) -> tuple[str, str] | None:
+    raw = str(filter_key or "").strip().lower()
+    if len(raw) < 2:
+        return None
+    project_code = raw[:2]
+    if project_code not in ADMIN_PROJECT_CODE_TO_KEY:
+        return None
+    suffix = raw[2:]
+    if suffix not in ADMIN_PROJECT_SUFFIX_TO_FILTER:
+        return None
+    return project_code, ADMIN_PROJECT_SUFFIX_TO_FILTER[suffix]
+
+
+def _filter_by_project(apps: list[dict], project_key: str) -> list[dict]:
+    filtered: list[dict] = []
+    for app in apps:
+        uid = int(app.get("user_id") or 0)
+        payload = get_form_data(uid) or {}
+        if project_key_from_data(payload) == project_key:
+            filtered.append(app)
+    return filtered
+
+
 def _admin_list_label(filter_key: str | None) -> str:
+    scoped = _parse_project_scoped_filter(filter_key)
+    if scoped:
+        project_code, base_filter = scoped
+        project_title = ADMIN_PROJECT_CODE_TO_TITLE.get(project_code, "Проект")
+        base_label = {
+            "pending": "новые заявки",
+            "reviewed": "обработанные заявки",
+            "accepted": "принятые заявки",
+            "rejected": "отклонённые заявки",
+            "all": "все заявки",
+            "stage_quick": "этап 1",
+            "stage_full": "этап 2",
+            "src_site": "источник: сайт",
+            "src_bot": "источник: боты",
+            "src_unknown": "источник: не определён",
+        }.get(base_filter, "заявки")
+        return f"{project_title}: {base_label}"
     return {
         "pending": "Ожидают подтверждения",
         "reviewed": "Решённые",
@@ -3131,12 +3208,19 @@ def _admin_list_label(filter_key: str | None) -> str:
         "src_site": "Источник: сайт",
         "src_bot": "Источник: боты",
         "src_unknown": "Источник: не определён",
-        "project_streamflow": "Проект P1",
-        "project_starflow": "Проект P2",
+        "project_streamflow": "Проект Streamflow",
+        "project_starflow": "Проект Starflow",
         None: "Все заявки",
     }.get(filter_key, "Все заявки")
 
 def _list_apps_by_filter(filter_key: str) -> list[dict]:
+    scoped = _parse_project_scoped_filter(filter_key)
+    if scoped:
+        project_code, base_filter = scoped
+        project_key = ADMIN_PROJECT_CODE_TO_KEY.get(project_code, PROJECT_STREAMFLOW)
+        base_apps = _list_apps_by_filter(base_filter)
+        return _filter_by_project(base_apps, project_key)
+
     status = None if filter_key in {
         "all",
         "reviewed",
@@ -3173,13 +3257,7 @@ def _list_apps_by_filter(filter_key: str) -> list[dict]:
         return filtered
     if filter_key in {"project_streamflow", "project_starflow"}:
         expected_project = PROJECT_STREAMFLOW if filter_key == "project_streamflow" else PROJECT_STARFLOW
-        filtered: list[dict] = []
-        for app in apps:
-            uid = int(app.get("user_id") or 0)
-            payload = get_form_data(uid) or {}
-            if project_key_from_data(payload) == expected_project:
-                filtered.append(app)
-        return filtered
+        return _filter_by_project(apps, expected_project)
     return apps
 
 
@@ -3189,6 +3267,33 @@ def _apps_total_for_filter(filter_key: str) -> int:
     except Exception:
         logger.exception("Ошибка подсчёта заявок для фильтра %s", filter_key)
         return 0
+
+
+def _enrich_admin_menu_counts(counts: dict | None) -> dict:
+    payload = dict(counts or {})
+    payload.setdefault("project_streamflow_total", _apps_total_for_filter("sf"))
+    payload.setdefault("project_starflow_total", _apps_total_for_filter("st"))
+    return payload
+
+
+def admin_menu_keyboard(counts: dict | None = None, stage_counts: dict | None = None):
+    return keyboards_module.admin_menu_keyboard(_enrich_admin_menu_counts(counts), stage_counts)
+
+
+def _project_panel_counts(project_code: str) -> dict[str, int]:
+    code = "st" if (project_code or "").strip().lower() == "st" else "sf"
+    suffix = {
+        "all": "",
+        "pending": "p",
+        "accepted": "a",
+        "rejected": "r",
+        "reviewed": "v",
+        "stage_quick": "q",
+        "stage_full": "f",
+    }
+    values = {name: _apps_total_for_filter(f"{code}{token}") for name, token in suffix.items()}
+    values["reviewed"] = values.get("accepted", 0) + values.get("rejected", 0)
+    return values
 
 
 def _build_admin_list_header(
@@ -6733,6 +6838,7 @@ async def admin_menu(message: Message, state: FSMContext):
     await state.clear()
     await sync_anonymous_create_post_state(enabled=False)
     await clear_admin_temp_messages()
+    await clear_admin_notify()
     await ensure_admin_menu_posted()
     await delete_message_silent(message)
 
@@ -6758,6 +6864,7 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
             return
         await safe_call_answer(call)
         await clear_admin_temp_messages()
+        await clear_admin_notify()
         action = call.data.split(":", 1)[1]
         if action != "create_post":
             current_state = await state.get_state()
@@ -6774,6 +6881,19 @@ async def admin_menu_action(call: CallbackQuery, state: FSMContext):
         if action in {"home", "refresh"}:
             await clear_admin_view_message()
             await post_admin_menu()
+            return
+        if action in {"panel_sf", "panel_st"}:
+            await clear_admin_view_message()
+            project_code = "st" if action.endswith("_st") else "sf"
+            counts = _project_panel_counts(project_code)
+            await update_admin_menu_message(
+                build_admin_project_menu_text(project_code, counts),
+                admin_project_menu_keyboard(project_code, counts),
+            )
+            return
+        if action.startswith("f:"):
+            await clear_admin_view_message()
+            await send_admin_list(call, action[2:], 0)
             return
         if action == "cat_content":
             await clear_admin_view_message()
