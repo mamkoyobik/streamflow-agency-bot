@@ -1372,6 +1372,10 @@ async def setup_bot_commands() -> None:
         BotCommand(command="start", description="Открыть меню"),
         BotCommand(command="language", description="Сменить язык"),
     ]
+    await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
+    if not ADMIN_PANEL_ENABLED:
+        return
+
     admin_commands = [
         BotCommand(command="admin", description="Открыть админ-меню"),
         BotCommand(command="create_post", description="Создать пост и кросспост"),
@@ -1380,16 +1384,22 @@ async def setup_bot_commands() -> None:
         BotCommand(command="excel", description="Выгрузить Excel"),
         BotCommand(command="reset_db", description="Сбросить базу (опасно)"),
     ]
-    await bot.set_my_commands(user_commands, scope=BotCommandScopeDefault())
     admin_scope_ids: list[int] = [int(ADMIN_GROUP_ID)]
     active_admin_chat_id = int(current_admin_chat_id())
     if active_admin_chat_id not in admin_scope_ids:
         admin_scope_ids.append(active_admin_chat_id)
     for chat_id in admin_scope_ids:
-        await bot.set_my_commands(
-            admin_commands,
-            scope=BotCommandScopeChatAdministrators(chat_id=chat_id),
-        )
+        if chat_id >= 0:
+            continue
+        try:
+            await bot.set_my_commands(
+                admin_commands,
+                scope=BotCommandScopeChatAdministrators(chat_id=chat_id),
+            )
+        except TelegramBadRequest:
+            logger.warning("Не удалось установить admin-команды в чат %s", chat_id)
+        except Exception:
+            logger.exception("Не удалось установить admin-команды в чат %s", chat_id)
 
 
 def extract_post_text(message: Message) -> str:
