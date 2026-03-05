@@ -19,6 +19,14 @@ if (os.getenv("STARFLOW_BOT_USERNAME") or "").strip():
     os.environ["BOT_USERNAME"] = (os.getenv("STARFLOW_BOT_USERNAME") or "").strip()
 if (os.getenv("STARFLOW_CHANNEL_LINK") or "").strip():
     os.environ["CHANNEL_LINK"] = (os.getenv("STARFLOW_CHANNEL_LINK") or "").strip()
+if (os.getenv("STARFLOW_CHANNEL_ID") or "").strip():
+    os.environ["CHANNEL_ID"] = (os.getenv("STARFLOW_CHANNEL_ID") or "").strip()
+if (os.getenv("STARFLOW_CHANNEL_EN_ID") or "").strip():
+    os.environ["CHANNEL_EN_ID"] = (os.getenv("STARFLOW_CHANNEL_EN_ID") or "").strip()
+if (os.getenv("STARFLOW_CHANNEL_PT_ID") or "").strip():
+    os.environ["CHANNEL_PT_ID"] = (os.getenv("STARFLOW_CHANNEL_PT_ID") or "").strip()
+if (os.getenv("STARFLOW_CHANNEL_ES_ID") or "").strip():
+    os.environ["CHANNEL_ES_ID"] = (os.getenv("STARFLOW_CHANNEL_ES_ID") or "").strip()
 if (os.getenv("STARFLOW_SITE_URL") or "").strip():
     os.environ["SITE_URL"] = (os.getenv("STARFLOW_SITE_URL") or "").strip()
 if (os.getenv("STARFLOW_ADMIN_GROUP_ID") or "").strip():
