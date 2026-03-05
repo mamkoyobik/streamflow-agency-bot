@@ -853,6 +853,8 @@ POLLING_CONFLICT_SLEEP_SECONDS = max(
 )
 ADMIN_PANEL_ENABLED = os.getenv("ADMIN_PANEL_ENABLED", "0").strip().lower() in {"1", "true", "yes", "on"}
 ADMIN_CENTER_MODE = os.getenv("ADMIN_CENTER_MODE", "0").strip().lower() in {"1", "true", "yes", "on"}
+ADMIN_SYNC_CHECK_SECONDS = _get_env_int("ADMIN_SYNC_CHECK_SECONDS", default=20, min_value=5)
+ADMIN_PENDING_SNAPSHOT_KEY = "admin_pending_snapshot_count"
 CYRILLIC_RE = re.compile(r"[А-Яа-яЁё]")
 TELEGRAM_CAPTION_LIMIT = 1024
 TELEGRAM_TEXT_LIMIT = 4096
@@ -3204,6 +3206,38 @@ async def notify_admin_new_application():
         set_setting(ADMIN_NOTIFY_SETTING_KEY, str(msg.message_id))
     except Exception:
         logger.exception("Ошибка уведомления о заявке")
+
+
+def _parse_int_setting(raw: str | None) -> int | None:
+    value = (raw or "").strip()
+    if not value:
+        return None
+    if value.lstrip("-").isdigit():
+        return int(value)
+    return None
+
+
+async def sync_admin_pending_queue_task():
+    if not ADMIN_PANEL_ENABLED:
+        return
+    while True:
+        try:
+            counts = get_status_counts()
+            pending = int(counts.get("pending", 0))
+            prev = _parse_int_setting(get_setting(ADMIN_PENDING_SNAPSHOT_KEY))
+            if prev is None:
+                set_setting(ADMIN_PENDING_SNAPSHOT_KEY, str(pending))
+            elif pending != prev:
+                if pending > prev:
+                    await notify_admin_new_application()
+                await ensure_admin_menu_posted()
+                set_setting(ADMIN_PENDING_SNAPSHOT_KEY, str(pending))
+        except asyncio.CancelledError:
+            raise
+        except Exception:
+            logger.exception("Ошибка синхронизации центральной админ-очереди")
+        await asyncio.sleep(ADMIN_SYNC_CHECK_SECONDS)
+
 
 async def set_admin_menu_message_id(message_id: int):
     admin_chat_id = current_admin_chat_id()
@@ -7818,10 +7852,17 @@ async def main():
         logger.exception("Ошибка очистки старых данных")
     if ADMIN_PANEL_ENABLED:
         await ensure_admin_menu_posted()
+        try:
+            pending = int(get_status_counts().get("pending", 0))
+            set_setting(ADMIN_PENDING_SNAPSHOT_KEY, str(pending))
+        except Exception:
+            logger.exception("Не удалось сохранить baseline pending-count для админ-центра")
     tasks = [asyncio.create_task(auto_request_info_task(), name="auto_request_info_task")]
     if ADMIN_PANEL_ENABLED:
         tasks.append(asyncio.create_task(daily_stats_task(), name="daily_stats_task"))
         tasks.append(asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"))
+        if ADMIN_CENTER_MODE:
+            tasks.append(asyncio.create_task(sync_admin_pending_queue_task(), name="sync_admin_pending_queue_task"))
     try:
         try:
             await bot.delete_webhook(drop_pending_updates=False)

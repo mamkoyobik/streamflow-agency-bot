@@ -153,9 +153,7 @@ logging.basicConfig(
 )
 
 logger = logging.getLogger(__name__)
-STARFLOW_ENABLE_ADMIN_JOBS = (
-    (os.getenv("STARFLOW_ENABLE_ADMIN_JOBS") or "").strip().lower() in {"1", "true", "yes", "on"}
-)
+ADMIN_PANEL_ENABLED = False
 
 # ================= BOT =================
 
@@ -1862,6 +1860,8 @@ def is_anonymous_admin_post(message: Message) -> bool:
 
 
 async def can_manage_admin_group(message: Message) -> bool:
+    if not ADMIN_PANEL_ENABLED:
+        return False
     if not message or not message.chat:
         return False
     if message.chat.type not in {"group", "supergroup"}:
@@ -1889,6 +1889,8 @@ async def can_manage_admin_group(message: Message) -> bool:
 
 
 async def can_manage_admin_callback(call: CallbackQuery) -> bool:
+    if not ADMIN_PANEL_ENABLED:
+        return False
     if not call.message or not call.from_user:
         return False
     if call.message.chat.type not in {"group", "supergroup"}:
@@ -2868,6 +2870,8 @@ async def auto_request_info_task():
         await asyncio.sleep(AUTO_REQUEST_INFO_CHECK_SECONDS)
 
 async def ensure_admin_menu_posted():
+    if not ADMIN_PANEL_ENABLED:
+        return
     try:
         admin_chat_id = current_admin_chat_id()
         try:
@@ -3200,6 +3204,8 @@ async def update_admin_photos(user_id: int):
         logger.exception("Ошибка отправки фото админу")
 
 async def notify_admin_new_application():
+    if not ADMIN_PANEL_ENABLED:
+        return
     admin_chat_id = current_admin_chat_id()
     try:
         counts = get_status_counts()
@@ -7660,16 +7666,7 @@ async def main():
         cleanup_old_form_data()
     except Exception:
         logger.exception("Ошибка очистки старых данных")
-    if STARFLOW_ENABLE_ADMIN_JOBS:
-        await ensure_admin_menu_posted()
-        tasks = [
-            asyncio.create_task(daily_stats_task(), name="daily_stats_task"),
-            asyncio.create_task(archive_admin_messages_task(), name="archive_admin_messages_task"),
-            asyncio.create_task(auto_request_info_task(), name="auto_request_info_task"),
-        ]
-    else:
-        logger.info("STARFLOW_ENABLE_ADMIN_JOBS=false: фоновые админ-джобы отключены")
-        tasks = []
+    tasks = [asyncio.create_task(auto_request_info_task(), name="auto_request_info_task")]
     try:
         try:
             await bot.delete_webhook(drop_pending_updates=False)
