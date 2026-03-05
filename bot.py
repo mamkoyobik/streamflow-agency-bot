@@ -4581,6 +4581,20 @@ async def start(message: Message, state: FSMContext):
         if message.chat.type != "private":
             await message.answer(t("ru", "start_private_only"))
             return
+        admin_private = False
+        if message.from_user:
+            username = (message.from_user.username or "").strip().lower()
+            admin_private = (
+                message.from_user.id in ADMIN_ALLOWED_USER_IDS
+                or username in ADMIN_ALLOWED_USERNAMES
+            )
+        if ADMIN_PANEL_ENABLED and admin_private:
+            bind_admin_chat_id(message.chat.id)
+            await state.clear()
+            await clear_admin_temp_messages()
+            await clear_admin_notify()
+            await ensure_admin_menu_posted()
+            return
         await delete_user_message(message)
         logger.info(
             "START_CMD user_id=%s text=%r",
@@ -7029,7 +7043,8 @@ async def admin_menu(message: Message, state: FSMContext):
     await clear_admin_temp_messages()
     await clear_admin_notify()
     await ensure_admin_menu_posted()
-    await delete_message_silent(message)
+    if message.chat.type != "private":
+        await delete_message_silent(message)
 
 @dp.callback_query(F.data == "admin_post:cancel")
 async def admin_create_post_cancel(call: CallbackQuery, state: FSMContext):
