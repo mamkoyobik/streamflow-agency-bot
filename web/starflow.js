@@ -607,6 +607,154 @@
     items.forEach((item) => observer.observe(item));
   }
 
+  function initStepper() {
+    const root = qs('[data-stepper]');
+    if (!root) {
+      return;
+    }
+
+    const tabs = qsa('[data-step-target]', root);
+    const panels = qsa('[data-step-panel]', root);
+    if (!tabs.length || !panels.length) {
+      return;
+    }
+
+    const activate = (target, moveFocus) => {
+      const stepId = String(target || tabs[0].getAttribute('data-step-target') || '');
+      tabs.forEach((tab) => {
+        const active = tab.getAttribute('data-step-target') === stepId;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+        tab.tabIndex = active ? 0 : -1;
+        if (active && moveFocus) {
+          tab.focus();
+        }
+      });
+
+      panels.forEach((panel) => {
+        const active = panel.getAttribute('data-step-panel') === stepId;
+        panel.hidden = !active;
+      });
+    };
+
+    tabs.forEach((tab, index) => {
+      tab.addEventListener('click', () => {
+        activate(tab.getAttribute('data-step-target'), false);
+      });
+
+      tab.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowRight' && event.key !== 'ArrowLeft' && event.key !== 'Home' && event.key !== 'End') {
+          return;
+        }
+
+        event.preventDefault();
+        let nextIndex = index;
+        if (event.key === 'ArrowRight') {
+          nextIndex = (index + 1) % tabs.length;
+        } else if (event.key === 'ArrowLeft') {
+          nextIndex = (index - 1 + tabs.length) % tabs.length;
+        } else if (event.key === 'Home') {
+          nextIndex = 0;
+        } else if (event.key === 'End') {
+          nextIndex = tabs.length - 1;
+        }
+        const nextTab = tabs[nextIndex];
+        activate(nextTab.getAttribute('data-step-target'), true);
+      });
+    });
+
+    activate(tabs[0].getAttribute('data-step-target'), false);
+  }
+
+  function initGeoSwitcher() {
+    const root = qs('[data-geo-switcher]');
+    if (!root) {
+      return;
+    }
+
+    const tabs = qsa('[data-geo-target]', root);
+    const panels = qsa('[data-geo-panel]', root);
+    if (!tabs.length || !panels.length) {
+      return;
+    }
+
+    const activate = (target) => {
+      const value = String(target || tabs[0].getAttribute('data-geo-target') || '');
+      tabs.forEach((tab) => {
+        const active = tab.getAttribute('data-geo-target') === value;
+        tab.classList.toggle('is-active', active);
+        tab.setAttribute('aria-selected', active ? 'true' : 'false');
+      });
+
+      panels.forEach((panel) => {
+        panel.hidden = panel.getAttribute('data-geo-panel') !== value;
+      });
+    };
+
+    tabs.forEach((tab) => {
+      tab.addEventListener('click', () => {
+        activate(tab.getAttribute('data-geo-target'));
+      });
+    });
+
+    activate(tabs[0].getAttribute('data-geo-target'));
+  }
+
+  function initFaqAccordion() {
+    const root = qs('[data-faq]');
+    if (!root) {
+      return;
+    }
+
+    const items = qsa('.sfw-faq__item', root);
+    if (!items.length) {
+      return;
+    }
+
+    const updatePanelHeight = (item, open) => {
+      const panel = qs('[data-faq-panel]', item);
+      if (!panel) {
+        return;
+      }
+      panel.style.maxHeight = open ? panel.scrollHeight + 'px' : '0px';
+    };
+
+    const setOpen = (item, open) => {
+      const trigger = qs('[data-faq-trigger]', item);
+      if (!trigger) {
+        return;
+      }
+
+      item.classList.toggle('is-open', open);
+      trigger.setAttribute('aria-expanded', open ? 'true' : 'false');
+      updatePanelHeight(item, open);
+    };
+
+    items.forEach((item, index) => {
+      const trigger = qs('[data-faq-trigger]', item);
+      if (!trigger) {
+        return;
+      }
+
+      const shouldStartOpen = item.classList.contains('is-open') || index === 0;
+      setOpen(item, shouldStartOpen);
+
+      trigger.addEventListener('click', () => {
+        const isOpen = item.classList.contains('is-open');
+        items.forEach((other) => setOpen(other, false));
+        setOpen(item, !isOpen);
+      });
+    });
+
+    window.addEventListener('resize', () => {
+      items.forEach((item) => {
+        if (item.classList.contains('is-open')) {
+          updatePanelHeight(item, true);
+        }
+      });
+    });
+  }
+
   function initScrollProgress() {
     const bar = qs('#sfw-scroll-progress-bar');
     if (!bar) {
@@ -717,10 +865,9 @@
     });
 
     if (!safeStorageGet(STORAGE_KEY)) {
-      openGate();
-    } else {
-      closeGate();
+      safeStorageSet(STORAGE_KEY, state.lang);
     }
+    closeGate();
 
     onLangChange(state.lang);
   }
@@ -984,6 +1131,9 @@
     initYear();
     initScrollProgress();
     initReveal();
+    initStepper();
+    initGeoSwitcher();
+    initFaqAccordion();
     initMobileMenu();
     initLangGate(state, onLangChange);
     initForm(state);
