@@ -889,7 +889,7 @@ MEDIA_CONTENT_TYPES = {"photo", "video", "document", "animation"}
 GENERIC_MARKER_RE = re.compile(r"\[\[(?:CE\d+|E\d+[SE]|LK\d+)\]\]")
 CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
-PUBLIC_MANAGER_HANDLE = (os.getenv("STARFLOW_PUBLIC_MANAGER_HANDLE") or "@starflowmanager").strip()
+PUBLIC_MANAGER_HANDLE = (os.getenv("STARFLOW_PUBLIC_MANAGER_HANDLE") or "@starflowincmanager").strip()
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
 STARFLOW_DEFAULT_LANG = "en"
 STARFLOW_USER_LANGS = ("en", "pt", "es")
@@ -968,6 +968,8 @@ def _parse_admin_allowed_ids() -> set[int]:
         os.getenv("ADMIN_USER_ID", ""),
         os.getenv("ADMIN_USER_IDS", ""),
         os.getenv("ADMIN_ID", ""),
+        os.getenv("STARFLOW_MANAGER_ID", "8534750751"),
+        os.getenv("STARFLOW_MANAGER_IDS", ""),
     ]
     result: set[int] = set()
     for raw in raw_values:

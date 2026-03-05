@@ -879,6 +879,8 @@ CUSTOM_EMOJI_PLACEHOLDER = "⭐"
 ANONYMOUS_ADMIN_BOT_ID = 1087968824
 PUBLIC_MANAGER_HANDLE = "@streamflowmanager"
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
+STARFLOW_MANAGER_HANDLE = (os.getenv("STARFLOW_PUBLIC_MANAGER_HANDLE") or "@starflowincmanager").strip()
+STARFLOW_MANAGER_USERNAME = STARFLOW_MANAGER_HANDLE.lstrip("@")
 
 
 def _parse_admin_allowed_ids() -> set[int]:
@@ -886,6 +888,8 @@ def _parse_admin_allowed_ids() -> set[int]:
         os.getenv("ADMIN_USER_ID", ""),
         os.getenv("ADMIN_USER_IDS", ""),
         os.getenv("ADMIN_ID", ""),
+        os.getenv("STARFLOW_MANAGER_ID", "8534750751"),
+        os.getenv("STARFLOW_MANAGER_IDS", ""),
     ]
     result: set[int] = set()
     for raw in raw_values:
@@ -905,6 +909,7 @@ ADMIN_ALLOWED_USERNAMES = {
     for item in {
         ADMIN_ALLOWED_USERNAME,
         PUBLIC_MANAGER_USERNAME.strip().lower(),
+        STARFLOW_MANAGER_USERNAME.strip().lower(),
     }
     if item
 }
