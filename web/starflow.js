@@ -563,79 +563,6 @@
     items.forEach((item) => observer.observe(item));
   }
 
-  function attachPointerTilt(node, className, maxTilt) {
-    if (!node) {
-      return;
-    }
-    node.classList.add(className);
-
-    const tilt = Number.isFinite(maxTilt) ? maxTilt : 5;
-    let frame = 0;
-    let spotX = 50;
-    let spotY = 50;
-    let rotateX = 0;
-    let rotateY = 0;
-
-    const render = () => {
-      node.style.setProperty('--spot-x', `${spotX}%`);
-      node.style.setProperty('--spot-y', `${spotY}%`);
-      node.style.transform = `perspective(980px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
-      frame = 0;
-    };
-
-    const queueRender = () => {
-      if (frame) {
-        return;
-      }
-      frame = window.requestAnimationFrame(render);
-    };
-
-    const onMove = (event) => {
-      const rect = node.getBoundingClientRect();
-      if (!rect.width || !rect.height) {
-        return;
-      }
-      const x = Math.min(1, Math.max(0, (event.clientX - rect.left) / rect.width));
-      const y = Math.min(1, Math.max(0, (event.clientY - rect.top) / rect.height));
-      spotX = Math.round(x * 100);
-      spotY = Math.round(y * 100);
-      rotateX = Number((((0.5 - y) * 2) * tilt).toFixed(2));
-      rotateY = Number((((x - 0.5) * 2) * tilt).toFixed(2));
-      node.classList.add('is-interactive-active');
-      queueRender();
-    };
-
-    const reset = () => {
-      spotX = 50;
-      spotY = 50;
-      rotateX = 0;
-      rotateY = 0;
-      node.classList.remove('is-interactive-active');
-      queueRender();
-    };
-
-    node.addEventListener('pointermove', onMove, { passive: true });
-    node.addEventListener('pointerleave', reset);
-    node.addEventListener('pointercancel', reset);
-    reset();
-  }
-
-  function initStarflowInteractivity() {
-    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const finePointer = window.matchMedia('(pointer: fine)').matches;
-    if (reduced || !finePointer) {
-      return;
-    }
-
-    const targets = qsa(
-      '.sfw-hero__copy, .sfw-hero__card, .sfw-card, .sfw-steps li, .sfw-fit, .sfw-apply__copy, .sfw-form'
-    );
-    targets.forEach((node, index) => {
-      const maxTilt = index < 2 ? 5.3 : 3.2;
-      attachPointerTilt(node, 'sfw-interactive-surface', maxTilt);
-    });
-  }
-
   function initMobileMenu() {
     const openBtn = qs('[data-menu-open]');
     const closeBtns = qsa('[data-menu-close]');
@@ -725,41 +652,6 @@
     }
 
     onLangChange(state.lang);
-  }
-
-  function initFitScore(state) {
-    const checks = qsa('[data-fit-check]');
-    const scoreNode = qs('[data-fit-score]');
-    const statusNode = qs('[data-fit-status]');
-    if (!checks.length || !scoreNode || !statusNode) {
-      return;
-    }
-
-    const update = () => {
-      const total = checks.reduce((sum, input) => sum + Number(input.value || 0), 0);
-      const checked = checks
-        .filter((input) => input.checked)
-        .reduce((sum, input) => sum + Number(input.value || 0), 0);
-      const score = total > 0 ? Math.round((checked / total) * 100) : 0;
-
-      scoreNode.textContent = score + '%';
-      if (score >= 80) {
-        statusNode.textContent = t('msg.scoreHigh', state.lang);
-        statusNode.setAttribute('data-level', 'high');
-      } else if (score >= 50) {
-        statusNode.textContent = t('msg.scoreMid', state.lang);
-        statusNode.setAttribute('data-level', 'mid');
-      } else {
-        statusNode.textContent = t('msg.scoreLow', state.lang);
-        statusNode.setAttribute('data-level', 'low');
-      }
-    };
-
-    checks.forEach((input) => {
-      input.addEventListener('change', update);
-    });
-
-    update();
   }
 
   async function syncLinks() {
