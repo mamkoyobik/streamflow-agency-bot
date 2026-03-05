@@ -755,6 +755,32 @@
     });
   }
 
+  function initStickyCta() {
+    const sticky = qs('.sfw-sticky-cta');
+    const hero = qs('.sfw-hero');
+    if (!sticky || !hero) {
+      return;
+    }
+
+    let rafId = 0;
+    const update = () => {
+      rafId = 0;
+      const threshold = Math.max(260, hero.offsetHeight * 0.55);
+      const visible = window.scrollY > threshold;
+      sticky.classList.toggle('is-visible', visible);
+    };
+
+    const onScroll = () => {
+      if (!rafId) {
+        rafId = window.requestAnimationFrame(update);
+      }
+    };
+
+    update();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    window.addEventListener('resize', onScroll);
+  }
+
   function initScrollProgress() {
     const bar = qs('#sfw-scroll-progress-bar');
     if (!bar) {
@@ -1134,6 +1160,7 @@
     initStepper();
     initGeoSwitcher();
     initFaqAccordion();
+    initStickyCta();
     initMobileMenu();
     initLangGate(state, onLangChange);
     initForm(state);
