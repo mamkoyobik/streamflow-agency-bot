@@ -947,48 +947,115 @@ STARFLOW_TEXT_OVERRIDES = {
     },
     "en": {
         "menu_caption": (
-            "🎯 Starflow is a partner network for streaming companies.\n"
-            "Bring candidates to interviews and get CPA payouts in USDT.\n\n"
-            "Choose a section below ✨"
+            "🏢 <b>Starflow Inc. Partner Network</b>\n"
+            "Performance acquisition for streaming companies.\n"
+            "Drive qualified interviews and get CPA payouts in USDT.\n\n"
+            "Select a section to continue."
         ),
-        "accept_caption": "✅ Application accepted. Continuing partner onboarding ✨",
-        "menu_be_model": "🤝 Become a partner",
+        "accept_caption": "✅ Application approved. Partner profile is active.",
+        "ack_text": "✅ Data saved. Moving to the next step.",
+        "loading_text": "⏳ Processing application data...\nPlease wait a moment.",
+        "support_line_1": "Your application is in progress.",
+        "support_line_2": "We are validating details and routing your profile.",
+        "support_line_3": "Final check. Almost complete.",
+        "start_private_only": "Please open a private chat with this bot and send /start.",
+        "open_private_prompt": "Open a private chat with the bot and send /start.",
+        "menu_be_model": "🤝 Join as a partner",
         "menu_portfolio": "📁 Partner materials",
-        "menu_about": "ℹ️ About the offer",
-        "about_menu_work": "🌷 Offer details",
-        "about_menu_platforms": "📍 GEO and sources",
-        "about_menu_income": "💰 CPA and payouts",
+        "menu_about": "ℹ️ Offer details",
+        "about_menu_work": "🏢 Business model",
+        "about_menu_platforms": "📍 GEO and channels",
+        "about_menu_income": "💰 Commercial terms",
         "about_work_text": (
-            "🌷 <b>Starflow partner offer</b>\n\n"
-            "We work with traffic for 5+ years and partner with teams who can attract people.\n\n"
-            "Partner profile:\n"
+            "🏢 <b>Starflow partner program</b>\n\n"
+            "Starflow is an acquisition network that supplies streaming companies "
+            "with interview-ready candidates.\n"
+            "The program is built for teams and solo operators who can run stable traffic.\n\n"
+            "<b>Typical partner profiles:</b>\n"
             "• media buying team\n"
             "• call-center\n"
-            "• marketing agency\n"
-            "• solo freelancer"
+            "• recruiting agency\n"
+            "• solo acquisition specialist\n\n"
+            "We focus on measurable volume, conversion quality, and consistent delivery."
         ),
         "about_platforms_text": (
-            "📍 <b>Sources and GEO</b>\n\n"
-            "Sources: ads, outreach, mailings, job boards, DM.\n\n"
-            "GEO:\n"
+            "📍 <b>Traffic channels and GEO</b>\n\n"
+            "<b>Allowed channels:</b>\n"
+            "• paid ads\n"
+            "• outreach and direct messaging\n"
+            "• job boards and classified listings\n"
+            "• email and messenger campaigns\n\n"
+            "<b>Target GEO:</b>\n"
             "• models: Europe, LatAm\n"
-            "• operators: Europe, LatAm, Asia"
+            "• operators: Europe, LatAm, Asia\n\n"
+            "Source mix is flexible. Quality and interview completion rate are critical."
         ),
         "about_income_text": (
-            "💰 <b>Partner terms</b>\n\n"
-            "• CPA $20-40 per successful interview\n"
-            "• weekly Sunday payouts in USDT\n"
-            "• no caps\n"
-            "• CRM, scripts and materials are provided"
+            "💰 <b>Commercial terms</b>\n\n"
+            "• CPA: <b>$20-40</b> per successful interview\n"
+            "• payouts: every Sunday in <b>USDT</b>\n"
+            "• no volume cap\n"
+            "• CRM, scripts, and launch materials included\n\n"
+            "No upfront fee. Payment is performance-based."
         ),
         "portfolio_menu_reviews": "❓ FAQ",
         "portfolio_menu_videos": "📜 Script",
         "portfolio_menu_pdf": "🧩 Materials",
-        "profile_portfolio_title": "📁 <b>Partner materials</b>\n\nFAQ, script and launch materials.",
-        "field_email_invalid": "🤍 Please enter a valid registration email:",
-        "photo_step_removed": "🤍 Photos are not required in the partner form.",
-        "photo_edit_disabled": "Photo editing is disabled for partner form.",
-        "portfolio_nav_disabled": "Only text materials are available in this version.",
+        "profile_about_title": (
+            "ℹ️ <b>Offer summary</b>\n\n"
+            "• Partner model\n"
+            "• CPA payouts in USDT\n"
+            "• CRM + scripts\n"
+            "• Account manager support"
+        ),
+        "profile_contact_title": "💬 <b>Account manager</b>\n\n{link}",
+        "profile_portfolio_title": "📁 <b>Partner materials</b>\n\nFAQ, script, and launch materials.",
+        "resume_prompt": "Your form is incomplete.\n\nContinue from where you stopped?",
+        "already_started_prompt": "An application is already started.\n\nContinue from the saved step?",
+        "already_started_site_prompt": (
+            "You already completed part of the application on the website.\n\n"
+            "To activate your partner profile, complete the remaining required fields.\n"
+            "All data is handled confidentially.\n\n"
+            "Continue from the saved step?"
+        ),
+        "pending_status_text": "Your application is under review.",
+        "accepted_status_text": "Your application has already been approved.",
+        "rejected_status_text": "A decision has already been sent for your application.",
+        "rate_limited": "A recent application already exists.\n\nPlease submit a new one later.",
+        "stale_button": "⚠️ This menu was updated. Use the current buttons.",
+        "unknown_input_hint": "Input not recognized. Please use the menu buttons below.",
+        "first_step_notice": "This is the first step of the application.",
+        "reject_non_text": "Please send the answer as plain text.",
+        "field_name_short": "Please enter your full legal name.",
+        "field_city_short": "Please provide city and country.",
+        "field_phone_invalid": "Please enter a valid international phone, for example: +44 7307 810222",
+        "field_age_invalid": "Enter birth date in format 01.01.2000 (18+ only).",
+        "field_yes_no": "Answer yes or no.",
+        "field_devices_short": "List your traffic sources (ads, outreach, job boards, etc.).",
+        "field_work_time_invalid": "Enter daily time in digits (for example: 4).",
+        "field_experience_prompt": "Describe your acquisition experience.",
+        "field_email_invalid": "Please enter a valid registration email:",
+        "field_telegram_invalid": "Enter Telegram in format @username.",
+        "cannot_send_message": "Unable to deliver message. Please check that the bot is not blocked.",
+        "normalized_phone_note": "Phone normalized: {value}",
+        "normalized_birthdate_note": "Birth date normalized: {value}",
+        "normalized_yes_no_note": "Answer normalized: {value}",
+        "normalized_telegram_note": "Telegram normalized: {value}",
+        "photo_step_removed": "Photos are not required for the partner form.",
+        "photo_edit_disabled": "Photo actions are disabled for the partner form.",
+        "portfolio_nav_disabled": "This section currently contains text materials only.",
+        "loading_stage_1": "⏳ Validating fields...\nPlease wait.",
+        "loading_stage_2": "⏳ Building partner card...\nAlmost complete.",
+        "application_sent": "✅ Application sent to the operations team.",
+        "application_missing": "The application is incomplete.\n\nPlease continue.",
+        "recent_already_sent": "A recent application was already submitted.\n\nTry again later.",
+        "approved_tail": "Please wait. Operations will contact you to schedule the interview.",
+        "rejected_reason_intro": (
+            "Thank you for your application.\n\n"
+            "At this time we cannot approve it.\n\n"
+            "Reason:\n{reason}\n\n"
+            "If requirements change, we will contact you."
+        ),
         "preview_title": (
             "🤝 <b>PARTNER APPLICATION</b>\n\n"
             "👤 <b>Full name:</b> {name}\n"
@@ -1006,15 +1073,15 @@ STARFLOW_TEXT_OVERRIDES = {
     },
     "pt": {
         "menu_caption": (
-            "🎯 Starflow é uma rede de parceiros para empresas de streaming.\n"
-            "Traga candidatos para entrevistas e receba CPA em USDT.\n\n"
-            "Escolha uma seção abaixo ✨"
+            "🏢 Starflow Inc. | Rede de parceiros para empresas de streaming.\n"
+            "Traga candidatos qualificados para entrevistas e receba CPA em USDT.\n\n"
+            "Escolha uma seção para continuar."
         ),
-        "accept_caption": "✅ Candidatura recebida. Vamos continuar o onboarding de parceiro ✨",
+        "accept_caption": "✅ Candidatura aprovada. Perfil de parceiro ativado.",
         "menu_be_model": "🤝 Tornar-se parceiro",
         "menu_portfolio": "📁 Materiais do parceiro",
         "menu_about": "ℹ️ Sobre a oferta",
-        "about_menu_work": "🌷 Sobre a oferta",
+        "about_menu_work": "🏢 Modelo de negócio",
         "about_menu_platforms": "📍 GEO e fontes",
         "about_menu_income": "💰 CPA e pagamentos",
         "about_work_text": "🌷 <b>Oferta de parceria Starflow</b>\n\nTrabalhamos com tráfego há mais de 5 anos.",
@@ -1053,15 +1120,15 @@ STARFLOW_TEXT_OVERRIDES = {
     },
     "es": {
         "menu_caption": (
-            "🎯 Starflow es una red de partners para empresas de streaming.\n"
-            "Trae candidatos a entrevistas y cobra CPA en USDT.\n\n"
-            "Elige una sección abajo ✨"
+            "🏢 Starflow Inc. | Red de partners para empresas de streaming.\n"
+            "Lleva candidatos calificados a entrevistas y cobra CPA en USDT.\n\n"
+            "Elige una sección para continuar."
         ),
-        "accept_caption": "✅ Solicitud recibida. Continuamos con el onboarding de partner ✨",
+        "accept_caption": "✅ Solicitud aprobada. Perfil de partner activado.",
         "menu_be_model": "🤝 Ser partner",
         "menu_portfolio": "📁 Materiales del partner",
         "menu_about": "ℹ️ Sobre la oferta",
-        "about_menu_work": "🌷 Sobre la oferta",
+        "about_menu_work": "🏢 Modelo de negocio",
         "about_menu_platforms": "📍 GEO y fuentes",
         "about_menu_income": "💰 CPA y pagos",
         "about_work_text": "🌷 <b>Oferta de partnership Starflow</b>\n\nTrabajamos con tráfico hace más de 5 años.",

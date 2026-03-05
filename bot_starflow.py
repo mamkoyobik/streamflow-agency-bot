@@ -263,10 +263,10 @@ async def on_join_request(req: ChatJoinRequest):
             return
 
         invite_by_lang = {
-            "en": "🤍 Your request to join the private channel is approved.\n\nPress /start ✨",
-            "pt": "🤍 Sua solicitação para entrar no canal privado foi aprovada.\n\nToque em /start ✨",
-            "es": "🤍 Tu solicitud para entrar al canal privado fue aprobada.\n\nPulsa /start ✨",
-            "ru": "🤍 Ты подала заявку в закрытый канал\n\nНажми /start ✨",
+            "en": "✅ Your channel request was approved.\n\nSend /start to continue onboarding.",
+            "pt": "✅ Seu pedido para entrar no canal foi aprovado.\n\nEnvie /start para continuar o onboarding.",
+            "es": "✅ Tu solicitud para entrar al canal fue aprobada.\n\nEnvía /start para continuar el onboarding.",
+            "ru": "✅ Заявка на вход в канал одобрена.\n\nНажмите /start для продолжения.",
         }
         invite_message = invite_by_lang.get(channel_lang, invite_by_lang[STARFLOW_DEFAULT_LANG])
         await bot.send_message(
