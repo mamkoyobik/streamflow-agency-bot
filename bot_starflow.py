@@ -893,6 +893,21 @@ PUBLIC_MANAGER_HANDLE = (os.getenv("STARFLOW_PUBLIC_MANAGER_HANDLE") or "@starfl
 PUBLIC_MANAGER_USERNAME = PUBLIC_MANAGER_HANDLE.lstrip("@")
 STARFLOW_DEFAULT_LANG = "en"
 STARFLOW_USER_LANGS = ("en", "pt", "es")
+DEFAULT_STARFLOW_MENU_IMAGE_PATH = "web/assets/starflowinc-logo-clean.png"
+STARFLOW_MENU_IMAGE_PATH = (os.getenv("STARFLOW_MENU_IMAGE_PATH") or DEFAULT_STARFLOW_MENU_IMAGE_PATH).strip()
+
+
+def starflow_menu_image_path() -> str:
+    candidates = [
+        STARFLOW_MENU_IMAGE_PATH,
+        DEFAULT_STARFLOW_MENU_IMAGE_PATH,
+        "web/assets/starflowinc-mark-clean.png",
+        "media/menu.jpg",
+    ]
+    for candidate in candidates:
+        if candidate and Path(candidate).exists():
+            return candidate
+    return "media/menu.jpg"
 
 # Rebind shared keyboards to Starflow translations.
 shared_keyboards.t = t
@@ -3785,13 +3800,18 @@ async def send_or_edit_user_menu(
 ) -> bool:
     locale = normalize_lang(lang or lang_for(user_id))
     resolved_channel_url = _normalize_telegram_url(channel_url) or CHANNEL_PUBLIC_LINK
+    menu_image = starflow_menu_image_path()
     message_id = get_menu_message_id(user_id)
     if message_id:
         try:
-            await bot.edit_message_caption(
+            await bot.edit_message_media(
                 chat_id=user_id,
                 message_id=message_id,
-                caption=caption,
+                media=InputMediaPhoto(
+                    media=FSInputFile(menu_image),
+                    caption=caption,
+                    parse_mode=ParseMode.HTML,
+                ),
                 reply_markup=main_menu(locale, channel_url=resolved_channel_url)
             )
             return True
@@ -3813,7 +3833,7 @@ async def send_or_edit_user_menu(
     try:
         msg = await bot.send_photo(
             user_id,
-            FSInputFile("media/menu.jpg"),
+            FSInputFile(menu_image),
             caption=caption,
             reply_markup=main_menu(locale, channel_url=resolved_channel_url)
         )
