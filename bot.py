@@ -16,7 +16,7 @@ from aiogram.types import (
     Message, CallbackQuery, FSInputFile,
     InputMediaPhoto, InputMediaVideo, InputMediaDocument, InputMediaAnimation,
     ChatJoinRequest, InlineKeyboardMarkup, MessageEntity,
-    BotCommand, BotCommandScopeDefault, BotCommandScopeChatAdministrators,
+    BotCommand, BotCommandScopeDefault, BotCommandScopeChat, BotCommandScopeChatAdministrators,
     BufferedInputFile,
 )
 try:
@@ -526,6 +526,8 @@ def current_admin_chat_id() -> int:
     raw = get_setting(ADMIN_CHAT_ID_SETTING_KEY)
     if raw and str(raw).lstrip("-").isdigit():
         return int(raw)
+    if ADMIN_ALLOWED_USER_IDS:
+        return sorted(ADMIN_ALLOWED_USER_IDS)[0]
     return int(ADMIN_GROUP_ID)
 
 
@@ -1314,10 +1316,27 @@ async def setup_bot_commands() -> None:
     if active_admin_chat_id not in admin_scope_ids:
         admin_scope_ids.append(active_admin_chat_id)
     for chat_id in admin_scope_ids:
-        await bot.set_my_commands(
-            admin_commands,
-            scope=BotCommandScopeChatAdministrators(chat_id=chat_id),
-        )
+        if chat_id >= 0:
+            continue
+        try:
+            await bot.set_my_commands(
+                admin_commands,
+                scope=BotCommandScopeChatAdministrators(chat_id=chat_id),
+            )
+        except TelegramBadRequest:
+            logger.warning("Не удалось установить admin-команды в чат %s", chat_id)
+        except Exception:
+            logger.exception("Не удалось установить admin-команды в чат %s", chat_id)
+    for admin_user_id in sorted(ADMIN_ALLOWED_USER_IDS):
+        try:
+            await bot.set_my_commands(
+                admin_commands,
+                scope=BotCommandScopeChat(chat_id=admin_user_id),
+            )
+        except TelegramBadRequest:
+            logger.warning("Не удалось установить admin-команды в личку %s", admin_user_id)
+        except Exception:
+            logger.exception("Не удалось установить admin-команды в личку %s", admin_user_id)
 
 
 def extract_post_text(message: Message) -> str:
@@ -1792,6 +1811,17 @@ async def can_manage_admin_group(message: Message) -> bool:
         return False
     if not message or not message.chat:
         return False
+    if message.chat.type == "private":
+        if not message.from_user:
+            return False
+        if message.from_user.id in ADMIN_ALLOWED_USER_IDS:
+            bind_admin_chat_id(message.chat.id)
+            return True
+        username = (message.from_user.username or "").strip().lower()
+        if username in ADMIN_ALLOWED_USERNAMES:
+            bind_admin_chat_id(message.chat.id)
+            return True
+        return False
     if message.chat.type not in {"group", "supergroup"}:
         return False
     chat_id = int(message.chat.id)
@@ -1820,6 +1850,15 @@ async def can_manage_admin_callback(call: CallbackQuery) -> bool:
     if not ADMIN_PANEL_ENABLED:
         return False
     if not call.message or not call.from_user:
+        return False
+    if call.message.chat.type == "private":
+        if call.from_user.id in ADMIN_ALLOWED_USER_IDS:
+            bind_admin_chat_id(call.message.chat.id)
+            return True
+        username = (call.from_user.username or "").strip().lower()
+        if username in ADMIN_ALLOWED_USERNAMES:
+            bind_admin_chat_id(call.message.chat.id)
+            return True
         return False
     if call.message.chat.type not in {"group", "supergroup"}:
         return False
