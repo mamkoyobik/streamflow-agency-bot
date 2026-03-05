@@ -120,6 +120,10 @@
     </div>
   </header>
 
+  <div class="sfw-scroll-progress" aria-hidden="true">
+    <span id="sfw-scroll-progress-bar"></span>
+  </div>
+
   <div class="sfw-mobile-nav" id="sfw-mobile-nav" aria-hidden="true">
     <div class="sfw-mobile-nav__backdrop" data-menu-close></div>
     <aside class="sfw-mobile-nav__panel" role="dialog" aria-modal="true" aria-label="Mobile menu" tabindex="-1">
@@ -153,6 +157,20 @@
             <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start application</a>
             <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
           </div>
+          <div class="sfw-hero__clarity" aria-label="Quick orientation">
+            <article>
+              <h3 data-i18n="hero.quick1.title">Who this page is for</h3>
+              <p data-i18n="hero.quick1.text">Teams and solo operators with active traffic sources.</p>
+            </article>
+            <article>
+              <h3 data-i18n="hero.quick2.title">How the payout works</h3>
+              <p data-i18n="hero.quick2.text">$20-40 per approved interview with weekly USDT payouts.</p>
+            </article>
+            <article>
+              <h3 data-i18n="hero.quick3.title">What to do now</h3>
+              <p data-i18n="hero.quick3.text">Complete the short form and continue in messenger.</p>
+            </article>
+          </div>
           <div class="sfw-hero__mini-flow" aria-label="Launch path">
             <div>
               <strong>01</strong>
@@ -175,14 +193,28 @@
         </div>
 
         <article class="sfw-hero__card sfw-reveal" data-reveal-delay="90">
-          <p class="sfw-card-kicker" data-i18n="hero.cardKicker">Straight to the point</p>
-          <h2 data-i18n="hero.cardTitle">What the deal actually looks like</h2>
-          <ul>
-            <li data-i18n="hero.card1">You bring candidates from ads, outreach, job boards, or referrals.</li>
-            <li data-i18n="hero.card2">We provide scripts, CRM workflow, and manager support.</li>
-            <li data-i18n="hero.card3">One KPI, one payout rhythm, no vague affiliate logic.</li>
-          </ul>
-          <p class="sfw-hero__note" data-i18n="hero.note">Best fit for partners with at least one working traffic source.</p>
+          <p class="sfw-card-kicker" data-i18n="hero.cardKicker">Quick self-check</p>
+          <h2 data-i18n="hero.cardTitle">Check fit before you submit the form</h2>
+          <div class="sfw-hero__card-columns">
+            <section>
+              <h3 data-i18n="hero.cardGoodTitle">Good fit</h3>
+              <ul>
+                <li data-i18n="hero.card1">You already run traffic from ads, outreach, job boards, or referrals.</li>
+                <li data-i18n="hero.card2">You can keep acquisition active every week.</li>
+                <li data-i18n="hero.card3">You are ready to work inside scripts and CRM statuses.</li>
+              </ul>
+            </section>
+            <section>
+              <h3 data-i18n="hero.cardBadTitle">Not for this page</h3>
+              <ul>
+                <li data-i18n="hero.card4">You need a fixed salary job format.</li>
+                <li data-i18n="hero.card5">You do not have an active traffic source yet.</li>
+                <li data-i18n="hero.card6">You do not plan to work with process and reporting.</li>
+              </ul>
+            </section>
+          </div>
+          <p class="sfw-hero__note" data-i18n="hero.note">If the first block matches your setup, start with the application and we will continue in messenger.</p>
+          <a class="sfw-btn sfw-btn--primary sfw-btn--card" href="#apply" data-i18n="cta.apply">Start application</a>
         </article>
       </div>
     </section>

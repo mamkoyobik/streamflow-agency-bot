@@ -118,6 +118,24 @@ body[data-site='starflow'] :focus-visible {
   background: rgba(237, 243, 249, 0.9);
 }
 
+.sfw-scroll-progress {
+  position: sticky;
+  top: 82px;
+  z-index: 29;
+  width: 100%;
+  height: 3px;
+  background: rgba(29, 72, 110, 0.1);
+  pointer-events: none;
+}
+
+.sfw-scroll-progress span {
+  display: block;
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(90deg, var(--sfw-accent), var(--sfw-accent-2));
+  transition: width 0.12s linear;
+}
+
 .sfw-header__inner {
   min-height: 82px;
   display: flex;
@@ -485,8 +503,35 @@ body[data-site='starflow'] :focus-visible {
   gap: 0.55rem;
 }
 
+.sfw-hero__clarity {
+  margin-top: 0.82rem;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.sfw-hero__clarity article {
+  border: 1px solid var(--sfw-line);
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.84);
+  padding: 0.62rem 0.68rem;
+}
+
+.sfw-hero__clarity h3 {
+  margin: 0;
+  font-size: 0.83rem;
+  line-height: 1.25;
+}
+
+.sfw-hero__clarity p {
+  margin: 0.34rem 0 0;
+  color: var(--sfw-muted);
+  font-size: 0.8rem;
+  line-height: 1.38;
+}
+
 .sfw-hero__mini-flow {
-  margin-top: 1rem;
+  margin-top: 0.75rem;
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 0.55rem;
@@ -548,10 +593,10 @@ body[data-site='starflow'] :focus-visible {
 
 .sfw-hero__card {
   padding: 1.1rem;
-  display: grid;
+  display: flex;
+  flex-direction: column;
   gap: 0.7rem;
-  align-content: start;
-  align-self: start;
+  min-height: 100%;
   background:
     linear-gradient(165deg, rgba(31, 79, 115, 0.16), rgba(255, 255, 255, 0.94)),
     var(--sfw-surface);
@@ -560,6 +605,24 @@ body[data-site='starflow'] :focus-visible {
 .sfw-hero__card h2 {
   margin: 0;
   font-size: 1.14rem;
+}
+
+.sfw-hero__card-columns {
+  display: grid;
+  gap: 0.58rem;
+}
+
+.sfw-hero__card-columns section {
+  border: 1px solid var(--sfw-line);
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.64rem;
+}
+
+.sfw-hero__card-columns h3 {
+  margin: 0;
+  font-size: 0.88rem;
+  letter-spacing: 0.01em;
 }
 
 .sfw-card-kicker {
@@ -571,13 +634,14 @@ body[data-site='starflow'] :focus-visible {
   text-transform: uppercase;
 }
 
-.sfw-hero__card ul {
+.sfw-hero__card-columns ul {
   margin: 0;
   padding-left: 1.1rem;
   color: var(--sfw-text);
   display: grid;
-  gap: 0.42rem;
-  line-height: 1.5;
+  gap: 0.33rem;
+  line-height: 1.42;
+  font-size: 0.92rem;
 }
 
 .sfw-hero__note {
@@ -589,39 +653,9 @@ body[data-site='starflow'] :focus-visible {
   line-height: 1.55;
 }
 
-.sfw-interactive-surface {
-  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
-  transform-style: preserve-3d;
-  will-change: transform;
-  position: relative;
-  overflow: hidden;
-}
-
-.sfw-interactive-surface::after {
-  content: '';
-  position: absolute;
-  inset: -1px;
-  border-radius: inherit;
-  pointer-events: none;
-  background:
-    radial-gradient(
-      170px circle at var(--spot-x, 50%) var(--spot-y, 50%),
-      rgba(62, 116, 159, 0.2),
-      transparent 72%
-    );
-  opacity: 0;
-  transition: opacity 0.2s ease;
-}
-
-.sfw-interactive-surface.is-interactive-active {
-  border-color: var(--sfw-line-strong);
-  box-shadow:
-    0 18px 34px rgba(26, 53, 78, 0.2),
-    0 0 0 1px rgba(62, 116, 159, 0.18);
-}
-
-.sfw-interactive-surface.is-interactive-active::after {
-  opacity: 1;
+.sfw-btn--card {
+  margin-top: auto;
+  width: 100%;
 }
 
 .sfw-section {
@@ -957,6 +991,10 @@ body[data-site='starflow'] :focus-visible {
     min-height: 74px;
   }
 
+  .sfw-scroll-progress {
+    top: 74px;
+  }
+
   .sfw-header__tools .sfw-btn {
     display: none;
   }
@@ -966,6 +1004,10 @@ body[data-site='starflow'] :focus-visible {
   }
 
   .sfw-kpis {
+    grid-template-columns: 1fr;
+  }
+
+  .sfw-hero__clarity {
     grid-template-columns: 1fr;
   }
 
