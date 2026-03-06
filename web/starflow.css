@@ -423,22 +423,17 @@ body[data-site='starflow'] :focus-visible {
 
 .sfw-hero__brand {
   grid-column: 1 / -1;
-  border: 1px solid var(--sfw-line);
-  border-radius: var(--sfw-radius-lg);
-  background:
-    linear-gradient(90deg, rgba(0, 71, 171, 0.06), rgba(0, 196, 204, 0.08), rgba(0, 71, 171, 0.06)),
-    #ffffff;
-  padding: clamp(0.55rem, 1.2vw, 0.9rem);
-  display: grid;
-  place-items: center;
-  box-shadow: var(--sfw-shadow);
+  display: flex;
+  justify-content: center;
+  margin: 0 0 clamp(0.4rem, 1.4vw, 0.95rem);
 }
 
 .sfw-hero__brand img {
-  width: clamp(420px, 56vw, 760px);
-  height: clamp(98px, 10.8vw, 138px);
+  width: clamp(520px, 76vw, 980px);
+  height: clamp(110px, 14vw, 170px);
   object-fit: cover;
   object-position: center;
+  filter: drop-shadow(0 10px 22px rgba(0, 71, 171, 0.1));
 }
 
 .sfw-hero__copy,
@@ -1180,7 +1175,7 @@ body[data-site='starflow'] :focus-visible {
   }
 
   .sfw-hero__brand {
-    margin-bottom: 0.2rem;
+    margin-bottom: 0.42rem;
   }
 
   .sfw-sticky-cta {
@@ -1218,8 +1213,8 @@ body[data-site='starflow'] :focus-visible {
   }
 
   .sfw-hero__brand img {
-    width: min(88vw, 480px);
-    height: clamp(82px, 24vw, 118px);
+    width: min(92vw, 520px);
+    height: clamp(86px, 23vw, 120px);
   }
 
   .sfw-stepper__tabs {
