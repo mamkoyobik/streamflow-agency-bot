@@ -118,7 +118,7 @@ body[data-site='starflow'] :focus-visible {
 }
 
 .sfw-brand__logo {
-  width: 178px;
+  width: clamp(188px, 16vw, 236px);
   height: auto;
   display: block;
   object-fit: contain;
@@ -415,6 +415,10 @@ body[data-site='starflow'] :focus-visible {
 }
 
 .sfw-hero__grid {
+  --sfw-hero-spot-x: 74%;
+  --sfw-hero-spot-y: 34%;
+  --sfw-hero-parallax-x: 0px;
+  --sfw-hero-parallax-y: 0px;
   position: relative;
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -422,7 +426,7 @@ body[data-site='starflow'] :focus-visible {
   padding: clamp(1.4rem, 2.9vw, 2.6rem);
   min-height: clamp(360px, 48vw, 520px);
   background:
-    linear-gradient(112deg, #061737 0%, #0b295e 52%, #0d3272 100%);
+    linear-gradient(130deg, #031028 0%, #07306a 48%, #0a3f84 100%);
   box-shadow: 0 24px 60px rgba(7, 25, 60, 0.28);
 }
 
@@ -432,8 +436,8 @@ body[data-site='starflow'] :focus-visible {
   inset: 0;
   z-index: 1;
   background:
-    linear-gradient(94deg, rgba(2, 12, 31, 0.82) 0%, rgba(2, 12, 31, 0.44) 40%, rgba(2, 12, 31, 0.16) 76%, rgba(2, 12, 31, 0.1) 100%),
-    radial-gradient(640px 360px at 78% 20%, rgba(0, 196, 204, 0.2), transparent 72%);
+    radial-gradient(720px 360px at var(--sfw-hero-spot-x) var(--sfw-hero-spot-y), rgba(0, 196, 204, 0.32), transparent 72%),
+    linear-gradient(94deg, rgba(2, 12, 31, 0.86) 0%, rgba(2, 12, 31, 0.5) 40%, rgba(2, 12, 31, 0.19) 76%, rgba(2, 12, 31, 0.12) 100%);
   pointer-events: none;
 }
 
@@ -441,13 +445,36 @@ body[data-site='starflow'] :focus-visible {
   content: '';
   position: absolute;
   inset: 0;
-  z-index: 0;
-  background-image: url('assets/starflowinc-logo-clean.png');
-  background-repeat: no-repeat;
-  background-position: center;
-  background-size: clamp(420px, 58vw, 980px);
-  opacity: 0.17;
+  z-index: 1;
+  background:
+    repeating-linear-gradient(120deg, rgba(233, 244, 255, 0.055) 0 1px, transparent 1px 58px),
+    repeating-linear-gradient(28deg, rgba(233, 244, 255, 0.038) 0 1px, transparent 1px 42px);
+  opacity: 0.56;
   pointer-events: none;
+}
+
+.sfw-hero__logo {
+  position: absolute;
+  right: clamp(0.7rem, 2.2vw, 1.6rem);
+  bottom: clamp(0.4rem, 1.6vw, 1.1rem);
+  width: clamp(230px, 34vw, 470px);
+  z-index: 2;
+  opacity: 0.76;
+  transform: translate3d(var(--sfw-hero-parallax-x), var(--sfw-hero-parallax-y), 0);
+  transition: transform 0.22s ease, opacity 0.22s ease, filter 0.22s ease;
+  pointer-events: none;
+}
+
+.sfw-hero__logo img {
+  width: 100%;
+  height: auto;
+  object-fit: contain;
+  filter: drop-shadow(0 18px 42px rgba(0, 11, 30, 0.28));
+}
+
+.sfw-hero__grid:hover .sfw-hero__logo {
+  opacity: 0.9;
+  filter: saturate(1.04);
 }
 
 .sfw-card,
@@ -1101,14 +1128,15 @@ body[data-site='starflow'] :focus-visible {
 .sfw-footer__brand {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.6rem;
+  color: var(--sfw-text);
+  font-weight: 600;
 }
 
-.sfw-footer__brand img {
-  width: 18px;
-  height: 18px;
-  border-radius: 6px;
-  object-fit: cover;
+.sfw-footer__wordmark {
+  width: clamp(132px, 13vw, 176px);
+  height: auto;
+  object-fit: contain;
 }
 
 .sfw-footer__inner a {
@@ -1182,8 +1210,11 @@ body[data-site='starflow'] :focus-visible {
   }
 
   .sfw-hero__grid::after {
-    background-size: clamp(420px, 74vw, 760px);
-    opacity: 0.15;
+    opacity: 0.48;
+  }
+
+  .sfw-hero__logo {
+    width: min(43vw, 360px);
   }
 
   .sfw-sticky-cta {
@@ -1202,7 +1233,7 @@ body[data-site='starflow'] :focus-visible {
   }
 
   .sfw-brand__logo {
-    width: 154px;
+    width: 168px;
   }
 
   .sfw-scroll-progress {
@@ -1213,7 +1244,6 @@ body[data-site='starflow'] :focus-visible {
     display: none;
   }
 
-  .sfw-kpis,
   .sfw-grid--3,
   .sfw-grid--2,
   .sfw-highlight {
@@ -1227,8 +1257,14 @@ body[data-site='starflow'] :focus-visible {
   }
 
   .sfw-hero__grid::after {
-    background-size: min(118vw, 640px);
-    opacity: 0.13;
+    opacity: 0.4;
+  }
+
+  .sfw-hero__logo {
+    width: min(54vw, 236px);
+    right: -2.7rem;
+    bottom: -3.1rem;
+    opacity: 0.34;
   }
 
   .sfw-hero h1 {
@@ -1273,6 +1309,10 @@ body[data-site='starflow'] :focus-visible {
   .sfw-footer__inner {
     flex-direction: column;
     align-items: flex-start;
+  }
+
+  .sfw-footer__wordmark {
+    width: 148px;
   }
 }
 
