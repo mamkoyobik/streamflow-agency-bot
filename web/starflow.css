@@ -411,33 +411,45 @@ body[data-site='starflow'] :focus-visible {
 }
 
 .sfw-hero {
-  padding: clamp(2.9rem, 5vw, 5rem) 0 2.4rem;
+  padding: clamp(2.4rem, 4.6vw, 4rem) 0 2.1rem;
 }
 
 .sfw-hero__grid {
-  display: grid;
-  grid-template-columns: 1.06fr 0.94fr;
-  gap: 1.3rem;
-  align-items: start;
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 30px;
+  padding: clamp(1.4rem, 2.9vw, 2.6rem);
+  min-height: clamp(360px, 48vw, 520px);
+  background:
+    linear-gradient(112deg, #061737 0%, #0b295e 52%, #0d3272 100%);
+  box-shadow: 0 24px 60px rgba(7, 25, 60, 0.28);
 }
 
-.sfw-hero__brand {
-  grid-column: 1 / -1;
-  display: flex;
-  justify-content: center;
-  margin: 0 0 clamp(0.4rem, 1.4vw, 0.95rem);
+.sfw-hero__grid::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background:
+    linear-gradient(94deg, rgba(2, 12, 31, 0.82) 0%, rgba(2, 12, 31, 0.44) 40%, rgba(2, 12, 31, 0.16) 76%, rgba(2, 12, 31, 0.1) 100%),
+    radial-gradient(640px 360px at 78% 20%, rgba(0, 196, 204, 0.2), transparent 72%);
+  pointer-events: none;
 }
 
-.sfw-hero__brand img {
-  width: clamp(520px, 76vw, 980px);
-  height: clamp(110px, 14vw, 170px);
-  object-fit: cover;
-  object-position: center;
-  filter: drop-shadow(0 10px 22px rgba(0, 71, 171, 0.1));
+.sfw-hero__grid::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  background-image: url('assets/starflowinc-logo-clean.png');
+  background-repeat: no-repeat;
+  background-position: center;
+  background-size: clamp(420px, 58vw, 980px);
+  opacity: 0.17;
+  pointer-events: none;
 }
 
-.sfw-hero__copy,
-.sfw-hero__card,
 .sfw-card,
 .sfw-stepper,
 .sfw-highlight,
@@ -452,11 +464,6 @@ body[data-site='starflow'] :focus-visible {
   border-radius: var(--sfw-radius-lg);
   background: var(--sfw-surface);
   box-shadow: var(--sfw-shadow);
-}
-
-.sfw-hero__copy {
-  padding: clamp(1.5rem, 2.8vw, 2.4rem);
-  background: var(--sfw-surface);
 }
 
 .sfw-eyebrow {
@@ -477,54 +484,50 @@ body[data-site='starflow'] :focus-visible {
 }
 
 .sfw-hero h1 {
-  font-size: clamp(2rem, 4.8vw, 3.5rem);
-  max-width: 18ch;
+  font-size: clamp(2.2rem, 5vw, 4.05rem);
+  color: #f5f9ff;
+  max-width: 13ch;
 }
 
 .sfw-lead {
-  margin: 1rem 0 0;
-  color: var(--sfw-muted);
+  margin: 1.08rem 0 0;
+  color: rgba(226, 236, 250, 0.86);
   line-height: 1.7;
   font-size: clamp(1rem, 1.22vw, 1.12rem);
-  max-inline-size: 56ch;
+  max-inline-size: 52ch;
+}
+
+.sfw-hero__copy {
+  position: relative;
+  z-index: 2;
+  max-width: min(720px, 100%);
+}
+
+.sfw-hero .sfw-eyebrow {
+  color: rgba(177, 204, 238, 0.92);
+}
+
+.sfw-hero .sfw-btn--primary {
+  background: #ffffff;
+  color: #0c2d66;
+  box-shadow: none;
+}
+
+.sfw-hero .sfw-btn--ghost {
+  border-color: rgba(201, 222, 247, 0.48);
+  color: #e9f2ff;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.sfw-hero .sfw-btn--ghost:hover {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .sfw-hero__actions {
-  margin-top: 1rem;
+  margin-top: 1.14rem;
   display: flex;
   flex-wrap: wrap;
-  gap: 0.56rem;
-}
-
-.sfw-kpis {
-  grid-column: 1 / -1;
-  margin: 0.1rem 0 0;
-  padding: 0;
-  list-style: none;
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 0.75rem;
-}
-
-.sfw-kpis li {
-  border: 1px solid var(--sfw-line);
-  border-radius: 13px;
-  background: #f4f9ff;
-  padding: 0.82rem;
-}
-
-.sfw-kpis strong {
-  display: block;
-  color: var(--sfw-text);
-  font-size: 1.16rem;
-  line-height: 1;
-}
-
-.sfw-kpis span {
-  display: block;
-  margin-top: 0.35rem;
-  color: var(--sfw-muted);
-  font-size: 0.82rem;
+  gap: 0.62rem;
 }
 
 .sfw-hero__card {
@@ -1174,8 +1177,13 @@ body[data-site='starflow'] :focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .sfw-hero__brand {
-    margin-bottom: 0.42rem;
+  .sfw-hero__grid {
+    min-height: clamp(350px, 84vw, 500px);
+  }
+
+  .sfw-hero__grid::after {
+    background-size: clamp(420px, 74vw, 760px);
+    opacity: 0.15;
   }
 
   .sfw-sticky-cta {
@@ -1212,9 +1220,19 @@ body[data-site='starflow'] :focus-visible {
     grid-template-columns: 1fr;
   }
 
-  .sfw-hero__brand img {
-    width: min(92vw, 520px);
-    height: clamp(86px, 23vw, 120px);
+  .sfw-hero__grid {
+    min-height: auto;
+    padding: 1.2rem;
+    border-radius: 24px;
+  }
+
+  .sfw-hero__grid::after {
+    background-size: min(118vw, 640px);
+    opacity: 0.13;
+  }
+
+  .sfw-hero h1 {
+    max-width: 14ch;
   }
 
   .sfw-stepper__tabs {
