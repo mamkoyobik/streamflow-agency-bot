@@ -567,6 +567,25 @@
       'persona.card3.text': 'У вас уже есть рабочие процессы лидогенерации.',
       'persona.card4.title': 'Фрилансер-одиночка',
       'persona.card4.text': 'Вы ведёте аутрич, DM, рекламу или трафик с job-board самостоятельно.',
+      'ready.eyebrow': 'Калькулятор готовности',
+      'ready.title': 'Проверьте готовность к запуску за 30 секунд',
+      'ready.lead': 'Отметьте ключевые критерии. Чем выше score, тем быстрее онбординг и первая выплата.',
+      'ready.score.label': 'Индекс готовности',
+      'ready.result.start': 'Отметьте пункты, чтобы получить оценку.',
+      'ready.result.high': 'Высокая готовность: можно переходить к заявке и запускаться на этой неделе.',
+      'ready.result.mid': 'Средняя готовность: выровняйте 1-2 пункта и можно стартовать.',
+      'ready.result.low': 'Низкая готовность: сначала соберите базовый процесс и источник трафика.',
+      'ready.check.1': 'У вас уже есть активный источник трафика (ads, outreach, DM, job-board).',
+      'ready.check.2': 'Вы работаете стабильно соло или у вас есть команда 2+ человека.',
+      'ready.check.3': 'Вы покрываете приоритетные GEO и рабочие языки.',
+      'ready.check.4': 'Вы готовы работать по скриптам, CRM-статусам и операционному процессу.',
+      'ready.check.5': 'Вы можете показать кейсы/примеры и быстро выходите на связь.',
+      'ready.check.6': 'Вам подходит модель pay-per-result без запроса на аванс.',
+      'ready.key.title': 'Ключевые вопросы на созвоне',
+      'ready.key.1': 'Какой у вас бэкграунд и какие источники уже запущены?',
+      'ready.key.2': 'Вы работаете соло или с командой? Сколько людей в процессе?',
+      'ready.key.3': 'Какие языки и GEO закрываете прямо сейчас?',
+      'ready.key.4': 'Что вам нужно от нас, чтобы стартовать уже на этой неделе?',
       'qual.eyebrow': 'Квалификация',
       'qual.title': 'Зелёные и красные флаги до запуска',
       'qual.lead': 'Используйте это как быстрый операционный фильтр.',
@@ -640,7 +659,11 @@
       'faq.a6': 'Вы получаете доступ к CRM, скрипты, требования и поддержку в Telegram. После этого запускаете трафик и выходите на первую выплату в воскресенье.',
       'form.contactTelegram': 'Telegram',
       'form.contactWhatsapp': 'WhatsApp',
-      'footer.brand': 'Starflow Inc.'
+      'footer.brand': 'Starflow Inc.',
+      'footer.note': 'B2B-партнёрские операции с еженедельными выплатами в USDT.',
+      'footer.link.flow': 'Процесс',
+      'footer.link.offer': 'Выплаты',
+      'footer.link.apply': 'Заявка'
     },
     en: {
       'meta.title': 'Starflow Inc. — Partner Recruiting Program',
@@ -682,6 +705,25 @@
       'persona.card3.text': 'You already operate lead generation processes at scale.',
       'persona.card4.title': 'Solo freelancer',
       'persona.card4.text': 'You run outreach, DMs, ads, or job-board traffic independently.',
+      'ready.eyebrow': 'Readiness calculator',
+      'ready.title': 'Check launch readiness in 30 seconds',
+      'ready.lead': 'Toggle the key criteria below. Higher score means faster onboarding and first payout.',
+      'ready.score.label': 'Readiness score',
+      'ready.result.start': 'Select criteria to see readiness level.',
+      'ready.result.high': 'High readiness: move to application and launch this week.',
+      'ready.result.mid': 'Medium readiness: align 1-2 points and you are ready to launch.',
+      'ready.result.low': 'Low readiness: build baseline process and traffic source first.',
+      'ready.check.1': 'You already run an active traffic source (ads, outreach, DM, job-board).',
+      'ready.check.2': 'You can run steady solo operations or have a team of 2+ people.',
+      'ready.check.3': 'You cover priority GEOs and working languages.',
+      'ready.check.4': 'You are ready to work with scripts, CRM statuses, and process discipline.',
+      'ready.check.5': 'You can show recent cases/examples and communicate quickly.',
+      'ready.check.6': 'You are aligned with pay-per-result and do not require upfront funding.',
+      'ready.key.title': 'Key call questions',
+      'ready.key.1': 'What is your background and which sources are already live?',
+      'ready.key.2': 'Do you work solo or with a team? How many people are involved?',
+      'ready.key.3': 'Which languages and GEOs can you cover right now?',
+      'ready.key.4': 'What do you need from us to launch this week?',
       'qual.eyebrow': 'Qualification',
       'qual.title': 'Green flags and red flags before launch',
       'qual.lead': 'Use this as a quick operating filter.',
@@ -755,7 +797,11 @@
       'faq.a6': 'You receive CRM access, scripts, requirements, and Telegram support. Then you launch traffic and target your first payout on Sunday.',
       'form.contactTelegram': 'Telegram',
       'form.contactWhatsapp': 'WhatsApp',
-      'footer.brand': 'Starflow Inc.'
+      'footer.brand': 'Starflow Inc.',
+      'footer.note': 'B2B partner operations with weekly USDT payouts.',
+      'footer.link.flow': 'Flow',
+      'footer.link.offer': 'Compensation',
+      'footer.link.apply': 'Apply'
     },
     pt: {
       'meta.title': 'Starflow Inc. — Programa de Parceria',
@@ -797,6 +843,25 @@
       'persona.card3.text': 'Você já opera processos de geração de leads em escala.',
       'persona.card4.title': 'Freelancer solo',
       'persona.card4.text': 'Você opera outreach, DMs, anúncios ou tráfego de job boards de forma independente.',
+      'ready.eyebrow': 'Calculadora de prontidão',
+      'ready.title': 'Verifique a prontidão para lançar em 30 segundos',
+      'ready.lead': 'Marque os critérios-chave. Quanto maior o score, mais rápido o onboarding e o primeiro pagamento.',
+      'ready.score.label': 'Índice de prontidão',
+      'ready.result.start': 'Marque os itens para ver o nível de prontidão.',
+      'ready.result.high': 'Alta prontidão: pode avançar para inscrição e lançar esta semana.',
+      'ready.result.mid': 'Prontidão média: alinhe 1-2 pontos e você já pode lançar.',
+      'ready.result.low': 'Baixa prontidão: primeiro monte processo base e fonte de tráfego.',
+      'ready.check.1': 'Você já opera uma fonte ativa de tráfego (ads, outreach, DM, job-board).',
+      'ready.check.2': 'Você opera solo com consistência ou tem equipe com 2+ pessoas.',
+      'ready.check.3': 'Você cobre GEOs prioritários e idiomas de trabalho.',
+      'ready.check.4': 'Você está pronto para trabalhar com scripts, status de CRM e processo.',
+      'ready.check.5': 'Você pode mostrar cases recentes e responde rápido.',
+      'ready.check.6': 'Você está alinhado ao pay-per-result e não exige adiantamento.',
+      'ready.key.title': 'Perguntas-chave na call',
+      'ready.key.1': 'Qual é seu background e quais fontes já estão ativas?',
+      'ready.key.2': 'Você trabalha solo ou em equipe? Quantas pessoas participam?',
+      'ready.key.3': 'Quais idiomas e GEOs você cobre agora?',
+      'ready.key.4': 'O que você precisa de nós para lançar ainda esta semana?',
       'qual.eyebrow': 'Qualificação',
       'qual.title': 'Sinais verdes e vermelhos antes do lançamento',
       'qual.lead': 'Use isso como filtro operacional rápido.',
@@ -870,7 +935,11 @@
       'faq.a6': 'Você recebe acesso ao CRM, scripts, requisitos e suporte no Telegram. Depois lança tráfego e busca o primeiro pagamento no domingo.',
       'form.contactTelegram': 'Telegram',
       'form.contactWhatsapp': 'WhatsApp',
-      'footer.brand': 'Starflow Inc.'
+      'footer.brand': 'Starflow Inc.',
+      'footer.note': 'Operação B2B para partners com pagamentos semanais em USDT.',
+      'footer.link.flow': 'Fluxo',
+      'footer.link.offer': 'Pagamentos',
+      'footer.link.apply': 'Inscrição'
     },
     es: {
       'meta.title': 'Starflow Inc. — Programa de Partners',
@@ -912,6 +981,25 @@
       'persona.card3.text': 'Ya operas procesos de generación de leads a escala.',
       'persona.card4.title': 'Freelancer individual',
       'persona.card4.text': 'Gestionas outreach, DMs, anuncios o tráfico de job boards de forma independiente.',
+      'ready.eyebrow': 'Calculadora de preparación',
+      'ready.title': 'Comprueba tu preparación para lanzar en 30 segundos',
+      'ready.lead': 'Marca los criterios clave. A mayor score, más rápido el onboarding y el primer pago.',
+      'ready.score.label': 'Índice de preparación',
+      'ready.result.start': 'Marca los puntos para ver el nivel de preparación.',
+      'ready.result.high': 'Preparación alta: puedes pasar a la solicitud y lanzar esta semana.',
+      'ready.result.mid': 'Preparación media: ajusta 1-2 puntos y puedes lanzar rápido.',
+      'ready.result.low': 'Preparación baja: primero arma proceso base y fuente de tráfico.',
+      'ready.check.1': 'Ya operas una fuente activa de tráfico (ads, outreach, DM, job-board).',
+      'ready.check.2': 'Operas en solitario con constancia o tienes equipo de 2+ personas.',
+      'ready.check.3': 'Cubres GEOs prioritarios e idiomas de trabajo.',
+      'ready.check.4': 'Puedes trabajar con scripts, estados de CRM y disciplina de proceso.',
+      'ready.check.5': 'Puedes mostrar casos recientes y respondes rápido.',
+      'ready.check.6': 'Estás alineado con pay-per-result y no pides adelantos.',
+      'ready.key.title': 'Preguntas clave en llamada',
+      'ready.key.1': '¿Cuál es tu background y qué fuentes ya tienes activas?',
+      'ready.key.2': '¿Trabajas solo o con equipo? ¿Cuántas personas participan?',
+      'ready.key.3': '¿Qué idiomas y GEOs puedes cubrir ahora mismo?',
+      'ready.key.4': '¿Qué necesitas de nosotros para lanzar esta semana?',
       'qual.eyebrow': 'Calificación',
       'qual.title': 'Señales verdes y rojas antes del lanzamiento',
       'qual.lead': 'Úsalo como filtro operativo rápido.',
@@ -985,7 +1073,11 @@
       'faq.a6': 'Recibes acceso al CRM, scripts, requisitos y soporte en Telegram. Luego lanzas tráfico y apuntas a tu primer pago del domingo.',
       'form.contactTelegram': 'Telegram',
       'form.contactWhatsapp': 'WhatsApp',
-      'footer.brand': 'Starflow Inc.'
+      'footer.brand': 'Starflow Inc.',
+      'footer.note': 'Operación B2B para partners con pagos semanales en USDT.',
+      'footer.link.flow': 'Proceso',
+      'footer.link.offer': 'Pagos',
+      'footer.link.apply': 'Solicitud'
     }
   };
 
@@ -1312,9 +1404,59 @@
     });
   }
 
+  function initReadinessCalculator(state) {
+    const root = qs('[data-readiness]');
+    if (!root) {
+      return;
+    }
+
+    const checks = qsa('[data-ready-check]', root);
+    const score = qs('[data-readiness-score]', root);
+    const bar = qs('[data-readiness-bar]', root);
+    const result = qs('[data-readiness-result]', root);
+    if (!checks.length || !score || !bar || !result) {
+      return;
+    }
+
+    const getResultKey = (value) => {
+      if (value >= 84) {
+        return 'ready.result.high';
+      }
+      if (value >= 50) {
+        return 'ready.result.mid';
+      }
+      if (value <= 0) {
+        return 'ready.result.start';
+      }
+      return 'ready.result.low';
+    };
+
+    const update = () => {
+      const active = checks.filter((button) => button.getAttribute('aria-pressed') === 'true').length;
+      const value = Math.round((active / checks.length) * 100);
+      const resultKey = getResultKey(value);
+
+      score.textContent = value + '%';
+      bar.style.width = value + '%';
+      result.setAttribute('data-i18n', resultKey);
+      result.textContent = t(resultKey, state.lang);
+    };
+
+    checks.forEach((button) => {
+      button.addEventListener('click', () => {
+        const nextPressed = button.getAttribute('aria-pressed') !== 'true';
+        button.setAttribute('aria-pressed', nextPressed ? 'true' : 'false');
+        update();
+      });
+    });
+
+    update();
+  }
+
   function initStickyCta() {
     const sticky = qs('.sfw-sticky-cta');
     const hero = qs('.sfw-hero');
+    const footer = qs('.sfw-footer');
     if (!sticky || !hero) {
       return;
     }
@@ -1323,7 +1465,9 @@
     const update = () => {
       rafId = 0;
       const threshold = Math.max(260, hero.offsetHeight * 0.55);
-      const visible = window.scrollY > threshold;
+      const footerTop = footer ? footer.getBoundingClientRect().top : Number.POSITIVE_INFINITY;
+      const footerVisible = footerTop <= window.innerHeight - 22;
+      const visible = window.scrollY > threshold && !footerVisible;
       sticky.classList.toggle('is-visible', visible);
     };
 
@@ -1772,6 +1916,7 @@
     initReveal();
     initStepper();
     initGeoSwitcher();
+    initReadinessCalculator(state);
     initFaqAccordion();
     initHeroInteractive();
     initStickyCta();

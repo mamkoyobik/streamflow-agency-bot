@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-	  <link rel="stylesheet" href="starflow.css?v=20260306-03">
+  <link rel="stylesheet" href="starflow.css?v=20260306-04">
 
   <script type="application/ld+json">
     {
@@ -317,100 +317,76 @@
       </div>
     </section>
 
-    <section class="sfw-section" id="qualification">
+    <section class="sfw-section" id="readiness">
       <div class="sfw-container">
         <div class="sfw-section__head sfw-reveal">
-          <p class="sfw-eyebrow" data-i18n="qual.eyebrow">Qualification</p>
-          <h2 data-i18n="qual.title">Green flags and red flags before launch</h2>
-          <p class="sfw-section__text" data-i18n="qual.lead">Use this as a quick operating filter.</p>
+          <p class="sfw-eyebrow" data-i18n="ready.eyebrow">Readiness calculator</p>
+          <h2 data-i18n="ready.title">Check readiness in 30 seconds before launch</h2>
+          <p class="sfw-section__text" data-i18n="ready.lead">Toggle the key criteria below. Higher score means faster onboarding and first payout.</p>
         </div>
 
-        <div class="sfw-qual sfw-reveal">
-          <article class="sfw-qual__col sfw-qual__col--good">
-            <h3 data-i18n="qual.good.title">Green flags</h3>
-            <ul>
-              <li data-i18n="qual.good.1">You understand traffic, conversion, and leads.</li>
-              <li data-i18n="qual.good.2">You can show cases or examples.</li>
-              <li data-i18n="qual.good.3">You have 2-3+ people and can scale process.</li>
-              <li data-i18n="qual.good.4">You work with Eastern Europe or LatAm and relevant languages.</li>
-              <li data-i18n="qual.good.5">You respond fast and can follow scripts.</li>
-              <li data-i18n="qual.good.6">You understand pay-per-result and do not request upfront funding.</li>
-            </ul>
-          </article>
+        <div class="sfw-readiness sfw-reveal" data-readiness>
+          <div class="sfw-readiness__score">
+            <p data-i18n="ready.score.label">Readiness score</p>
+            <strong data-readiness-score>0%</strong>
+          </div>
 
-          <article class="sfw-qual__col sfw-qual__col--bad">
-            <h3 data-i18n="qual.bad.title">Red flags</h3>
-            <ul>
-              <li data-i18n="qual.bad.1">You ask for full upfront financing.</li>
-              <li data-i18n="qual.bad.2">You do not understand basic traffic terms.</li>
-              <li data-i18n="qual.bad.3">You promise unrealistic volume without proof.</li>
-              <li data-i18n="qual.bad.4">You only work with CIS/Russia GEO.</li>
-              <li data-i18n="qual.bad.5">You refuse scripts and process.</li>
-              <li data-i18n="qual.bad.6">You disappear or reply too slowly.</li>
-              <li data-i18n="qual.bad.7">You focus on "guarantees" before starting work.</li>
-            </ul>
-          </article>
-        </div>
-      </div>
-    </section>
+          <div class="sfw-readiness__bar" aria-hidden="true">
+            <span data-readiness-bar></span>
+          </div>
 
-    <section class="sfw-section" id="questions">
-      <div class="sfw-container">
-        <div class="sfw-section__head sfw-reveal">
-          <p class="sfw-eyebrow" data-i18n="questions.eyebrow">Discovery script</p>
-          <h2 data-i18n="questions.title">6 key questions you should answer before approval</h2>
-          <p class="sfw-section__text" data-i18n="questions.lead">These six answers define fit, speed, and payout potential.</p>
-        </div>
+          <p class="sfw-readiness__result" data-readiness-result data-i18n="ready.result.start">
+            Select criteria to see readiness level.
+          </p>
 
-        <div class="sfw-questions sfw-reveal">
-          <ol>
-            <li data-i18n="questions.q1">What is your background (call center, affiliate marketing, recruitment)?</li>
-            <li data-i18n="questions.q2">Do you work solo or with a team? How many people?</li>
-            <li data-i18n="questions.q3">What traffic sources do you use (DMs, ads, job boards, cold outreach)?</li>
-            <li data-i18n="questions.q4">What languages do you work with?</li>
-            <li data-i18n="questions.q5">What GEOs can you cover?</li>
-            <li data-i18n="questions.q6">What questions do you have about the offer?</li>
-          </ol>
-          <aside>
-            <h3 data-i18n="questions.why.title">Why this matters</h3>
-            <ul>
-              <li data-i18n="questions.why.1">You show your current operating scale.</li>
-              <li data-i18n="questions.why.2">You prove source quality and GEO fit quickly.</li>
-              <li data-i18n="questions.why.3">You reduce onboarding time and launch faster.</li>
-            </ul>
+          <ul class="sfw-readiness__checks" aria-label="Readiness checklist">
+            <li>
+              <button type="button" class="sfw-readiness__check" data-ready-check aria-pressed="false">
+                <span class="sfw-readiness__dot" aria-hidden="true"></span>
+                <span data-i18n="ready.check.1">You have an active traffic source (ads, outreach, DM, job-board).</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="sfw-readiness__check" data-ready-check aria-pressed="false">
+                <span class="sfw-readiness__dot" aria-hidden="true"></span>
+                <span data-i18n="ready.check.2">You can run solo steadily or have 2+ people for operations.</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="sfw-readiness__check" data-ready-check aria-pressed="false">
+                <span class="sfw-readiness__dot" aria-hidden="true"></span>
+                <span data-i18n="ready.check.3">You cover priority GEOs and working languages.</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="sfw-readiness__check" data-ready-check aria-pressed="false">
+                <span class="sfw-readiness__dot" aria-hidden="true"></span>
+                <span data-i18n="ready.check.4">You can work with scripts, CRM statuses, and process discipline.</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="sfw-readiness__check" data-ready-check aria-pressed="false">
+                <span class="sfw-readiness__dot" aria-hidden="true"></span>
+                <span data-i18n="ready.check.5">You can show examples/cases and reply quickly.</span>
+              </button>
+            </li>
+            <li>
+              <button type="button" class="sfw-readiness__check" data-ready-check aria-pressed="false">
+                <span class="sfw-readiness__dot" aria-hidden="true"></span>
+                <span data-i18n="ready.check.6">You are aligned with pay-per-result and do not require upfront funding.</span>
+              </button>
+            </li>
+          </ul>
+
+          <aside class="sfw-readiness__key">
+            <h3 data-i18n="ready.key.title">Key call questions</h3>
+            <ol>
+              <li data-i18n="ready.key.1">What is your background and what sources are already live?</li>
+              <li data-i18n="ready.key.2">Do you work solo or with a team? How many people are involved?</li>
+              <li data-i18n="ready.key.3">Which languages and GEOs can you cover right now?</li>
+              <li data-i18n="ready.key.4">What do you need from us to launch this week?</li>
+            </ol>
           </aside>
-        </div>
-      </div>
-    </section>
-
-    <section class="sfw-section" id="objections">
-      <div class="sfw-container">
-        <div class="sfw-section__head sfw-reveal">
-          <p class="sfw-eyebrow" data-i18n="obj.eyebrow">Objections handling</p>
-          <h2 data-i18n="obj.title">Clear answers to the two most common objections</h2>
-        </div>
-
-        <div class="sfw-grid sfw-grid--2 sfw-reveal">
-          <article class="sfw-card sfw-objection">
-            <h3 data-i18n="obj.exp.title">“I have no experience”</h3>
-            <p data-i18n="obj.exp.en"><strong>EN:</strong> We provide CRM and scripts. If you know how to reach people — you'll figure it out. The method doesn't matter, results do.</p>
-            <p data-i18n="obj.exp.ru"><strong>RU:</strong> Мы даём CRM и скрипты. Если умеешь находить людей — разберёшься. Способ не важен, важен результат.</p>
-            <ul>
-              <li data-i18n="obj.exp.1">Tell us your current experience: social, outreach, or ads.</li>
-              <li data-i18n="obj.exp.2">Confirm you are ready to learn the process.</li>
-              <li data-i18n="obj.exp.3">Share how much time you can commit weekly.</li>
-            </ul>
-          </article>
-
-          <article class="sfw-card sfw-objection">
-            <h3 data-i18n="obj.mlm.title">“Is this MLM / pyramid?”</h3>
-            <p data-i18n="obj.mlm.en"><strong>EN:</strong> No. You don't pay to join. There is no multi-level structure. You bring candidates → they complete interviews → you get paid.</p>
-            <p data-i18n="obj.mlm.ru"><strong>RU:</strong> Нет. Ты ничего не платишь за вход. Нет многоуровневой структуры. Приводишь кандидатов → собеседования → получаешь деньги.</p>
-            <ul>
-              <li data-i18n="obj.mlm.1">MLM = pay to enter + level structure.</li>
-              <li data-i18n="obj.mlm.2">This model = zero entry cost + one level + pay per result.</li>
-            </ul>
-          </article>
         </div>
       </div>
     </section>
@@ -614,11 +590,19 @@
 
   <footer class="sfw-footer">
     <div class="sfw-container sfw-footer__inner">
-      <p class="sfw-footer__brand">
-        <img class="sfw-footer__wordmark" src="assets/logo2.png?v=2" alt="Starflow Inc." width="1792" height="592" loading="lazy" decoding="async">
-        <span>© <span id="sfw-year"></span> <span data-i18n="footer.brand">Starflow Inc.</span></span>
-      </p>
-      <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="footer.channel">Telegram channel</a>
+      <div class="sfw-footer__meta">
+        <p class="sfw-footer__brand">
+          <img class="sfw-footer__wordmark" src="assets/logo2.png?v=2" alt="Starflow Inc." width="1792" height="592" loading="lazy" decoding="async">
+          <span>© <span id="sfw-year"></span> <span data-i18n="footer.brand">Starflow Inc.</span></span>
+        </p>
+        <p class="sfw-footer__note" data-i18n="footer.note">B2B partner operations with weekly USDT payouts.</p>
+      </div>
+      <nav class="sfw-footer__links" aria-label="Footer navigation">
+        <a href="#how" data-i18n="footer.link.flow">Flow</a>
+        <a href="#compensation" data-i18n="footer.link.offer">Compensation</a>
+        <a href="#apply" data-i18n="footer.link.apply">Apply</a>
+        <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="footer.channel">Telegram channel</a>
+      </nav>
     </div>
   </footer>
 
@@ -627,6 +611,6 @@
     <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
   </div>
 
-  <script src="starflow.js?v=20260306-03" defer></script>
+  <script src="starflow.js?v=20260306-04" defer></script>
 </body>
 </html>
