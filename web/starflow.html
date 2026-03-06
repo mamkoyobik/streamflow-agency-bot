@@ -43,7 +43,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Public+Sans:wght@400;500;600;700;800&family=Space+Grotesk:wght@600;700&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="starflow.css?v=20260306-01">
+  <link rel="stylesheet" href="starflow.css?v=20260306-02">
 
   <script type="application/ld+json">
     {
@@ -69,14 +69,14 @@
 <body data-site="starflow" data-page="home">
   <noscript><div><img src="https://mc.yandex.ru/watch/106823371" style="position:absolute;left:-9999px;" alt=""></div></noscript>
 
-  <a class="sfw-skip-link" href="#main-content">Skip to main content</a>
+  <a class="sfw-skip-link" href="#main-content" data-i18n="a11y.skip">Skip to main content</a>
 
   <div class="sfw-lang-gate" id="sfw-lang-gate" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="sfw-lang-title" hidden>
     <div class="sfw-lang-gate__backdrop" data-lang-close></div>
     <div class="sfw-lang-gate__card">
       <p class="sfw-lang-gate__eyebrow">Starflow Inc.</p>
-      <h2 id="sfw-lang-title">Choose language</h2>
-      <p>Select interface language</p>
+      <h2 id="sfw-lang-title" data-i18n="lang.title">Choose language</h2>
+      <p data-i18n="lang.subtitle">Select interface language</p>
       <div class="sfw-lang-gate__options">
         <button type="button" data-lang-choice="ru">RU</button>
         <button type="button" data-lang-choice="en">EN</button>
@@ -93,10 +93,10 @@
       </a>
 
       <nav class="sfw-nav" aria-label="Primary navigation">
-        <a href="#how">How it works</a>
-        <a href="#compensation">Compensation</a>
-        <a href="#geos">Priority GEOs</a>
-        <a href="#apply">Apply</a>
+        <a href="#how" data-i18n="nav.flow">How it works</a>
+        <a href="#compensation" data-i18n="nav.offer">Compensation</a>
+        <a href="#geos" data-i18n="nav.geos">Priority GEOs</a>
+        <a href="#apply" data-i18n="nav.apply">Apply</a>
       </nav>
 
       <div class="sfw-header__tools">
@@ -107,11 +107,11 @@
           <option value="pt">PT</option>
           <option value="es">ES</option>
         </select>
-        <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram</a>
-        <a class="sfw-btn sfw-btn--primary" href="#apply">Start registration</a>
+        <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+        <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
       </div>
 
-      <button class="sfw-menu-toggle" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="sfw-mobile-nav" data-menu-open>
+      <button class="sfw-menu-toggle" type="button" aria-label="Open menu" data-i18n-aria-label="mobile.open" aria-expanded="false" aria-controls="sfw-mobile-nav" data-menu-open>
         <span></span><span></span><span></span>
       </button>
     </div>
@@ -125,18 +125,18 @@
     <div class="sfw-mobile-nav__backdrop" data-menu-close></div>
     <aside class="sfw-mobile-nav__panel" role="dialog" aria-modal="true" aria-label="Mobile menu" tabindex="-1">
       <div class="sfw-mobile-nav__top">
-        <strong>Menu</strong>
-        <button type="button" data-menu-close aria-label="Close">×</button>
+        <strong data-i18n="mobile.menu">Menu</strong>
+        <button type="button" data-menu-close aria-label="Close" data-i18n-aria-label="mobile.close">×</button>
       </div>
       <nav class="sfw-mobile-nav__links">
-        <a href="#how">How it works</a>
-        <a href="#compensation">Compensation</a>
-        <a href="#geos">Priority GEOs</a>
-        <a href="#apply">Apply</a>
+        <a href="#how" data-i18n="nav.flow">How it works</a>
+        <a href="#compensation" data-i18n="nav.offer">Compensation</a>
+        <a href="#geos" data-i18n="nav.geos">Priority GEOs</a>
+        <a href="#apply" data-i18n="nav.apply">Apply</a>
       </nav>
       <div class="sfw-mobile-nav__actions">
-        <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram</a>
-        <a class="sfw-btn sfw-btn--primary" href="#apply">Start registration</a>
+        <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+        <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
       </div>
     </aside>
   </div>
@@ -146,68 +146,72 @@
 
     <section class="sfw-hero">
       <div class="sfw-container sfw-hero__grid">
+        <div class="sfw-hero__brand sfw-reveal" data-reveal-delay="40" aria-hidden="true">
+          <img src="assets/logo.png?v=1" alt="" width="1376" height="768" loading="eager" decoding="async">
+        </div>
+
         <div class="sfw-hero__copy sfw-reveal">
-          <p class="sfw-eyebrow">Partner recruiting offer</p>
-          <h1>Bring qualified candidates. Get paid every Sunday in USDT.</h1>
-          <p class="sfw-lead">Use any traffic source you control. You focus on acquisition, we keep the payout model transparent and weekly.</p>
+          <p class="sfw-eyebrow" data-i18n="hero.eyebrow">Partner recruiting offer</p>
+          <h1 data-i18n="hero.title">Bring qualified candidates. Get paid every Sunday in USDT.</h1>
+          <p class="sfw-lead" data-i18n="hero.lead">Use any traffic source you control. You focus on acquisition, we keep the payout model transparent and weekly.</p>
 
           <div class="sfw-hero__actions">
-            <a class="sfw-btn sfw-btn--primary" href="#apply">Start registration</a>
-            <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Ask in Telegram</a>
+            <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
+            <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Ask in Telegram</a>
           </div>
-
-          <ul class="sfw-kpis" aria-label="Offer snapshot">
-            <li><strong>$20</strong><span>Start rate per interview</span></li>
-            <li><strong>$35-40</strong><span>Top partner range</span></li>
-            <li><strong>$700</strong><span>Fast-start bonus (50 in month 1)</span></li>
-          </ul>
         </div>
 
         <aside class="sfw-hero__card sfw-reveal" data-reveal-delay="100">
-          <p class="sfw-card-kicker">Offer summary</p>
-          <h2>Clear model before you launch</h2>
+          <p class="sfw-card-kicker" data-i18n="hero.summaryKicker">Offer summary</p>
+          <h2 data-i18n="hero.summaryTitle">Clear model before you launch</h2>
           <ul>
-            <li>Approved interview -> payout.</li>
-            <li>$20 start, up to $35-40 by quality.</li>
-            <li>Sunday payouts in USDT + $700 fast-start bonus.</li>
+            <li data-i18n="hero.summary1">Approved interview -> payout.</li>
+            <li data-i18n="hero.summary2">$20 start, up to $35-40 by quality.</li>
+            <li data-i18n="hero.summary3">Sunday payouts in USDT + $700 fast-start bonus.</li>
           </ul>
-          <a class="sfw-btn sfw-btn--primary sfw-btn--card" href="#apply">Get partner access</a>
+          <a class="sfw-btn sfw-btn--primary sfw-btn--card" href="#apply" data-i18n="cta.apply">Get partner access</a>
         </aside>
+
+        <ul class="sfw-kpis sfw-reveal" data-reveal-delay="160" aria-label="Offer snapshot">
+          <li><strong>$20</strong><span data-i18n="comp.kpiStart">Start rate per interview</span></li>
+          <li><strong>$35-40</strong><span data-i18n="comp.kpiTop">Top partner range</span></li>
+          <li><strong>$700</strong><span data-i18n="comp.kpiBonus">Fast-start bonus (50 in month 1)</span></li>
+        </ul>
       </div>
     </section>
 
     <section class="sfw-section" id="how">
       <div class="sfw-container">
         <div class="sfw-section__head sfw-reveal">
-          <p class="sfw-eyebrow">How it works</p>
-          <h2>Your launch path in 4 steps</h2>
-          <p class="sfw-section__text">One clear flow: registration -> onboarding -> launch -> payout.</p>
+          <p class="sfw-eyebrow" data-i18n="flow.eyebrow">How it works</p>
+          <h2 data-i18n="flow.title">Your launch path in 4 steps</h2>
+          <p class="sfw-section__text" data-i18n="flow.lead">One clear flow: registration -> onboarding -> launch -> payout.</p>
         </div>
 
         <div class="sfw-stepper sfw-reveal" data-stepper>
           <div class="sfw-stepper__tabs" role="tablist" aria-label="Launch steps">
-            <button type="button" id="step-tab-1" role="tab" aria-selected="true" aria-controls="step-panel-1" data-step-target="1">1. Register</button>
-            <button type="button" id="step-tab-2" role="tab" aria-selected="false" aria-controls="step-panel-2" data-step-target="2">2. Onboard</button>
-            <button type="button" id="step-tab-3" role="tab" aria-selected="false" aria-controls="step-panel-3" data-step-target="3">3. Bring candidates</button>
-            <button type="button" id="step-tab-4" role="tab" aria-selected="false" aria-controls="step-panel-4" data-step-target="4">4. Get paid</button>
+            <button type="button" id="step-tab-1" role="tab" aria-selected="true" aria-controls="step-panel-1" data-step-target="1" data-i18n="flow.tab1">1. Register</button>
+            <button type="button" id="step-tab-2" role="tab" aria-selected="false" aria-controls="step-panel-2" data-step-target="2" data-i18n="flow.tab2">2. Onboard</button>
+            <button type="button" id="step-tab-3" role="tab" aria-selected="false" aria-controls="step-panel-3" data-step-target="3" data-i18n="flow.tab3">3. Bring candidates</button>
+            <button type="button" id="step-tab-4" role="tab" aria-selected="false" aria-controls="step-panel-4" data-step-target="4" data-i18n="flow.tab4">4. Get paid</button>
           </div>
 
           <div class="sfw-stepper__panels">
             <article id="step-panel-1" class="sfw-stepper__panel" data-step-panel="1" role="tabpanel" aria-labelledby="step-tab-1">
-              <h3>Submit your short partner form</h3>
-              <p>You share your background, traffic source, languages, and GEO coverage.</p>
+              <h3 data-i18n="flow.s1.title">Submit your short partner form</h3>
+              <p data-i18n="flow.s1.text">You share your background, traffic source, languages, and GEO coverage.</p>
             </article>
             <article id="step-panel-2" class="sfw-stepper__panel" data-step-panel="2" role="tabpanel" aria-labelledby="step-tab-2" hidden>
-              <h3>Get CRM, scripts, and requirements</h3>
-              <p>You get CRM access, scripts, requirements, and Telegram support.</p>
+              <h3 data-i18n="flow.s2.title">Get CRM, scripts, and requirements</h3>
+              <p data-i18n="flow.s2.text">You get CRM access, scripts, requirements, and Telegram support.</p>
             </article>
             <article id="step-panel-3" class="sfw-stepper__panel" data-step-panel="3" role="tabpanel" aria-labelledby="step-tab-3" hidden>
-              <h3>Launch traffic and deliver first 5-10 candidates</h3>
-              <p>You run your source, deliver first interviews, and optimize for higher rate tiers.</p>
+              <h3 data-i18n="flow.s3.title">Launch traffic and deliver first 5-10 candidates</h3>
+              <p data-i18n="flow.s3.text">You run your source, deliver first interviews, and optimize for higher rate tiers.</p>
             </article>
             <article id="step-panel-4" class="sfw-stepper__panel" data-step-panel="4" role="tabpanel" aria-labelledby="step-tab-4" hidden>
-              <h3>Get your first Sunday payout in USDT</h3>
-              <p>Payouts are weekly with no hard cap if quality remains stable.</p>
+              <h3 data-i18n="flow.s4.title">Get your first Sunday payout in USDT</h3>
+              <p data-i18n="flow.s4.text">Payouts are weekly with no hard cap if quality remains stable.</p>
             </article>
           </div>
         </div>
@@ -217,26 +221,26 @@
     <section class="sfw-section" id="compensation">
       <div class="sfw-container">
         <div class="sfw-section__head sfw-reveal">
-          <p class="sfw-eyebrow">Compensation</p>
-          <h2>Your payout levels are transparent</h2>
-          <p class="sfw-section__text">You are paid for approved interviews only. Better quality means higher rate.</p>
+          <p class="sfw-eyebrow" data-i18n="offer.eyebrow">Compensation</p>
+          <h2 data-i18n="offer.title">Your payout levels are transparent</h2>
+          <p class="sfw-section__text" data-i18n="offer.lead">You are paid for approved interviews only. Better quality means higher rate.</p>
         </div>
 
         <div class="sfw-grid sfw-grid--3 sfw-reveal">
           <article class="sfw-card sfw-pay-card">
-            <p>Start level</p>
+            <p data-i18n="comp.startLabel">Start level</p>
             <h3>$20</h3>
-            <span>per approved interview</span>
+            <span data-i18n="comp.perInterview">per approved interview</span>
           </article>
           <article class="sfw-card sfw-pay-card">
-            <p>Good quality</p>
+            <p data-i18n="comp.goodLabel">Good quality</p>
             <h3>$25-30</h3>
-            <span>per approved interview</span>
+            <span data-i18n="comp.perInterview">per approved interview</span>
           </article>
           <article class="sfw-card sfw-pay-card">
-            <p>Top partners</p>
+            <p data-i18n="comp.topLabel">Top partners</p>
             <h3>$35-40</h3>
-            <span>per approved interview</span>
+            <span data-i18n="comp.perInterview">per approved interview</span>
           </article>
         </div>
 
@@ -256,8 +260,8 @@
         </div>
 
         <div class="sfw-mid-cta sfw-reveal">
-          <p>Ready to test your traffic source with weekly payouts?</p>
-          <a class="sfw-btn sfw-btn--primary" href="#apply">Start registration</a>
+          <p data-i18n="comp.cta">Ready to test your traffic source with weekly payouts?</p>
+          <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
         </div>
       </div>
     </section>
@@ -617,22 +621,22 @@
   </main>
 
   <aside class="sfw-sticky-cta" aria-label="Desktop quick apply">
-    <p>You can launch this week</p>
-    <a class="sfw-btn sfw-btn--primary" href="#apply">Start registration</a>
+    <p data-i18n="sticky.text">You can launch this week</p>
+    <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
   </aside>
 
   <footer class="sfw-footer">
     <div class="sfw-container sfw-footer__inner">
       <p class="sfw-footer__brand"><img src="assets/favicon2.png?v=1" alt="" width="18" height="18" loading="lazy" decoding="async">© <span id="sfw-year"></span> Starflow Inc.</p>
-      <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram channel</a>
+      <a data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="footer.channel">Telegram channel</a>
     </div>
   </footer>
 
   <div class="sfw-mobile-cta" aria-label="Quick actions">
-    <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener">Telegram</a>
-    <a class="sfw-btn sfw-btn--primary" href="#apply">Start registration</a>
+    <a class="sfw-btn sfw-btn--ghost" data-telegram-link href="https://t.me/starflowcorp" target="_blank" rel="noopener" data-i18n="cta.telegram">Telegram</a>
+    <a class="sfw-btn sfw-btn--primary" href="#apply" data-i18n="cta.apply">Start registration</a>
   </div>
 
-  <script src="starflow.js?v=20260306-01" defer></script>
+  <script src="starflow.js?v=20260306-02" defer></script>
 </body>
 </html>
