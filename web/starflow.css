@@ -1,22 +1,22 @@
 :root {
-  --sfw-bg: #ffffff;
-  --sfw-bg-soft: #f5f8fc;
+  --sfw-bg: #f4f6fb;
+  --sfw-bg-soft: #eef2f9;
   --sfw-surface: #ffffff;
   --sfw-surface-solid: #ffffff;
-  --sfw-surface-soft: #f8fbff;
-  --sfw-text: #0f2540;
-  --sfw-muted: #5a6f86;
-  --sfw-line: rgba(24, 47, 72, 0.14);
-  --sfw-line-strong: rgba(0, 71, 171, 0.26);
-  --sfw-accent: #0047ab;
-  --sfw-accent-2: #00c4cc;
-  --sfw-danger: #c75466;
-  --sfw-success: #2a8d63;
-  --sfw-radius-lg: 24px;
-  --sfw-radius-md: 16px;
+  --sfw-surface-soft: #f7f9fd;
+  --sfw-text: #111827;
+  --sfw-muted: #5f6b85;
+  --sfw-line: rgba(15, 23, 42, 0.09);
+  --sfw-line-strong: rgba(37, 99, 235, 0.45);
+  --sfw-accent: #2563eb;
+  --sfw-accent-2: #38bdf8;
+  --sfw-danger: #dc4c64;
+  --sfw-success: #15803d;
+  --sfw-radius-lg: 22px;
+  --sfw-radius-md: 14px;
   --sfw-radius-sm: 10px;
   --sfw-container: 1200px;
-  --sfw-shadow: 0 10px 28px rgba(15, 37, 64, 0.05);
+  --sfw-shadow: 0 16px 40px rgba(15, 23, 42, 0.06);
 }
 
 * {
@@ -32,8 +32,8 @@ body[data-site='starflow'] {
   color: var(--sfw-text);
   font-family: 'Public Sans', 'Segoe UI', sans-serif;
   background:
-    radial-gradient(960px 360px at 50% -120px, rgba(0, 196, 204, 0.11), transparent 70%),
-    linear-gradient(180deg, #f8fbff 0%, var(--sfw-bg) 34%, var(--sfw-bg-soft) 100%);
+    radial-gradient(980px 420px at 50% -160px, rgba(191, 219, 254, 0.9), transparent 70%),
+    linear-gradient(180deg, #f9fafb 0%, var(--sfw-bg) 38%, var(--sfw-bg-soft) 100%);
   overflow-x: hidden;
 }
 
@@ -96,9 +96,9 @@ body[data-site='starflow'] :focus-visible {
   position: sticky;
   top: 0;
   z-index: 60;
-  border-bottom: 1px solid var(--sfw-line);
-  backdrop-filter: blur(14px);
-  background: rgba(255, 255, 255, 0.94);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+  backdrop-filter: blur(18px);
+  background: rgba(248, 250, 252, 0.96);
 }
 
 .sfw-header__inner {
@@ -131,24 +131,24 @@ body[data-site='starflow'] :focus-visible {
   align-items: center;
   gap: 0.24rem;
   padding: 0.28rem;
-  border: 1px solid rgba(22, 46, 73, 0.14);
+  border: 1px solid rgba(148, 163, 184, 0.5);
   border-radius: 999px;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.96);
 }
 
 .sfw-nav a {
   text-decoration: none;
   color: var(--sfw-muted);
   border-radius: 999px;
-  padding: 0.48rem 0.74rem;
+  padding: 0.48rem 0.8rem;
   font-size: 0.82rem;
-  font-weight: 700;
-  transition: color 0.2s ease, background 0.2s ease;
+  font-weight: 600;
+  transition: color 0.18s ease, background 0.18s ease;
 }
 
 .sfw-nav a:hover {
   color: var(--sfw-text);
-  background: rgba(0, 71, 171, 0.07);
+  background: rgba(148, 163, 184, 0.12);
 }
 
 .sfw-header__tools {

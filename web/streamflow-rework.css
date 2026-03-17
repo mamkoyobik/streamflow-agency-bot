@@ -1,16 +1,16 @@
 :root {
-  --sf-bg: #08050c;
-  --sf-bg-soft: #120918;
-  --sf-surface: rgba(24, 14, 34, 0.84);
-  --sf-surface-2: rgba(39, 21, 52, 0.9);
-  --sf-text: #f7f3ff;
-  --sf-muted: #d2bddf;
-  --sf-line: rgba(255, 166, 230, 0.2);
-  --sf-line-strong: rgba(255, 86, 182, 0.62);
-  --sf-accent: #ff3fa7;
-  --sf-accent-2: #ff83cf;
-  --sf-danger: #ff7cb6;
-  --sf-success: #8effca;
+  --sf-bg: #060712;
+  --sf-bg-soft: #101221;
+  --sf-surface: rgba(19, 22, 38, 0.9);
+  --sf-surface-2: rgba(22, 27, 46, 0.96);
+  --sf-text: #f6f6fc;
+  --sf-muted: #b9c0d8;
+  --sf-line: rgba(120, 145, 210, 0.26);
+  --sf-line-strong: rgba(140, 180, 255, 0.7);
+  --sf-accent: #ff7ab2;
+  --sf-accent-2: #ffd29f;
+  --sf-danger: #ff8fa8;
+  --sf-success: #7fe0b3;
   --sf-radius-lg: 30px;
   --sf-radius-md: 18px;
   --sf-radius-sm: 12px;
@@ -32,9 +32,10 @@ body[data-site='streamflow'] {
   font-family: 'Manrope', 'Segoe UI', sans-serif;
   color: var(--sf-text);
   background:
-    radial-gradient(900px 500px at 9% -8%, rgba(255, 63, 167, 0.3), transparent 58%),
-    radial-gradient(760px 460px at 92% 12%, rgba(255, 131, 207, 0.2), transparent 60%),
-    linear-gradient(160deg, #05030a 0%, #0a0611 45%, #07050d 100%);
+    radial-gradient(880px 520px at 8% -10%, rgba(255, 122, 178, 0.18), transparent 60%),
+    radial-gradient(720px 460px at 100% 0%, rgba(126, 160, 255, 0.2), transparent 62%),
+    radial-gradient(820px 520px at 50% 120%, rgba(53, 72, 140, 0.75), transparent 70%),
+    linear-gradient(165deg, var(--sf-bg) 0%, #050510 40%, #050915 100%);
   overflow-x: hidden;
 }
 
@@ -48,20 +49,20 @@ body[data-site='streamflow']::after {
 }
 
 body[data-site='streamflow']::before {
-  width: 430px;
-  height: 430px;
+  width: 380px;
+  height: 380px;
   right: -140px;
-  bottom: -150px;
-  background: radial-gradient(circle, rgba(255, 63, 167, 0.28), transparent 68%);
-  filter: blur(2px);
+  bottom: -120px;
+  background: radial-gradient(circle, rgba(255, 193, 140, 0.26), transparent 70%);
+  filter: blur(1px);
 }
 
 body[data-site='streamflow']::after {
-  width: 360px;
-  height: 360px;
+  width: 320px;
+  height: 320px;
   left: -110px;
-  top: 34%;
-  background: radial-gradient(circle, rgba(255, 131, 207, 0.2), transparent 72%);
+  top: 32%;
+  background: radial-gradient(circle, rgba(138, 166, 255, 0.24), transparent 74%);
 }
 
 body[data-site='streamflow'] img,
@@ -134,9 +135,10 @@ body[data-site='streamflow'] :focus-visible {
   position: sticky;
   top: 0;
   z-index: 30;
-  backdrop-filter: blur(16px);
-  background: linear-gradient(180deg, rgba(7, 4, 11, 0.9), rgba(7, 4, 11, 0.72));
-  border-bottom: 1px solid var(--sf-line);
+  backdrop-filter: blur(18px);
+  background:
+    linear-gradient(180deg, rgba(5, 7, 20, 0.95), rgba(5, 7, 20, 0.82));
+  border-bottom: 1px solid rgba(120, 145, 210, 0.4);
 }
 
 .sf-header__inner {
@@ -186,9 +188,9 @@ body[data-site='streamflow'] :focus-visible {
   align-items: center;
   gap: 0.35rem;
   padding: 0.28rem;
-  border: 1px solid var(--sf-line);
+  border: 1px solid rgba(91, 116, 187, 0.55);
   border-radius: 999px;
-  background: rgba(17, 10, 24, 0.8);
+  background: radial-gradient(circle at 0 0, rgba(255, 210, 159, 0.12), transparent 60%), rgba(7, 10, 28, 0.9);
 }
 
 .sf-nav a {
@@ -198,18 +200,18 @@ body[data-site='streamflow'] :focus-visible {
   font-size: 0.88rem;
   letter-spacing: 0.02em;
   border-radius: 999px;
-  padding: 0.5rem 0.76rem;
-  transition: 0.2s ease;
+  padding: 0.5rem 0.86rem;
+  transition: color 0.18s ease, background 0.18s ease;
 }
 
 .sf-nav a:hover {
   color: var(--sf-text);
-  background: rgba(255, 63, 167, 0.16);
+  background: rgba(126, 160, 255, 0.18);
 }
 
 .sf-nav a.is-active {
   color: var(--sf-text);
-  background: rgba(255, 63, 167, 0.22);
+  background: linear-gradient(135deg, rgba(126, 160, 255, 0.3), rgba(255, 210, 159, 0.26));
 }
 
 .sf-header__tools {
@@ -485,7 +487,8 @@ body[data-site='streamflow'] :focus-visible {
 .sf-hero__copy {
   padding: clamp(1.2rem, 2.2vw, 2rem);
   background:
-    linear-gradient(145deg, rgba(255, 63, 167, 0.2), transparent 44%),
+    radial-gradient(460px 320px at 0% 0%, rgba(255, 210, 159, 0.16), transparent 70%),
+    radial-gradient(520px 320px at 80% -20%, rgba(126, 160, 255, 0.2), transparent 72%),
     var(--sf-surface);
 }
 
@@ -536,10 +539,10 @@ body[data-site='streamflow'] :focus-visible {
 }
 
 .sf-kpis li {
-  border: 1px solid var(--sf-line);
+  border: 1px solid rgba(91, 116, 187, 0.6);
   border-radius: 14px;
   padding: 0.72rem;
-  background: rgba(255, 255, 255, 0.03);
+  background: radial-gradient(circle at 10% 0, rgba(255, 210, 159, 0.16), transparent 65%), rgba(6, 9, 28, 0.9);
 }
 
 .sf-kpis strong {
@@ -560,7 +563,7 @@ body[data-site='streamflow'] :focus-visible {
   margin-top: 0.95rem;
   border: 1px solid var(--sf-line);
   border-radius: 16px;
-  background: rgba(255, 255, 255, 0.03);
+  background: rgba(8, 11, 30, 0.96);
   padding: 0.72rem;
   display: grid;
   gap: 0.55rem;
@@ -682,7 +685,9 @@ body[data-site='streamflow'] :focus-visible {
 .sf-card {
   border: 1px solid var(--sf-line);
   border-radius: var(--sf-radius-md);
-  background: var(--sf-surface-2);
+  background:
+    radial-gradient(420px 260px at 0 0, rgba(255, 210, 159, 0.12), transparent 70%),
+    var(--sf-surface-2);
   box-shadow: var(--sf-shadow);
   padding: 1rem;
 }
@@ -748,7 +753,9 @@ body[data-site='streamflow'] :focus-visible {
   overflow: hidden;
   border: 1px solid var(--sf-line);
   border-radius: var(--sf-radius-md);
-  background: var(--sf-surface-2);
+  background:
+    radial-gradient(520px 260px at 0 0, rgba(255, 210, 159, 0.12), transparent 70%),
+    var(--sf-surface-2);
   display: grid;
   grid-template-rows: clamp(220px, 24vw, 280px) auto;
 }
@@ -794,7 +801,9 @@ body[data-site='streamflow'] :focus-visible {
 .sf-stream-card {
   border: 1px solid var(--sf-line);
   border-radius: var(--sf-radius-md);
-  background: var(--sf-surface-2);
+  background:
+    radial-gradient(520px 260px at 100% 0, rgba(126, 160, 255, 0.16), transparent 72%),
+    var(--sf-surface-2);
   box-shadow: var(--sf-shadow);
   overflow: hidden;
 }
